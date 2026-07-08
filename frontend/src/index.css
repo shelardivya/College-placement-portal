@@ -8,7 +8,6 @@ body {
   color: #1e293b;
   /* Sleek dark gray text */
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 * {

@@ -35,6 +35,7 @@
 
 /* General Landing Page Wrapper */
 .landing-page {
+    font-family: 'Inter', sans-serif;
     width: 100%;
     min-height: 100vh;
     position: relative;
@@ -341,14 +342,14 @@
 }
 
 /* *Stats grid styles */
-.stats-grid {
+.landing-page .stats-grid {
     display: flex;
     justify-content: space-between;
     gap: 16px;
     margin-bottom: 16px;
 }
 
-.stat-box {
+.landing-page .stat-box {
     flex: 1;
     height: 104px;
     background: var(--card);
@@ -364,7 +365,7 @@
     box-sizing: border-box;
 }
 
-.stat-label {
+.landing-page .stat-label {
     display: block;
     font-size: 12px;
     font-weight: 500;
@@ -372,14 +373,14 @@
     letter-spacing: 0.2px;
 }
 
-.stat-row {
+.landing-page .stat-row {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 13px;
 }
 
-.stat-value {
+.landing-page .stat-value {
     font-family: 'Inter', sans-serif;
     font-size: 24px;
     font-weight: 700;
@@ -511,7 +512,7 @@
     text-align: left;
 }
 
-.company-name {
+.landing-page .company-name {
     color: var(--white);
     font-weight: 500;
     font-size: 14px;

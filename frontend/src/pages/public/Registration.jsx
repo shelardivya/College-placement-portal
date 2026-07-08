@@ -1,7 +1,7 @@
-import { registerStudent } from "../auth/authService";
-import React, { useState } from "react";
+import { registerStudent } from "../../auth/authService";
+import React, { useState, useEffect, useRef } from "react";
 import './Registration.css';
-import logoGrad from '../assets/logo_grad.png';
+import logoGrad from "../../assets/logo_grad.png";
 import {
     GraduationCap,
     ArrowLeft,
@@ -45,6 +45,42 @@ function Registration({ onNavigate }) {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+
+    // DOB Custom Calendar states
+    const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
+    const [dobCalDate, setDobCalDate] = useState(new Date(2004, 0, 1)); // Default view around standard student age (2004)
+    const dobDatePickerRef = useRef(null);
+
+    const handleDobPrevMonth = () => {
+        setDobCalDate(new Date(dobCalDate.getFullYear(), dobCalDate.getMonth() - 1, 1));
+    };
+
+    const handleDobNextMonth = () => {
+        setDobCalDate(new Date(dobCalDate.getFullYear(), dobCalDate.getMonth() + 1, 1));
+    };
+
+    const dobTotalDays = new Date(dobCalDate.getFullYear(), dobCalDate.getMonth() + 1, 0).getDate();
+    const dobFirstDayIndex = new Date(dobCalDate.getFullYear(), dobCalDate.getMonth(), 1).getDay();
+
+    // Click away to close calendar picker
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dobDatePickerRef.current && !dobDatePickerRef.current.contains(event.target)) {
+                setIsDobPickerOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const formatDOBDate = (dateString) => {
+        if (!dateString) return '';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return dateString;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+    };
 
     // Validate a single field and return its error message
     const validateField = (name, value) => {
@@ -156,7 +192,7 @@ function Registration({ onNavigate }) {
     };
 
     // Event handler for form submission
-    const handleSubmit =  async(e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Run validation across all fields
@@ -187,56 +223,80 @@ function Registration({ onNavigate }) {
             return;
         }
 
+
+        // Reformat stored yyyy-mm-dd date into dd-mm-yyyy for the backend API
+        let apiFormattedDob = "";
+        if (formData.dob) {
+            const [year, month, day] = formData.dob.split("-");
+            apiFormattedDob = `${day}-${month}-${year}`;
+        }
+
         const requestBody = {
-                fullName: formData.fullname,
-
-                email: formData.email,
-
-                mobile: formData.mobile,
-
-                dob: formData.dob,
-
-                department: formData.department,
-
-                course: formData.course,
-
-                currentYear: formData.year,
-
-                cgpa: Number(formData.cgpa),
-
-                password: formData.password,
-
-                confirmPassword: formData.confirmPassword
+            fullName: formData.fullname,
+            email: formData.email,
+            mobile: formData.mobile,
+            dob: apiFormattedDob, //  Replaced with the formatted date
+            department: formData.department,
+            course: formData.course,
+            currentYear: Number(formData.year),
+            cgpa: Number(formData.cgpa),
+            password: formData.password,
+            confirmPassword: formData.confirmPassword
         };
 
 
-try {
 
-    const response = await registerStudent(requestBody);
+        try {
+            const response = await registerStudent(requestBody);
+            console.log("API Response:", response.data);
 
-    console.log("API Response:", response.data);
-
-    setToastMessage("Registration completed successfully!");
-    setToastType("success");
-    setShowToast(true);
-
-    setTimeout(() => {
-        setShowToast(false);
-        onNavigate("login");
-    }, 2000);
-
-} catch (error) {
-
-    console.error("Registration Error:", error);
-
-    setToastMessage("Registration failed");
-    setToastType("error");
-    setShowToast(true);
-
-}
+            // 1. Save the backend token and student details to localStorage
+            if (response.data && response.data.token) {
+                localStorage.setItem("token", response.data.token);
+            }
+            localStorage.setItem("user", JSON.stringify({ 
+                fullName: formData.fullname,
+                email: formData.email,
+                phone: formData.mobile,
+                branch: formData.department,
+                passingYear: formData.year,
+                cgpa: formData.cgpa,
+                skills: "React, JavaScript, CSS, Node.js, Python",
+                linkedinUrl: `https://linkedin.com/in/${formData.fullname.toLowerCase().replace(/\s+/g, '-')}`,
+                githubUrl: `https://github.com/${formData.fullname.toLowerCase().replace(/\s+/g, '')}`
+            }));
 
 
-       
+            setToastMessage("Registration completed successfully!");
+            setToastType("success");
+            setShowToast(true);
+
+            // 2. Redirect directly to the Student Dashboard after 2 seconds
+            setTimeout(() => {
+                setShowToast(false);
+                onNavigate("student");
+            }, 2000);
+
+
+
+
+
+        } catch (error) {
+
+            console.error("Registration Error:", error);
+            if (error.response &&
+                error.response.data) {
+                console.log("Backend Validation Errors:", error.response.data)
+            }
+
+            setToastMessage("Registration failed");
+            setToastType("error");
+            setShowToast(true);
+
+        }
+
+
+
     };
 
     return (
@@ -460,15 +520,97 @@ try {
                             {/* Date of Birth */}
                             <div className="input-group">
                                 <label>Date of Birth (DOB)</label>
-                                <div className={`input-wrapper ${errors.dob ? 'has-error' : ''}`}>
-                                    <Calendar size={16} />
-                                    <input
-                                        type="date"
-                                        name="dob"
-                                        value={formData.dob}
-                                        onChange={handleChange}
-                                        required
-                                    />
+                                <div className={`input-wrapper ${errors.dob ? 'has-error' : ''}`} ref={dobDatePickerRef} style={{ position: 'relative', overflow: 'visible', border: 'none', padding: 0 }}>
+                                    <div className="custom-date-picker-container" style={{ width: '100%' }}>
+                                        <button
+                                            type="button"
+                                            className="date-picker-trigger"
+                                            onClick={() => setIsDobPickerOpen(!isDobPickerOpen)}
+                                            style={{ width: '100%', justifyContent: 'space-between', display: 'flex', alignItems: 'center' }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <Calendar size={16} />
+                                                {formData.dob ? formatDOBDate(formData.dob) : 'Select Date of Birth...'}
+                                            </span>
+                                        </button>
+
+                                        {isDobPickerOpen && (
+                                            <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '260px' }}>
+                                                <div className="calendar-header">
+                                                    <button type="button" onClick={handleDobPrevMonth}>&lt;</button>
+                                                    <span>
+                                                        <select
+                                                            value={dobCalDate.getMonth()}
+                                                            onChange={(e) => setDobCalDate(new Date(dobCalDate.getFullYear(), parseInt(e.target.value), 1))}
+                                                            className="calendar-select"
+                                                            style={{ border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '0.8125rem', outline: 'none', cursor: 'pointer' }}
+                                                        >
+                                                            {[
+                                                                "January", "February", "March", "April", "May", "June",
+                                                                "July", "August", "September", "October", "November", "December"
+                                                            ].map((m, idx) => (
+                                                                <option key={m} value={idx}>{m}</option>
+                                                            ))}
+                                                        </select>
+                                                        <select
+                                                            value={dobCalDate.getFullYear()}
+                                                            onChange={(e) => setDobCalDate(new Date(parseInt(e.target.value), dobCalDate.getMonth(), 1))}
+                                                            className="calendar-select"
+                                                            style={{ border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '0.8125rem', outline: 'none', cursor: 'pointer', marginLeft: '4px' }}
+                                                        >
+                                                            {Array.from({ length: new Date().getFullYear() - 1980 + 1 }, (_, i) => 1980 + i).reverse().map(y => (
+                                                                <option key={y} value={y}>{y}</option>
+                                                            ))}
+                                                        </select>
+                                                    </span>
+                                                    <button type="button" onClick={handleDobNextMonth}>&gt;</button>
+                                                </div>
+                                                <div className="calendar-weekdays">
+                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                        <span key={d}>{d}</span>
+                                                    ))}
+                                                </div>
+                                                <div className="calendar-days">
+                                                    {/* Render empty cells for padding */}
+                                                    {Array.from({ length: dobFirstDayIndex }).map((_, i) => (
+                                                        <span key={`empty-${i}`} className="empty-day"></span>
+                                                    ))}
+                                                    {/* Render month days */}
+                                                    {Array.from({ length: dobTotalDays }).map((_, i) => {
+                                                        const day = i + 1;
+                                                        const dateStr = `${dobCalDate.getFullYear()}-${String(dobCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                        const isSelected = formData.dob === dateStr;
+                                                        return (
+                                                            <button
+                                                                type="button"
+                                                                key={day}
+                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                                onClick={() => {
+                                                                    setFormData(prev => ({ ...prev, dob: dateStr }));
+                                                                    const fieldError = validateField('dob', dateStr);
+                                                                    setErrors(prev => ({ ...prev, dob: fieldError }));
+                                                                    setIsDobPickerOpen(false);
+                                                                }}
+                                                            >
+                                                                {day}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                                <div className="calendar-footer">
+                                                    <button type="button" className="calendar-clear-btn" onClick={() => { setFormData(prev => ({ ...prev, dob: '' })); const fieldError = validateField('dob', ''); setErrors(prev => ({ ...prev, dob: fieldError })); setIsDobPickerOpen(false); }}>Clear</button>
+                                                    <button type="button" className="calendar-today-btn" onClick={() => {
+                                                        const today = new Date();
+                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                        setFormData(prev => ({ ...prev, dob: todayStr }));
+                                                        const fieldError = validateField('dob', todayStr);
+                                                        setErrors(prev => ({ ...prev, dob: fieldError }));
+                                                        setIsDobPickerOpen(false);
+                                                    }}>Today</button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 {errors.dob && <span className="error-message">{errors.dob}</span>}
                             </div>
@@ -485,7 +627,7 @@ try {
                                         required
                                     >
                                         <option value="" disabled hidden>Select Department</option>
-                                        <option value="Computer Scrience and Applications">Computer Science and Applications</option>
+                                        <option value="Computer Science and Applications">Computer Science and Applications</option>
                                     </select>
                                 </div>
                                 {errors.department && <span className="error-message">{errors.department}</span>}

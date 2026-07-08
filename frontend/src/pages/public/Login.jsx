@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Login.css';
-import logoGrad from '../assets/logo_grad.png';
+import logoGrad from "../../assets/logo_grad.png";
+import { loginAdmin, loginStudent, forgotPassword, resetPassword } from '../../auth/authService';
 import {
     GraduationCap,
     ArrowLeft,
@@ -55,39 +56,119 @@ function Login({ onNavigate }) {
         }));
     };
 
+
     //Handles Form submissions
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (loginView === 'login') {
             // Check if Password matches Confirm Password
             if (formData.password !== formData.confirmPassword) {
-                setToastMessage("Invalid credentials");
+                setToastMessage("Passwords do not match");
                 setToastType('error');
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
                 return;
             }
-            console.log('Login credentials submitted:', formData);
-            setToastMessage("Login successfully");
-            setToastType('success');
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-                onNavigate('landing');
-            }, 2000);
+
+            try {
+                // 1. Determine if this is an admin or student based on email
+                const isAdmin = formData.email === 'admin@placementportal.edu' ||
+                    formData.email === 'saurabh@gmail.com' ||
+                    formData.email.includes('admin');
+
+                let response;
+                const requestPayload = {
+                    email: formData.email,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword // Send the confirm password here
+                };
+
+                // 2. Call the correct API endpoint
+                if (isAdmin) {
+                    response = await loginAdmin(requestPayload);
+                } else {
+                    response = await loginStudent(requestPayload);
+                }
+
+                console.log("Login Response:", response.data);
+
+                // 3. Save the token and student details to localStorage
+                if (response.data && response.data.token) {
+                    const token = response.data.token;
+                    localStorage.setItem("token", token);
+
+                    try {
+                        // Decode the JWT token payload (middle part)
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        console.log("Decoded Token Payload:", payload);
+
+                        // Extract name from token or fallback to email prefix
+                        const nameFromEmail = formData.email.split('@')[0].split(/[0-9]/)[0];
+                        const emailFallbackName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+
+                        localStorage.setItem("user", JSON.stringify({
+                            fullName: payload.fullName || payload.name || payload.studentName || emailFallbackName || "Student",
+                            email: payload.email || formData.email
+                        }));
+                    } catch (e) {
+                        console.error("Token decoding failed:", e);
+                        // Fallback saving
+                        const nameFromEmail = formData.email.split('@')[0].split(/[0-9]/)[0];
+                        const emailFallbackName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+                        localStorage.setItem("user", JSON.stringify({
+                            fullName: emailFallbackName || "Student",
+                            email: formData.email
+                        }));
+                    }
+                }
+
+                setToastMessage("Login successfully");
+                setToastType('success');
+                setShowToast(true);
+
+                // 4. Navigate to the correct dashboard after 2 seconds
+                setTimeout(() => {
+                    setShowToast(false);
+                    if (isAdmin) {
+                        onNavigate('admin');
+                    } else {
+                        onNavigate('student'); // Take student directly to their dashboard
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error("Login Error:", error);
+                const errorMsg = error.response?.data?.message || "Invalid email or password";
+                setToastMessage(errorMsg);
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
         }
 
 
         else if (loginView === 'forgot') {
-            // Trigger toast notification and redirect to reset view after 2.5s
-            setToastMessage("Reset link sent successfully!");
-            setToastType('success');
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-                setLoginView('reset');
-            }, 2500);
+            try {
+                // Call the backend forgot-password API
+                const response = await forgotPassword(formData.email);
+                console.log("Forgot Password Response:", response.data);
+
+                setToastMessage("Reset link sent successfully!");
+                setToastType('success');
+                setShowToast(true);
+                setTimeout(() => {
+                    setShowToast(false);
+                    setLoginView('reset');
+                }, 2500);
+            } catch (error) {
+                console.error("Forgot Password Error:", error);
+                const errorMsg = error.response?.data?.message || "Failed to send reset link";
+                setToastMessage(errorMsg);
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
         }
 
         else if (loginView === 'reset') {
@@ -101,14 +182,31 @@ function Login({ onNavigate }) {
                 return;
             }
 
-            setToastMessage('Password reset successfully!');
-            setToastType('success');
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-                setLoginView('login');
-                setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
-            }, 2000);
+            try {
+                // Call the backend reset-password API
+                const response = await resetPassword({
+                    email: formData.email,
+                    newPassword: formData.password,
+                    confirmPassword: formData.confirmPassword
+                });
+                console.log("Reset Password Response:", response.data);
+
+                setToastMessage('Password reset successfully!');
+                setToastType('success');
+                setShowToast(true);
+                setTimeout(() => {
+                    setShowToast(false);
+                    setLoginView('login');
+                    setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
+                }, 2000);
+            } catch (error) {
+                console.error("Reset Password Error:", error);
+                const errorMsg = error.response?.data?.message || "Failed to reset password";
+                setToastMessage(errorMsg);
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
         }
     };
 
