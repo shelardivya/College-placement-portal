@@ -20,11 +20,11 @@ import {
     XCircle
 } from 'lucide-react';
 
-function Login({ onNavigate }) {
+function Login({ onNavigate, initialView }) {
     //View controller state: login | forgot | reset
 
     const [loginView, setLoginView] =
-        useState('login');
+        useState(initialView || 'login');
 
     //Toggles to show/hide raw typed passwords
     const [showPassword, setShowPassword] =
@@ -38,11 +38,14 @@ function Login({ onNavigate }) {
     const [toastType, setToastType] = useState('success');
 
     //Form inout state tracking
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        rememberMe: false
+    const [formData, setFormData] = useState(() => {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            email: params.get('email') || '',
+            password: '',
+            confirmPassword: '',
+            rememberMe: false
+        };
     });
 
     //Handles values change in inputs
@@ -62,9 +65,8 @@ function Login({ onNavigate }) {
         e.preventDefault();
 
         if (loginView === 'login') {
-            // Check if Password matches Confirm Password
             if (formData.password !== formData.confirmPassword) {
-                setToastMessage("Passwords do not match");
+                setToastMessage("Password and Confirm Password do not match!");
                 setToastType('error');
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
@@ -72,70 +74,86 @@ function Login({ onNavigate }) {
             }
 
             try {
-                // 1. Determine if this is an admin or student based on email
-                const isAdmin = formData.email === 'admin@placementportal.edu' ||
-                    formData.email === 'saurabh@gmail.com' ||
-                    formData.email.includes('admin');
 
+                // Determine role from email in a robust way
+                const emailLower = formData.email.trim().toLowerCase();
+                const isAdmin = emailLower === 'saurabh@gmail.com' || 
+                                emailLower.startsWith('admin') || 
+                                emailLower.includes('@admin.') || 
+                                emailLower.includes('.admin');
+
+                // Call the correct API endpoint with the fields each expects
                 let response;
-                const requestPayload = {
-                    email: formData.email,
-                    password: formData.password,
-                    confirmPassword: formData.confirmPassword // Send the confirm password here
-                };
-
-                // 2. Call the correct API endpoint
                 if (isAdmin) {
-                    response = await loginAdmin(requestPayload);
+                    // Admin login API requires: email, password, confirmPassword, rememberMe
+                    response = await loginAdmin({
+                        email: formData.email.trim(),
+                        password: formData.password,
+                        confirmPassword: formData.confirmPassword,
+                        rememberMe: formData.rememberMe
+                    });
                 } else {
-                    response = await loginStudent(requestPayload);
+                    // Student login API requires: email, password, confirmPassword
+                    response = await loginStudent({
+                        email: formData.email.trim(),
+                        password: formData.password,
+                        confirmPassword: formData.confirmPassword
+                    });
                 }
 
-                console.log("Login Response:", response.data);
 
-                // 3. Save the token and student details to localStorage
+                // Save token to localStorage
                 if (response.data && response.data.token) {
                     const token = response.data.token;
                     localStorage.setItem("token", token);
+                    localStorage.setItem("role", isAdmin ? "admin" : "student");
 
                     try {
-                        // Decode the JWT token payload (middle part)
                         const payload = JSON.parse(atob(token.split('.')[1]));
-                        console.log("Decoded Token Payload:", payload);
-
-                        // Extract name from token or fallback to email prefix
-                        const nameFromEmail = formData.email.split('@')[0].split(/[0-9]/)[0];
-                        const emailFallbackName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-
-                        localStorage.setItem("user", JSON.stringify({
-                            fullName: payload.fullName || payload.name || payload.studentName || emailFallbackName || "Student",
-                            email: payload.email || formData.email
-                        }));
-                    } catch (e) {
-                        console.error("Token decoding failed:", e);
-                        // Fallback saving
-                        const nameFromEmail = formData.email.split('@')[0].split(/[0-9]/)[0];
-                        const emailFallbackName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-                        localStorage.setItem("user", JSON.stringify({
-                            fullName: emailFallbackName || "Student",
-                            email: formData.email
-                        }));
+                        const nameFromEmail = formData.email.split('@')[0];
+                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
+                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
+                        
+                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+                        
+                        if (matchedProfile) {
+                            localStorage.setItem("user", JSON.stringify(matchedProfile));
+                        } else {
+                            localStorage.setItem("user", JSON.stringify({
+                                fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
+                                email: payload.email || formData.email
+                            }));
+                        }
+                    } catch {
+                        const nameFromEmail = formData.email.split('@')[0];
+                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
+                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
+                        
+                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+                        
+                        if (matchedProfile) {
+                            localStorage.setItem("user", JSON.stringify(matchedProfile));
+                        } else {
+                            localStorage.setItem("user", JSON.stringify({
+                                fullName: fallbackName,
+                                email: formData.email
+                            }));
+                        }
                     }
+
                 }
 
-                setToastMessage("Login successfully");
+                setToastMessage("Login successful!");
                 setToastType('success');
                 setShowToast(true);
 
-                // 4. Navigate to the correct dashboard after 2 seconds
                 setTimeout(() => {
                     setShowToast(false);
-                    if (isAdmin) {
-                        onNavigate('admin');
-                    } else {
-                        onNavigate('student'); // Take student directly to their dashboard
-                    }
-                }, 2000);
+                    onNavigate(isAdmin ? 'admin' : 'student');
+                }, 1500);
+
 
             } catch (error) {
                 console.error("Login Error:", error);
@@ -364,35 +382,29 @@ function Login({ onNavigate }) {
                                 </div>
                             )}
 
-                            {/*Confirm Password Input (Login View)*/}
+                            {/* CONFIRM PASSWORD INPUT (Login view) */}
                             {loginView === 'login' && (
-                                <div className='input-group full-width'>
-                                    <label htmlFor="">Confirm Password</label>
-
-                                    <div className='input-wrapper'>
+                                <div className="input-group full-width">
+                                    <label>Confirm Password</label>
+                                    <div className="input-wrapper">
                                         <Lock size={16} />
-
-                                        <input type={showConfirmPassword ? "text" : "password"}
-                                            name='confirmPassword'
-                                            placeholder='confirm your password'
+                                        <input
+                                            type={showConfirmPassword ? "text" : "password"}
+                                            name="confirmPassword"
+                                            placeholder="Confirm your password"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
                                             required
-                                            autoComplete='current-password'
                                         />
-
-                                        <button type='button' className='btn-toggle-eye'
-                                            onClick={() =>
-                                                setShowConfirmPassword(!showConfirmPassword)
-                                            }>
-
-                                            {showConfirmPassword ? <EyeOff size={16} /> :
-                                                <Eye size={16} />}
-
+                                        <button
+                                            type="button"
+                                            className="btn-toggle-eye"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        >
+                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
                                 </div>
-
                             )}
 
                             {/* RESET PASSWORD INPUTS (Reset view) */}

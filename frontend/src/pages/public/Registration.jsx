@@ -254,7 +254,8 @@ function Registration({ onNavigate }) {
             if (response.data && response.data.token) {
                 localStorage.setItem("token", response.data.token);
             }
-            localStorage.setItem("user", JSON.stringify({ 
+            // Save student details to local registry
+            const newProfile = { 
                 fullName: formData.fullname,
                 email: formData.email,
                 phone: formData.mobile,
@@ -263,8 +264,17 @@ function Registration({ onNavigate }) {
                 cgpa: formData.cgpa,
                 skills: "React, JavaScript, CSS, Node.js, Python",
                 linkedinUrl: `https://linkedin.com/in/${formData.fullname.toLowerCase().replace(/\s+/g, '-')}`,
-                githubUrl: `https://github.com/${formData.fullname.toLowerCase().replace(/\s+/g, '')}`
-            }));
+                githubUrl: `https://github.com/${formData.fullname.toLowerCase().replace(/\s+/g, '')}`,
+                portfolioUrl: "",
+                resumeUrl: ""
+            };
+            localStorage.setItem("user", JSON.stringify(newProfile));
+
+            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+            const updatedProfiles = registeredProfiles.filter(p => p.email.toLowerCase() !== formData.email.toLowerCase());
+            updatedProfiles.push(newProfile);
+            localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
+
 
 
             setToastMessage("Registration completed successfully!");

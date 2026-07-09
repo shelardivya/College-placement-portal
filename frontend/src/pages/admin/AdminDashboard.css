@@ -1,32 +1,17 @@
 :root {
-    --primary-blue: #2563eb;
-    /* Royal Blue */
+    --primary-blue: var(--primary);
     --primary-blue-hover: #1d4ed8;
-    /* Darker Blue */
-    --primary-navy: #1e3a8a;
-    /* Deep Navy */
-    --bg-main: #f8fafc;
-    /* Off-white */
-    --bg-card: #ffffff;
-    /* Pure White */
-    --text-dark: #0f172a;
-    /* Slate 900 */
-    --text-light: #64748b;
-    /* Slate 500 */
-    --border-color: #e2e8f0;
-    /* Slate 200 */
-    --border-light: #f1f5f9;
-    /* Slate 100 */
+    --primary-navy: var(--secondary);
+    --border-light: var(--bg-secondary);
+    --text-dark: var(--text-primary);
+    --text-light: var(--text-secondary);
 
     /* SaaS Multi-layered Shadows (Stripe Style) */
-    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
-    --shadow-saas: 0 1px 3px rgba(0, 0, 0, 0.04), 0 10px 15px -3px rgba(0, 0, 0, 0.02), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-    --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.05), 0 10px 10px -5px rgba(15, 23, 42, 0.02);
+    --shadow-saas: var(--shadow-md);
 
     /* Large modern rounded corners */
-    --border-radius: 20px;
-    --border-radius-lg: 24px;
+    --border-radius: var(--radius-lg);
+    --border-radius-lg: var(--radius-xl);
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
@@ -34,7 +19,7 @@
 /*Container Styles */
 .admin-dashboard-container {
     font-family: var(--font-family);
-    background-color: var(--bg-main);
+    background-color: transparent;
     min-height: 100vh;
     color: var(--text-dark);
 }
@@ -374,28 +359,120 @@
 .postings-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     margin-bottom: 16px;
 }
 
-.posting-item {
+/* Premium job card */
+.posting-card-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 0;
-    border-bottom: 1px solid var(--border-light);
-    transition: all 0.2s ease;
-}
-
-.posting-item:last-child {
-    border-bottom: none;
-}
-
-.posting-info {
-    display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 14px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1.5px solid var(--border-light);
+    border-radius: 14px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
 }
+
+.posting-card-item:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Logo container */
+.posting-card-logo-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.posting-company-logo {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.posting-logo-fallback {
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+}
+
+/* Card body */
+.posting-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Card title = Company name */
+.posting-card-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+}
+
+/* Info rows: Location / Job Role / Deadline stacked */
+.posting-info-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.posting-info-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+}
+
+.posting-info-icon {
+    font-size: 0.8rem;
+    width: 16px;
+    flex-shrink: 0;
+}
+
+.posting-info-label {
+    color: #64748b;
+    font-weight: 500;
+    min-width: 58px;
+}
+
+.posting-info-sep {
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+.posting-info-value {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.posting-info-deadline {
+    color: #dc2626;
+}
+
+/* Status badge aligned to far right */
+.posting-card-status {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+
 
 .briefcase-icon-bg {
     width: 40px;
@@ -487,7 +564,7 @@
 
 .search-filter-row {
     display: flex;
-    gap: 16px;
+    gap: 24px;
     width: 100%;
 }
 
@@ -539,7 +616,7 @@
 .custom-dropdown-container {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     position: relative;
 }
 
@@ -1428,14 +1505,18 @@
     padding: 0 16px 12px 16px;
 }
 
-.profile-avatar-large {
-    width: 44px;
-    height: 44px;
-    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 100%);
-    color: white;
-    font-size: 0.875rem;
-    font-weight: 700;
-    border-radius: 50%;
+.profile-dropdown-menu .profile-avatar-large {
+    width: 44px !important;
+    height: 44px !important;
+    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 100%) !important;
+    color: white !important;
+    font-size: 0.875rem !important;
+    font-weight: 700 !important;
+    border-radius: 50% !important;
+    border: none !important;
+    box-shadow: none !important;
+    animation: none !important;
+    position: static !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1754,3 +1835,196 @@
     padding: 2px 8px;
     border-radius: 6px;
 }
+
+/* Password Input Eye Toggle absolute positioning */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    padding-right: 44px !important;
+    box-sizing: border-box;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+}
+
+/* Give dropdown arrows and text some breathable space */
+.form-group select {
+    padding-right: 40px !important;
+    cursor: pointer;
+}
+
+/* NOTIFICATION SIDEBAR STYLES */
+.sd-notification-sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 2000;
+}
+
+.sd-notification-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    max-width: 400px;
+    height: 100vh;
+    background-color: #ffffff;
+    box-shadow: -10px 0 35px rgba(15, 23, 42, 0.08), -5px 0 15px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    z-index: 2001;
+    animation: sidebarSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    overflow: hidden;
+}
+
+@keyframes sidebarSlideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.sd-notification-sidebar .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+    background-color: #ffffff;
+}
+
+.sd-notification-sidebar .sidebar-header h4 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+}
+
+.sd-notification-sidebar .btn-close-sidebar {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.sd-notification-sidebar .btn-close-sidebar:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.sd-notification-sidebar .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    background-color: #f8fafc;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sd-notification-sidebar .sidebar-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sd-notification-sidebar .sidebar-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sd-notification-sidebar .sidebar-body::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.sd-notification-sidebar .sidebar-body::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Notification Card Items styling */
+.sd-notification-sidebar .notification-item {
+    background-color: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-left: 4px solid #3b82f6; /* Premium Theme Blue Accent Indicator */
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.015);
+}
+
+.sd-notification-sidebar .notification-item:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    background-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.04), 0 4px 6px -2px rgba(15, 23, 42, 0.02);
+}
+
+.sd-notification-sidebar .notification-item p {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
+    margin: 0;
+    line-height: 1.5;
+    text-align: left;
+}
+
+/* Date Pill Badge indicator */
+.sd-notification-sidebar .notification-item .notif-date {
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: #2563eb;
+    background-color: #eff6ff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    align-self: flex-start;
+    text-align: left;
+}
+
+.sd-notification-sidebar .no-notifications {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-align: center;
+    margin-top: 40px;
+}
+
