@@ -749,6 +749,14 @@
     transition: all 0.2s ease;
 }
 
+.company-logo-svg svg {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    display: block;
+}
+
 .google-svg {
     border-color: #fca5a5;
     background-color: #fff5f5;
@@ -1911,6 +1919,7 @@
     from {
         transform: translateX(100%);
     }
+
     to {
         transform: translateX(0);
     }
@@ -1983,7 +1992,8 @@
 .sd-notification-sidebar .notification-item {
     background-color: #ffffff;
     border: 1px solid rgba(226, 232, 240, 0.9);
-    border-left: 4px solid #3b82f6; /* Premium Theme Blue Accent Indicator */
+    border-left: 4px solid #3b82f6;
+    /* Premium Theme Blue Accent Indicator */
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -2027,4 +2037,3 @@
     text-align: center;
     margin-top: 40px;
 }
-
