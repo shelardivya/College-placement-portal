@@ -100,7 +100,7 @@ export default function
     const getInitialProfile = () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         return {
-            fullName: storedUser.fullName || "Saurabh Kumar",
+            fullName: storedUser.fullName || "Saurabh Mishra",
             email: storedUser.email || "saurabh@gmail.com",
             phone: storedUser.phone || "",
             branch: storedUser.branch || "",
@@ -692,10 +692,10 @@ export default function
                         <h3>Resume Match Status</h3>
                         <div className="search-bar-wrapper">
                             <Search className="search-icon" size={16} />
-                            <input 
-                                type="text" 
-                                className="search-input" 
-                                placeholder="Search company..." 
+                            <input
+                                type="text"
+                                className="search-input"
+                                placeholder="Search company..."
                                 value={matchSearchQuery}
                                 onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
                             />
@@ -797,31 +797,31 @@ export default function
                             <div className="modal-form">
                                 <div className="form-group">
                                     <label>Company Name</label>
-                                    <input 
-                                        type="text" 
-                                        value={selectedJob.company} 
-                                        disabled 
+                                    <input
+                                        type="text"
+                                        value={selectedJob.company}
+                                        disabled
                                         className="read-only-input"
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                     <label>Job Requirements</label>
-                                     <div className="read-only-requirements-list">
-                                         {selectedJob.requirements.map((req, idx) => (
-                                             <div className="requirement-bullet-item" key={idx}>
-                                                 <span className="requirement-bullet-dot"></span>
-                                                 <span className="requirement-text">{req}</span>
-                                             </div>
-                                         ))}
-                                     </div>
-                                 </div>
+                                    <label>Job Requirements</label>
+                                    <div className="read-only-requirements-list">
+                                        {selectedJob.requirements.map((req, idx) => (
+                                            <div className="requirement-bullet-item" key={idx}>
+                                                <span className="requirement-bullet-dot"></span>
+                                                <span className="requirement-text">{req}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
 
                                 <div className="form-group">
                                     <label>Job Role Overview</label>
-                                    <textarea 
-                                        value={`${selectedJob.role}. ${eligibility.roleOverview}`} 
-                                        disabled 
+                                    <textarea
+                                        value={`${selectedJob.role}. ${eligibility.roleOverview}`}
+                                        disabled
                                         rows={3}
                                         className="read-only-textarea"
                                     />
@@ -832,20 +832,20 @@ export default function
                                 <div className="form-row">
                                     <div className="form-group half-width">
                                         <label>Degree</label>
-                                        <input 
-                                            type="text" 
-                                            value={eligibility.degree} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={eligibility.degree}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
 
                                     <div className="form-group half-width">
                                         <label>Branch</label>
-                                        <input 
-                                            type="text" 
-                                            value={eligibility.branch} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={eligibility.branch}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
@@ -854,20 +854,20 @@ export default function
                                 <div className="form-row">
                                     <div className="form-group half-width">
                                         <label>Min CGPA</label>
-                                        <input 
-                                            type="text" 
-                                            value={eligibility.minCgpa} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={eligibility.minCgpa}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
 
                                     <div className="form-group half-width">
                                         <label>Passing Year</label>
-                                        <input 
-                                            type="text" 
-                                            value={eligibility.passingYear} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={eligibility.passingYear}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
@@ -876,20 +876,20 @@ export default function
                                 <div className="form-row">
                                     <div className="form-group half-width">
                                         <label>Experience</label>
-                                        <input 
-                                            type="text" 
-                                            value={eligibility.experience} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={eligibility.experience}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
 
                                     <div className="form-group half-width">
                                         <label>Deadline</label>
-                                        <input 
-                                            type="text" 
-                                            value={selectedJob.deadline} 
-                                            disabled 
+                                        <input
+                                            type="text"
+                                            value={selectedJob.deadline}
+                                            disabled
                                             className="read-only-input"
                                         />
                                     </div>
@@ -900,8 +900,8 @@ export default function
                                 <div className="form-group full-width-resume">
                                     <label>Upload Resume (PDF only) <span className="required-star">*</span></label>
                                     <div className="resume-upload-zone">
-                                        <input 
-                                            type="file" 
+                                        <input
+                                            type="file"
                                             accept=".pdf"
                                             onChange={handleResumeFileChange}
                                             id="modal-resume-file"
@@ -966,9 +966,9 @@ export default function
                             <div className="form-row">
                                 <div className="form-group half-width">
                                     <label>Full Name</label>
-                                    <input 
-                                        type="text" 
-                                        value={isEditingProfile ? tempProfile.fullName : profile.fullName} 
+                                    <input
+                                        type="text"
+                                        value={isEditingProfile ? tempProfile.fullName : profile.fullName}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, fullName: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -977,9 +977,9 @@ export default function
 
                                 <div className="form-group half-width">
                                     <label>Email Address</label>
-                                    <input 
-                                        type="email" 
-                                        value={isEditingProfile ? tempProfile.email : profile.email} 
+                                    <input
+                                        type="email"
+                                        value={isEditingProfile ? tempProfile.email : profile.email}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, email: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -990,9 +990,9 @@ export default function
                             <div className="form-row">
                                 <div className="form-group half-width">
                                     <label>Phone Number</label>
-                                    <input 
-                                        type="text" 
-                                        value={isEditingProfile ? tempProfile.phone : profile.phone} 
+                                    <input
+                                        type="text"
+                                        value={isEditingProfile ? tempProfile.phone : profile.phone}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, phone: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -1002,9 +1002,9 @@ export default function
 
                                 <div className="form-group half-width">
                                     <label>Branch</label>
-                                    <input 
-                                        type="text" 
-                                        value={isEditingProfile ? tempProfile.branch : profile.branch} 
+                                    <input
+                                        type="text"
+                                        value={isEditingProfile ? tempProfile.branch : profile.branch}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, branch: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -1016,9 +1016,9 @@ export default function
                             <div className="form-row">
                                 <div className="form-group half-width">
                                     <label>Passing Year</label>
-                                    <input 
-                                        type="text" 
-                                        value={isEditingProfile ? tempProfile.passingYear : profile.passingYear} 
+                                    <input
+                                        type="text"
+                                        value={isEditingProfile ? tempProfile.passingYear : profile.passingYear}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, passingYear: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -1028,9 +1028,9 @@ export default function
 
                                 <div className="form-group half-width">
                                     <label>CGPA</label>
-                                    <input 
-                                        type="text" 
-                                        value={isEditingProfile ? tempProfile.cgpa : profile.cgpa} 
+                                    <input
+                                        type="text"
+                                        value={isEditingProfile ? tempProfile.cgpa : profile.cgpa}
                                         disabled={!isEditingProfile}
                                         onChange={(e) => setTempProfile({ ...tempProfile, cgpa: e.target.value })}
                                         className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -1041,9 +1041,9 @@ export default function
 
                             <div className="form-group">
                                 <label>Skills</label>
-                                <input 
-                                    type="text" 
-                                    value={isEditingProfile ? tempProfile.skills : profile.skills} 
+                                <input
+                                    type="text"
+                                    value={isEditingProfile ? tempProfile.skills : profile.skills}
                                     disabled={!isEditingProfile}
                                     onChange={(e) => setTempProfile({ ...tempProfile, skills: e.target.value })}
                                     className={isEditingProfile ? "editable-input" : "read-only-input"}
@@ -1055,19 +1055,19 @@ export default function
                                 <div className="form-group half-width">
                                     <label>LinkedIn URL</label>
                                     {isEditingProfile ? (
-                                        <input 
-                                            type="text" 
-                                            value={tempProfile.linkedinUrl} 
+                                        <input
+                                            type="text"
+                                            value={tempProfile.linkedinUrl}
                                             onChange={(e) => setTempProfile({ ...tempProfile, linkedinUrl: e.target.value })}
                                             className="editable-input"
                                             placeholder="https://linkedin.com/in/username"
                                         />
                                     ) : (
                                         <div className="link-display-wrapper">
-                                            <input 
-                                                type="text" 
-                                                value={profile.linkedinUrl || "Not Provided"} 
-                                                disabled 
+                                            <input
+                                                type="text"
+                                                value={profile.linkedinUrl || "Not Provided"}
+                                                disabled
                                                 className="read-only-input"
                                             />
                                             {profile.linkedinUrl && (
@@ -1082,19 +1082,19 @@ export default function
                                 <div className="form-group half-width">
                                     <label>GitHub URL</label>
                                     {isEditingProfile ? (
-                                        <input 
-                                            type="text" 
-                                            value={tempProfile.githubUrl} 
+                                        <input
+                                            type="text"
+                                            value={tempProfile.githubUrl}
                                             onChange={(e) => setTempProfile({ ...tempProfile, githubUrl: e.target.value })}
                                             className="editable-input"
                                             placeholder="https://github.com/username"
                                         />
                                     ) : (
                                         <div className="link-display-wrapper">
-                                            <input 
-                                                type="text" 
-                                                value={profile.githubUrl || "Not Provided"} 
-                                                disabled 
+                                            <input
+                                                type="text"
+                                                value={profile.githubUrl || "Not Provided"}
+                                                disabled
                                                 className="read-only-input"
                                             />
                                             {profile.githubUrl && (
