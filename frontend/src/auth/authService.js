@@ -36,3 +36,14 @@ export const createJobPosting = (jobData) => {
         }
     });
 };
+
+
+export const getDrafts = () => {
+    const token =
+        localStorage.getItem("token");
+    return api.get("/admin/drafts", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};

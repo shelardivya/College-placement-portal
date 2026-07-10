@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
-import { createJobPosting } from '../../auth/authService';
+import { createJobPosting, getDrafts } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -165,7 +165,7 @@ function AdminDashboard({ onNavigate }) {
     // Secondary filter inputs states
     const [filterDate, setFilterDate] = useState('');
     const [filterCompany, setFilterCompany] = useState('');
-    
+
     // Custom calendar popup states
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [calDate, setCalDate] = useState(new Date());
@@ -226,6 +226,10 @@ function AdminDashboard({ onNavigate }) {
         };
     }, []);
 
+
+
+
+
     const handleFilterByChange = (value) => {
         setFilterBy(value);
         setFilterDate('');
@@ -248,7 +252,7 @@ function AdminDashboard({ onNavigate }) {
         // Dropdown specific filters
         if (filterBy.toLowerCase() === 'by company name') {
             if (filterCompany.trim() !== '') {
-                result = result.filter(app => 
+                result = result.filter(app =>
                     app.company.toLowerCase().includes(filterCompany.toLowerCase())
                 );
             }
@@ -266,6 +270,34 @@ function AdminDashboard({ onNavigate }) {
         setApplicantsCurrentPage(1); // Reset page to 1 when search or filter changes
         setFilteredApplicants(result);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
+
+    // Fetch drafts on component mount
+    useEffect(() => {
+        const fetchDrafts = async () => {
+            try {
+                const response = await getDrafts();
+                // Map API response to UI state format
+                const formattedDrafts = response.data.map(d => ({
+                    id: d.id,
+                    title: d.jobRoleOverview,
+                    company: d.companyName,
+                    location: d.location || "Remote",
+                    requirements: d.jobRequirements,
+                    degree: d.degree,
+                    branch: d.branch,
+                    cgpa: d.minCgpa,
+                    year: d.passingYear,
+                    experience: d.experience,
+                    deadline: d.deadline,
+                    lastSaved: 'Saved'
+                }));
+                setDrafts(formattedDrafts);
+            } catch (error) {
+                console.error("Error fetching drafts:", error);
+            }
+        };
+        fetchDrafts();
+    }, []);
 
     // 7. Handler: Updates the new job form state whenever a user types or selects an option 
     const handleInputChange = (e) => {
@@ -487,6 +519,7 @@ function AdminDashboard({ onNavigate }) {
             id: jobs.length + 1,
             title: draftToPublish.title,
             company: draftToPublish.company,
+            location: draftToPublish.location || "Remote",
             requirements: draftToPublish.requirements,
             degree: draftToPublish.degree,
             branch: draftToPublish.branch,
@@ -517,6 +550,7 @@ function AdminDashboard({ onNavigate }) {
 
         setNewJob({
             companyName: draftToEdit.company,
+            location: draftToEdit.location || '',
             jobRequirements: draftToEdit.requirements || '',
             jobRoleOverview: draftToEdit.title,
             degree: draftToEdit.degree || '',
@@ -552,7 +586,7 @@ function AdminDashboard({ onNavigate }) {
     // Update profile submit handler
     const handleUpdateProfile = (e) => {
         e.preventDefault();
-        
+
         // Persist to localStorage
         const loggedInAdmin = JSON.parse(localStorage.getItem("user") || "{}");
         const updatedUser = {
@@ -562,7 +596,7 @@ function AdminDashboard({ onNavigate }) {
             phone: adminProfile.phone
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+
         setToastType('success');
         setToastMessage("Admin profile updated successfully!");
         setShowToast(true);
@@ -758,10 +792,10 @@ function AdminDashboard({ onNavigate }) {
                                         <div className='profile-divider' />
 
                                         <div className='profile-options-list'>
-                                             <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                 <User size={16} />
-                                                 <span>View Profile</span>
-                                             </button>
+                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                                <User size={16} />
+                                                <span>View Profile</span>
+                                            </button>
 
                                             <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
                                                 <Lock size={16} />
@@ -770,16 +804,16 @@ function AdminDashboard({ onNavigate }) {
 
                                             <div className='profile-divider' />
 
-                                             <button className='profile-option-btn logout-btn' onClick={() => { 
-                                                 setIsProfileOpen(false); 
-                                                 localStorage.removeItem("token");
-                                                 localStorage.removeItem("user");
-                                                 localStorage.removeItem("role");
-                                                 onNavigate('login'); 
-                                             }}>
-                                                 <LogOut size={16} />
-                                                 <span>Logout</span>
-                                             </button>
+                                            <button className='profile-option-btn logout-btn' onClick={() => {
+                                                setIsProfileOpen(false);
+                                                localStorage.removeItem("token");
+                                                localStorage.removeItem("user");
+                                                localStorage.removeItem("role");
+                                                onNavigate('login');
+                                            }}>
+                                                <LogOut size={16} />
+                                                <span>Logout</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </>
@@ -1030,14 +1064,14 @@ function AdminDashboard({ onNavigate }) {
                                         {/* Dynamic filtering inputs */}
                                         {filterBy === 'By Date' && (
                                             <div className="custom-date-picker-container" ref={datePickerRef}>
-                                                <button 
+                                                <button
                                                     className="date-picker-trigger"
                                                     onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
                                                 >
-                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'} 
+                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
                                                     <Calendar size={14} style={{ marginLeft: '8px' }} />
                                                 </button>
-                                                
+
                                                 {isDatePickerOpen && (
                                                     <div className="custom-calendar-popup">
                                                         <div className="calendar-header">
@@ -1061,8 +1095,8 @@ function AdminDashboard({ onNavigate }) {
                                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                                 const isSelected = filterDate === dateStr;
                                                                 return (
-                                                                    <button 
-                                                                        key={day} 
+                                                                    <button
+                                                                        key={day}
                                                                         className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                         onClick={() => {
                                                                             setFilterDate(dateStr);
@@ -1076,7 +1110,7 @@ function AdminDashboard({ onNavigate }) {
                                                         </div>
                                                         <div className="calendar-footer">
                                                             <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                                            <button className="calendar-today-btn" onClick={() => { 
+                                                            <button className="calendar-today-btn" onClick={() => {
                                                                 const today = new Date();
                                                                 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                                                                 setFilterDate(todayStr);
@@ -1088,7 +1122,7 @@ function AdminDashboard({ onNavigate }) {
                                             </div>
                                         )}
                                         {filterBy === 'By Company Name' && (
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="filter-company-input"
                                                 placeholder="Enter company name..."
@@ -1305,16 +1339,16 @@ function AdminDashboard({ onNavigate }) {
                                     <div className='form-group half-width'>
                                         <label htmlFor="">Deadline</label>
                                         <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 className="date-picker-trigger"
                                                 onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
                                                 style={{ width: '100%', justifyContent: 'space-between' }}
                                             >
-                                                {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'} 
+                                                {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'}
                                                 <Calendar size={14} />
                                             </button>
-                                            
+
                                             {isModalDatePickerOpen && (
                                                 <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
                                                     <div className="calendar-header">
@@ -1338,9 +1372,9 @@ function AdminDashboard({ onNavigate }) {
                                                             const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                             const isSelected = newJob.deadline === dateStr;
                                                             return (
-                                                                <button 
+                                                                <button
                                                                     type="button"
-                                                                    key={day} 
+                                                                    key={day}
                                                                     className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                     onClick={() => {
                                                                         setNewJob(prev => ({ ...prev, deadline: dateStr }));
@@ -1354,7 +1388,7 @@ function AdminDashboard({ onNavigate }) {
                                                     </div>
                                                     <div className="calendar-footer">
                                                         <button type="button" className="calendar-clear-btn" onClick={() => { setNewJob(prev => ({ ...prev, deadline: '' })); setIsModalDatePickerOpen(false); }}>Clear</button>
-                                                        <button type="button" className="calendar-today-btn" onClick={() => { 
+                                                        <button type="button" className="calendar-today-btn" onClick={() => {
                                                             const today = new Date();
                                                             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                                                             setNewJob(prev => ({ ...prev, deadline: todayStr }));
@@ -1414,19 +1448,19 @@ function AdminDashboard({ onNavigate }) {
                                 </h4>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     {profileTab === 'edit' && !isEditingProfile && (
-                                        <button 
-                                            type="button" 
-                                            className="btn-confirm-apply" 
-                                            style={{ 
-                                                padding: '6px 14px', 
-                                                fontSize: '0.8125rem', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: '6px', 
-                                                borderRadius: '9999px', 
+                                        <button
+                                            type="button"
+                                            className="btn-confirm-apply"
+                                            style={{
+                                                padding: '6px 14px',
+                                                fontSize: '0.8125rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                borderRadius: '9999px',
                                                 margin: 0,
                                                 cursor: 'pointer'
-                                            }} 
+                                            }}
                                             onClick={() => setIsEditingProfile(true)}
                                         >
                                             <Edit3 size={14} />
@@ -1596,34 +1630,34 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-            {/* Notifications Sidebar Panel */}
-            {isNotificationSidebarOpen && (
-                <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
-                    <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
-                        <div className="sidebar-header">
-                            <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
-                                <h4 style={{ margin: 0 }}>Notifications</h4>
+                {/* Notifications Sidebar Panel */}
+                {isNotificationSidebarOpen && (
+                    <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
+                        <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
+                            <div className="sidebar-header">
+                                <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
+                                    <h4 style={{ margin: 0 }}>Notifications</h4>
+                                </div>
+                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                    <X size={18} />
+                                </button>
                             </div>
-                            <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <div className="sidebar-body">
-                            {notifications.length === 0 ? (
-                                <p className="no-notifications">No new notifications</p>
-                            ) : (
-                                notifications.map((notif) => (
-                                    <div key={notif.id} className="notification-item">
-                                        <p>{notif.text}</p>
-                                        <span className="notif-date">{notif.date}</span>
-                                    </div>
-                                ))
-                            )}
+                            <div className="sidebar-body">
+                                {notifications.length === 0 ? (
+                                    <p className="no-notifications">No new notifications</p>
+                                ) : (
+                                    notifications.map((notif) => (
+                                        <div key={notif.id} className="notification-item">
+                                            <p>{notif.text}</p>
+                                            <span className="notif-date">{notif.date}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
             </div >
         </div >
