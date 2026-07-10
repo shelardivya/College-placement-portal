@@ -806,6 +806,16 @@ export default function
                                 </div>
 
                                 <div className="form-group">
+                                    <label>Location</label>
+                                    <input
+                                        type="text"
+                                        value={selectedJob.location || "Remote"}
+                                        disabled
+                                        className="read-only-input"
+                                    />
+                                </div>
+
+                                <div className="form-group">
                                     <label>Job Requirements</label>
                                     <div className="read-only-requirements-list">
                                         {selectedJob.requirements.map((req, idx) => (

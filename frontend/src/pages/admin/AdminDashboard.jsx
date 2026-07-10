@@ -103,6 +103,7 @@ function AdminDashboard({ onNavigate }) {
     // 5.Form state for adding a new job
     const [newJob, setNewJob] = useState({
         companyName: '',
+        location: '',
         jobRequirements: '',
         jobRoleOverview: '',
         degree: '',
@@ -309,6 +310,7 @@ function AdminDashboard({ onNavigate }) {
 
             const payload = {
                 companyName: newJob.companyName,
+                location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements,
                 jobRoleOverview: newJob.jobRoleOverview,
                 degree: newJob.degree || "B.Tech",
@@ -327,6 +329,7 @@ function AdminDashboard({ onNavigate }) {
                 id: response.data.id || (jobs.length + 1),
                 title: newJob.jobRoleOverview,
                 company: newJob.companyName,
+                location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
                 branch: newJob.branch,
@@ -344,6 +347,7 @@ function AdminDashboard({ onNavigate }) {
             // Reset the form fields back to empty
             setNewJob({
                 companyName: '',
+                location: '',
                 jobRequirements: '',
                 jobRoleOverview: '',
                 degree: '',
@@ -408,6 +412,7 @@ function AdminDashboard({ onNavigate }) {
 
             const payload = {
                 companyName: newJob.companyName,
+                location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "None",
                 jobRoleOverview: newJob.jobRoleOverview,
                 degree: newJob.degree || "B.Tech",
@@ -425,6 +430,7 @@ function AdminDashboard({ onNavigate }) {
                 id: response.data.id || (drafts.length + 1),
                 title: newJob.jobRoleOverview,
                 company: newJob.companyName,
+                location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
                 branch: newJob.branch,
@@ -438,6 +444,7 @@ function AdminDashboard({ onNavigate }) {
             setDrafts([newDraft, ...drafts]);
             setNewJob({
                 companyName: '',
+                location: '',
                 jobRequirements: '',
                 jobRoleOverview: '',
                 degree: '',
@@ -1186,6 +1193,17 @@ function AdminDashboard({ onNavigate }) {
                                         className={validationError && !newJob.companyName ? 'error-input' : ''}
                                         required />
 
+                                </div>
+
+                                <div className='form-group'>
+                                    <label>Location</label>
+
+                                    <input type="text"
+                                        name='location'
+                                        placeholder='e.g. Bangalore, India (or Remote)'
+                                        value={newJob.location}
+                                        onChange={handleInputChange}
+                                    />
                                 </div>
 
                                 <div className='form-group'>
