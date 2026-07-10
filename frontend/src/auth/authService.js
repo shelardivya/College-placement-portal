@@ -19,3 +19,20 @@ export const forgotPassword = (email) => {
 export const resetPassword = (resetData) => {
     return api.post("/auth/reset-password", resetData);
 };
+
+export const createJobPosting = (jobData) => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    const user = localStorage.getItem("user");
+    console.log("--- API Debug Info ---");
+    console.log("Token in localStorage:", token);
+    console.log("Role in localStorage:", role);
+    console.log("User in localStorage:", user);
+    console.log("Payload sending to API:", jobData);
+    console.log("----------------------");
+    return api.post("/admin/job/add", jobData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
