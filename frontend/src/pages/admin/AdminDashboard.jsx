@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
-import { createJobPosting, getDrafts } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -18,14 +18,17 @@ import {
     Calendar,
     Eye,
     EyeOff,
-    Edit3
+    Edit3,
+    BarChart,
+    Settings
 } from 'lucide-react';
 
 function AdminDashboard({ onNavigate }) {
-    //1. Sidebar form visibility
-    const [isSidebarOpen, setIsSidebarOpen] =
-        useState(false);
+    // 1. Sidebar form visibility
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    // Active menu tab state
+    const [activeTab, setActiveTab] = useState('dashboard');
 
     //2. Search and filter state
     const [searchTerm, setSearchTerm] =
@@ -511,59 +514,80 @@ function AdminDashboard({ onNavigate }) {
 
 
     // Publish draft handler (moves draft to active jobs list)
-    const handlePublishDraft = (draftId) => {
+    const handlePublishDraft = async (draftId) => {
         const draftToPublish = drafts.find(d => d.id === draftId);
         if (!draftToPublish) return;
 
-        const newPublishedJob = {
-            id: jobs.length + 1,
-            title: draftToPublish.title,
-            company: draftToPublish.company,
-            location: draftToPublish.location || "Remote",
-            requirements: draftToPublish.requirements,
-            degree: draftToPublish.degree,
-            branch: draftToPublish.branch,
-            cgpa: draftToPublish.cgpa,
-            year: draftToPublish.year,
-            experience: draftToPublish.experience,
-            deadline: draftToPublish.deadline,
-            status: 'Active',
-            date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-        };
+        try {
+            // Call the publish API
+            const response = await publishDraft(draftId);
+            const apiJob = response.data; // Data returned from backend
 
-        setJobs([newPublishedJob, ...jobs]);
-        setDrafts(drafts.filter(d => d.id !== draftId));
+            const newPublishedJob = {
+                id: apiJob.id || (jobs.length + 1),
+                title: apiJob.jobRoleOverview || draftToPublish.title,
+                company: apiJob.companyName || draftToPublish.company,
+                location: apiJob.location || draftToPublish.location || "Remote",
+                requirements: apiJob.jobRequirements || draftToPublish.requirements,
+                degree: apiJob.degree || draftToPublish.degree,
+                branch: apiJob.branch || draftToPublish.branch,
+                cgpa: apiJob.minCgpa || draftToPublish.cgpa,
+                year: apiJob.passingYear || draftToPublish.year,
+                experience: apiJob.experience || draftToPublish.experience,
+                deadline: apiJob.deadline || draftToPublish.deadline,
+                status: 'Active',
+                date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            };
 
-        setToastType('success');
-        // Trigger Toast Notification
-        setToastMessage(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`);
-        setShowToast(true);
-        setTimeout(() => {
-            setShowToast(false);
-        }, 3000);
+            setJobs([newPublishedJob, ...jobs]);
+            setDrafts(drafts.filter(d => d.id !== draftId));
+
+            setToastType('success');
+            setToastMessage(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`);
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Failed to publish draft:", error);
+            setToastType('error');
+            setToastMessage("Failed to publish draft. Please try again.");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        }
     };
 
     // Edit draft handler (populates form inputs and removes from drafts feed)
-    const handleEditDraft = (draftId) => {
-        const draftToEdit = drafts.find(d => d.id === draftId);
-        if (!draftToEdit) return;
+    const handleEditDraft = async (draftId) => {
+        try {
+            const response = await getDraftById(draftId);
+            const draftToEdit = response.data;
 
-        setNewJob({
-            companyName: draftToEdit.company,
-            location: draftToEdit.location || '',
-            jobRequirements: draftToEdit.requirements || '',
-            jobRoleOverview: draftToEdit.title,
-            degree: draftToEdit.degree || '',
-            branch: draftToEdit.branch || '',
-            minCgpa: draftToEdit.cgpa || '',
-            passingYear: draftToEdit.year || '',
-            experience: draftToEdit.experience || '',
-            deadline: draftToEdit.deadline || ''
-        });
+            setNewJob({
+                companyName: draftToEdit.companyName,
+                location: draftToEdit.location || '',
+                jobRequirements: draftToEdit.jobRequirements || '',
+                jobRoleOverview: draftToEdit.jobRoleOverview,
+                degree: draftToEdit.degree || '',
+                branch: draftToEdit.branch || '',
+                minCgpa: draftToEdit.minCgpa || '',
+                passingYear: draftToEdit.passingYear || '',
+                experience: draftToEdit.experience || '',
+                deadline: draftToEdit.deadline || ''
+            });
 
-        setValidationError(false);
-        setDrafts(drafts.filter(d => d.id !== draftId));
-        setIsSidebarOpen(true);
+            setValidationError(false);
+            setDrafts(drafts.filter(d => d.id !== draftId));
+            setIsSidebarOpen(true);
+        } catch (error) {
+            console.error("Failed to load draft details:", error);
+            setToastType('error');
+            setToastMessage("Failed to fetch draft details from the server.");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     // Profile and Password input handlers
@@ -741,94 +765,137 @@ function AdminDashboard({ onNavigate }) {
     );
 
     return (
-        <div className='admin-dashboard-container'>
+        <div className='admin-layout-container'>
+            
+            {/* 1. LEFT SIDEBAR PANEL */}
+            <aside className='admin-sidebar'>
+                <div className='sidebar-brand'>
+                    <GraduationCap className='brand-icon' size={24} />
+                    <span>College Portal</span>
+                </div>
 
-            {/*HEADER /NAVBAR*/}
-            <header className='admin-header'>
-                <div className='header-container'>
-                    <div className='logo-section'>
-                        <GraduationCap className='logo-icon' size={28} />
+                <nav className='sidebar-menu-list'>
+                    {[
+                        { id: 'dashboard', label: 'Dashboard', icon: <Briefcase size={18} /> },
+                        { id: 'students', label: 'Students', icon: <Users size={18} /> },
+                        { id: 'placements', label: 'Placements', icon: <FileText size={18} /> },
+                        { id: 'companies', label: 'Companies', icon: <Factory size={18} /> },
+                        { id: 'skills', label: 'Skills', icon: <Plus size={18} /> },
+                        { id: 'analytics', label: 'Analytics', icon: <BarChart size={18} /> },
+                        { id: 'notifications', label: 'Notifications', icon: <Bell size={18} /> },
+                        { id: 'reports', label: 'Reports', icon: <FileText size={18} /> },
+                        { id: 'settings', label: 'Settings', icon: <Settings size={18} /> }
+                    ].map(item => (
+                        <button
+                            key={item.id}
+                            className={`sidebar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(item.id)}
+                        >
+                            {item.icon}
+                            <span>{item.label}</span>
+                        </button>
+                    ))}
+                </nav>
 
-                        <span className='college-name'>
-                            College Placement Portal
-                        </span>
-                    </div>
+                <div className='sidebar-footer'>
+                    <button className='btn-sidebar-download'>
+                        <div className='download-icon-circle'>
+                            <FileText size={16} />
+                        </div>
+                        <div className='download-btn-text'>
+                            <span className='btn-title'>Download Report</span>
+                            <span className='btn-subtitle'>Get placement report</span>
+                        </div>
+                    </button>
+                </div>
+            </aside>
 
-                    <div className='header-right'>
-                        <span className='role-badge'>Admin</span>
-
-                        <div className='notification-wrapper' onClick={() => {
-                            setIsNotificationSidebarOpen(true);
-                            setIsProfileOpen(false);
-                        }} style={{ cursor: 'pointer' }}>
-                            <Bell className='bell-icon' size={22} />
-                            {notifications.length > 0 && (
-                                <span className='notification-badge'>{notifications.length}</span>
-                            )}
+            {/* 2. RIGHT CONTENT AREA */}
+            <div className='admin-main-wrapper'>
+                
+                {/* Header */}
+                <header className='admin-header'>
+                    <div className='header-container'>
+                        <div className='logo-section-dummy'>
+                            {/* Empty spacer */}
                         </div>
 
-                        <div className='user-profile-container'>
-                            <div
-                                className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
-                                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            >
-                                {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                        <div className='header-right'>
+                            <span className='role-badge'>Admin</span>
+
+                            <div className='notification-wrapper' onClick={() => {
+                                setIsNotificationSidebarOpen(true);
+                                setIsProfileOpen(false);
+                            }} style={{ cursor: 'pointer' }}>
+                                <Bell className='bell-icon' size={22} />
+                                {notifications.length > 0 && (
+                                    <span className='notification-badge'>{notifications.length}</span>
+                                )}
                             </div>
 
-                            {isProfileOpen && (
-                                <>
-                                    <div className='profile-dropdown-backdrop' onClick={() => setIsProfileOpen(false)} />
-                                    <div className='profile-dropdown-menu'>
-                                        <div className='profile-header'>
-                                            <span className='profile-avatar-large'>
-                                                {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                                            </span>
-                                            <div className='profile-meta-info'>
-                                                <span className='profile-name'>{adminProfile.name}</span>
-                                                <span className='profile-email'>{adminProfile.email}</span>
+                            <div className='user-profile-container'>
+                                <div
+                                    className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
+                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                >
+                                    {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                                </div>
+
+                                {isProfileOpen && (
+                                    <>
+                                        <div className='profile-dropdown-backdrop' onClick={() => setIsProfileOpen(false)} />
+                                        <div className='profile-dropdown-menu'>
+                                            <div className='profile-header'>
+                                                <span className='profile-avatar-large'>
+                                                    {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                                                </span>
+                                                <div className='profile-meta-info'>
+                                                    <span className='profile-name'>{adminProfile.name}</span>
+                                                    <span className='profile-email'>{adminProfile.email}</span>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        <div className='profile-divider' />
-
-                                        <div className='profile-options-list'>
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                <User size={16} />
-                                                <span>View Profile</span>
-                                            </button>
-
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                <Lock size={16} />
-                                                <span>Change Password</span>
-                                            </button>
 
                                             <div className='profile-divider' />
 
-                                            <button className='profile-option-btn logout-btn' onClick={() => {
-                                                setIsProfileOpen(false);
-                                                localStorage.removeItem("token");
-                                                localStorage.removeItem("user");
-                                                localStorage.removeItem("role");
-                                                onNavigate('login');
-                                            }}>
-                                                <LogOut size={16} />
-                                                <span>Logout</span>
-                                            </button>
+                                            <div className='profile-options-list'>
+                                                <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                                    <User size={16} />
+                                                    <span>View Profile</span>
+                                                </button>
+
+                                                <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                                    <Lock size={16} />
+                                                    <span>Change Password</span>
+                                                </button>
+
+                                                <div className='profile-divider' />
+
+                                                <button className='profile-option-btn logout-btn' onClick={() => {
+                                                    setIsProfileOpen(false);
+                                                    localStorage.removeItem("token");
+                                                    localStorage.removeItem("user");
+                                                    localStorage.removeItem("role");
+                                                    onNavigate('login');
+                                                }}>
+                                                    <LogOut size={16} />
+                                                    <span>Logout</span>
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
-                                </>
-                            )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </header>
+                </header>
 
-            <div className='dashboard-content-layout'>
+                <div className='dashboard-content-layout'>
 
-                {/*MAIN DASHBOARD PANEL*/}
-                <main className='dashboard-main'>
-
-                    {/*GREETING SECTION*/}
+                    {/*MAIN DASHBOARD PANEL*/}
+                    <main className='dashboard-main'>
+                    {activeTab === 'dashboard' && (
+                        <>
+                        {/*GREETING SECTION*/}
                     <section className='greeting-section'>
                         <div className='greeting-content'>
                             <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
@@ -1193,6 +1260,15 @@ function AdminDashboard({ onNavigate }) {
                             </div>
                         </div>
                     </div>
+                    </>
+                    )}
+
+                    {activeTab === 'analytics' && (
+                        <div className='analytics-page-container' style={{ padding: '24px' }}>
+                            <h3>Student Analytics</h3>
+                            <p>This is where we will build your charts next!</p>
+                        </div>
+                    )}
                 </main>
 
                 {isSidebarOpen && (
@@ -1659,9 +1735,10 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-            </div >
-        </div >
-    );
+            </div>
+        </div>
+    </div>
+);
 }
 
 

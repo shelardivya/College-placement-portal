@@ -47,3 +47,24 @@ export const getDrafts = () => {
         }
     });
 };
+
+
+export const getDraftById = (id) => {
+    const token =
+        localStorage.getItem("token");
+    return api.get(`/admin/draft/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+
+export const publishDraft = (id) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/admin/draft/publish/${id}`, {}, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
