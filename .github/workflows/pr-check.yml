@@ -6,8 +6,9 @@ on:
       - develop
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest 
+  
+  build-backend:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -22,3 +23,21 @@ jobs:
         run: |
           cd backend
           mvn clean package -DskipTests=true
+
+  
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24' 
+
+      - name: Install and Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
