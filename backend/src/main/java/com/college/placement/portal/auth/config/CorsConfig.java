@@ -21,7 +21,9 @@ public class CorsConfig {
                                 "http://localhost:3000",
                                 "http://localhost:4200",
                                 "https://*.ngrok-free.app",
-                                "https://*.ngrok-free.dev"
+                                "https://*.ngrok-free.dev",
+                                "http://43.205.227.246",
+                                "https://43.205.227.246"
                         )
                         .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
                         .allowedHeaders("*")
