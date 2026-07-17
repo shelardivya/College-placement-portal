@@ -1,5 +1,6 @@
 package com.college.placement.portal.admin.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
 
 public class AddJobRequestDto {
@@ -13,7 +14,9 @@ public class AddJobRequestDto {
     private Double minCgpa;
     private String passingYear;
     private String experience;
+    private String location;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate deadline;
 
     private String action; // POST / DRAFT
@@ -43,6 +46,13 @@ public class AddJobRequestDto {
 
     public String getExperience() { return experience; }
     public void setExperience(String experience) { this.experience = experience; }
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
     public LocalDate getDeadline() { return deadline; }
     public void setDeadline(LocalDate deadline) { this.deadline = deadline; }

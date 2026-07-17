@@ -18,11 +18,12 @@ public class AddJobController {
         this.service = service;
     }
 
-    // ❌ @PreAuthorize hata do ABHI
+
     @PostMapping("/add")
     public ResponseEntity<AddJobEntity> addJob(
             @RequestBody AddJobRequestDto dto
     ) {
         return ResponseEntity.ok(service.addJob(dto));
     }
+
 }

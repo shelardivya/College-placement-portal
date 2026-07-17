@@ -1,5 +1,6 @@
 package com.college.placement.portal.admin.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,7 +26,9 @@ public class AddJobEntity {
     private Double minCgpa;
     private String passingYear;
     private String experience;
+    private String location;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate deadline;
 
     private String status; // DRAFT / ACTIVE
@@ -60,6 +63,13 @@ public class AddJobEntity {
 
     public String getExperience() { return experience; }
     public void setExperience(String experience) { this.experience = experience; }
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
 
     public LocalDate getDeadline() { return deadline; }
     public void setDeadline(LocalDate deadline) { this.deadline = deadline; }

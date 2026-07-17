@@ -27,6 +27,7 @@ public class AddJobService {
         job.setMinCgpa(dto.getMinCgpa());
         job.setPassingYear(dto.getPassingYear());
         job.setExperience(dto.getExperience());
+        job.setLocation(dto.getLocation());
 
         job.setDeadline(dto.getDeadline());
 
