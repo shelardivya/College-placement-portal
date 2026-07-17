@@ -77,10 +77,10 @@ function Login({ onNavigate, initialView }) {
 
                 // Determine role from email in a robust way
                 const emailLower = formData.email.trim().toLowerCase();
-                const isAdmin = emailLower === 'saurabh@gmail.com' || 
-                                emailLower.startsWith('admin') || 
-                                emailLower.includes('@admin.') || 
-                                emailLower.includes('.admin');
+                const isAdmin = emailLower === 'saurabh@gmail.com' ||
+                    emailLower.startsWith('admin') ||
+                    emailLower.includes('@admin.') ||
+                    emailLower.includes('.admin');
 
                 // Call the correct API endpoint with the fields each expects
                 let response;
@@ -113,10 +113,10 @@ function Login({ onNavigate, initialView }) {
                         const nameFromEmail = formData.email.split('@')[0];
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-                        
+
                         const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
                         const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-                        
+
                         if (matchedProfile) {
                             localStorage.setItem("user", JSON.stringify(matchedProfile));
                         } else {
@@ -129,10 +129,10 @@ function Login({ onNavigate, initialView }) {
                         const nameFromEmail = formData.email.split('@')[0];
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-                        
+
                         const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
                         const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-                        
+
                         if (matchedProfile) {
                             localStorage.setItem("user", JSON.stringify(matchedProfile));
                         } else {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
-import { createJobPosting } from '../../auth/authService';
+import StudentAnalytics from './StudentAnalytics';
+import QueriesStories from './QueriesStories';
+import { createJobPosting, getDrafts, getDraftById, publishDraft } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -18,13 +20,17 @@ import {
     Calendar,
     Eye,
     EyeOff,
-    Edit3
+    Edit3,
+    BarChart
 } from 'lucide-react';
 
 function AdminDashboard({ onNavigate }) {
     //1. Sidebar form visibility
     const [isSidebarOpen, setIsSidebarOpen] =
         useState(false);
+
+    // Active menu tab state
+    const [activeTab, setActiveTab] = useState('dashboard');
 
 
     //2. Search and filter state
@@ -103,6 +109,7 @@ function AdminDashboard({ onNavigate }) {
     // 5.Form state for adding a new job
     const [newJob, setNewJob] = useState({
         companyName: '',
+        location: '',
         jobRequirements: '',
         jobRoleOverview: '',
         degree: '',
@@ -164,7 +171,7 @@ function AdminDashboard({ onNavigate }) {
     // Secondary filter inputs states
     const [filterDate, setFilterDate] = useState('');
     const [filterCompany, setFilterCompany] = useState('');
-    
+
     // Custom calendar popup states
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [calDate, setCalDate] = useState(new Date());
@@ -225,6 +232,10 @@ function AdminDashboard({ onNavigate }) {
         };
     }, []);
 
+
+
+
+
     const handleFilterByChange = (value) => {
         setFilterBy(value);
         setFilterDate('');
@@ -247,7 +258,7 @@ function AdminDashboard({ onNavigate }) {
         // Dropdown specific filters
         if (filterBy.toLowerCase() === 'by company name') {
             if (filterCompany.trim() !== '') {
-                result = result.filter(app => 
+                result = result.filter(app =>
                     app.company.toLowerCase().includes(filterCompany.toLowerCase())
                 );
             }
@@ -265,6 +276,34 @@ function AdminDashboard({ onNavigate }) {
         setApplicantsCurrentPage(1); // Reset page to 1 when search or filter changes
         setFilteredApplicants(result);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
+
+    // Fetch drafts on component mount
+    useEffect(() => {
+        const fetchDrafts = async () => {
+            try {
+                const response = await getDrafts();
+                // Map API response to UI state format
+                const formattedDrafts = response.data.map(d => ({
+                    id: d.id,
+                    title: d.jobRoleOverview,
+                    company: d.companyName,
+                    location: d.location || "Remote",
+                    requirements: d.jobRequirements,
+                    degree: d.degree,
+                    branch: d.branch,
+                    cgpa: d.minCgpa,
+                    year: d.passingYear,
+                    experience: d.experience,
+                    deadline: d.deadline,
+                    lastSaved: 'Saved'
+                }));
+                setDrafts(formattedDrafts);
+            } catch (error) {
+                console.error("Error fetching drafts:", error);
+            }
+        };
+        fetchDrafts();
+    }, []);
 
     // 7. Handler: Updates the new job form state whenever a user types or selects an option 
     const handleInputChange = (e) => {
@@ -309,6 +348,7 @@ function AdminDashboard({ onNavigate }) {
 
             const payload = {
                 companyName: newJob.companyName,
+                location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements,
                 jobRoleOverview: newJob.jobRoleOverview,
                 degree: newJob.degree || "B.Tech",
@@ -327,6 +367,7 @@ function AdminDashboard({ onNavigate }) {
                 id: response.data.id || (jobs.length + 1),
                 title: newJob.jobRoleOverview,
                 company: newJob.companyName,
+                location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
                 branch: newJob.branch,
@@ -344,6 +385,7 @@ function AdminDashboard({ onNavigate }) {
             // Reset the form fields back to empty
             setNewJob({
                 companyName: '',
+                location: '',
                 jobRequirements: '',
                 jobRoleOverview: '',
                 degree: '',
@@ -408,6 +450,7 @@ function AdminDashboard({ onNavigate }) {
 
             const payload = {
                 companyName: newJob.companyName,
+                location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "None",
                 jobRoleOverview: newJob.jobRoleOverview,
                 degree: newJob.degree || "B.Tech",
@@ -425,6 +468,7 @@ function AdminDashboard({ onNavigate }) {
                 id: response.data.id || (drafts.length + 1),
                 title: newJob.jobRoleOverview,
                 company: newJob.companyName,
+                location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
                 branch: newJob.branch,
@@ -438,6 +482,7 @@ function AdminDashboard({ onNavigate }) {
             setDrafts([newDraft, ...drafts]);
             setNewJob({
                 companyName: '',
+                location: '',
                 jobRequirements: '',
                 jobRoleOverview: '',
                 degree: '',
@@ -472,57 +517,80 @@ function AdminDashboard({ onNavigate }) {
 
 
     // Publish draft handler (moves draft to active jobs list)
-    const handlePublishDraft = (draftId) => {
+    const handlePublishDraft = async (draftId) => {
         const draftToPublish = drafts.find(d => d.id === draftId);
         if (!draftToPublish) return;
 
-        const newPublishedJob = {
-            id: jobs.length + 1,
-            title: draftToPublish.title,
-            company: draftToPublish.company,
-            requirements: draftToPublish.requirements,
-            degree: draftToPublish.degree,
-            branch: draftToPublish.branch,
-            cgpa: draftToPublish.cgpa,
-            year: draftToPublish.year,
-            experience: draftToPublish.experience,
-            deadline: draftToPublish.deadline,
-            status: 'Active',
-            date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-        };
+        try {
+            // Call the publish API
+            const response = await publishDraft(draftId);
+            const apiJob = response.data; // Data returned from backend
 
-        setJobs([newPublishedJob, ...jobs]);
-        setDrafts(drafts.filter(d => d.id !== draftId));
+            const newPublishedJob = {
+                id: apiJob.id || (jobs.length + 1),
+                title: apiJob.jobRoleOverview || draftToPublish.title,
+                company: apiJob.companyName || draftToPublish.company,
+                location: apiJob.location || draftToPublish.location || "Remote",
+                requirements: apiJob.jobRequirements || draftToPublish.requirements,
+                degree: apiJob.degree || draftToPublish.degree,
+                branch: apiJob.branch || draftToPublish.branch,
+                cgpa: apiJob.minCgpa || draftToPublish.cgpa,
+                year: apiJob.passingYear || draftToPublish.year,
+                experience: apiJob.experience || draftToPublish.experience,
+                deadline: apiJob.deadline || draftToPublish.deadline,
+                status: 'Active',
+                date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            };
 
-        setToastType('success');
-        // Trigger Toast Notification
-        setToastMessage(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`);
-        setShowToast(true);
-        setTimeout(() => {
-            setShowToast(false);
-        }, 3000);
+            setJobs([newPublishedJob, ...jobs]);
+            setDrafts(drafts.filter(d => d.id !== draftId));
+
+            setToastType('success');
+            setToastMessage(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`);
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Failed to publish draft:", error);
+            setToastType('error');
+            setToastMessage("Failed to publish draft. Please try again.");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        }
     };
 
     // Edit draft handler (populates form inputs and removes from drafts feed)
-    const handleEditDraft = (draftId) => {
-        const draftToEdit = drafts.find(d => d.id === draftId);
-        if (!draftToEdit) return;
+    const handleEditDraft = async (draftId) => {
+        try {
+            const response = await getDraftById(draftId);
+            const draftToEdit = response.data;
 
-        setNewJob({
-            companyName: draftToEdit.company,
-            jobRequirements: draftToEdit.requirements || '',
-            jobRoleOverview: draftToEdit.title,
-            degree: draftToEdit.degree || '',
-            branch: draftToEdit.branch || '',
-            minCgpa: draftToEdit.cgpa || '',
-            passingYear: draftToEdit.year || '',
-            experience: draftToEdit.experience || '',
-            deadline: draftToEdit.deadline || ''
-        });
+            setNewJob({
+                companyName: draftToEdit.companyName,
+                location: draftToEdit.location || '',
+                jobRequirements: draftToEdit.jobRequirements || '',
+                jobRoleOverview: draftToEdit.jobRoleOverview,
+                degree: draftToEdit.degree || '',
+                branch: draftToEdit.branch || '',
+                minCgpa: draftToEdit.minCgpa || '',
+                passingYear: draftToEdit.passingYear || '',
+                experience: draftToEdit.experience || '',
+                deadline: draftToEdit.deadline || ''
+            });
 
-        setValidationError(false);
-        setDrafts(drafts.filter(d => d.id !== draftId));
-        setIsSidebarOpen(true);
+            setValidationError(false);
+            setDrafts(drafts.filter(d => d.id !== draftId));
+            setIsSidebarOpen(true);
+        } catch (error) {
+            console.error("Failed to load draft details:", error);
+            setToastType('error');
+            setToastMessage("Failed to fetch draft details from the server.");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     // Profile and Password input handlers
@@ -545,7 +613,7 @@ function AdminDashboard({ onNavigate }) {
     // Update profile submit handler
     const handleUpdateProfile = (e) => {
         e.preventDefault();
-        
+
         // Persist to localStorage
         const loggedInAdmin = JSON.parse(localStorage.getItem("user") || "{}");
         const updatedUser = {
@@ -555,7 +623,7 @@ function AdminDashboard({ onNavigate }) {
             phone: adminProfile.phone
         };
         localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+
         setToastType('success');
         setToastMessage("Admin profile updated successfully!");
         setShowToast(true);
@@ -704,16 +772,54 @@ function AdminDashboard({ onNavigate }) {
 
             {/*HEADER /NAVBAR*/}
             <header className='admin-header'>
-                <div className='header-container'>
-                    <div className='logo-section'>
-                        <GraduationCap className='logo-icon' size={28} />
+                    <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
+                        <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                            <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>College Portal</span>
+                        </div>
 
-                        <span className='college-name'>
-                            College Placement Portal
-                        </span>
-                    </div>
+                        <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                            {[
+                                { id: 'dashboard', label: 'Dashboard' },
+                                { id: 'analytics', label: 'Student Analytics' },
+                                { id: 'queries', label: 'Queries & Stories' }
+                            ].map(item => (
+                                <button
+                                    key={item.id}
+                                    className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(item.id)}
+                                    style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        color: activeTab === item.id ? '#2563eb' : '#64748b',
+                                        fontWeight: activeTab === item.id ? '600' : '500',
+                                        fontSize: '0.95rem',
+                                        cursor: 'pointer',
+                                        padding: '8px 0',
+                                        position: 'relative',
+                                        transition: 'color 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <span>{item.label}</span>
+                                    {activeTab === item.id && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            bottom: '-6px',
+                                            left: 0,
+                                            right: 0,
+                                            height: '2px',
+                                            backgroundColor: '#2563eb',
+                                            borderRadius: '2px'
+                                        }} />
+                                    )}
+                                </button>
+                            ))}
+                        </nav>
 
-                    <div className='header-right'>
+                        <div className='header-right'>
                         <span className='role-badge'>Admin</span>
 
                         <div className='notification-wrapper' onClick={() => {
@@ -751,10 +857,10 @@ function AdminDashboard({ onNavigate }) {
                                         <div className='profile-divider' />
 
                                         <div className='profile-options-list'>
-                                             <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                 <User size={16} />
-                                                 <span>View Profile</span>
-                                             </button>
+                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                                <User size={16} />
+                                                <span>View Profile</span>
+                                            </button>
 
                                             <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
                                                 <Lock size={16} />
@@ -763,16 +869,16 @@ function AdminDashboard({ onNavigate }) {
 
                                             <div className='profile-divider' />
 
-                                             <button className='profile-option-btn logout-btn' onClick={() => { 
-                                                 setIsProfileOpen(false); 
-                                                 localStorage.removeItem("token");
-                                                 localStorage.removeItem("user");
-                                                 localStorage.removeItem("role");
-                                                 onNavigate('login'); 
-                                             }}>
-                                                 <LogOut size={16} />
-                                                 <span>Logout</span>
-                                             </button>
+                                            <button className='profile-option-btn logout-btn' onClick={() => {
+                                                setIsProfileOpen(false);
+                                                localStorage.removeItem("token");
+                                                localStorage.removeItem("user");
+                                                localStorage.removeItem("role");
+                                                onNavigate('login');
+                                            }}>
+                                                <LogOut size={16} />
+                                                <span>Logout</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </>
@@ -782,10 +888,12 @@ function AdminDashboard({ onNavigate }) {
                 </div>
             </header>
 
-            <div className='dashboard-content-layout'>
+            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
 
                 {/*MAIN DASHBOARD PANEL*/}
                 <main className='dashboard-main'>
+                    {activeTab === 'dashboard' && (
+                        <>
 
                     {/*GREETING SECTION*/}
                     <section className='greeting-section'>
@@ -1023,14 +1131,14 @@ function AdminDashboard({ onNavigate }) {
                                         {/* Dynamic filtering inputs */}
                                         {filterBy === 'By Date' && (
                                             <div className="custom-date-picker-container" ref={datePickerRef}>
-                                                <button 
+                                                <button
                                                     className="date-picker-trigger"
                                                     onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
                                                 >
-                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'} 
+                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
                                                     <Calendar size={14} style={{ marginLeft: '8px' }} />
                                                 </button>
-                                                
+
                                                 {isDatePickerOpen && (
                                                     <div className="custom-calendar-popup">
                                                         <div className="calendar-header">
@@ -1054,8 +1162,8 @@ function AdminDashboard({ onNavigate }) {
                                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                                 const isSelected = filterDate === dateStr;
                                                                 return (
-                                                                    <button 
-                                                                        key={day} 
+                                                                    <button
+                                                                        key={day}
                                                                         className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                         onClick={() => {
                                                                             setFilterDate(dateStr);
@@ -1069,7 +1177,7 @@ function AdminDashboard({ onNavigate }) {
                                                         </div>
                                                         <div className="calendar-footer">
                                                             <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                                            <button className="calendar-today-btn" onClick={() => { 
+                                                            <button className="calendar-today-btn" onClick={() => {
                                                                 const today = new Date();
                                                                 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                                                                 setFilterDate(todayStr);
@@ -1081,7 +1189,7 @@ function AdminDashboard({ onNavigate }) {
                                             </div>
                                         )}
                                         {filterBy === 'By Company Name' && (
-                                            <input 
+                                            <input
                                                 type="text"
                                                 className="filter-company-input"
                                                 placeholder="Enter company name..."
@@ -1152,6 +1260,16 @@ function AdminDashboard({ onNavigate }) {
                             </div>
                         </div>
                     </div>
+                    </>
+                    )}
+
+                    {activeTab === 'analytics' && (
+                        <StudentAnalytics />
+                    )}
+
+                    {activeTab === 'queries' && (
+                        <QueriesStories />
+                    )}
                 </main>
 
                 {isSidebarOpen && (
@@ -1186,6 +1304,17 @@ function AdminDashboard({ onNavigate }) {
                                         className={validationError && !newJob.companyName ? 'error-input' : ''}
                                         required />
 
+                                </div>
+
+                                <div className='form-group'>
+                                    <label>Location</label>
+
+                                    <input type="text"
+                                        name='location'
+                                        placeholder='e.g. Bangalore, India (or Remote)'
+                                        value={newJob.location}
+                                        onChange={handleInputChange}
+                                    />
                                 </div>
 
                                 <div className='form-group'>
@@ -1287,16 +1416,16 @@ function AdminDashboard({ onNavigate }) {
                                     <div className='form-group half-width'>
                                         <label htmlFor="">Deadline</label>
                                         <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 className="date-picker-trigger"
                                                 onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
                                                 style={{ width: '100%', justifyContent: 'space-between' }}
                                             >
-                                                {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'} 
+                                                {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'}
                                                 <Calendar size={14} />
                                             </button>
-                                            
+
                                             {isModalDatePickerOpen && (
                                                 <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
                                                     <div className="calendar-header">
@@ -1320,9 +1449,9 @@ function AdminDashboard({ onNavigate }) {
                                                             const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                             const isSelected = newJob.deadline === dateStr;
                                                             return (
-                                                                <button 
+                                                                <button
                                                                     type="button"
-                                                                    key={day} 
+                                                                    key={day}
                                                                     className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                     onClick={() => {
                                                                         setNewJob(prev => ({ ...prev, deadline: dateStr }));
@@ -1336,7 +1465,7 @@ function AdminDashboard({ onNavigate }) {
                                                     </div>
                                                     <div className="calendar-footer">
                                                         <button type="button" className="calendar-clear-btn" onClick={() => { setNewJob(prev => ({ ...prev, deadline: '' })); setIsModalDatePickerOpen(false); }}>Clear</button>
-                                                        <button type="button" className="calendar-today-btn" onClick={() => { 
+                                                        <button type="button" className="calendar-today-btn" onClick={() => {
                                                             const today = new Date();
                                                             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                                                             setNewJob(prev => ({ ...prev, deadline: todayStr }));
@@ -1396,19 +1525,19 @@ function AdminDashboard({ onNavigate }) {
                                 </h4>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     {profileTab === 'edit' && !isEditingProfile && (
-                                        <button 
-                                            type="button" 
-                                            className="btn-confirm-apply" 
-                                            style={{ 
-                                                padding: '6px 14px', 
-                                                fontSize: '0.8125rem', 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: '6px', 
-                                                borderRadius: '9999px', 
+                                        <button
+                                            type="button"
+                                            className="btn-confirm-apply"
+                                            style={{
+                                                padding: '6px 14px',
+                                                fontSize: '0.8125rem',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                borderRadius: '9999px',
                                                 margin: 0,
                                                 cursor: 'pointer'
-                                            }} 
+                                            }}
                                             onClick={() => setIsEditingProfile(true)}
                                         >
                                             <Edit3 size={14} />
@@ -1578,34 +1707,34 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-            {/* Notifications Sidebar Panel */}
-            {isNotificationSidebarOpen && (
-                <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
-                    <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
-                        <div className="sidebar-header">
-                            <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
-                                <h4 style={{ margin: 0 }}>Notifications</h4>
+                {/* Notifications Sidebar Panel */}
+                {isNotificationSidebarOpen && (
+                    <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
+                        <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
+                            <div className="sidebar-header">
+                                <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
+                                    <h4 style={{ margin: 0 }}>Notifications</h4>
+                                </div>
+                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                    <X size={18} />
+                                </button>
                             </div>
-                            <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <div className="sidebar-body">
-                            {notifications.length === 0 ? (
-                                <p className="no-notifications">No new notifications</p>
-                            ) : (
-                                notifications.map((notif) => (
-                                    <div key={notif.id} className="notification-item">
-                                        <p>{notif.text}</p>
-                                        <span className="notif-date">{notif.date}</span>
-                                    </div>
-                                ))
-                            )}
+                            <div className="sidebar-body">
+                                {notifications.length === 0 ? (
+                                    <p className="no-notifications">No new notifications</p>
+                                ) : (
+                                    notifications.map((notif) => (
+                                        <div key={notif.id} className="notification-item">
+                                            <p>{notif.text}</p>
+                                            <span className="notif-date">{notif.date}</span>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
             </div >
         </div >

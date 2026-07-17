@@ -36,3 +36,35 @@ export const createJobPosting = (jobData) => {
         }
     });
 };
+
+
+export const getDrafts = () => {
+    const token =
+        localStorage.getItem("token");
+    return api.get("/admin/drafts", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+
+export const getDraftById = (id) => {
+    const token =
+        localStorage.getItem("token");
+    return api.get(`/admin/draft/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+
+export const publishDraft = (id) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/admin/draft/publish/${id}`, {}, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
