@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
+import StudentAnalytics from './StudentAnalytics';
+import QueriesStories from './QueriesStories';
 import { createJobPosting, getDrafts, getDraftById, publishDraft } from '../../auth/authService';
 import {
     GraduationCap,
@@ -26,6 +28,9 @@ function AdminDashboard({ onNavigate }) {
     //1. Sidebar form visibility
     const [isSidebarOpen, setIsSidebarOpen] =
         useState(false);
+
+    // Active menu tab state
+    const [activeTab, setActiveTab] = useState('dashboard');
 
 
     //2. Search and filter state
@@ -767,16 +772,54 @@ function AdminDashboard({ onNavigate }) {
 
             {/*HEADER /NAVBAR*/}
             <header className='admin-header'>
-                <div className='header-container'>
-                    <div className='logo-section'>
-                        <GraduationCap className='logo-icon' size={28} />
+                    <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
+                        <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                            <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>College Portal</span>
+                        </div>
 
-                        <span className='college-name'>
-                            College Placement Portal
-                        </span>
-                    </div>
+                        <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                            {[
+                                { id: 'dashboard', label: 'Dashboard' },
+                                { id: 'analytics', label: 'Student Analytics' },
+                                { id: 'queries', label: 'Queries & Stories' }
+                            ].map(item => (
+                                <button
+                                    key={item.id}
+                                    className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(item.id)}
+                                    style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        color: activeTab === item.id ? '#2563eb' : '#64748b',
+                                        fontWeight: activeTab === item.id ? '600' : '500',
+                                        fontSize: '0.95rem',
+                                        cursor: 'pointer',
+                                        padding: '8px 0',
+                                        position: 'relative',
+                                        transition: 'color 0.2s ease',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <span>{item.label}</span>
+                                    {activeTab === item.id && (
+                                        <span style={{
+                                            position: 'absolute',
+                                            bottom: '-6px',
+                                            left: 0,
+                                            right: 0,
+                                            height: '2px',
+                                            backgroundColor: '#2563eb',
+                                            borderRadius: '2px'
+                                        }} />
+                                    )}
+                                </button>
+                            ))}
+                        </nav>
 
-                    <div className='header-right'>
+                        <div className='header-right'>
                         <span className='role-badge'>Admin</span>
 
                         <div className='notification-wrapper' onClick={() => {
@@ -845,10 +888,12 @@ function AdminDashboard({ onNavigate }) {
                 </div>
             </header>
 
-            <div className='dashboard-content-layout'>
+            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
 
                 {/*MAIN DASHBOARD PANEL*/}
                 <main className='dashboard-main'>
+                    {activeTab === 'dashboard' && (
+                        <>
 
                     {/*GREETING SECTION*/}
                     <section className='greeting-section'>
@@ -1215,6 +1260,16 @@ function AdminDashboard({ onNavigate }) {
                             </div>
                         </div>
                     </div>
+                    </>
+                    )}
+
+                    {activeTab === 'analytics' && (
+                        <StudentAnalytics />
+                    )}
+
+                    {activeTab === 'queries' && (
+                        <QueriesStories />
+                    )}
                 </main>
 
                 {isSidebarOpen && (
