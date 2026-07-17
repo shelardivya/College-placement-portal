@@ -29,17 +29,23 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/v3/api-docs/**"
-
                         ).permitAll()
-                        .requestMatchers("/auth/**").permitAll()
+
+                        // Student APIs
+                        .requestMatchers("/api/student/**")
+                        .hasRole("STUDENT")
+
+                        // Admin APIs
                         .requestMatchers("/api/admin/**")
                         .hasRole("ADMIN")
+
+                        // Remaining APIs
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
 
-                // JWT Filter add
+                // JWT Filter
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class

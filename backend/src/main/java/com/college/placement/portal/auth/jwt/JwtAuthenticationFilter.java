@@ -45,11 +45,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             String email = registerJWT.extractEmail(token);
 
+            // DEBUG
+            System.out.println("JWT Email : " + email);
+
             if (email != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails =
                         customUserDetailsService.loadUserByUsername(email);
+
+                // DEBUG
+                System.out.println("Authorities : " + userDetails.getAuthorities());
 
                 if (registerJWT.validateToken(token, userDetails)) {
 
@@ -67,10 +73,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
+
+                    // DEBUG
+                    System.out.println("Authentication Successful");
+
+                } else {
+
+                    // DEBUG
+                    System.out.println("JWT Validation Failed");
+
                 }
             }
 
         } catch (Exception e) {
+
+            // DEBUG
+            System.out.println("JWT Exception : " + e.getMessage());
+            e.printStackTrace();
 
             SecurityContextHolder.clearContext();
 

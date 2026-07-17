@@ -43,5 +43,6 @@ public class GlobalExceptionHandler {
                 .body(Map.of(
                         "message", message
                 ));
+
     }
 }
