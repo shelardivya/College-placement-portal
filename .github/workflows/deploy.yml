@@ -1,0 +1,54 @@
+name: Auto Deploy to AWS App Server
+
+on:
+  push:
+    branches:
+      - develop 
+
+jobs:
+  deploy-to-server:
+    runs-on: self-hosted 
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+     
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Deploy Frontend Files
+        run: |
+          # Vite ki banayi hui nayi files ko frontend_app folder me copy karna
+          sudo cp -r frontend/dist/* /opt/frontend_app/
+          # Ownership wapas frontend_user ko dena
+          sudo chown -R frontend_user:frontend_user /opt/frontend_app/
+
+     
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Backend
+        run: |
+          cd backend
+          mvn clean package -DskipTests=true
+
+      - name: Deploy Backend Files & Restart Service
+        run: |
+          # Nayi jar file ko backend_app folder me copy karna
+          sudo cp backend/target/*.jar /opt/backend_app/
+          # Ownership wapas backend_user ko dena
+          sudo chown -R backend_user:backend_user /opt/backend_app/
+          # Backend service ko restart karna taaki naya code live ho jaye
+          sudo systemctl restart backend.service
