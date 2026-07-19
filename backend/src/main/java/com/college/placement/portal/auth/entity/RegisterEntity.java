@@ -44,6 +44,15 @@ public class RegisterEntity {
     @Column
     private Double cgpa;
 
+    @Column(columnDefinition = "TEXT")
+    private String skills;
+
+    @Column(name = "linkedin_url")
+    private String linkedinUrl;
+
+    @Column(name = "github_url")
+    private String githubUrl;
+
     // ===== AUTH DETAILS =====
 
     @Column(nullable = true)
