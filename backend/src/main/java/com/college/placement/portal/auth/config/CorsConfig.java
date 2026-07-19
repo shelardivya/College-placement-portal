@@ -2,33 +2,45 @@ package com.college.placement.portal.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 public class CorsConfig {
 
+
     @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
+    public CorsConfigurationSource corsConfigurationSource() {
 
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
+        CorsConfiguration config = new CorsConfiguration();
 
-                registry.addMapping("/**")
-                        .allowedOriginPatterns(
-                                "http://localhost:5173",
-                                "http://localhost:3000",
-                                "http://localhost:4200",
-                                "https://*.ngrok-free.app",
-                                "https://*.ngrok-free.dev",
-                                "http://43.205.227.246",
-                                "https://43.205.227.246"
-                        )
-                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
-            }
-        };
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "https://*.ngrok-free.app",
+                "https://*.ngrok-free.dev",
+                "http://43.205.227.246:*",
+                "https://43.205.227.246:*"
+        ));
+
+        config.setAllowedMethods(
+                List.of("GET","POST","PUT","DELETE","OPTIONS")
+        );
+
+        config.setAllowedHeaders(List.of("*"));
+
+        config.setAllowCredentials(true);
+
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
 }
