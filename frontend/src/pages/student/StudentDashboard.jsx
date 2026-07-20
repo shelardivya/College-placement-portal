@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     GraduationCap,
     Bell,
@@ -7,8 +7,10 @@ import {
     Clock,
     XCircle,
     MapPin,
+    Building,
     Briefcase,
     Calendar,
+    ChevronLeft,
     ChevronRight,
     X,
     Lock,
@@ -26,9 +28,133 @@ import {
     Link,
     FileText,
     Search,
-    Upload
+    Upload,
+    MessageSquare,
+    Plus
 } from "lucide-react";
 import "./StudentDashboard.css";
+
+// Default fallback mock data for Placement Drives
+const initialDrives = [
+    {
+        id: 1,
+        company: 'Google',
+        logo: 'https://logo.clearbit.com/google.com',
+        role: 'SDE Intern',
+        location: 'Bangalore',
+        date: '20 Jul 2026',
+        time: '10:00 AM',
+        status: 'open',
+        venue: 'Seminar Hall A',
+        about: 'Google is conducting an on-campus recruitment drive for the SDE Intern role.',
+        targetStudent: 'All'
+    },
+    {
+        id: 2,
+        company: 'Amazon',
+        logo: 'https://logo.clearbit.com/amazon.com',
+        role: 'Backend Developer',
+        location: 'Hyderabad',
+        date: '25 Jul 2026',
+        time: '11:30 AM',
+        status: 'upcoming',
+        venue: 'Seminar Hall A',
+        about: 'Amazon is conducting an on-campus recruitment drive for the Backend Developer role.',
+        targetStudent: 'All'
+    },
+    {
+        id: 3,
+        company: 'TCS',
+        logo: 'https://logo.clearbit.com/tcs.com',
+        role: 'System Engineer',
+        location: 'Pune',
+        date: '30 Jul 2026',
+        time: '09:00 AM',
+        status: 'closed',
+        venue: 'Seminar Hall B',
+        about: 'TCS is conducting a mass campus recruitment drive for System Engineers.',
+        targetStudent: 'All'
+    },
+    {
+        id: 4,
+        company: 'Infosys',
+        logo: 'https://logo.clearbit.com/infosys.com',
+        role: 'Full Stack Developer',
+        location: 'Mysore',
+        date: '05 Aug 2026',
+        time: '02:00 PM',
+        status: 'upcoming',
+        venue: 'Seminar Hall A',
+        about: 'Infosys is conducting an on-campus drive for the Full Stack Developer role.',
+        targetStudent: 'All'
+    },
+    {
+        id: 5,
+        company: 'Cognizant',
+        logo: 'https://logo.clearbit.com/cognizant.com',
+        role: 'QA Engineer',
+        location: 'Chennai',
+        date: '12 Aug 2026',
+        time: '10:00 AM',
+        status: 'upcoming',
+        venue: 'Online / MS Teams',
+        about: 'Cognizant is conducting a virtual campus drive for the QA Engineer role.',
+        targetStudent: 'All'
+    },
+    {
+        id: 6,
+        company: 'Wipro',
+        logo: 'https://logo.clearbit.com/wipro.com',
+        role: 'System Associate',
+        location: 'Kochi',
+        date: '18 Aug 2026',
+        time: '11:00 AM',
+        status: 'upcoming',
+        venue: 'Placement Cell Lab 2',
+        about: 'Wipro is conducting an on-campus drive for System Associates.',
+        targetStudent: 'All'
+    }
+];
+
+// Default fallback mock data for Placement Stories
+const initialStories = [
+    {
+        id: 1,
+        name: 'Nithisha Yadav',
+        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
+        company: 'Thoughtworks',
+        companyColor: '#f3e8ff',
+        companyTextColor: '#8b5cf6',
+        role: 'Software Engineer',
+        packageAmt: '8.5 LPA',
+        storyText: 'Secured a Software Engineer role at Thoughtworks. The preparation drives helped me refine my technical skills.',
+        date: '10 Apr 2025'
+    },
+    {
+        id: 2,
+        name: 'Prabhat Pundeer',
+        avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
+        company: 'Snabbits',
+        companyColor: '#fffbeb',
+        companyTextColor: '#d97706',
+        role: 'SDE Intern',
+        packageAmt: '6.0 LPA',
+        storyText: 'Delighted to join Snabbits as an SDE Intern. Grateful to the control center mentors for guidance.',
+        date: '8 Apr 2025'
+    },
+    {
+        id: 3,
+        name: 'Deepak Kumar',
+        avatar: 'https://randomuser.me/api/portraits/men/22.jpg',
+        company: 'Mindstix',
+        companyColor: '#eff6ff',
+        companyTextColor: '#2563eb',
+        role: 'Full Stack Developer',
+        packageAmt: '12.0 LPA',
+        storyText: 'Landed a Full Stack Developer role at Mindstix. Consistent project building was key to cracking the interviews.',
+        date: '5 Apr 2025'
+    }
+];
 
 export default function
     StudentDashboard({ onNavigate }) {
@@ -41,6 +167,74 @@ export default function
         const parts = name.trim().split(" ");
         return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
     };
+
+    const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'studhub'
+
+    // Sync states from localStorage (with mock fallbacks)
+    const [drives, setDrives] = useState(() => {
+        const stored = localStorage.getItem("placement_drives");
+        return stored ? JSON.parse(stored) : initialDrives;
+    });
+
+    const isEventTomorrow = (dateStr) => {
+        if (!dateStr) return false;
+        try {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            
+            const eventDate = new Date(dateStr);
+            if (isNaN(eventDate.getTime())) return false;
+            
+            return eventDate.getDate() === tomorrow.getDate() &&
+                   eventDate.getMonth() === tomorrow.getMonth() &&
+                   eventDate.getFullYear() === tomorrow.getFullYear();
+        } catch (e) {
+            return false;
+        }
+    };
+
+    // Filter drives targeted to this student
+    const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
+    const studentFilteredDrives = drives.filter(drive => {
+        const target = (drive.targetStudent || "").toLowerCase().trim();
+        if (target === "" || target === "all") {
+            return true;
+        }
+        return target === studentEmail;
+    });
+
+    // Find the next upcoming/open event sorted by date
+    const activeDrives = studentFilteredDrives.filter(d => d.status === 'open' || d.status === 'upcoming');
+    const getParsedDate = (dateStr) => {
+        try {
+            const d = new Date(dateStr);
+            return isNaN(d.getTime()) ? new Date("9999-12-31") : d;
+        } catch (e) {
+            return new Date("9999-12-31");
+        }
+    };
+    activeDrives.sort((a, b) => getParsedDate(a.date) - getParsedDate(b.date));
+    const nextEvent = activeDrives[0];
+
+    const [stories, setStories] = useState(() => {
+        const stored = localStorage.getItem("placement_stories");
+        return stored ? JSON.parse(stored) : initialStories;
+    });
+
+    const [queries, setQueries] = useState(() => {
+        const stored = localStorage.getItem("student_queries");
+        return stored ? JSON.parse(stored) : [];
+    });
+
+    // Write back student queries when updated locally
+    useEffect(() => {
+        localStorage.setItem("student_queries", JSON.stringify(queries));
+    }, [queries]);
+
+    // Student Query Form states
+    const [querySubject, setQuerySubject] = useState("");
+    const [queryMessage, setQueryMessage] = useState("");
 
     //Component state
     const [selectedJob, setSelectedJob] =
@@ -100,8 +294,8 @@ export default function
     const getInitialProfile = () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         return {
-            fullName: storedUser.fullName || "Saurabh Mishra",
-            email: storedUser.email || "saurabh@gmail.com",
+            fullName: storedUser.fullName || "Student Name",
+            email: storedUser.email || "student@portal.edu",
             phone: storedUser.phone || "",
             branch: storedUser.branch || "",
             passingYear: storedUser.passingYear || "",
@@ -179,6 +373,60 @@ export default function
         setShowCurrentPassword(false);
         setShowNewPassword(false);
         setShowConfirmPassword(false);
+    };
+
+    // Handles raising a student query
+    const handleRaiseQuery = (e) => {
+        e.preventDefault();
+        if (!querySubject.trim() || !queryMessage.trim()) {
+            setToastMessage("Please fill in both subject and description.");
+            setToastType('error');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+            return;
+        }
+
+        const branchText = profile.branch || loggedInUser.branch || "B.Tech CSE";
+        const newQuery = {
+            id: Date.now(),
+            name: studentName,
+            course: branchText,
+            avatar: getInitials(studentName),
+            colorClass: ['blue', 'purple', 'green', 'orange'][Math.floor(Math.random() * 4)],
+            title: querySubject.trim(),
+            message: queryMessage.trim(),
+            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+            status: 'pending'
+        };
+
+        const updatedQueries = [newQuery, ...queries];
+        setQueries(updatedQueries);
+        localStorage.setItem("student_queries", JSON.stringify(updatedQueries));
+
+        // Reset form inputs
+        setQuerySubject("");
+        setQueryMessage("");
+
+        // Trigger success notification
+        setToastMessage("Query raised successfully! Admin will respond soon.");
+        setToastType('success');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
+    // Handles applying to a campus drive event
+    const handleApplyDrive = (drive) => {
+        setToastMessage(`Successfully applied for ${drive.role} at ${drive.company}!`);
+        setToastType('success');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
+    const handleViewEventDetails = (drive) => {
+        setToastMessage(`Successfully registered for the ${drive.company} drive at ${drive.venue || 'Seminar Hall A'}.`);
+        setToastType('success');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
     };
 
     // Handles logout flow
@@ -513,6 +761,21 @@ export default function
                     <h1>College Placement Portal</h1>
                 </div>
 
+                <div className="student-nav-tabs">
+                    <button
+                        className={`student-nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('dashboard')}
+                    >
+                        Dashboard
+                    </button>
+                    <button
+                        className={`student-nav-tab ${activeTab === 'studhub' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('studhub')}
+                    >
+                        Stud Hub
+                    </button>
+                </div>
+
                 <div className="header-actions">
                     <span className="role-badge">Student</span>
 
@@ -571,6 +834,7 @@ export default function
             </header>
 
             {/*Welcome Banner*/}
+            {activeTab === 'dashboard' && (
             <section className="welcome-section">
                 <div className="welcome-content">
                     <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
@@ -580,8 +844,10 @@ export default function
                     <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 </div>
             </section>
+            )}
 
             {/*Metric Boxes*/}
+            {activeTab === 'dashboard' && (
             <section className="metrics-grid">
                 {metrics.map((metric) => (
                     <div className="metric-card" key={metric.id}>
@@ -609,8 +875,12 @@ export default function
                 ))}
 
             </section>
+            )}
+
+
 
             {/*MAin two column content*/}
+            {activeTab === 'dashboard' && (
             <main className="dashboard-main-content">
 
                 {/*LEft column : latest job opportunities */}
@@ -778,6 +1048,199 @@ export default function
                 </section>
 
             </main>
+            )}
+
+            {/* Stud Hub page */}
+            {activeTab === 'studhub' && (
+            <div className="studhub-container">
+
+                {/* Stud Hub Welcome Banner */}
+                <div className="studhub-banner">
+                    <div className="studhub-banner-text">
+                        <h2>Stud Hub <span>🚀</span></h2>
+                        <p>Stay updated with placement stories, upcoming campus drives, and raise your queries — all in one place.</p>
+                    </div>
+                    <div className="welcome-date-badge">
+                        <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                </div>
+
+                {/* Two-column layout */}
+                <div className="studhub-grid">
+
+                    {/* left column */}
+                    <div className="studhub-left">
+
+                        {/* 1. Placement Success Stories */}
+                        <div className="sh-panel">
+                            <div className="sh-panel-header">
+                                <div className="sh-panel-title-group">
+                                    <Award size={18} className="sh-panel-icon" />
+                                    <h3 className="sh-panel-title">Placement Success Stories</h3>
+                                </div>
+                                <span className="sh-count-badge">{stories.length} Stories</span>
+                            </div>
+
+                            {stories.length === 0 ? (
+                                <div className="sh-empty-state">
+                                    <Award size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
+                                    <p>No placement stories published yet.</p>
+                                    <span>Check back soon!</span>
+                                </div>
+                            ) : (
+                                <div className="sh-stories-list">
+                                    {stories.map((story) => (
+                                        <div key={story.id} className="sh-story-card">
+                                            <div className="sh-story-top">
+                                                <img
+                                                    src={story.avatar}
+                                                    alt={story.name}
+                                                    className="sh-story-avatar"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                                <div className="sh-story-info">
+                                                    <h4 className="sh-story-name">{story.name}</h4>
+                                                    <span
+                                                        className="sh-company-badge"
+                                                        style={{ backgroundColor: story.companyColor || '#eff6ff', color: story.companyTextColor || '#2563eb' }}
+                                                    >
+                                                        {story.company}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="sh-story-body">
+                                                <p className="sh-role-line" style={{ color: story.companyTextColor || '#2563eb' }}>
+                                                    {story.role}
+                                                </p>
+                                                <p className="sh-story-quote">
+                                                    &ldquo;{story.storyText || `Secured a ${story.role} role at ${story.company}.`}&rdquo;
+                                                </p>
+                                                <div className="sh-story-footer">
+                                                    <span className="sh-package-tag">💰 {story.packageAmt || 'Not Disclosed'}</span>
+                                                    <span className="sh-date-tag">📅 {story.date}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 2. Raise a Query */}
+                        <div className="sh-panel sh-query-panel">
+                            <div className="sh-panel-header">
+                                <div className="sh-panel-title-group">
+                                    <MessageSquare size={18} className="sh-panel-icon" />
+                                    <h3 className="sh-panel-title">Raise a Query</h3>
+                                </div>
+                            </div>
+                            <p className="sh-panel-subtitle">Have a question? Submit it below and our admin team will respond shortly.</p>
+
+                            <form onSubmit={handleRaiseQuery} className="sh-query-form">
+                                <div className="sh-form-group">
+                                    <label className="sh-form-label">Query Subject <span style={{ color: '#ef4444' }}>*</span></label>
+                                    <input
+                                        type="text"
+                                        className="sh-form-input"
+                                        placeholder="e.g. TCS Drive Eligibility, Resume Upload Issue"
+                                        value={querySubject}
+                                        onChange={(e) => setQuerySubject(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="sh-form-group">
+                                    <label className="sh-form-label">Description <span style={{ color: '#ef4444' }}>*</span></label>
+                                    <textarea
+                                        className="sh-form-textarea"
+                                        placeholder="Describe your query in detail..."
+                                        rows={4}
+                                        value={queryMessage}
+                                        onChange={(e) => setQueryMessage(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <button type="submit" className="sh-submit-btn">
+                                    <Plus size={16} />
+                                    Submit Query
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    {/* right column */}
+                    <div className="studhub-right">
+
+                        {/* 3. Campus Placement Events (Next Campus Event) */}
+                        <div className="sh-panel campus-event-panel">
+                            <h3 className="event-panel-title">Next Campus Event</h3>
+                            
+                            {!nextEvent ? (
+                                <div className="sh-empty-state">
+                                    <Briefcase size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
+                                    <p>No upcoming campus events scheduled for you.</p>
+                                    <span>Check back soon!</span>
+                                </div>
+                            ) : (
+                                <div className="next-event-card">
+                                    <div className="event-card-header-row">
+                                        <div className="event-icon-box">
+                                            <Calendar className="event-purple-icon" size={20} />
+                                        </div>
+                                        <h2 className="event-company-title">{nextEvent.company} Drive</h2>
+                                    </div>
+                                    
+                                    <div className="event-details-list">
+                                        <div className="event-detail-item">
+                                            <div className="event-detail-icon-wrapper">
+                                                <Calendar size={15} />
+                                            </div>
+                                            <div className="detail-item-text">
+                                                <span className="detail-label">Date</span>
+                                                <span className="detail-value">
+                                                    {nextEvent.date} {isEventTomorrow(nextEvent.date) ? "(Tomorrow)" : ""}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="event-detail-item">
+                                            <div className="event-detail-icon-wrapper">
+                                                <Clock size={15} />
+                                            </div>
+                                            <div className="detail-item-text">
+                                                <span className="detail-label">Time</span>
+                                                <span className="detail-value">{nextEvent.time || "10:00 AM"} Onwards</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="event-detail-item">
+                                            <div className="event-detail-icon-wrapper">
+                                                <MapPin size={15} />
+                                            </div>
+                                            <div className="detail-item-text">
+                                                <span className="detail-label">Location</span>
+                                                <span className="detail-value">{nextEvent.location || "Main Campus"}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="event-detail-item">
+                                            <div className="event-detail-icon-wrapper">
+                                                <Building size={15} />
+                                            </div>
+                                            <div className="detail-item-text">
+                                                <span className="detail-label">Venue</span>
+                                                <span className="detail-value">{nextEvent.venue || "Seminar Hall A"}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            )}
 
             {/* Job Requirements Modal Popup Overlay */}
             {selectedJob && (() => {

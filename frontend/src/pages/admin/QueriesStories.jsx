@@ -9,7 +9,8 @@ import {
     Trash2,
     Clock,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    X
 } from 'lucide-react';
 import './QueriesStories.css';
 
@@ -113,7 +114,10 @@ export default function QueriesStories() {
             location: 'Bangalore',
             date: '20 Jul 2026',
             time: '10:00 AM',
-            status: 'open'
+            status: 'open',
+            venue: 'Seminar Hall A',
+            about: 'Google is conducting an on-campus recruitment drive for the SDE Intern role.',
+            targetStudent: 'All'
         },
         {
             id: 2,
@@ -123,7 +127,10 @@ export default function QueriesStories() {
             location: 'Hyderabad',
             date: '25 Jul 2026',
             time: '11:30 AM',
-            status: 'upcoming'
+            status: 'upcoming',
+            venue: 'Seminar Hall A',
+            about: 'Amazon is conducting an on-campus recruitment drive for the Backend Developer role.',
+            targetStudent: 'All'
         },
         {
             id: 3,
@@ -133,7 +140,10 @@ export default function QueriesStories() {
             location: 'Pune',
             date: '30 Jul 2026',
             time: '09:00 AM',
-            status: 'closed'
+            status: 'closed',
+            venue: 'Seminar Hall B',
+            about: 'TCS is conducting a mass campus recruitment drive for System Engineers.',
+            targetStudent: 'All'
         },
         {
             id: 4,
@@ -143,7 +153,10 @@ export default function QueriesStories() {
             location: 'Mysore',
             date: '05 Aug 2026',
             time: '02:00 PM',
-            status: 'upcoming'
+            status: 'upcoming',
+            venue: 'Seminar Hall A',
+            about: 'Infosys is conducting an on-campus drive for the Full Stack Developer role.',
+            targetStudent: 'All'
         },
         {
             id: 5,
@@ -153,7 +166,10 @@ export default function QueriesStories() {
             location: 'Chennai',
             date: '12 Aug 2026',
             time: '10:00 AM',
-            status: 'upcoming'
+            status: 'upcoming',
+            venue: 'Online / MS Teams',
+            about: 'Cognizant is conducting a virtual campus drive for the QA Engineer role.',
+            targetStudent: 'All'
         },
         {
             id: 6,
@@ -163,7 +179,10 @@ export default function QueriesStories() {
             location: 'Kochi',
             date: '18 Aug 2026',
             time: '11:00 AM',
-            status: 'upcoming'
+            status: 'upcoming',
+            venue: 'Placement Cell Lab 2',
+            about: 'Wipro is conducting an on-campus drive for System Associates.',
+            targetStudent: 'All'
         }
     ];
 
@@ -216,6 +235,105 @@ export default function QueriesStories() {
     useEffect(() => {
         localStorage.setItem("placement_drives", JSON.stringify(drives));
     }, [drives]);
+
+    // Modal states for adding/editing placement drives
+    const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
+    const [editingDrive, setEditingDrive] = useState(null);
+    const [driveForm, setDriveForm] = useState({
+        company: '',
+        role: '',
+        location: '',
+        date: '',
+        time: '',
+        venue: '',
+        status: 'open',
+        targetStudent: 'All'
+    });
+
+    const handleOpenAddDrive = () => {
+        setEditingDrive(null);
+        setDriveForm({
+            company: '',
+            role: '',
+            location: '',
+            date: '',
+            time: '',
+            venue: 'Seminar Hall A',
+            status: 'open',
+            targetStudent: 'All'
+        });
+        setIsDriveModalOpen(true);
+    };
+
+    const handleOpenEditDrive = (drive) => {
+        setEditingDrive(drive);
+        setDriveForm({
+            company: drive.company || '',
+            role: drive.role || '',
+            location: drive.location || '',
+            date: drive.date || '',
+            time: drive.time || '',
+            venue: drive.venue || 'Seminar Hall A',
+            status: drive.status || 'open',
+            targetStudent: drive.targetStudent || 'All'
+        });
+        setIsDriveModalOpen(true);
+    };
+
+    const handleDeleteDrive = (driveId) => {
+        if (window.confirm("Are you sure you want to delete this placement drive?")) {
+            const updatedDrives = drives.filter(d => d.id !== driveId);
+            setDrives(updatedDrives);
+        }
+    };
+
+    const handleSaveDrive = (e) => {
+        e.preventDefault();
+        if (!driveForm.company || !driveForm.role) {
+            return;
+        }
+
+        const logoUrl = `https://logo.clearbit.com/${driveForm.company.toLowerCase().replace(/\s+/g, '')}.com`;
+
+        if (editingDrive) {
+            // Update existing
+            const updatedDrives = drives.map(d => {
+                if (d.id === editingDrive.id) {
+                    return {
+                        ...d,
+                        company: driveForm.company,
+                        logo: logoUrl,
+                        role: driveForm.role,
+                        location: driveForm.location,
+                        date: driveForm.date,
+                        time: driveForm.time,
+                        venue: driveForm.venue,
+                        status: driveForm.status,
+                        targetStudent: driveForm.targetStudent
+                    };
+                }
+                return d;
+            });
+            setDrives(updatedDrives);
+        } else {
+            // Add new
+            const newDrive = {
+                id: Date.now(),
+                company: driveForm.company,
+                logo: logoUrl,
+                role: driveForm.role,
+                location: driveForm.location,
+                date: driveForm.date,
+                time: driveForm.time,
+                venue: driveForm.venue,
+                status: driveForm.status,
+                targetStudent: driveForm.targetStudent
+            };
+            setDrives([newDrive, ...drives]);
+        }
+
+        setIsDriveModalOpen(false);
+    };
 
     const [driveSearch, setDriveSearch] = useState('');
     const [drivePage, setDrivePage] = useState(1);
@@ -545,7 +663,7 @@ export default function QueriesStories() {
                                     onChange={(e) => setDriveSearch(e.target.value)}
                                 />
                             </div>
-                            <button className="btn-add-drive">
+                            <button className="btn-add-drive" onClick={handleOpenAddDrive}>
                                 <Plus size={15} style={{ marginRight: '6px' }} />
                                 Add New Drive
                             </button>
@@ -602,10 +720,10 @@ export default function QueriesStories() {
                                             </td>
                                             <td>
                                                 <div className="actions-button-row">
-                                                    <button className="action-icon-btn edit">
+                                                    <button className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
                                                         <Edit2 size={15} />
                                                     </button>
-                                                    <button className="action-icon-btn delete">
+                                                    <button className="action-icon-btn delete" onClick={() => handleDeleteDrive(drive.id)}>
                                                         <Trash2 size={15} />
                                                     </button>
                                                 </div>
@@ -756,6 +874,135 @@ export default function QueriesStories() {
                 </div>
 
             </div>
+
+            {/* Modal rendering */}
+            {isDriveModalOpen && (
+                <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
+                    <div className="qs-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="qs-modal-header">
+                            <h4>{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
+                            <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSaveDrive} className="qs-modal-form">
+                            <div className="qs-form-grid">
+                                <div className="qs-form-group">
+                                    <label>Company Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.company}
+                                        onChange={(e) => setDriveForm({ ...driveForm, company: e.target.value })}
+                                        placeholder="e.g. TCS"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Job Role *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.role}
+                                        onChange={(e) => setDriveForm({ ...driveForm, role: e.target.value })}
+                                        placeholder="e.g. System Engineer"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Location *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.location}
+                                        onChange={(e) => setDriveForm({ ...driveForm, location: e.target.value })}
+                                        placeholder="e.g. Pune"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Date *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.date}
+                                        onChange={(e) => setDriveForm({ ...driveForm, date: e.target.value })}
+                                        placeholder="e.g. 30 Jul 2026"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Time *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.time}
+                                        onChange={(e) => setDriveForm({ ...driveForm, time: e.target.value })}
+                                        placeholder="e.g. 09:00 AM"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Venue *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={driveForm.venue}
+                                        onChange={(e) => setDriveForm({ ...driveForm, venue: e.target.value })}
+                                        placeholder="e.g. Seminar Hall A"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Status *</label>
+                                    <select
+                                        className="form-input-control"
+                                        value={driveForm.status}
+                                        onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
+                                    >
+                                        <option value="open">Open</option>
+                                        <option value="upcoming">Upcoming</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                </div>
+                                <div className="qs-form-group">
+                                    <label>Target Student Email (Leave as 'All' for everyone)</label>
+                                    <select
+                                        className="form-input-control"
+                                        value={driveForm.targetStudent}
+                                        onChange={(e) => setDriveForm({ ...driveForm, targetStudent: e.target.value })}
+                                    >
+                                        <option value="All">All Students</option>
+                                        <option value="student@portal.edu">student@portal.edu (Default Student)</option>
+                                        <option value="priya@college.edu.in">priya@college.edu.in (Priya Sharma)</option>
+                                        <option value="rahul@college.edu.in">rahul@college.edu.in (Rahul Patil)</option>
+                                        <option value="sneha@college.edu.in">sneha@college.edu.in (Sneha Jadhav)</option>
+                                        {/* Dynamic profiles */}
+                                        {(() => {
+                                            try {
+                                                const profiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                                                return profiles.map(p => (
+                                                    <option key={p.email} value={p.email}>{p.email} ({p.fullName})</option>
+                                                ));
+                                            } catch (err) {
+                                                return null;
+                                            }
+                                        })()}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary-purple">
+                                    {editingDrive ? "Update Drive" : "Add Drive"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
