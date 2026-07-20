@@ -355,7 +355,7 @@ function Registration({ onNavigate }) {
                 <div className="register-left">
                     {/* Application Header Logo */}
                     <div className="register-logo-section">
-                        <img src={logoGrad} className="logo-icon-img" alt="Logo" />
+                        <GraduationCap className="logo-icon" size={28} />
                         <span className="college-name">College Placement Portal</span>
                     </div>
 

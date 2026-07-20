@@ -237,7 +237,7 @@ function Login({ onNavigate, initialView }) {
                 {/* LEFT COLUMN: Branding & Recent Placements */}
                 <div className="login-left">
                     <div className="login-logo-section">
-                        <img src={logoGrad} className="logo-icon-img" alt="Logo" />
+                        <GraduationCap className="logo-icon" size={28} />
                         <span className="college-name">College Placement Portal</span>
                     </div>
 

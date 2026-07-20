@@ -165,7 +165,7 @@
     flex-grow: 1;
 }
 
-.student-name {
+.recent-placements-ledger .student-name {
     font-weight: 600;
     color: #ffffff;
 }
