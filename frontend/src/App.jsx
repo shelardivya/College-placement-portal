@@ -12,6 +12,12 @@ function App() {
     if (path.startsWith('/reset-password') || search.includes('token=') || search.includes('email=')) {
       return 'login';
     }
+    if (path === '/student') {
+      return 'student';
+    }
+    if (path === '/admin') {
+      return 'admin';
+    }
     return 'landing';
   });
 
