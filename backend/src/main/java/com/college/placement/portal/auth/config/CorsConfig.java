@@ -23,6 +23,7 @@ public class CorsConfig {
                 "http://localhost:4200",
                 "https://*.ngrok-free.app",
                 "https://*.ngrok-free.dev",
+                "https://campus-hire.duckdns.org",
                 "http://43.205.227.246:5137",
                 "https://43.205.227.246:5137"
         ));

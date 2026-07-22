@@ -3,11 +3,13 @@ package com.college.placement.portal.admin.controller;
 import com.college.placement.portal.admin.dto.CgpaPlacementDto;
 import com.college.placement.portal.admin.dto.DepartmentAnalyticsDto;
 import com.college.placement.portal.admin.dto.StudentAnalyticsDto;
+import com.college.placement.portal.admin.dto.TopSkillDto;
 import com.college.placement.portal.admin.service.StudentAnalyticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.GetMapping;
 import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/admin/student-analytics")
@@ -56,6 +58,18 @@ public class StudentAnalyticsController {
 
         return ResponseEntity.ok(
                 studentAnalyticsService.getPlacementByCgpa()
+        );
+
+    }
+    // ==========================================
+// Top Skills In Demand
+// ==========================================
+
+    @GetMapping("/top-skills")
+    public ResponseEntity<List<TopSkillDto>> getTopSkills() {
+
+        return ResponseEntity.ok(
+                studentAnalyticsService.getTopSkills()
         );
 
     }

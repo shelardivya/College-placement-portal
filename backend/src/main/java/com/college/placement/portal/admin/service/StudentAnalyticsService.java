@@ -3,13 +3,17 @@ package com.college.placement.portal.admin.service;
 import com.college.placement.portal.admin.dto.CgpaPlacementDto;
 import com.college.placement.portal.admin.dto.DepartmentAnalyticsDto;
 import com.college.placement.portal.admin.dto.StudentAnalyticsDto;
+import com.college.placement.portal.admin.dto.TopSkillDto;
+import com.college.placement.portal.admin.entity.AddJobEntity;
 import com.college.placement.portal.admin.entity.PlacementRecordEntity;
+import com.college.placement.portal.admin.repository.AddJobRepository;
 import com.college.placement.portal.admin.repository.PlacementRecordRepository;
-import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import org.springframework.stereotype.Service;
-
+import java.util.HashMap;
+import java.util.Comparator;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,13 +22,15 @@ public class StudentAnalyticsService {
 
     private final PlacementRecordRepository placementRecordRepository;
     private final RegisterRepository registerRepository;
-
+    private final AddJobRepository addJobRepository;
     public StudentAnalyticsService(
             PlacementRecordRepository placementRecordRepository,
-            RegisterRepository registerRepository
+            RegisterRepository registerRepository,
+            AddJobRepository addJobRepository
     ) {
         this.placementRecordRepository = placementRecordRepository;
         this.registerRepository = registerRepository;
+        this.addJobRepository = addJobRepository;
     }
 
     // ==========================================
@@ -127,5 +133,60 @@ public class StudentAnalyticsService {
         response.add(new CgpaPlacementDto("9-10", between9And10));
 
         return response;
+    }
+
+    // ==========================================
+// Top Skills In Demand
+// ==========================================
+
+    public List<TopSkillDto> getTopSkills() {
+
+        List<AddJobEntity> jobs =
+                addJobRepository.findAll();
+
+        Map<String, Long> skillCount = new HashMap<>();
+
+        for (AddJobEntity job : jobs) {
+
+            if (job.getJobRequirements() == null ||
+                    job.getJobRequirements().isBlank()) {
+                continue;
+            }
+            String[] skills = job.getJobRequirements().split("[,\n\r]+");
+
+            for (String skill : skills) {
+
+                String value = skill.trim();
+
+                if (value.isEmpty()) {
+                    continue;
+                }
+
+                skillCount.put(
+                        value,
+                        skillCount.getOrDefault(value, 0L) + 1
+                );
+
+            }
+
+        }
+
+        List<TopSkillDto> response =
+                new ArrayList<>();
+
+        skillCount.entrySet()
+                .stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue(
+                        Comparator.reverseOrder()))
+                .limit(10)
+                .forEach(entry -> response.add(
+                        new TopSkillDto(
+                                entry.getKey(),
+                                entry.getValue()
+                        )
+                ));
+
+        return response;
+
     }
 }
