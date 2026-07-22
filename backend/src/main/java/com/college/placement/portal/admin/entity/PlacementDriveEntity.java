@@ -22,6 +22,9 @@ public class PlacementDriveEntity {
     @Column
     private String location;
 
+    @Column
+    private String venue;
+
     @Column(name = "drive_date")
     private LocalDate driveDate;
 
@@ -30,6 +33,12 @@ public class PlacementDriveEntity {
 
     @Column
     private String status;
+
+    @Column(name = "target_student")
+    private String targetStudent;
+
+    @Column(name = "specific_student_name")
+    private String specificStudentName;
 
     // ===========================
     // Getter Setter
@@ -63,6 +72,14 @@ public class PlacementDriveEntity {
         this.location = location;
     }
 
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
     public LocalDate getDriveDate() {
         return driveDate;
     }
@@ -85,5 +102,21 @@ public class PlacementDriveEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getTargetStudent() {
+        return targetStudent;
+    }
+
+    public void setTargetStudent(String targetStudent) {
+        this.targetStudent = targetStudent;
+    }
+
+    public String getSpecificStudentName() {
+        return specificStudentName;
+    }
+
+    public void setSpecificStudentName(String specificStudentName) {
+        this.specificStudentName = specificStudentName;
     }
 }
