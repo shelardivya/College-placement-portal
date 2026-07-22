@@ -26,7 +26,7 @@ export default function QueriesStories() {
             title: 'Resume not uploading',
             message: 'I am unable to upload my resume. It shows error please help me resolve this issue.',
             date: '2 May 2025',
-            status: 'pending'
+            status: 'resolved'
         },
         {
             id: 2,
@@ -37,7 +37,7 @@ export default function QueriesStories() {
             title: 'Profile strength calculation',
             message: 'How is profile strength calculated? I want to improve my score.',
             date: '1 May 2025',
-            status: 'in-progress'
+            status: 'resolved'
         },
         {
             id: 3,
@@ -59,14 +59,22 @@ export default function QueriesStories() {
             title: 'Documents required',
             message: 'Please provide the list of documents required for placement registration.',
             date: '29 Apr 2025',
-            status: 'pending'
+            status: 'resolved'
         }
     ];
 
     // React States for student queries and pagination
     const [queries, setQueries] = useState(() => {
         const stored = localStorage.getItem("student_queries");
-        return stored ? JSON.parse(stored) : initialQueries;
+        if (stored) {
+            try {
+                const parsed = JSON.parse(stored);
+                return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
+            } catch (e) {
+                return initialQueries;
+            }
+        }
+        return initialQueries;
     });
 
     useEffect(() => {
@@ -78,10 +86,31 @@ export default function QueriesStories() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2; // Show 2 queries per page
 
+    // States for View and Reply Modals
+    const [viewingQuery, setViewingQuery] = useState(null);
+    const [replyingQuery, setReplyingQuery] = useState(null);
+    const [replyText, setReplyText] = useState('');
+
+    const handleSendReply = (e) => {
+        e.preventDefault();
+        if (!replyingQuery) return;
+        setQueries(prevQueries => prevQueries.map(q => {
+            if (q.id === replyingQuery.id) {
+                return {
+                    ...q,
+                    status: 'resolved',
+                    reply: replyText
+                };
+            }
+            return q;
+        }));
+        setReplyingQuery(null);
+        setReplyText('');
+    };
+
     // Helper calculations for status counts
     const totalQueriesCount = queries.length;
     const pendingCount = queries.filter(q => q.status === 'pending').length;
-    const inProgressCount = queries.filter(q => q.status === 'in-progress').length;
     const resolvedCount = queries.filter(q => q.status === 'resolved').length;
 
     // Reset pagination to page 1 on search or filter change
@@ -236,18 +265,20 @@ export default function QueriesStories() {
         localStorage.setItem("placement_drives", JSON.stringify(drives));
     }, [drives]);
 
-    // Modal states for adding/editing placement drives
+    // Modal states for adding/editing/deleting placement drives
     const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
     const [editingDrive, setEditingDrive] = useState(null);
+    const [deletingDrive, setDeletingDrive] = useState(null);
     const [driveForm, setDriveForm] = useState({
         company: '',
         role: '',
         location: '',
         date: '',
         time: '',
-        venue: '',
+        venue: 'Seminar Hall A',
         status: 'open',
-        targetStudent: 'All'
+        targetStudent: 'All Students (Selected for Everyone)',
+        customTarget: ''
     });
 
     const handleOpenAddDrive = () => {
@@ -260,7 +291,8 @@ export default function QueriesStories() {
             time: '',
             venue: 'Seminar Hall A',
             status: 'open',
-            targetStudent: 'All'
+            targetStudent: 'All Students (Selected for Everyone)',
+            customTarget: ''
         });
         setIsDriveModalOpen(true);
     };
@@ -275,16 +307,17 @@ export default function QueriesStories() {
             time: drive.time || '',
             venue: drive.venue || 'Seminar Hall A',
             status: drive.status || 'open',
-            targetStudent: drive.targetStudent || 'All'
+            targetStudent: drive.targetStudent || 'All Students (Selected for Everyone)',
+            customTarget: drive.customTarget || ''
         });
         setIsDriveModalOpen(true);
     };
 
-    const handleDeleteDrive = (driveId) => {
-        if (window.confirm("Are you sure you want to delete this placement drive?")) {
-            const updatedDrives = drives.filter(d => d.id !== driveId);
-            setDrives(updatedDrives);
-        }
+    const confirmDeleteDrive = () => {
+        if (!deletingDrive) return;
+        const updatedDrives = drives.filter(d => d.id !== deletingDrive.id);
+        setDrives(updatedDrives);
+        setDeletingDrive(null);
     };
 
     const handleSaveDrive = (e) => {
@@ -440,7 +473,6 @@ export default function QueriesStories() {
                             >
                                 <option value="all">All Status</option>
                                 <option value="pending">Pending</option>
-                                <option value="in-progress">In Progress</option>
                                 <option value="resolved">Resolved</option>
                             </select>
                             <div className="qs-search-bar-wrapper">
@@ -463,9 +495,6 @@ export default function QueriesStories() {
                         </button>
                         <button className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
                             Pending ({pendingCount})
-                        </button>
-                        <button className={`pill-btn progress-pill ${queryFilter === 'in-progress' ? 'active' : ''}`} onClick={() => setQueryFilter('in-progress')}>
-                            In Progress ({inProgressCount})
                         </button>
                         <button className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
                             Resolved ({resolvedCount})
@@ -512,8 +541,8 @@ export default function QueriesStories() {
                                             {query.status}
                                         </span>
                                         <div className="action-links-group">
-                                            <button className="text-action-btn">View</button>
-                                            <button className="text-action-btn primary-action">Reply</button>
+                                            <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
+                                            <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
                                             <button className="icon-menu-btn"><MoreVertical size={16} /></button>
                                         </div>
                                     </div>
@@ -678,6 +707,7 @@ export default function QueriesStories() {
                                     <th>Company</th>
                                     <th>Job Role</th>
                                     <th>Location</th>
+                                    <th>Venue</th>
                                     <th>Date</th>
                                     <th>Time</th>
                                     <th>Status</th>
@@ -701,6 +731,7 @@ export default function QueriesStories() {
                                             </td>
                                             <td>{drive.role}</td>
                                             <td>{drive.location}</td>
+                                            <td>{drive.venue || 'Seminar Hall A'}</td>
                                             <td>
                                                 <span className="icon-text-cell">
                                                     <Calendar size={13} />
@@ -723,7 +754,7 @@ export default function QueriesStories() {
                                                     <button className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
                                                         <Edit2 size={15} />
                                                     </button>
-                                                    <button className="action-icon-btn delete" onClick={() => handleDeleteDrive(drive.id)}>
+                                                    <button className="action-icon-btn delete" onClick={() => setDeletingDrive(drive)}>
                                                         <Trash2 size={15} />
                                                     </button>
                                                 </div>
@@ -732,7 +763,7 @@ export default function QueriesStories() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="7" className="empty-state-text">No active placement drives found.</td>
+                                        <td colSpan="8" className="empty-state-text">No active placement drives found.</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -771,7 +802,7 @@ export default function QueriesStories() {
                 </div>
 
                 {/* 4. Published Placement Stories Panel */}
-                <div className="qs-panel placement-stories-card" style={{ position: 'relative' }}>
+                <div className="qs-panel placement-stories-card">
                     <div className="qs-panel-header">
                         <div>
                             <h3 className="panel-title">Published Placement Stories</h3>
@@ -779,116 +810,97 @@ export default function QueriesStories() {
                         </div>
                     </div>
 
-                    {/* Stories Carousel grid layout */}
-                    <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px' }}>
-                        {/* Carousel Left navigation trigger arrow */}
-                        <button
-                            className="action-icon-btn"
-                            onClick={() => setStoryPage(prev => Math.max(prev - 1, 1))}
-                            disabled={storyPage === 1}
-                            style={{
-                                border: '1px solid #e2e8f0',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#ffffff',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                                cursor: storyPage === 1 ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: storyPage === 1 ? 0.3 : 1,
-                                transition: 'opacity 0.2s ease'
-                            }}
-                        >
-                            <ChevronLeft size={18} />
-                        </button>
-
-                        <div className="stories-cards-row">
-                            {paginatedStories.map((story) => (
-                                <div key={story.id} className="story-single-card">
-                                    <div className="story-card-top">
+                    {/* Vertical Stack of Story Cards */}
+                    <div className="stories-vertical-list">
+                        {paginatedStories.map((story) => (
+                            <div key={story.id} className="story-card-item">
+                                <div className="story-card-header-row">
+                                    <div className="story-student-profile">
                                         <img
                                             src={story.avatar}
                                             alt={story.name}
-                                            className="story-student-avatar"
-                                            style={{ objectFit: 'cover' }}
+                                            className="story-avatar-img"
                                         />
-                                        <span
-                                            className="story-company-tag"
-                                            style={{
-                                                backgroundColor: story.companyColor,
-                                                color: story.companyTextColor
-                                            }}
-                                        >
-                                            {story.company}
-                                        </span>
+                                        <div className="story-student-meta">
+                                            <div className="name-company-row">
+                                                <h4 className="story-student-fullname">{story.name}</h4>
+                                                <span
+                                                    className="story-company-pill"
+                                                    style={{
+                                                        backgroundColor: story.companyColor || '#f3e8ff',
+                                                        color: story.companyTextColor || '#8b5cf6'
+                                                    }}
+                                                >
+                                                    {story.company}
+                                                </span>
+                                            </div>
+                                            <span
+                                                className="story-role-title"
+                                                style={{ color: story.companyTextColor || '#8b5cf6' }}
+                                            >
+                                                {story.role}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="story-card-body">
-                                        <h4 className="story-student-name">{story.name}</h4>
-                                        <p className="story-student-role" style={{ color: story.companyTextColor, margin: '2px 0 0 0', fontWeight: '700', fontSize: '0.8rem' }}>
-                                            {story.role}
-                                        </p>
-                                        <p className="story-role-desc" style={{ marginTop: '8px', lineHeight: '1.4', fontSize: '0.75rem', color: '#64748b' }}>
-                                            "{story.storyText || `Secured a ${story.role} role at ${story.company}.`}"
-                                        </p>
-                                        <span className="story-package-tag">{story.packageAmt}</span>
-                                        <span className="story-publish-date-inline">
-                                            <Calendar size={12} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
-                                            Published on {story.date}
-                                        </span>
-                                    </div>
-                                    <div className="story-card-footer">
-                                        <button className="story-action-btn edit">Edit</button>
-                                        <button className="story-action-btn delete">Delete</button>
-                                    </div>
+                                    <span className="story-package-badge">{story.packageAmt}</span>
                                 </div>
-                            ))}
-                        </div>
 
-                        {/* Carousel Right navigation trigger arrow */}
+                                <div className="story-quote-card">
+                                    "{story.storyText || `Secured a ${story.role} role at ${story.company}.`}"
+                                </div>
+
+                                <div className="story-card-footer-row">
+                                    <span className="story-publish-date">
+                                        <Calendar size={13} /> Published on {story.date}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Bottom Pagination Control */}
+                    <div className="stories-pagination-footer">
                         <button
-                            className="action-icon-btn"
-                            onClick={() => setStoryPage(prev => Math.min(prev + 1, totalStoryPages))}
-                            disabled={storyPage === totalStoryPages}
-                            style={{
-                                border: '1px solid #e2e8f0',
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '50%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#ffffff',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                                cursor: storyPage === totalStoryPages ? 'not-allowed' : 'pointer',
-                                padding: 0,
-                                opacity: storyPage === totalStoryPages ? 0.3 : 1,
-                                transition: 'opacity 0.2s ease'
-                            }}
+                            className="stories-nav-btn"
+                            onClick={() => setStoryPage(prev => Math.max(prev - 1, 1))}
+                            disabled={storyPage === 1}
                         >
-                            <ChevronRight size={18} />
+                            &larr; Prev
+                        </button>
+
+                        <span className="stories-page-info">
+                            Page {storyPage} of {totalStoryPages || 1}
+                        </span>
+
+                        <button
+                            className="stories-nav-btn"
+                            onClick={() => setStoryPage(prev => Math.min(prev + 1, totalStoryPages))}
+                            disabled={storyPage === totalStoryPages || totalStoryPages === 0}
+                        >
+                            Next &rarr;
                         </button>
                     </div>
                 </div>
 
             </div>
 
-            {/* Modal rendering */}
+            {/* Add / Edit Placement Drive Modal */}
             {isDriveModalOpen && (
                 <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
-                    <div className="qs-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="qs-modal-header">
-                            <h4>{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
+                            <div>
+                                <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
+                                <p className="modal-subtitle">Configure schedule, venue, and target students for this placement drive.</p>
+                            </div>
                             <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
-                                <X size={20} />
+                                <X size={18} />
                             </button>
                         </div>
                         <form onSubmit={handleSaveDrive} className="qs-modal-form">
                             <div className="qs-form-grid">
                                 <div className="qs-form-group">
-                                    <label>Company Name *</label>
+                                    <label className="form-label">Company Name *</label>
                                     <input
                                         type="text"
                                         required
@@ -899,7 +911,7 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Job Role *</label>
+                                    <label className="form-label">Job Role *</label>
                                     <input
                                         type="text"
                                         required
@@ -910,7 +922,7 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Location *</label>
+                                    <label className="form-label">Location *</label>
                                     <input
                                         type="text"
                                         required
@@ -921,7 +933,7 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Date *</label>
+                                    <label className="form-label">Date *</label>
                                     <input
                                         type="text"
                                         required
@@ -932,7 +944,7 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Time *</label>
+                                    <label className="form-label">Time *</label>
                                     <input
                                         type="text"
                                         required
@@ -943,18 +955,18 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Venue *</label>
+                                    <label className="form-label">Venue *</label>
                                     <input
                                         type="text"
                                         required
                                         className="form-input-control"
                                         value={driveForm.venue}
                                         onChange={(e) => setDriveForm({ ...driveForm, venue: e.target.value })}
-                                        placeholder="e.g. Seminar Hall A"
+                                        placeholder="Seminar Hall A"
                                     />
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Status *</label>
+                                    <label className="form-label">Status *</label>
                                     <select
                                         className="form-input-control"
                                         value={driveForm.status}
@@ -966,37 +978,181 @@ export default function QueriesStories() {
                                     </select>
                                 </div>
                                 <div className="qs-form-group">
-                                    <label>Target Student Email (Leave as 'All' for everyone)</label>
+                                    <label className="form-label">Target Student *</label>
                                     <select
                                         className="form-input-control"
                                         value={driveForm.targetStudent}
                                         onChange={(e) => setDriveForm({ ...driveForm, targetStudent: e.target.value })}
                                     >
-                                        <option value="All">All Students</option>
+                                        <option value="All Students (Selected for Everyone)">All Students (Selected for Everyone)</option>
                                         <option value="student@portal.edu">student@portal.edu (Default Student)</option>
                                         <option value="priya@college.edu.in">priya@college.edu.in (Priya Sharma)</option>
                                         <option value="rahul@college.edu.in">rahul@college.edu.in (Rahul Patil)</option>
                                         <option value="sneha@college.edu.in">sneha@college.edu.in (Sneha Jadhav)</option>
-                                        {/* Dynamic profiles */}
-                                        {(() => {
-                                            try {
-                                                const profiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                                                return profiles.map(p => (
-                                                    <option key={p.email} value={p.email}>{p.email} ({p.fullName})</option>
-                                                ));
-                                            } catch (err) {
-                                                return null;
-                                            }
-                                        })()}
                                     </select>
+                                </div>
+                                <div className="qs-form-group full-width">
+                                    <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
+                                    <input
+                                        type="text"
+                                        className="form-input-control"
+                                        value={driveForm.customTarget || ''}
+                                        onChange={(e) => setDriveForm({ ...driveForm, customTarget: e.target.value })}
+                                        placeholder="e.g. Sneha Jadhav (BCA)"
+                                    />
                                 </div>
                             </div>
                             <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                                 <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary-purple">
-                                    {editingDrive ? "Update Drive" : "Add Drive"}
+                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                    <Plus size={16} /> {editingDrive ? "Update Drive" : "Add Drive"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Placement Drive Confirmation Modal */}
+            {deletingDrive && (
+                <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
+                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon-bg">
+                            <Trash2 size={22} />
+                        </div>
+                        <h4 className="delete-modal-title">Delete Placement Drive</h4>
+                        <p className="delete-modal-desc">
+                            Are you sure you want to delete the drive for <strong>{deletingDrive.company}</strong>? This action cannot be undone.
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button type="button" className="btn-delete-cancel" onClick={() => setDeletingDrive(null)}>
+                                Cancel
+                            </button>
+                            <button type="button" className="btn-delete-confirm" onClick={confirmDeleteDrive}>
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* View Student Query Details Modal */}
+            {viewingQuery && (
+                <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
+                    <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="qs-modal-header">
+                            <div>
+                                <h4 className="modal-title">Student Query Details</h4>
+                                <p className="modal-subtitle">Submitted by {viewingQuery.name}</p>
+                            </div>
+                            <button className="qs-close-btn" onClick={() => setViewingQuery(null)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="query-modal-body">
+                            <div className="modal-user-profile-row">
+                                <div className="query-user-profile">
+                                    <div
+                                        className="query-avatar-circle"
+                                        style={{
+                                            backgroundColor:
+                                                viewingQuery.colorClass === 'blue' ? '#dbeafe' :
+                                                    viewingQuery.colorClass === 'purple' ? '#e9d5ff' :
+                                                        viewingQuery.colorClass === 'green' ? '#a7f3d0' :
+                                                            viewingQuery.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
+                                            color:
+                                                viewingQuery.colorClass === 'blue' ? '#1e40af' :
+                                                    viewingQuery.colorClass === 'purple' ? '#581c87' :
+                                                        viewingQuery.colorClass === 'green' ? '#047857' :
+                                                            viewingQuery.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                        }}
+                                    >
+                                        {viewingQuery.avatar}
+                                    </div>
+                                    <div className="query-user-info">
+                                        <span className="query-username">{viewingQuery.name}</span>
+                                        <span className="query-userdept">{viewingQuery.course}</span>
+                                    </div>
+                                </div>
+                                <span className={`query-status-tag status-${viewingQuery.status}`}>
+                                    {viewingQuery.status}
+                                </span>
+                            </div>
+
+                            <div className="modal-field-section">
+                                <span className="modal-field-label">SUBJECT</span>
+                                <h4 className="modal-subject-title">{viewingQuery.title}</h4>
+                            </div>
+
+                            <div className="modal-field-section">
+                                <span className="modal-field-label">QUERY DESCRIPTION</span>
+                                <div className="modal-description-box">
+                                    {viewingQuery.message}
+                                </div>
+                            </div>
+
+                            <div className="modal-date-row">
+                                <Calendar size={13} style={{ marginRight: '6px' }} />
+                                <span>Submitted on {viewingQuery.date}</span>
+                            </div>
+
+                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                                <button className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reply to Query Modal */}
+            {replyingQuery && (
+                <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
+                    <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="qs-modal-header">
+                            <div>
+                                <h4 className="modal-title">Reply to Query</h4>
+                                <p className="modal-subtitle">Replying to {replyingQuery.name}</p>
+                            </div>
+                            <button className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendReply} className="query-modal-body">
+                            <div className="modal-field-section">
+                                <span className="modal-field-label">STUDENT'S QUERY</span>
+                                <div className="modal-description-box">
+                                    <h5 className="reply-preview-title">{replyingQuery.title}</h5>
+                                    <p className="reply-preview-text">{replyingQuery.message}</p>
+                                </div>
+                            </div>
+
+                            <div className="modal-field-section">
+                                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
+                                    Admin Response Message *
+                                </label>
+                                <textarea
+                                    className="form-textarea-control"
+                                    rows={4}
+                                    placeholder="Type your official response to the student here..."
+                                    value={replyText}
+                                    onChange={(e) => setReplyText(e.target.value)}
+                                    required
+                                    style={{ marginTop: '6px', width: '100%', boxSizing: 'border-box' }}
+                                ></textarea>
+                            </div>
+
+                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                                <button type="button" className="qs-cancel-btn" onClick={() => setReplyingQuery(null)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                    Send Reply
                                 </button>
                             </div>
                         </form>

@@ -33,6 +33,7 @@ import {
     Plus
 } from "lucide-react";
 import "./StudentDashboard.css";
+import StudHub from "./StudHub";
 
 // Default fallback mock data for Placement Drives
 const initialDrives = [
@@ -156,6 +157,42 @@ const initialStories = [
     }
 ];
 
+// Default fallback mock data for Student Queries & Responses
+const initialStudentQueries = [
+    {
+        id: 101,
+        title: 'Resume not uploading',
+        message: 'I tried uploading my resume PDF but it throws an error.',
+        status: 'resolved',
+        reply: 'Please clear your browser cache and upload a PDF under 5MB. Contact support if it persists.',
+        date: '20 Jul 2026'
+    },
+    {
+        id: 102,
+        title: 'Profile strength calculation',
+        message: 'How is the profile strength percentage calculated?',
+        status: 'resolved',
+        reply: 'Profile strength score increases as you fill in your academic details, skills, and upload a verified resume.',
+        date: '18 Jul 2026'
+    },
+    {
+        id: 103,
+        title: 'TCS Drive Eligibility Requirements',
+        message: 'Am I eligible for TCS drive with 65% aggregate?',
+        status: 'resolved',
+        reply: 'TCS requires a minimum of 60% across 10th, 12th, and Graduation with no active backlogs.',
+        date: '15 Jul 2026'
+    },
+    {
+        id: 104,
+        title: 'Interview slot rescheduling request',
+        message: 'Can I reschedule my interview slot for Infosys drive?',
+        status: 'resolved',
+        reply: 'Slot rescheduling requests are approved by placement officers on a case-by-case basis.',
+        date: '12 Jul 2026'
+    }
+];
+
 export default function
     StudentDashboard({ onNavigate }) {
     // Retrieve the logged-in student's details from localStorage
@@ -169,6 +206,7 @@ export default function
     };
 
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'studhub'
+    const [showDriveDetails, setShowDriveDetails] = useState(false);
 
     // Sync states from localStorage (with mock fallbacks)
     const [drives, setDrives] = useState(() => {
@@ -217,24 +255,9 @@ export default function
     activeDrives.sort((a, b) => getParsedDate(a.date) - getParsedDate(b.date));
     const nextEvent = activeDrives[0];
 
-    const [stories, setStories] = useState(() => {
-        const stored = localStorage.getItem("placement_stories");
-        return stored ? JSON.parse(stored) : initialStories;
-    });
 
-    const [queries, setQueries] = useState(() => {
-        const stored = localStorage.getItem("student_queries");
-        return stored ? JSON.parse(stored) : [];
-    });
 
-    // Write back student queries when updated locally
-    useEffect(() => {
-        localStorage.setItem("student_queries", JSON.stringify(queries));
-    }, [queries]);
 
-    // Student Query Form states
-    const [querySubject, setQuerySubject] = useState("");
-    const [queryMessage, setQueryMessage] = useState("");
 
     //Component state
     const [selectedJob, setSelectedJob] =
@@ -766,13 +789,15 @@ export default function
                         className={`student-nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                         onClick={() => setActiveTab('dashboard')}
                     >
-                        Dashboard
+                        <span>Dashboard</span>
+                        {activeTab === 'dashboard' && <span className="tab-underline" />}
                     </button>
                     <button
                         className={`student-nav-tab ${activeTab === 'studhub' ? 'active' : ''}`}
                         onClick={() => setActiveTab('studhub')}
                     >
-                        Stud Hub
+                        <span>Stud Hub</span>
+                        {activeTab === 'studhub' && <span className="tab-underline" />}
                     </button>
                 </div>
 
@@ -1051,196 +1076,7 @@ export default function
             )}
 
             {/* Stud Hub page */}
-            {activeTab === 'studhub' && (
-            <div className="studhub-container">
-
-                {/* Stud Hub Welcome Banner */}
-                <div className="studhub-banner">
-                    <div className="studhub-banner-text">
-                        <h2>Stud Hub <span>🚀</span></h2>
-                        <p>Stay updated with placement stories, upcoming campus drives, and raise your queries — all in one place.</p>
-                    </div>
-                    <div className="welcome-date-badge">
-                        <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    </div>
-                </div>
-
-                {/* Two-column layout */}
-                <div className="studhub-grid">
-
-                    {/* left column */}
-                    <div className="studhub-left">
-
-                        {/* 1. Placement Success Stories */}
-                        <div className="sh-panel">
-                            <div className="sh-panel-header">
-                                <div className="sh-panel-title-group">
-                                    <Award size={18} className="sh-panel-icon" />
-                                    <h3 className="sh-panel-title">Placement Success Stories</h3>
-                                </div>
-                                <span className="sh-count-badge">{stories.length} Stories</span>
-                            </div>
-
-                            {stories.length === 0 ? (
-                                <div className="sh-empty-state">
-                                    <Award size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
-                                    <p>No placement stories published yet.</p>
-                                    <span>Check back soon!</span>
-                                </div>
-                            ) : (
-                                <div className="sh-stories-list">
-                                    {stories.map((story) => (
-                                        <div key={story.id} className="sh-story-card">
-                                            <div className="sh-story-top">
-                                                <img
-                                                    src={story.avatar}
-                                                    alt={story.name}
-                                                    className="sh-story-avatar"
-                                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                                />
-                                                <div className="sh-story-info">
-                                                    <h4 className="sh-story-name">{story.name}</h4>
-                                                    <span
-                                                        className="sh-company-badge"
-                                                        style={{ backgroundColor: story.companyColor || '#eff6ff', color: story.companyTextColor || '#2563eb' }}
-                                                    >
-                                                        {story.company}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="sh-story-body">
-                                                <p className="sh-role-line" style={{ color: story.companyTextColor || '#2563eb' }}>
-                                                    {story.role}
-                                                </p>
-                                                <p className="sh-story-quote">
-                                                    &ldquo;{story.storyText || `Secured a ${story.role} role at ${story.company}.`}&rdquo;
-                                                </p>
-                                                <div className="sh-story-footer">
-                                                    <span className="sh-package-tag">💰 {story.packageAmt || 'Not Disclosed'}</span>
-                                                    <span className="sh-date-tag">📅 {story.date}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 2. Raise a Query */}
-                        <div className="sh-panel sh-query-panel">
-                            <div className="sh-panel-header">
-                                <div className="sh-panel-title-group">
-                                    <MessageSquare size={18} className="sh-panel-icon" />
-                                    <h3 className="sh-panel-title">Raise a Query</h3>
-                                </div>
-                            </div>
-                            <p className="sh-panel-subtitle">Have a question? Submit it below and our admin team will respond shortly.</p>
-
-                            <form onSubmit={handleRaiseQuery} className="sh-query-form">
-                                <div className="sh-form-group">
-                                    <label className="sh-form-label">Query Subject <span style={{ color: '#ef4444' }}>*</span></label>
-                                    <input
-                                        type="text"
-                                        className="sh-form-input"
-                                        placeholder="e.g. TCS Drive Eligibility, Resume Upload Issue"
-                                        value={querySubject}
-                                        onChange={(e) => setQuerySubject(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="sh-form-group">
-                                    <label className="sh-form-label">Description <span style={{ color: '#ef4444' }}>*</span></label>
-                                    <textarea
-                                        className="sh-form-textarea"
-                                        placeholder="Describe your query in detail..."
-                                        rows={4}
-                                        value={queryMessage}
-                                        onChange={(e) => setQueryMessage(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <button type="submit" className="sh-submit-btn">
-                                    <Plus size={16} />
-                                    Submit Query
-                                </button>
-                            </form>
-                        </div>
-
-                    </div>
-
-                    {/* right column */}
-                    <div className="studhub-right">
-
-                        {/* 3. Campus Placement Events (Next Campus Event) */}
-                        <div className="sh-panel campus-event-panel">
-                            <h3 className="event-panel-title">Next Campus Event</h3>
-                            
-                            {!nextEvent ? (
-                                <div className="sh-empty-state">
-                                    <Briefcase size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
-                                    <p>No upcoming campus events scheduled for you.</p>
-                                    <span>Check back soon!</span>
-                                </div>
-                            ) : (
-                                <div className="next-event-card">
-                                    <div className="event-card-header-row">
-                                        <div className="event-icon-box">
-                                            <Calendar className="event-purple-icon" size={20} />
-                                        </div>
-                                        <h2 className="event-company-title">{nextEvent.company} Drive</h2>
-                                    </div>
-                                    
-                                    <div className="event-details-list">
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Calendar size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Date</span>
-                                                <span className="detail-value">
-                                                    {nextEvent.date} {isEventTomorrow(nextEvent.date) ? "(Tomorrow)" : ""}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Clock size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Time</span>
-                                                <span className="detail-value">{nextEvent.time || "10:00 AM"} Onwards</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <MapPin size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Location</span>
-                                                <span className="detail-value">{nextEvent.location || "Main Campus"}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Building size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Venue</span>
-                                                <span className="detail-value">{nextEvent.venue || "Seminar Hall A"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-            )}
+            {activeTab === 'studhub' && <StudHub />}
 
             {/* Job Requirements Modal Popup Overlay */}
             {selectedJob && (() => {
