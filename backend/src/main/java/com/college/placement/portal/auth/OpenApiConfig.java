@@ -23,6 +23,10 @@ import org.springframework.context.annotation.Configuration;
                 @Server(
                         url = "https://tinsmith-clamp-oversight.ngrok-free.dev",
                         description = "ngrok HTTPS server"
+                ),
+                @Server(
+                        url = "https://campus-hire.duckdns.org/api",
+                        description = "Production Server"
                 )
         },
         security = @SecurityRequirement(name = "bearerAuth")

@@ -23,8 +23,9 @@ public class CorsConfig {
                 "http://localhost:4200",
                 "https://*.ngrok-free.app",
                 "https://*.ngrok-free.dev",
-                "http://43.205.227.246:*",
-                "https://43.205.227.246:*"
+                "https://campus-hire.duckdns.org",
+                "http://43.205.227.246:5137",
+                "https://43.205.227.246:5137"
         ));
 
         config.setAllowedMethods(
@@ -32,7 +33,7 @@ public class CorsConfig {
         );
 
         config.setAllowedHeaders(List.of("*"));
-
+        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
 
