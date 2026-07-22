@@ -668,142 +668,163 @@
     color: #4f46e5;
 }
 
-.stories-cards-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+/* Published Placement Stories Vertical Layout */
+.placement-stories-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.stories-vertical-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    margin-top: 16px;
     flex: 1;
 }
 
-@media (max-width: 1400px) {
-    .stories-cards-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-.story-single-card {
-    border: 1px solid #cbd5e1;
-    border-radius: 12px;
-    padding: 16px;
+.story-card-item {
+    border: 1px solid #f1f5f9;
+    border-radius: 16px;
+    padding: 20px;
     background-color: #ffffff;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 14px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
     transition: all 0.2s ease;
 }
 
-.story-single-card:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.02);
+.story-card-item:hover {
+    border-color: #e2e8f0;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.04);
 }
 
-.story-card-top {
+.story-card-header-row {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
 }
 
-.story-student-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background-color: #f3e8ff;
-    color: #8b5cf6;
-    font-weight: 700;
-    font-size: 0.85rem;
+.story-student-profile {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
 }
 
-.story-company-tag {
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 99px;
-    background-color: #f1f5f9;
-    color: #475569;
+.story-avatar-img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
 }
 
-.story-card-body {
+.story-student-meta {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    margin-bottom: 16px;
+    gap: 2px;
 }
 
-.story-student-name {
-    font-size: 0.9rem;
+.name-company-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.story-student-fullname {
+    font-size: 0.95rem;
     font-weight: 700;
     color: #0f172a;
     margin: 0;
 }
 
-.story-student-role {
-    font-size: 0.78rem;
-    color: #8b5cf6;
-    font-weight: 600;
-    margin: 0;
-}
-
-.story-role-desc {
-    font-size: 0.75rem;
-    color: #64748b;
-}
-
-.story-package-tag {
+.story-company-pill {
     font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    display: inline-block;
+}
+
+.story-role-title {
+    font-size: 0.82rem;
     font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 6px;
+}
+
+.story-package-badge {
     background-color: #fffbeb;
     color: #d97706;
-    align-self: flex-start;
-    margin-top: 6px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 8px;
 }
 
-.story-card-footer {
+.story-quote-card {
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 0.82rem;
+    font-style: italic;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.story-card-footer-row {
     display: flex;
-    border-top: 1px solid #f1f5f9;
-    margin: 14px -16px -16px -16px;
+    align-items: center;
 }
 
-.story-publish-date-inline {
-    font-size: 0.72rem;
+.story-publish-date {
+    font-size: 0.78rem;
     color: #94a3b8;
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 10px;
+    gap: 6px;
+}
+
+/* Pagination Row at Bottom of Placement Stories */
+.stories-pagination-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 16px;
+}
+
+.stories-nav-btn {
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #1e293b;
+    font-size: 0.85rem;
     font-weight: 600;
-}
-
-.story-action-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    padding: 10px 0;
-    font-size: 0.78rem;
-    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
     cursor: pointer;
-    text-align: center;
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.story-action-btn.edit {
-    color: #2563eb;
-    border-bottom-left-radius: 12px;
-}
-
-.story-action-btn.delete {
-    color: #ef4444;
-    border-left: 1px solid #f1f5f9;
-    border-bottom-right-radius: 12px;
-}
-
-.story-action-btn:hover {
+.stories-nav-btn:hover:not(:disabled) {
     background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.stories-nav-btn:disabled {
+    opacity: 0.5;
+    background-color: #f8fafc;
+    border-color: transparent;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.stories-page-info {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
 }
 
 .empty-state-text {
@@ -1006,4 +1027,171 @@
     padding-top: 16px;
     border-top: 1px solid #f1f5f9;
     margin-top: 12px;
+}
+
+/* Student Query View & Reply Modals */
+.view-query-modal,
+.reply-query-modal {
+    max-width: 520px;
+    width: 90%;
+    border-radius: 16px;
+    padding: 24px 28px;
+    background: #ffffff;
+}
+
+.modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 2px 0;
+}
+
+.modal-subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.modal-user-profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-field-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.modal-field-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.modal-subject-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.modal-description-box {
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.reply-preview-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+
+.reply-preview-text {
+    font-size: 0.82rem;
+    color: #475569;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.modal-date-row {
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 12px;
+}
+
+/* Delete Placement Drive Confirmation Modal */
+.qs-delete-modal-content {
+    background: #ffffff;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    position: relative;
+    animation: modalScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.delete-modal-icon-bg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #fee2e2;
+    color: #ef4444;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px auto;
+}
+
+.delete-modal-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+}
+
+.delete-modal-desc {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+}
+
+.delete-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.btn-delete-cancel {
+    flex: 1;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-cancel:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.btn-delete-confirm {
+    flex: 1;
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background-color: #ef4444;
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-delete-confirm:hover {
+    background-color: #dc2626;
 }

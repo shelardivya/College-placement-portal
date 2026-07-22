@@ -910,46 +910,40 @@ function AdminDashboard({ onNavigate }) {
                     <section className='stats-grid'>
                         <div className='stat-card'>
                             <div className='stat-icon-wrapper blue-icon'>
-                                <FileText size={22} />
+                                <FileText size={20} />
                             </div>
-
                             <div className='stat-details'>
                                 <span className='stat-label'>Active Posting</span>
-
                                 <h3 className='stat-value'>{jobs.length}</h3>
-                                <span className='stat-trend green-trend'>↑ 12%
-                                    <span className='trend-subtext'>from last month</span>
+                                <span className='stat-trend green-trend'>
+                                    ↑ 12% <span className='trend-subtext'>from last month</span>
                                 </span>
-
                             </div>
                         </div>
 
                         <div className='stat-card'>
                             <div className='stat-icon-wrapper green-icon'>
-                                <Users size={22} />
+                                <Users size={20} />
                             </div>
-
                             <div className='stat-details'>
                                 <span className='stat-label'>Total Students</span>
                                 <h3 className='stat-value'>500</h3>
-                                <span className='stat-trend green-trend'>↑ 8%
-                                    <span className='trend-subtext'>from last month</span></span>
-
+                                <span className='stat-trend green-trend'>
+                                    ↑ 8% <span className='trend-subtext'>from last month</span>
+                                </span>
                             </div>
                         </div>
 
                         <div className='stat-card'>
                             <div className='stat-icon-wrapper purple-icon'>
-                                < Briefcase size={22} />
+                                <Briefcase size={20} />
                             </div>
-
                             <div className='stat-details'>
-                                <span className='stat-label'>Resume Received </span>
+                                <span className='stat-label'>Resume Received</span>
                                 <h3 className='stat-value'>120</h3>
-
-                                <span className='stat-trend green-trend'>↑ 15%
-                                    <span className='trend-subtext'>from last month</span></span>
-
+                                <span className='stat-trend green-trend'>
+                                    ↑ 15% <span className='trend-subtext'>from last month</span>
+                                </span>
                             </div>
                         </div>
                     </section>

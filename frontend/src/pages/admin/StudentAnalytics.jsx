@@ -4,7 +4,12 @@ import {
     TrendingUp,
     Trophy,
     Wallet,
-    Coffee
+    Coffee,
+    Search,
+    Plus,
+    X,
+    ChevronDown,
+    Check
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -107,23 +112,23 @@ export default function StudentAnalytics() {
     ];
 
     //Top Placed Students data from image
-    const topStudentsData = [
+    const initialTopStudentsData = [
         {
-            rank: 1, name: 'Priya Sharma', initials: 'PS', cgpa: '9.4',
+            rank: 1, name: 'Priya Sharma', initials: 'PS', branch: 'CS', passingYear: '2026', cgpa: '9.4',
             lpa: '28', skill: 'Full Stack', skillColor: '#f3e8ff',
             skillTextColor: '#a855f7', company: 'Amazon',
             companyColor: '#c2410c'
         },
 
         {
-            rank: 2, name: 'Rahul Desai', initials: 'RD',
+            rank: 2, name: 'Rahul Desai', initials: 'RD', branch: 'IT', passingYear: '2025',
             cgpa: '9.1', lpa: '22', skill: 'Data Science',
             skillColor: '#dbeafe', skillTextColor: '#2563eb',
             company: 'Microsoft', companyColor: '#4f5e7b'
         },
 
         {
-            rank: 3, name: 'Sneha Kulkarni', initials: 'SK',
+            rank: 3, name: 'Sneha Kulkarni', initials: 'SK', branch: 'BCA', passingYear: '2026',
             cgpa: '8.8', lpa: '18', skill: 'Backend',
             skillColor: '#dcfce7',
             skillTextColor: '#16a34a', company: 'Apple',
@@ -131,47 +136,110 @@ export default function StudentAnalytics() {
         },
 
         {
-            rank: 4, name: 'Aarav Mehta', initials: 'AM',
+            rank: 4, name: 'Aarav Mehta', initials: 'AM', branch: 'CS', passingYear: '2025',
             cgpa: '8.5', lpa: '14', skill: 'Cooking',
             skillColor: '#ecfeff', skillTextColor: '#0891b2',
             company: 'Suresh Tea House', companyColor: '#475569'
         },
 
         {
-            rank: 5, name: 'Diya Jadav', initials: 'DJ',
+            rank: 5, name: 'Diya Jadav', initials: 'DJ', branch: 'IT', passingYear: '2026',
             cgpa: '8.4', lpa: '12', skill: 'React Native',
             skillColor: '#f3e8ff', skillTextColor: '#a855f7',
             company: 'Microsoft', companyColor: '#4f5e7b'
         },
 
         {
-            rank: 6, name: 'Harsh Patil', initials: 'HP',
+            rank: 6, name: 'Harsh Patil', initials: 'HP', branch: 'CS', passingYear: '2025',
             cgpa: '8.2', lpa: '10', skill: 'Backend',
             skillColor: '#dcfce7', skillTextColor: '#16a34a',
             company: 'Amazon', companyColor: '#c2410c'
         },
 
         {
-            rank: 7, name: 'Neha Shah', initials: 'NS',
+            rank: 7, name: 'Neha Shah', initials: 'NS', branch: 'IT', passingYear: '2026',
             cgpa: '8.0', lpa: '8', skill: 'Data Science',
             skillColor: '#dbeafe', skillTextColor: '#2563eb',
             company: 'Apple', companyColor: '#1e293b'
         },
 
         {
-            rank: 8, name: 'Karan Malhotra', initials: 'KM',
+            rank: 8, name: 'Karan Malhotra', initials: 'KM', branch: 'BCA', passingYear: '2025',
             cgpa: '7.8', lpa: '7', skill: 'Cloud',
             skillColor: '#ecfeff', skillTextColor: '#0891b2',
             company: 'Suresh Tea House', companyColor: '#475569'
         },
     ];
 
+    const [studentsList, setStudentsList] = useState(initialTopStudentsData);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
 
-    const filteredStudents = topStudentsData.filter(student =>
+    const [formData, setFormData] = useState({
+        name: '',
+        branch: 'CS',
+        passingYear: '2026',
+        cgpa: '',
+        lpa: '',
+        skill: '',
+        company: ''
+    });
+
+    const handleAddStudent = (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.cgpa || !formData.lpa || !formData.company) return;
+
+        const nameParts = formData.name.trim().split(' ');
+        let initials = 'ST';
+        if (nameParts.length >= 2) {
+            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+        } else if (nameParts[0]) {
+            initials = nameParts[0].substring(0, 2).toUpperCase();
+        }
+
+        const newStudent = {
+            rank: studentsList.length + 1,
+            name: formData.name,
+            initials: initials,
+            branch: formData.branch || 'CS',
+            passingYear: formData.passingYear || '2026',
+            cgpa: formData.cgpa,
+            lpa: formData.lpa,
+            skill: formData.skill || 'Full Stack',
+            skillColor: '#f3e8ff',
+            skillTextColor: '#a855f7',
+            company: formData.company,
+            companyColor: '#2563eb'
+        };
+
+        setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
+        setIsModalOpen(false);
+        setFormData({
+            name: '',
+            branch: 'CS',
+            passingYear: '2026',
+            cgpa: '',
+            lpa: '',
+            skill: '',
+            company: ''
+        });
+
+        setToastMessage('Student added to leaderboard successfully!');
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+        }, 4000);
+    };
+
+    const filteredStudents = studentsList.filter(student =>
         student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.skill.toLowerCase().includes(searchQuery.toLowerCase())
+        student.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (student.branch && student.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (student.passingYear && student.passingYear.toString().includes(searchQuery))
     );
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -430,14 +498,43 @@ export default function StudentAnalytics() {
                         <h3 className="table-card-title">Top Placed Students</h3>
                         <span className="table-title-badge">Leaderboard</span>
                     </div>
-                    <div className="table-search-wrapper">
-                        <input
-                            type="text"
-                            placeholder="Search student..."
-                            className="table-search-input"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="table-header-actions">
+                        {!isSearchOpen ? (
+                            <button
+                                className="table-search-toggle-btn"
+                                onClick={() => setIsSearchOpen(true)}
+                                title="Search"
+                            >
+                                <Search size={18} />
+                            </button>
+                        ) : (
+                            <div className="table-search-expanded">
+                                <Search size={16} className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search student..."
+                                    className="table-search-input-expanded"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    autoFocus
+                                />
+                                <button
+                                    className="search-clear-btn"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setIsSearchOpen(false);
+                                    }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        )}
+                        <button
+                            className="add-student-btn"
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            <Plus size={16} /> Add Top Placed Student
+                        </button>
                     </div>
                 </div>
 
@@ -447,6 +544,8 @@ export default function StudentAnalytics() {
                             <tr>
                                 <th>#</th>
                                 <th>STUDENT NAME</th>
+                                <th>BRANCH</th>
+                                <th>PASSING YEAR</th>
                                 <th>CGPA</th>
                                 <th>LPA</th>
                                 <th>SKILLS</th>
@@ -466,6 +565,12 @@ export default function StudentAnalytics() {
                                             <div className="student-avatar">{student.initials}</div>
                                             <span className="student-name">{student.name}</span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span className="branch-pill">{student.branch}</span>
+                                    </td>
+                                    <td>
+                                        <span className="year-pill">{student.passingYear}</span>
                                     </td>
                                     <td>
                                         <span className="cgpa-text">{student.cgpa}</span>
@@ -490,7 +595,7 @@ export default function StudentAnalytics() {
                                             {COMPANY_LOGOS[student.company] || <Coffee size={16} color="#86efac" style={{ marginRight: '8px', fill: '#86efac', flexShrink: 0 }} />}
                                             <span
                                                 className="company-text"
-                                                style={{ color: student.companyColor }}
+                                                style={{ color: student.companyColor || '#1e293b' }}
                                             >
                                                 {student.company}
                                             </span>
@@ -532,6 +637,158 @@ export default function StudentAnalytics() {
                     )}
                 </div>
             </div>
+
+            {/* Add Top Placed Student Modal */}
+            {isModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3 className="modal-title">Add Top Placed Student</h3>
+                                <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddStudent} className="modal-form">
+                            <div className="form-group">
+                                <label className="form-label">Student Full Name *</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. Priya Sharma"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Branch *</label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            className="form-select"
+                                            value={formData.branch}
+                                            onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                                            required
+                                        >
+                                            <option value="CS">CS</option>
+                                            <option value="IT">IT</option>
+                                            <option value="BCA">BCA</option>
+                                            <option value="MCA">MCA</option>
+                                            <option value="ECE">ECE</option>
+                                            <option value="ME">ME</option>
+                                            <option value="Civil">Civil</option>
+                                        </select>
+                                        <ChevronDown size={16} className="select-chevron" />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Passing Year *</label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            className="form-select"
+                                            value={formData.passingYear}
+                                            onChange={(e) => setFormData({ ...formData, passingYear: e.target.value })}
+                                            required
+                                        >
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                            <option value="2027">2027</option>
+                                        </select>
+                                        <ChevronDown size={16} className="select-chevron" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">CGPA (out of 10) *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. 9.4"
+                                        value={formData.cgpa}
+                                        onChange={(e) => setFormData({ ...formData, cgpa: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Package (LPA) *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. 28"
+                                        value={formData.lpa}
+                                        onChange={(e) => setFormData({ ...formData, lpa: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Primary Skill</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Full Stack, Data Science, Back..."
+                                        value={formData.skill}
+                                        onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">Company Name *</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Amazon, Microsoft, Apple"
+                                        value={formData.company}
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    className="btn-cancel"
+                                    onClick={() => setIsModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-submit"
+                                >
+                                    <Plus size={16} /> Add to Leaderboard
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Toast */}
+            {showToast && (
+                <div className="toast-notification">
+                    <div className="toast-icon-bg">
+                        <Check size={16} />
+                    </div>
+                    <span className="toast-text">{toastMessage}</span>
+                    <button className="toast-close-btn" onClick={() => setShowToast(false)}>
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
 
         </div>
     );
