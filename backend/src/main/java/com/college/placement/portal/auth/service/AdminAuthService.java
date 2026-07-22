@@ -21,7 +21,7 @@ public class AdminAuthService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private RegisterJWT registerJWT;   // ✅ ADD THIS
+    private RegisterJWT registerJWT;
 
     public Map<String, String> adminLogin(AdminFirstLoginRequest request) {
 
@@ -31,12 +31,15 @@ public class AdminAuthService {
         if (admin.getRole() == null || admin.getRole() != Role.ADMIN) {
             throw new IllegalArgumentException("Not an admin account");
         }
+
+        // ✅ Password & Confirm Password must match (First Login + Normal Login)
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("Password and Confirm Password do not match");
+        }
+
         // 🔴 FIRST TIME LOGIN
         if (admin.getPassword() == null) {
 
-            if (!request.getPassword().equals(request.getConfirmPassword())) {
-                throw new IllegalArgumentException("Password and Confirm Password do not match");
-            }
             admin.setRole(Role.ADMIN);
             admin.setPassword(passwordEncoder.encode(request.getPassword()));
             registerRepository.save(admin);

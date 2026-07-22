@@ -23,6 +23,10 @@ public class PlacementDriveResponseDto {
 
     private String status;
 
+    private String targetStudent;
+
+    private String specificStudentName;
+
     public Long getId() {
         return id;
     }
@@ -77,5 +81,21 @@ public class PlacementDriveResponseDto {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getTargetStudent() {
+        return targetStudent;
+    }
+
+    public void setTargetStudent(String targetStudent) {
+        this.targetStudent = targetStudent;
+    }
+
+    public String getSpecificStudentName() {
+        return specificStudentName;
+    }
+
+    public void setSpecificStudentName(String specificStudentName) {
+        this.specificStudentName = specificStudentName;
     }
 }

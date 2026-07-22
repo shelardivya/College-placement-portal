@@ -54,7 +54,17 @@ public class PlacementDriveService {
         drive.setStatus(
                 request.getStatus()
         );
+        drive.setVenue(
+                request.getVenue()
+        );
 
+        drive.setTargetStudent(
+                request.getTargetStudent()
+        );
+
+        drive.setSpecificStudentName(
+                request.getSpecificStudentName()
+        );
         placementDriveRepository.save(drive);
 
         return "Placement Drive Added Successfully.";
@@ -105,7 +115,9 @@ public class PlacementDriveService {
             dto.setStatus(
                     drive.getStatus()
             );
+            dto.setTargetStudent(drive.getTargetStudent());
 
+            dto.setSpecificStudentName(drive.getSpecificStudentName());
             response.add(dto);
 
         }
@@ -135,7 +147,8 @@ public class PlacementDriveService {
         dto.setDriveDate(drive.getDriveDate());
         dto.setDriveTime(drive.getDriveTime());
         dto.setStatus(drive.getStatus());
-
+        dto.setTargetStudent(drive.getTargetStudent());
+        dto.setSpecificStudentName(drive.getSpecificStudentName());
         return dto;
 
     }
@@ -176,6 +189,9 @@ public class PlacementDriveService {
         drive.setStatus(
                 request.getStatus()
         );
+        drive.setTargetStudent(request.getTargetStudent());
+
+        drive.setSpecificStudentName(request.getSpecificStudentName());
 
         placementDriveRepository.save(drive);
 

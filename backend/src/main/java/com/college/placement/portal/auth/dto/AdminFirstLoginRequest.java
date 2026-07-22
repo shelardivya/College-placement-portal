@@ -10,8 +10,8 @@ public class AdminFirstLoginRequest {
 
     @NotBlank(message = "Password is required")
     @Pattern(
-            regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
-            message = "Password must be at least 8 characters and contain one uppercase letter, one lowercase letter, one number and one special character."
+            regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$",
+            message = "Password must be at least 8 characters and contain at least one letter, one number and one special character."
     )
     private String password;
 

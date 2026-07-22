@@ -13,6 +13,7 @@ public class AddPlacementDriveRequestDto {
 
     private String location;
 
+    private String venue;
 
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate driveDate;
@@ -21,6 +22,10 @@ public class AddPlacementDriveRequestDto {
     private LocalTime driveTime;
 
     private String status;
+
+    private String targetStudent;
+
+    private String specificStudentName;
 
     // ==========================
     // Getter Setter
@@ -50,6 +55,14 @@ public class AddPlacementDriveRequestDto {
         this.location = location;
     }
 
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
     public LocalDate getDriveDate() {
         return driveDate;
     }
@@ -72,5 +85,21 @@ public class AddPlacementDriveRequestDto {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getTargetStudent() {
+        return targetStudent;
+    }
+
+    public void setTargetStudent(String targetStudent) {
+        this.targetStudent = targetStudent;
+    }
+
+    public String getSpecificStudentName() {
+        return specificStudentName;
+    }
+
+    public void setSpecificStudentName(String specificStudentName) {
+        this.specificStudentName = specificStudentName;
     }
 }
