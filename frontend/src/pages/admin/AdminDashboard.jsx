@@ -141,11 +141,11 @@ function AdminDashboard({ onNavigate }) {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [profileTab, setProfileTab] = useState('edit'); // 'edit' or 'password'
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    // Load active admin details from localStorage (set on login from backend)
-    const loggedInAdmin = JSON.parse(localStorage.getItem("user") || "{}");
+    // Load active admin details from localStorage (stored under "admin_user" on admin login)
+    const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
 
     const [adminProfile, setAdminProfile] = useState({
-        name: loggedInAdmin.fullName || '',
+        name: loggedInAdmin.fullName || 'Admin',
         email: loggedInAdmin.email || '',
         phone: loggedInAdmin.phone || '',
         role: 'System Administrator'
@@ -614,15 +614,15 @@ function AdminDashboard({ onNavigate }) {
     const handleUpdateProfile = (e) => {
         e.preventDefault();
 
-        // Persist to localStorage
-        const loggedInAdmin = JSON.parse(localStorage.getItem("user") || "{}");
+        // Persist to localStorage under admin_user key
+        const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
         const updatedUser = {
             ...loggedInAdmin,
             fullName: adminProfile.name,
             email: adminProfile.email,
             phone: adminProfile.phone
         };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
+        localStorage.setItem("admin_user", JSON.stringify(updatedUser));
 
         setToastType('success');
         setToastMessage("Admin profile updated successfully!");

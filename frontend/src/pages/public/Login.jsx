@@ -139,32 +139,50 @@ function Login({ onNavigate, initialView }) {
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
-                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                        if (matchedProfile) {
-                            localStorage.setItem("user", JSON.stringify(matchedProfile));
-                        } else {
-                            localStorage.setItem("user", JSON.stringify({
-                                fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
-                                email: payload.email || formData.email
+                        if (isAdmin) {
+                            // Admin: store ONLY in "admin_user" — never read from registered_profiles
+                            localStorage.setItem("admin_user", JSON.stringify({
+                                fullName: payload.fullName || payload.name || payload.adminName || "Admin",
+                                email: payload.email || formData.email,
+                                role: 'System Administrator'
                             }));
+                        } else {
+                            // Student: read from registered_profiles as before
+                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+
+                            if (matchedProfile) {
+                                localStorage.setItem("user", JSON.stringify(matchedProfile));
+                            } else {
+                                localStorage.setItem("user", JSON.stringify({
+                                    fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
+                                    email: payload.email || formData.email
+                                }));
+                            }
                         }
                     } catch {
                         const nameFromEmail = formData.email.split('@')[0];
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
-                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                        if (matchedProfile) {
-                            localStorage.setItem("user", JSON.stringify(matchedProfile));
-                        } else {
-                            localStorage.setItem("user", JSON.stringify({
-                                fullName: fallbackName,
-                                email: formData.email
+                        if (isAdmin) {
+                            localStorage.setItem("admin_user", JSON.stringify({
+                                fullName: "Admin",
+                                email: formData.email,
+                                role: 'System Administrator'
                             }));
+                        } else {
+                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+
+                            if (matchedProfile) {
+                                localStorage.setItem("user", JSON.stringify(matchedProfile));
+                            } else {
+                                localStorage.setItem("user", JSON.stringify({
+                                    fullName: fallbackName,
+                                    email: formData.email
+                                }));
+                            }
                         }
                     }
 
