@@ -47,7 +47,7 @@ public class ForgotPasswordService {
         forgetPasswordRepository.save(entity);
 
         String resetLink =
-                "http://localhost:3000/reset-password?email=" + email;
+                "https://campus-hire.duckdns.org/reset-password?email="  + email;
 
         emailService.sendEmail(
                 email,
