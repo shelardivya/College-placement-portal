@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getStudentQueries, submitStudentQuery } from '../../auth/authService';
 import {
     Award,
     MessageSquare,
@@ -224,6 +225,29 @@ export default function StudHub() {
         return stored && JSON.parse(stored).length > 0 ? JSON.parse(stored) : initialStudentQueries;
     });
 
+    useEffect(() => {
+        const fetchQueries = async () => {
+            try {
+                const response = await getStudentQueries();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedQueries = response.data.map(q => ({
+                        id: q.id,
+                        title: q.subject,
+                        message: q.description,
+                        status: q.status ? q.status.toLowerCase() : 'pending',
+                        reply: q.adminReply || 'Your query has been submitted. Admin team will respond shortly.',
+                        date: new Date(q.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                    }));
+                    // Sort so newest is first
+                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch student queries:", error);
+            }
+        };
+        fetchQueries();
+    }, []);
+
     // Sync queries back to localStorage
     useEffect(() => {
         localStorage.setItem("student_queries", JSON.stringify(queries));
@@ -245,23 +269,36 @@ export default function StudHub() {
         setTimeout(() => setShowToast(false), 3000);
     };
 
-    const handleRaiseQuery = (e) => {
+    const handleRaiseQuery = async (e) => {
         e.preventDefault();
         if (!querySubject.trim() || !queryMessage.trim()) return;
 
-        const newQuery = {
-            id: Date.now(),
-            title: querySubject,
-            message: queryMessage,
-            status: 'pending',
-            reply: 'Your query has been submitted. Admin team will respond shortly.',
-            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
-        };
+        try {
+            const payload = {
+                subject: querySubject,
+                description: queryMessage
+            };
 
-        setQueries(prev => [newQuery, ...prev]);
-        setQuerySubject("");
-        setQueryMessage("");
-        triggerToast("Query submitted successfully! Admin will respond shortly.", "success");
+            const response = await submitStudentQuery(payload);
+            const createdQuery = response.data || { ...payload, id: Date.now(), createdAt: new Date() };
+
+            const newQuery = {
+                id: createdQuery.id,
+                title: createdQuery.subject,
+                message: createdQuery.description,
+                status: 'pending',
+                reply: 'Your query has been submitted. Admin team will respond shortly.',
+                date: new Date(createdQuery.createdAt || new Date()).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
+
+            setQueries(prev => [newQuery, ...prev]);
+            setQuerySubject("");
+            setQueryMessage("");
+            triggerToast("Query submitted successfully! Admin will respond shortly.", "success");
+        } catch (error) {
+            console.error("Failed to submit query:", error);
+            triggerToast("Failed to submit query. Please try again.", "error");
+        }
     };
 
     // Segmented filter tab and separate pagination states for Query Responses
