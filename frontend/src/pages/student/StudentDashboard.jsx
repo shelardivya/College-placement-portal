@@ -671,7 +671,7 @@ export default function
                         jobList = response.data.jobs;
                     }
                 }
-                
+
                 if (jobList.length > 0) {
                     const mappedJobs = jobList.map(job => {
                         const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
@@ -736,7 +736,7 @@ export default function
 
         // Safely parse company name to prevent page crash on Apply
         const companyName = String(job.company || "").toLowerCase();
-        
+
         if (companyName.includes("google")) {
             degree = "BE/B.Tech";
             branch = "Computer Science or related";
@@ -922,55 +922,55 @@ export default function
                                     .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
                                     .map((job) => {
                                         const isApplied = appliedJobs.includes(job.id);
-                                    return (
-                                        <div className="job-card" key={job.id}>
-                                            <div className="job-card-header">
-                                                <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
-                                                    <img
-                                                        src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                        alt={job.company}
-                                                        className="company-logo-img"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                        }}
-                                                    />
-                                                    <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
-                                                        {job.logoLetter || job.company.charAt(0)}
-                                                    </span>
+                                        return (
+                                            <div className="job-card" key={job.id}>
+                                                <div className="job-card-header">
+                                                    <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
+                                                        <img
+                                                            src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                            alt={job.company}
+                                                            className="company-logo-img"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                            }}
+                                                        />
+                                                        <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
+                                                            {job.logoLetter || job.company.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="company-name">{job.company}</h4>
+                                                    <button
+                                                        className={`btn-apply ${isApplied ? 'applied' : ''}`}
+                                                        disabled={isApplied}
+                                                        onClick={() => handleApplyClick(job)}
+                                                    >
+                                                        {isApplied ? "Applied" : "Apply"}
+                                                    </button>
                                                 </div>
-                                                <h4 className="company-name">{job.company}</h4>
-                                                <button
-                                                    className={`btn-apply ${isApplied ? 'applied' : ''}`}
-                                                    disabled={isApplied}
-                                                    onClick={() => handleApplyClick(job)}
-                                                >
-                                                    {isApplied ? "Applied" : "Apply"}
-                                                </button>
+                                                <div className="job-details-meta">
+                                                    <div className="meta-item">
+                                                        <MapPin size={14} className="meta-icon" />
+                                                        <span className="meta-label">Location</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong>{job.location}</strong>
+                                                    </div>
+                                                    <div className="meta-item">
+                                                        <Briefcase size={14} className="meta-icon" />
+                                                        <span className="meta-label">Job Role</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong>{job.role}</strong>
+                                                    </div>
+                                                    <div className="meta-item">
+                                                        <Calendar size={14} className="meta-icon" />
+                                                        <span className="meta-label">Deadline</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong className="meta-deadline">{job.deadline}</strong>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="job-details-meta">
-                                                <div className="meta-item">
-                                                    <MapPin size={14} className="meta-icon" />
-                                                    <span className="meta-label">Location</span>
-                                                    <span className="meta-sep">:</span>
-                                                    <strong>{job.location}</strong>
-                                                </div>
-                                                <div className="meta-item">
-                                                    <Briefcase size={14} className="meta-icon" />
-                                                    <span className="meta-label">Job Role</span>
-                                                    <span className="meta-sep">:</span>
-                                                    <strong>{job.role}</strong>
-                                                </div>
-                                                <div className="meta-item">
-                                                    <Calendar size={14} className="meta-icon" />
-                                                    <span className="meta-label">Deadline</span>
-                                                    <span className="meta-sep">:</span>
-                                                    <strong className="meta-deadline">{job.deadline}</strong>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })
+                                        );
+                                    })
                             ) : (
                                 <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
                                     <p>No new job opportunities are currently available for your profile.</p>
@@ -981,23 +981,23 @@ export default function
                         {jobs && jobs.length > JOBS_PER_PAGE && (
                             <div className="sd-pagination">
                                 <button
-                                className="sd-page-btn"
-                                disabled={jobsPage === 1}
-                                onClick={() => setJobsPage(p => p - 1)}
-                            >
-                                ← Prev
-                            </button>
-                            <span className="sd-page-info">
-                                {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                            </span>
-                            <button
-                                className="sd-page-btn"
-                                disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                                onClick={() => setJobsPage(p => p + 1)}
-                            >
-                                Next →
-                            </button>
-                        </div>
+                                    className="sd-page-btn"
+                                    disabled={jobsPage === 1}
+                                    onClick={() => setJobsPage(p => p - 1)}
+                                >
+                                    ← Prev
+                                </button>
+                                <span className="sd-page-info">
+                                    {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                </span>
+                                <button
+                                    className="sd-page-btn"
+                                    disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                    onClick={() => setJobsPage(p => p + 1)}
+                                >
+                                    Next →
+                                </button>
+                            </div>
                         )}
                     </section>
 
@@ -1629,3 +1629,6 @@ export default function
 
 
 }
+
+
+//Checking stud profile api 
