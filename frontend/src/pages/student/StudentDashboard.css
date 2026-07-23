@@ -3464,15 +3464,33 @@
     margin: 0;
 }
 
+@keyframes blinkingQueryPill {
+    0% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.45;
+        box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
+        transform: scale(1.03);
+    }
+    100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+        transform: scale(1);
+    }
+}
+
 .query-status-pill-btn {
     border: none;
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 99px;
     font-size: 0.78rem;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -3481,7 +3499,8 @@
     background-color: #dcfce7;
     color: #15803d;
     border: 1px solid #bbf7d0;
-    padding: 4px 12px;
+    padding: 5px 14px;
+    animation: none;
 }
 
 .query-status-pill-btn.pending {
@@ -3489,17 +3508,17 @@
     color: #ffffff;
     border: 1px solid #2563eb;
     padding: 5px 14px;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    animation: blinkingQueryPill 1.2s infinite ease-in-out;
 }
 
 .query-status-pill-btn.pending:hover {
     background-color: #1d4ed8;
     border-color: #1d4ed8;
-    transform: translateY(-1px);
 }
 
 .query-status-pill-btn:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
 }
 
 .admin-reply-box {

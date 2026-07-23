@@ -273,12 +273,14 @@ export default function StudHub() {
     const handleToggleResolveQuery = (queryId) => {
         setQueries(prev => {
             const source = prev.length > 0 ? prev : initialStudentQueries;
-            return source.map(q => {
+            const updated = source.map(q => {
                 if (q.id === queryId) {
                     return { ...q, status: q.status === 'resolved' ? 'pending' : 'resolved' };
                 }
                 return q;
             });
+            localStorage.setItem("student_queries", JSON.stringify(updated));
+            return updated;
         });
     };
 
