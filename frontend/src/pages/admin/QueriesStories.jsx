@@ -493,255 +493,10 @@ export default function QueriesStories() {
 
     return (
         <div className="queries-stories-container">
-            {/* Grid wrapper to place cards side by side */}
+            {/* Top row layout containing Manage Placement Drives and Published Placement Stories side by side as shown in screenshot */}
             <div className="qs-row">
 
-                {/* 1. Student Queries Card */}
-                <div className="qs-panel queries-card">
-                    <div className="qs-panel-header">
-                        <div>
-                            <h3 className="panel-title">Student Queries</h3>
-                            <p className="panel-subtitle">View and resolve queries submitted by students.</p>
-                        </div>
-                        <div className="header-controls">
-                            <select
-                                className="status-select-dropdown"
-                                value={queryFilter}
-                                onChange={(e) => setQueryFilter(e.target.value)}
-                            >
-                                <option value="all">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="resolved">Resolved</option>
-                            </select>
-                            <div className="qs-search-bar-wrapper">
-                                <Search size={16} className="search-icon" />
-                                <input
-                                    type="text"
-                                    placeholder="Search queries..."
-                                    className="search-input-box"
-                                    value={querySearch}
-                                    onChange={(e) => setQuerySearch(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filter Pills */}
-                    <div className="pills-wrapper">
-                        <button className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
-                            All ({totalQueriesCount})
-                        </button>
-                        <button className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
-                            Pending ({pendingCount})
-                        </button>
-                        <button className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
-                            Resolved ({resolvedCount})
-                        </button>
-                    </div>
-
-                    {/* Queries List */}
-                    <div className="queries-list-scroll">
-                        {paginatedQueries.length > 0 ? (
-                            paginatedQueries.map((query) => (
-                                <div key={query.id} className="query-item-card">
-                                    <div className="query-user-profile">
-                                        <div
-                                            className="query-avatar-circle"
-                                            style={{
-                                                backgroundColor:
-                                                    query.colorClass === 'blue' ? '#dbeafe' :
-                                                        query.colorClass === 'purple' ? '#e9d5ff' :
-                                                            query.colorClass === 'green' ? '#a7f3d0' :
-                                                                query.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                                color:
-                                                    query.colorClass === 'blue' ? '#1e40af' :
-                                                        query.colorClass === 'purple' ? '#581c87' :
-                                                            query.colorClass === 'green' ? '#047857' :
-                                                                query.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
-                                            }}
-                                        >
-                                            {query.avatar}
-                                        </div>
-                                        <div className="query-user-info">
-                                            <span className="query-username">{query.name}</span>
-                                            <span className="query-userdept">{query.course}</span>
-                                        </div>
-                                    </div>
-                                    <div className="query-message-body">
-                                        <h5 className="query-subject">{query.title}</h5>
-                                        <p className="query-text">{query.message}</p>
-                                    </div>
-                                    <div className="query-meta-actions">
-                                        <span className="query-date-info">
-                                            <Calendar size={13} style={{ marginRight: '4px' }} /> {query.date}
-                                        </span>
-                                        <span className={`query-status-tag status-${query.status}`}>
-                                            {query.status}
-                                        </span>
-                                        <div className="action-links-group">
-                                            <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
-                                            <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="empty-state-text">No matching student queries found.</p>
-                        )}
-                    </div>
-
-                    {/* Centered Pagination controls block */}
-                    <div className="table-card-footer">
-                        <div className="pagination-wrapper">
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                            >
-                                &larr;
-                            </button>
-
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                                <button
-                                    key={pageNum}
-                                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
-                                    onClick={() => setCurrentPage(pageNum)}
-                                >
-                                    {pageNum}
-                                </button>
-                            ))}
-
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                            >
-                                &rarr;
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2. Publish Story Form Panel */}
-                <div className="qs-panel publish-story-card">
-                    <div className="qs-panel-header">
-                        <div>
-                            <h3 className="panel-title">Create Placement Story</h3>
-                            <p className="panel-subtitle">Add and publish success stories of placed students.</p>
-                        </div>
-                    </div>
-
-                    <form onSubmit={handlePublishStory} className="publish-form-body">
-                        {/* Upper Row containing upload photo dashed card and name/company inputs */}
-                        <div className="form-upper-row">
-                            <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    accept="image/*"
-                                    style={{ display: 'none' }}
-                                    onChange={handlePhotoChange}
-                                />
-                                {storyForm.photo ? (
-                                    <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                                        <img
-                                            src={storyForm.photo}
-                                            alt="Preview"
-                                            style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
-                                        />
-                                        <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
-                                        <button
-                                            type="button"
-                                            style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setStoryForm(prev => ({ ...prev, photo: '' }));
-                                            }}
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <Upload size={24} className="upload-cloud-icon" />
-                                        <span className="upload-label">Upload Photo</span>
-                                        <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
-                                    </>
-                                )}
-                            </div>
-                            <div className="inputs-block">
-                                <div className="form-group-field">
-                                    <label className="field-label">Student Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter student name"
-                                        className="form-input-control"
-                                        value={storyForm.studentName}
-                                        onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
-                                    />
-                                </div>
-                                <div className="form-group-field">
-                                    <label className="field-label">Company Name</label>
-                                    <input
-                                        type="text"
-                                        placeholder="Enter company name"
-                                        className="form-input-control"
-                                        value={storyForm.companyName}
-                                        onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Split inputs for Role and Package */}
-                        <div className="form-grid-row">
-                            <div className="form-group-field">
-                                <label className="field-label">Job Role</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter job role"
-                                    className="form-input-control"
-                                    value={storyForm.jobRole}
-                                    onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group-field">
-                                <label className="field-label">Package</label>
-                                <input
-                                    type="text"
-                                    placeholder="Enter package (e.g. 6 LPA)"
-                                    className="form-input-control"
-                                    value={storyForm.package}
-                                    onChange={(e) => setStoryForm({ ...storyForm, package: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Full width Success Story textarea field */}
-                        <div className="form-group-field full-width">
-                            <label className="field-label">Success Story</label>
-                            <textarea
-                                placeholder="Write the student's success story..."
-                                className="form-textarea-control"
-                                rows={4}
-                                value={storyForm.storyText}
-                                onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        {/* Submit button aligned to right */}
-                        <div className="form-submit-row">
-                            <button type="submit" className="btn-primary-purple">Publish Story</button>
-                        </div>
-                    </form>
-                </div>
-
-            </div> {/* End of top qs-row */}
-
-            {/* Second row layout containing Manage Placement Drives and Published Placement Stories side by side */}
-            <div className="qs-row" style={{ marginTop: '24px' }}>
-
-                {/* 3. Manage Placement Drives Panel */}
+                {/* 1. Manage Placement Drives Panel */}
                 <div className="qs-panel placement-drives-card">
                     <div className="qs-panel-header">
                         <div>
@@ -868,7 +623,7 @@ export default function QueriesStories() {
                     </div>
                 </div>
 
-                {/* 4. Published Placement Stories Panel */}
+                {/* 2. Published Placement Stories Panel */}
                 <div className="qs-panel placement-stories-card">
                     <div className="qs-panel-header">
                         <div>
@@ -946,6 +701,251 @@ export default function QueriesStories() {
                         >
                             Next &rarr;
                         </button>
+                    </div>
+                </div>
+
+            </div> {/* End of top qs-row */}
+
+            {/* Second row layout containing Create Placement Story and Student Queries side by side */}
+            <div className="qs-row" style={{ marginTop: '24px' }}>
+
+                {/* 3. Publish Story Form Panel */}
+                <div className="qs-panel publish-story-card">
+                    <div className="qs-panel-header">
+                        <div>
+                            <h3 className="panel-title">Create Placement Story</h3>
+                            <p className="panel-subtitle">Add and publish success stories of placed students.</p>
+                        </div>
+                    </div>
+
+                    <form onSubmit={handlePublishStory} className="publish-form-body">
+                        {/* Upper Row containing upload photo dashed card and name/company inputs */}
+                        <div className="form-upper-row">
+                            <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoChange}
+                                />
+                                {storyForm.photo ? (
+                                    <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                        <img
+                                            src={storyForm.photo}
+                                            alt="Preview"
+                                            style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                                        />
+                                        <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
+                                        <button
+                                            type="button"
+                                            style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setStoryForm(prev => ({ ...prev, photo: '' }));
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Upload size={24} className="upload-cloud-icon" />
+                                        <span className="upload-label">Upload Photo</span>
+                                        <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
+                                    </>
+                                )}
+                            </div>
+                            <div className="inputs-block">
+                                <div className="form-group-field">
+                                    <label className="field-label">Student Name</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter student name"
+                                        className="form-input-control"
+                                        value={storyForm.studentName}
+                                        onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group-field">
+                                    <label className="field-label">Company Name</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter company name"
+                                        className="form-input-control"
+                                        value={storyForm.companyName}
+                                        onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Split inputs for Role and Package */}
+                        <div className="form-grid-row">
+                            <div className="form-group-field">
+                                <label className="field-label">Job Role</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter job role"
+                                    className="form-input-control"
+                                    value={storyForm.jobRole}
+                                    onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
+                                />
+                            </div>
+                            <div className="form-group-field">
+                                <label className="field-label">Package</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter package (e.g. 6 LPA)"
+                                    className="form-input-control"
+                                    value={storyForm.package}
+                                    onChange={(e) => setStoryForm({ ...storyForm, package: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Full width Success Story textarea field */}
+                        <div className="form-group-field full-width">
+                            <label className="field-label">Success Story</label>
+                            <textarea
+                                placeholder="Write the student's success story..."
+                                className="form-textarea-control"
+                                rows={4}
+                                value={storyForm.storyText}
+                                onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
+                            ></textarea>
+                        </div>
+
+                        {/* Submit button aligned to right */}
+                        <div className="form-submit-row">
+                            <button type="submit" className="btn-primary-purple">Publish Story</button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* 4. Student Queries Card */}
+                <div className="qs-panel queries-card">
+                    <div className="qs-panel-header">
+                        <div>
+                            <h3 className="panel-title">Student Queries</h3>
+                            <p className="panel-subtitle">View and resolve queries submitted by students.</p>
+                        </div>
+                        <div className="header-controls">
+                            <select
+                                className="status-select-dropdown"
+                                value={queryFilter}
+                                onChange={(e) => setQueryFilter(e.target.value)}
+                            >
+                                <option value="all">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="resolved">Resolved</option>
+                            </select>
+                            <div className="qs-search-bar-wrapper">
+                                <Search size={16} className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search queries..."
+                                    className="search-input-box"
+                                    value={querySearch}
+                                    onChange={(e) => setQuerySearch(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Filter Pills */}
+                    <div className="pills-wrapper">
+                        <button className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
+                            All ({totalQueriesCount})
+                        </button>
+                        <button className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
+                            Pending ({pendingCount})
+                        </button>
+                        <button className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
+                            Resolved ({resolvedCount})
+                        </button>
+                    </div>
+
+                    {/* Queries List */}
+                    <div className="queries-list-scroll">
+                        {paginatedQueries.length > 0 ? (
+                            paginatedQueries.map((query) => (
+                                <div key={query.id} className="query-item-card">
+                                    <div className="query-user-profile">
+                                        <div
+                                            className="query-avatar-circle"
+                                            style={{
+                                                backgroundColor:
+                                                    query.colorClass === 'blue' ? '#dbeafe' :
+                                                        query.colorClass === 'purple' ? '#e9d5ff' :
+                                                            query.colorClass === 'green' ? '#a7f3d0' :
+                                                                query.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
+                                                color:
+                                                    query.colorClass === 'blue' ? '#1e40af' :
+                                                        query.colorClass === 'purple' ? '#581c87' :
+                                                            query.colorClass === 'green' ? '#047857' :
+                                                                query.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                            }}
+                                        >
+                                            {query.avatar}
+                                        </div>
+                                        <div className="query-user-info">
+                                            <span className="query-username">{query.name}</span>
+                                            <span className="query-userdept">{query.course}</span>
+                                        </div>
+                                    </div>
+                                    <div className="query-message-body">
+                                        <h5 className="query-subject">{query.title}</h5>
+                                        <p className="query-text">{query.message}</p>
+                                    </div>
+                                    <div className="query-meta-actions">
+                                        <span className="query-date-info">
+                                            <Calendar size={13} style={{ marginRight: '4px' }} /> {query.date}
+                                        </span>
+                                        <span className={`query-status-tag status-${query.status}`}>
+                                            {query.status}
+                                        </span>
+                                        <div className="action-links-group">
+                                            <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
+                                            <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="empty-state-text">No matching student queries found.</p>
+                        )}
+                    </div>
+
+                    {/* Centered Pagination controls block */}
+                    <div className="table-card-footer">
+                        <div className="pagination-wrapper">
+                            <button
+                                className="pagination-btn"
+                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                disabled={currentPage === 1}
+                            >
+                                &larr;
+                            </button>
+
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                                <button
+                                    key={pageNum}
+                                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                                    onClick={() => setCurrentPage(pageNum)}
+                                >
+                                    {pageNum}
+                                </button>
+                            ))}
+
+                            <button
+                                className="pagination-btn"
+                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                            >
+                                &rarr;
+                            </button>
+                        </div>
                     </div>
                 </div>
 
