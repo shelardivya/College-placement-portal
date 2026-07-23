@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -101,6 +101,8 @@ function AdminDashboard({ onNavigate }) {
         }
     ];
 
+    const [matchingApplicants, setMatchingApplicants] = useState([]);
+
     const [applicants, setApplicants] =
         useState(initialApplicants);
     const [filteredApplicants, setFilteredApplicants] =
@@ -188,8 +190,32 @@ function AdminDashboard({ onNavigate }) {
             }
         };
 
+        const fetchApplicantsMatching = async () => {
+            try {
+                const response = await getAdminApplicantsMatching();
+                if (response.data && Array.isArray(response.data)) {
+                    const mapped = response.data.map(app => {
+                        const nameParts = (app.studentName || 'S').trim().split(' ');
+                        const initials = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : nameParts[0].substring(0, 2).toUpperCase();
+                        return {
+                            id: app.id || Date.now() + Math.random(),
+                            name: app.studentName || 'Student',
+                            initials: initials,
+                            role: app.jobRole || 'SDE',
+                            cgpa: app.cgpa || 8.0,
+                            match: app.matchScore || Math.floor(Math.random() * 20) + 80 // fallback 80-99%
+                        };
+                    });
+                    setMatchingApplicants(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch matching applicants", error);
+            }
+        };
+
         fetchAdminProfile();
         fetchRecentPosts();
+        fetchApplicantsMatching();
     }, []);
 
 

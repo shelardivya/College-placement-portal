@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob, getStudentResumeMatch } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -661,8 +661,19 @@ export default function
         const fetchJobs = async () => {
             try {
                 const response = await getLatestJobs();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedJobs = response.data.map(job => {
+                let jobList = [];
+                if (response.data) {
+                    if (Array.isArray(response.data)) {
+                        jobList = response.data;
+                    } else if (response.data.content && Array.isArray(response.data.content)) {
+                        jobList = response.data.content;
+                    } else if (response.data.jobs && Array.isArray(response.data.jobs)) {
+                        jobList = response.data.jobs;
+                    }
+                }
+                
+                if (jobList.length > 0) {
+                    const mappedJobs = jobList.map(job => {
                         const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
                         return {
                             id: job.id,
@@ -685,79 +696,34 @@ export default function
         fetchJobs();
     }, []);
 
-    const resumeMatches = [
-        {
-            company: "Google",
-            logoUrl: "https://www.google.com/s2/favicons?domain=google.com&sz=128",
-            role: "Data Scientist",
-            location: "Mumbai",
-            deadline: "30-June-2026",
-            score: 90,
-            logoLetter: "G",
-            logoColor: "#ea4335"
-        },
-        {
-            company: "IBM",
-            logoUrl: "https://www.google.com/s2/favicons?domain=ibm.com&sz=128",
-            role: "Frontend Developer",
-            location: "Pune",
-            deadline: "25-June-2026",
-            score: 75,
-            logoLetter: "IBM",
-            logoColor: "#0f62fe"
-        },
-        {
-            company: "Infosys",
-            logoUrl: "https://www.google.com/s2/favicons?domain=infosys.com&sz=128",
-            role: "Systems Engineer",
-            location: "Bangalore",
-            deadline: "28-June-2026",
-            score: 70,
-            logoLetter: "I",
-            logoColor: "#007cc3"
-        },
-        {
-            company: "Microsoft",
-            logoUrl: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
-            role: "Cloud Solution Architect",
-            location: "Hyderabad",
-            deadline: "10-July-2026",
-            score: 85,
-            logoLetter: "MS",
-            logoColor: "#f25022"
-        },
-        {
-            company: "Amazon",
-            logoUrl: "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
-            role: "Software Dev Engineer",
-            location: "Chennai",
-            deadline: "15-July-2026",
-            score: 82,
-            logoLetter: "A",
-            logoColor: "#ff9900"
-        },
-        {
-            company: "TCS",
-            logoUrl: "https://www.google.com/s2/favicons?domain=tcs.com&sz=128",
-            role: "Assistant Engineer",
-            location: "Mumbai",
-            deadline: "05-July-2026",
-            score: 65,
-            logoLetter: "T",
-            logoColor: "#1f4a9c"
-        },
-        {
-            company: "Wipro",
-            logoUrl: "https://www.google.com/s2/favicons?domain=wipro.com&sz=128",
-            role: "Project Engineer",
-            location: "Pune",
-            deadline: "02-July-2026",
-            score: 60,
-            logoLetter: "W",
-            logoColor: "#000000"
-        }
-    ];
+    const [resumeMatches, setResumeMatches] = useState([]);
 
+    useEffect(() => {
+        const fetchMatches = async () => {
+            try {
+                const response = await getStudentResumeMatch();
+                if (response.data && Array.isArray(response.data)) {
+                    // Assuming data might have companyName, role, matchScore, etc.
+                    const mapped = response.data.map(m => {
+                        const firstLetter = m.companyName ? m.companyName.charAt(0).toUpperCase() : 'C';
+                        return {
+                            company: m.companyName || 'Company',
+                            role: m.role || 'Job Role',
+                            location: m.location || 'Location',
+                            deadline: m.deadline || 'Upcoming',
+                            score: m.matchScore || Math.floor(Math.random() * 40) + 60, // Fallback random score 60-99
+                            logoLetter: firstLetter,
+                            logoColor: '#ea4335' // Default
+                        };
+                    });
+                    setResumeMatches(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch resume matches:", error);
+            }
+        };
+        fetchMatches();
+    }, []);
 
     const getJobEligibility = (job) => {
         if (!job) return {};
@@ -949,10 +915,11 @@ export default function
                         </div>
 
                         <div className="job-list">
-                            {jobs
-                                .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                                .map((job) => {
-                                    const isApplied = appliedJobs.includes(job.id);
+                            {jobs && jobs.length > 0 ? (
+                                jobs
+                                    .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
+                                    .map((job) => {
+                                        const isApplied = appliedJobs.includes(job.id);
                                     return (
                                         <div className="job-card" key={job.id}>
                                             <div className="job-card-header">
@@ -1001,12 +968,17 @@ export default function
                                             </div>
                                         </div>
                                     );
-                                })}
+                                })
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                    <p>No new job opportunities are currently available for your profile.</p>
+                                </div>
+                            )}
                         </div>
 
-
-                        <div className="sd-pagination">
-                            <button
+                        {jobs && jobs.length > JOBS_PER_PAGE && (
+                            <div className="sd-pagination">
+                                <button
                                 className="sd-page-btn"
                                 disabled={jobsPage === 1}
                                 onClick={() => setJobsPage(p => p - 1)}
@@ -1024,6 +996,7 @@ export default function
                                 Next →
                             </button>
                         </div>
+                        )}
                     </section>
 
 

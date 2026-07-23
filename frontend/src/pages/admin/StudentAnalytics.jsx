@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics } from '../../auth/authService';
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -163,71 +163,47 @@ export default function StudentAnalytics() {
         fetchDepartmentData();
         fetchCgpaData();
         fetchSkillsData();
+
+        const fetchTopStudents = async () => {
+            try {
+                const response = await getAllTopPlacedStudents();
+                if (response.data && Array.isArray(response.data)) {
+                    const mapped = response.data.map((s, index) => {
+                        const nameParts = (s.studentName || '').trim().split(' ');
+                        let initials = 'ST';
+                        if (nameParts.length >= 2) {
+                            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                        } else if (nameParts[0]) {
+                            initials = nameParts[0].substring(0, 2).toUpperCase();
+                        }
+                        return {
+                            id: s.id,
+                            rank: index + 1,
+                            name: s.studentName,
+                            initials: initials,
+                            branch: 'CS', // Hardcoded fallback if not in API
+                            passingYear: '2026', // Hardcoded fallback if not in API
+                            cgpa: s.cgpa || '9.0',
+                            lpa: s.packageLpa || '12',
+                            skill: s.skills || 'Full Stack',
+                            skillColor: '#f3e8ff',
+                            skillTextColor: '#a855f7',
+                            company: s.companyName,
+                            companyColor: '#c2410c'
+                        };
+                    });
+                    setStudentsList(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch top placed students", error);
+            }
+        };
+        fetchTopStudents();
     }, []);
 
     const segments = getDonutSegments(departmentData);
 
-    //Top Placed Students data from image
-    const initialTopStudentsData = [
-        {
-            rank: 1, name: 'Priya Sharma', initials: 'PS', branch: 'CS', passingYear: '2026', cgpa: '9.4',
-            lpa: '28', skill: 'Full Stack', skillColor: '#f3e8ff',
-            skillTextColor: '#a855f7', company: 'Amazon',
-            companyColor: '#c2410c'
-        },
-
-        {
-            rank: 2, name: 'Rahul Desai', initials: 'RD', branch: 'IT', passingYear: '2025',
-            cgpa: '9.1', lpa: '22', skill: 'Data Science',
-            skillColor: '#dbeafe', skillTextColor: '#2563eb',
-            company: 'Microsoft', companyColor: '#4f5e7b'
-        },
-
-        {
-            rank: 3, name: 'Sneha Kulkarni', initials: 'SK', branch: 'BCA', passingYear: '2026',
-            cgpa: '8.8', lpa: '18', skill: 'Backend',
-            skillColor: '#dcfce7',
-            skillTextColor: '#16a34a', company: 'Apple',
-            companyColor: '#1e293b'
-        },
-
-        {
-            rank: 4, name: 'Aarav Mehta', initials: 'AM', branch: 'CS', passingYear: '2025',
-            cgpa: '8.5', lpa: '14', skill: 'Cooking',
-            skillColor: '#ecfeff', skillTextColor: '#0891b2',
-            company: 'Suresh Tea House', companyColor: '#475569'
-        },
-
-        {
-            rank: 5, name: 'Diya Jadav', initials: 'DJ', branch: 'IT', passingYear: '2026',
-            cgpa: '8.4', lpa: '12', skill: 'React Native',
-            skillColor: '#f3e8ff', skillTextColor: '#a855f7',
-            company: 'Microsoft', companyColor: '#4f5e7b'
-        },
-
-        {
-            rank: 6, name: 'Harsh Patil', initials: 'HP', branch: 'CS', passingYear: '2025',
-            cgpa: '8.2', lpa: '10', skill: 'Backend',
-            skillColor: '#dcfce7', skillTextColor: '#16a34a',
-            company: 'Amazon', companyColor: '#c2410c'
-        },
-
-        {
-            rank: 7, name: 'Neha Shah', initials: 'NS', branch: 'IT', passingYear: '2026',
-            cgpa: '8.0', lpa: '8', skill: 'Data Science',
-            skillColor: '#dbeafe', skillTextColor: '#2563eb',
-            company: 'Apple', companyColor: '#1e293b'
-        },
-
-        {
-            rank: 8, name: 'Karan Malhotra', initials: 'KM', branch: 'BCA', passingYear: '2025',
-            cgpa: '7.8', lpa: '7', skill: 'Cloud',
-            skillColor: '#ecfeff', skillTextColor: '#0891b2',
-            company: 'Suresh Tea House', companyColor: '#475569'
-        },
-    ];
-
-    const [studentsList, setStudentsList] = useState(initialTopStudentsData);
+    const [studentsList, setStudentsList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -244,46 +220,62 @@ export default function StudentAnalytics() {
         company: ''
     });
 
-    const handleAddStudent = (e) => {
+    const handleAddStudent = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.cgpa || !formData.lpa || !formData.company) return;
 
-        const nameParts = formData.name.trim().split(' ');
-        let initials = 'ST';
-        if (nameParts.length >= 2) {
-            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-        } else if (nameParts[0]) {
-            initials = nameParts[0].substring(0, 2).toUpperCase();
+        try {
+            const payload = {
+                studentName: formData.name,
+                companyName: formData.company,
+                packageLpa: parseFloat(formData.lpa) || 12,
+                cgpa: parseFloat(formData.cgpa) || 9.0,
+                skills: formData.skill || 'Full Stack'
+            };
+
+            const response = await addTopPlacedStudent(payload);
+            const savedStudent = response.data || payload;
+
+            const nameParts = (savedStudent.studentName || '').trim().split(' ');
+            let initials = 'ST';
+            if (nameParts.length >= 2) {
+                initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+            } else if (nameParts[0]) {
+                initials = nameParts[0].substring(0, 2).toUpperCase();
+            }
+
+            const newStudent = {
+                id: savedStudent.id || Date.now(),
+                rank: studentsList.length + 1,
+                name: savedStudent.studentName,
+                initials: initials,
+                branch: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026',
+                cgpa: savedStudent.cgpa,
+                lpa: savedStudent.packageLpa,
+                skill: savedStudent.skills || 'Full Stack',
+                skillColor: '#f3e8ff',
+                skillTextColor: '#a855f7',
+                company: savedStudent.companyName,
+                companyColor: '#2563eb'
+            };
+
+            setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
+            setIsModalOpen(false);
+            setFormData({
+                name: '',
+                branch: 'CS',
+                passingYear: '2026',
+                cgpa: '',
+                lpa: '',
+                skill: '',
+                company: ''
+            });
+            setToastMessage('Student added successfully!');
+        } catch (error) {
+            console.error("Failed to add top placed student", error);
+            setToastMessage('Failed to add student. Please try again.');
         }
-
-        const newStudent = {
-            rank: studentsList.length + 1,
-            name: formData.name,
-            initials: initials,
-            branch: formData.branch || 'CS',
-            passingYear: formData.passingYear || '2026',
-            cgpa: formData.cgpa,
-            lpa: formData.lpa,
-            skill: formData.skill || 'Full Stack',
-            skillColor: '#f3e8ff',
-            skillTextColor: '#a855f7',
-            company: formData.company,
-            companyColor: '#2563eb'
-        };
-
-        setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
-        setIsModalOpen(false);
-        setFormData({
-            name: '',
-            branch: 'CS',
-            passingYear: '2026',
-            cgpa: '',
-            lpa: '',
-            skill: '',
-            company: ''
-        });
-
-        setToastMessage('Student added to leaderboard successfully!');
         setShowToast(true);
         setTimeout(() => {
             setShowToast(false);
