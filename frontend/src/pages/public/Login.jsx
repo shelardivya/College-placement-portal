@@ -37,26 +37,37 @@ function Login({ onNavigate, initialView }) {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
 
-    //Form inout state tracking
+    //Form input state tracking
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
+        const initialEmail = params.get('email') || '';
+        const initialPass = initialEmail ? '12345678' : '';
         return {
-            email: params.get('email') || '',
-            password: '',
-            confirmPassword: '',
+            email: initialEmail,
+            password: initialPass,
+            confirmPassword: initialPass,
             rememberMe: false
         };
     });
 
-    //Handles values change in inputs
+    //Handles values change in inputs with auto-fill support for email
     const handleChange = (e) => {
-        const { name, value, type, checked } =
-            e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ?
-                checked : value
-        }));
+        const { name, value, type, checked } = e.target;
+        if (name === 'email') {
+            const trimmed = value.trim();
+            const autoPass = trimmed !== '' ? '12345678' : '';
+            setFormData(prev => ({
+                ...prev,
+                email: value,
+                password: autoPass,
+                confirmPassword: autoPass
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
     };
 
 
@@ -334,6 +345,29 @@ function Login({ onNavigate, initialView }) {
                         )}
 
                         <form onSubmit={handleSubmit} className="form-grid-login">
+                            {/* QUICK DEMO AUTO-FILL CHIPS */}
+                            {loginView === 'login' && (
+                                <div className="quick-autofill-bar">
+                                    <span className="autofill-label">⚡ Quick Fill:</span>
+                                    <button
+                                        type="button"
+                                        className="autofill-chip student-chip"
+                                        onClick={() => setFormData({ email: 'sam@gmail.com', password: '12345678', confirmPassword: '12345678', rememberMe: false })}
+                                        title="Auto-fill Student credentials"
+                                    >
+                                        Student
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="autofill-chip admin-chip"
+                                        onClick={() => setFormData({ email: 'saurabh@gmail.com', password: '12345678', confirmPassword: '12345678', rememberMe: false })}
+                                        title="Auto-fill Admin credentials"
+                                    >
+                                        Admin
+                                    </button>
+                                </div>
+                            )}
+
                             {/* EMAIL INPUT (Login & Forgot views) */}
                             {loginView !== 'reset' && (
                                 <div className="input-group full-width">

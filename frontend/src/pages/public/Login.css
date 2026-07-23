@@ -217,6 +217,59 @@
     box-sizing: border-box;
 }
 
+/* Quick Auto-Fill Bar & Chips */
+.quick-autofill-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.autofill-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 2px;
+}
+
+.autofill-chip {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.student-chip {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.student-chip:hover {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.admin-chip {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border-color: #bbf7d0;
+}
+
+.admin-chip:hover {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
 /* Input Fields Styles (Scoped to .login-page to prevent style leakage from Registration.css) */
 .login-page .input-group {
     display: flex;
