@@ -788,7 +788,7 @@ export default function QueriesStories() {
                                             <td>
                                                 <div className="company-logo-cell">
                                                     <img
-                                                        src={drive.logo}
+                                                        src={drive.logo?.includes('clearbit') ? `https://www.google.com/s2/favicons?domain=${drive.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128` : drive.logo}
                                                         alt={drive.company}
                                                         style={{
                                                             width: '28px',
@@ -855,7 +855,7 @@ export default function QueriesStories() {
                         </table>
                     </div>
 
-                    <div className="table-card-footer" style={{ paddingTop: '12px' }}>
+                    <div className="table-card-footer" style={{ paddingTop: '12px', marginBottom: 'auto' }}>
                         <div className="pagination-wrapper">
                             <button
                                 className="pagination-btn"
