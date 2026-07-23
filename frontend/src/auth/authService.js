@@ -134,3 +134,21 @@ export const getAdminRecentPosts = () => {
         }
     });
 };
+
+export const getAllPlacementDrives = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/placement-drive/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const addPlacementDrive = (driveData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/api/admin/placement-drive/add", driveData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
