@@ -734,32 +734,33 @@ export default function
         let experience = "Fresher";
         let roleOverview = job.additionalInfo || job.additionalinfo || "This is a full-time role.";
 
-        const jobId = (job.id || "").toLowerCase();
-        if (jobId.includes("google")) {
+        const companyName = String(job.company || "").toLowerCase();
+        
+        if (companyName.includes("google")) {
             degree = "BE/B.Tech";
             branch = "Computer Science or related";
             minCgpa = "7.0";
             passingYear = "2026";
             experience = "Fresher";
-        } else if (jobId.includes("ibm")) {
+        } else if (companyName.includes("ibm")) {
             degree = "BE/B.Tech/MCA";
             branch = "Computer Science or IT";
             minCgpa = "6.5";
             passingYear = "2026";
             experience = "Fresher";
-        } else if (jobId.includes("infosys")) {
+        } else if (companyName.includes("infosys")) {
             degree = "BE/B.Tech/M.Tech/MCA/M.Sc";
             branch = "CS or related fields";
             minCgpa = "6.0";
             passingYear = "2026";
             experience = "Fresher";
-        } else if (jobId.includes("microsoft")) {
+        } else if (companyName.includes("microsoft")) {
             degree = "BE/B.Tech/MCA/M.Tech";
             branch = "CS/IT";
             minCgpa = "7.0";
             passingYear = "2026";
             experience = "Fresher";
-        } else if (jobId.includes("amazon")) {
+        } else if (companyName.includes("amazon")) {
             degree = "BE/B.Tech";
             branch = "CS/IT";
             minCgpa = "7.5";
