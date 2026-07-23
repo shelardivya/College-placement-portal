@@ -1,8 +1,8 @@
 /* Stud Hub Container */
 .studhub-container {
-    padding: 24px 32px 40px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 24px 40px 48px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 /* Stud Hub Banner */
@@ -12,8 +12,8 @@
     justify-content: space-between;
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 50%, #7c3aed 100%);
     border-radius: 20px;
-    padding: 24px 32px;
-    margin-bottom: 24px;
+    padding: 28px 36px;
+    margin-bottom: 32px;
     color: #fff;
     box-shadow: 0 8px 32px rgba(37, 99, 235, 0.2);
 }
@@ -61,7 +61,7 @@
 .studhub-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: 32px;
     align-items: start;
     width: 100%;
 }
@@ -70,7 +70,7 @@
 .studhub-right {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 32px;
     min-width: 0;
 }
 
@@ -79,9 +79,9 @@
     background: #ffffff;
     border-radius: 20px;
     border: 1px solid #f1f5f9;
-    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
     overflow: hidden;
-    padding: 24px;
+    padding: 28px 32px;
 }
 
 .sh-panel-header {
