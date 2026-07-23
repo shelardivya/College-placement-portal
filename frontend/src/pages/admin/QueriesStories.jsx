@@ -790,9 +790,27 @@ export default function QueriesStories() {
                                                     <img
                                                         src={drive.logo}
                                                         alt={drive.company}
-                                                        className="logo-initial"
-                                                        style={{ width: '20px', height: '20px', objectFit: 'contain' }}
+                                                        style={{
+                                                            width: '28px',
+                                                            height: '28px',
+                                                            objectFit: 'contain',
+                                                            borderRadius: '6px',
+                                                            background: '#f8fafc',
+                                                            border: '1px solid #e2e8f0',
+                                                            padding: '2px',
+                                                            flexShrink: 0
+                                                        }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
                                                     />
+                                                    <span
+                                                        className="logo-initial"
+                                                        style={{ display: 'none' }}
+                                                    >
+                                                        {drive.company.charAt(0)}
+                                                    </span>
                                                     <span className="table-bold-text">{drive.company}</span>
                                                 </div>
                                             </td>
