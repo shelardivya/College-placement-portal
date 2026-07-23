@@ -215,3 +215,22 @@ export const changePassword = (passwordData) => {
         }
     });
 };
+
+export const getLatestJobs = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/student/jobs/latest", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const applyForJob = (jobId, formData) => {
+    const token = localStorage.getItem("token");
+    return api.post(`/api/student/jobs/${jobId}/apply`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+};

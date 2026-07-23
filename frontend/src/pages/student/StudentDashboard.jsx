@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -221,13 +221,13 @@ export default function
             const today = new Date();
             const tomorrow = new Date(today);
             tomorrow.setDate(today.getDate() + 1);
-            
+
             const eventDate = new Date(dateStr);
             if (isNaN(eventDate.getTime())) return false;
-            
+
             return eventDate.getDate() === tomorrow.getDate() &&
-                   eventDate.getMonth() === tomorrow.getMonth() &&
-                   eventDate.getFullYear() === tomorrow.getFullYear();
+                eventDate.getMonth() === tomorrow.getMonth() &&
+                eventDate.getFullYear() === tomorrow.getFullYear();
         } catch (e) {
             return false;
         }
@@ -560,8 +560,8 @@ export default function
     };
 
     // 2. Triggered when the user clicks "Confirm and Apply" inside the requirements modal
-    const handleConfirmApply = () => {
-        if (!resumeFileName) {
+    const handleConfirmApply = async () => {
+        if (!resumeFileName || !resumeFile) {
             setToastMessage("Please upload your resume PDF first!");
             setToastType('error');
             setShowToast(true);
@@ -570,16 +570,28 @@ export default function
         }
 
         if (selectedJob) {
-            setAppliedJobs(prev => [...prev, selectedJob.id]);
-            setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
-            setToastType('success');
-            setShowToast(true);
-            setSelectedJob(null);
-            setResumeFile(null);
-            setResumeFileName("");
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            try {
+                const formData = new FormData();
+                formData.append('resume', resumeFile);
+
+                await applyForJob(selectedJob.id, formData);
+
+                setAppliedJobs(prev => [...prev, selectedJob.id]);
+                setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
+                setToastType('success');
+                setShowToast(true);
+
+                setSelectedJob(null);
+                setResumeFile(null);
+                setResumeFileName("");
+
+            } catch (error) {
+                console.error("Failed to apply for job:", error);
+                setToastMessage("Failed to apply for the job. Please try again.");
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
         }
     };
 
@@ -643,96 +655,35 @@ export default function
         }
     ];
 
+    const [jobs, setJobs] = useState([]);
 
-    const jobs = [
-        {
-            id: "google-backend",
-            company: "Google",
-            logoUrl: "https://www.google.com/s2/favicons?domain=google.com&sz=128",
-            location: "Mumbai",
-            role: "Backend Developer",
-            deadline: "30-June-2026",
-            logoLetter: "G",
-            logoClor: "#ea4335",
-            requirements: [
-                "BE/B.Tech in Computer Science or related field",
-                "Strong knowledge of Java, Spring Boot, REST APIs",
-                "Experience with databases (MySQL/PostgreSQL)",
-                "Good problem-solving skills",
-                "CGPA: 7.0 and above"
-            ],
-            additionalinfo: "This is a full-time role based in Mumbai."
-        },
-        {
-            id: "ibm-frontend",
-            company: "IBM",
-            logoUrl: "https://www.google.com/s2/favicons?domain=ibm.com&sz=128",
-            location: "Pune",
-            role: "Frontend Developer",
-            deadline: "25-June-2026",
-            logoLetter: "IBM",
-            logoColor: "#0f62fe",
-            requirements: [
-                "BE/B.Tech/MCA in Computer Science or IT",
-                "Proficiency in React, HTML, CSS, JavaScript",
-                "Experience with responsive designs and modern CSS systems",
-                "Familiarity with Git and version control frameworks",
-                "CGPA: 6.5 and above"
-            ],
-            additionalInfo: "This is a full-time role based in Pune."
-        },
-        {
-            id: "infosys-systems",
-            company: "Infosys",
-            logoUrl: "https://www.google.com/s2/favicons?domain=infosys.com&sz=128",
-            location: "Bangalore",
-            role: "Systems Engineer",
-            deadline: "28-June-2026",
-            logoLetter: "In",
-            logoColor: "#007cc3",
-            requirements: [
-                "BE/B.Tech/M.Tech/MCA/M.Sc in CS or related fields",
-                "Strong analytical and logical reasoning skills",
-                "Basic understanding of programming concepts (Java, Python, or C++)",
-                "Good communication skills",
-                "No active backlogs"
-            ],
-            additionalInfo: "This is a full-time role based in Bangalore."
-        },
-        {
-            id: "microsoft-cloud",
-            company: "Microsoft",
-            logoUrl: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
-            location: "Hyderabad",
-            role: "Cloud Solution Architect",
-            deadline: "10-July-2026",
-            logoLetter: "MS",
-            logoColor: "#f25022",
-            requirements: [
-                "BE/B.Tech/MCA/M.Tech in CS/IT",
-                "Deep understanding of Cloud Computing concepts (Azure/AWS)",
-                "Hands-on coding experience in Python, C# or Go",
-                "Excellent systems design principles"
-            ],
-            additionalInfo: "This is a full-time remote/hybrid role based in Hyderabad."
-        },
-        {
-            id: "amazon-sde",
-            company: "Amazon",
-            logoUrl: "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
-            location: "Chennai",
-            role: "Software Dev Engineer (SDE I)",
-            deadline: "15-July-2026",
-            logoLetter: "A",
-            logoColor: "#ff9900",
-            requirements: [
-                "Strong foundation in DS & Algo",
-                "Proficiency in Java, C++ or Python",
-                "Familiarity with distributed computing and databases"
-            ],
-            additionalInfo: "This is a full-time role based in Chennai."
-        }
-    ];
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const response = await getLatestJobs();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedJobs = response.data.map(job => {
+                        const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
+                        return {
+                            id: job.id,
+                            company: job.companyName,
+                            logoLetter: firstLetter,
+                            logoColor: '#2563eb',
+                            location: job.location,
+                            role: job.jobRoleOverview,
+                            deadline: job.deadline,
+                            requirements: ["See detailed description for requirements"],
+                            additionalinfo: job.jobRoleOverview
+                        };
+                    });
+                    setJobs(mappedJobs);
+                }
+            } catch (error) {
+                console.error("Error fetching latest jobs:", error);
+            }
+        };
+        fetchJobs();
+    }, []);
 
     const resumeMatches = [
         {
@@ -943,241 +894,241 @@ export default function
 
 
             {activeTab === 'dashboard' && (
-            <section className="welcome-section">
-                <div className="welcome-content">
-                    <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
-                    <p>Here's whats's happening with your placement portal today.</p>
-                </div>
-                <div className="welcome-date-badge">
-                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </div>
-            </section>
-            )}
-
-
-            {activeTab === 'dashboard' && (
-            <section className="metrics-grid">
-                {metrics.map((metric) => (
-                    <div className="metric-card" key={metric.id}>
-                        <div className="metric-header">
-                            <div className={`metric-icon-wrapper ${metric.colorClass}`}>
-                                {metric.icon}
-                            </div>
-
-                            <div className="metric-info">
-                                <span className="metric-title"> {metric.title}</span>
-                                <span className="metric-value">{metric.value}</span>
-                            </div>
-                        </div>
-
-
-                        <div className="metric-progress-container">
-                            <div className={`metric-progress-bar ${metric.colorClass}`}
-
-                                style={{ width: `${metric.progess || metric.progress}%` }}>
-                            </div>
-
-                        </div>
-
+                <section className="welcome-section">
+                    <div className="welcome-content">
+                        <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
+                        <p>Here's whats's happening with your placement portal today.</p>
                     </div>
-                ))}
-
-            </section>
-            )}
-
-
-
-
-            {activeTab === 'dashboard' && (
-            <main className="dashboard-main-content">
-
-
-                <section className="dashboard-column jobs-column">
-                    <div className="column-card-header">
-                        <h3>Latest Job Opportunities</h3>
-                    </div>
-
-                    <div className="job-list">
-                        {jobs
-                            .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                            .map((job) => {
-                                const isApplied = appliedJobs.includes(job.id);
-                                return (
-                                    <div className="job-card" key={job.id}>
-                                        <div className="job-card-header">
-                                            <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
-                                                <img
-                                                    src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                    alt={job.company}
-                                                    className="company-logo-img"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                    }}
-                                                />
-                                                <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
-                                                    {job.logoLetter || job.company.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <h4 className="company-name">{job.company}</h4>
-                                            <button
-                                                className={`btn-apply ${isApplied ? 'applied' : ''}`}
-                                                disabled={isApplied}
-                                                onClick={() => handleApplyClick(job)}
-                                            >
-                                                {isApplied ? "Applied" : "Apply"}
-                                            </button>
-                                        </div>
-                                        <div className="job-details-meta">
-                                            <div className="meta-item">
-                                                <MapPin size={14} className="meta-icon" />
-                                                <span className="meta-label">Location</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong>{job.location}</strong>
-                                            </div>
-                                            <div className="meta-item">
-                                                <Briefcase size={14} className="meta-icon" />
-                                                <span className="meta-label">Job Role</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong>{job.role}</strong>
-                                            </div>
-                                            <div className="meta-item">
-                                                <Calendar size={14} className="meta-icon" />
-                                                <span className="meta-label">Deadline</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong className="meta-deadline">{job.deadline}</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                    </div>
-
-
-                    <div className="sd-pagination">
-                        <button
-                            className="sd-page-btn"
-                            disabled={jobsPage === 1}
-                            onClick={() => setJobsPage(p => p - 1)}
-                        >
-                            ← Prev
-                        </button>
-                        <span className="sd-page-info">
-                            {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                        </span>
-                        <button
-                            className="sd-page-btn"
-                            disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                            onClick={() => setJobsPage(p => p + 1)}
-                        >
-                            Next →
-                        </button>
+                    <div className="welcome-date-badge">
+                        <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
                 </section>
+            )}
 
 
-                <section className="dashboard-column match-column">
-                    <div className="column-card-header">
-                        <h3>Resume Match Status</h3>
-                        <div className="search-bar-wrapper">
-                            <Search className="search-icon" size={16} />
-                            <input
-                                type="text"
-                                className="search-input"
-                                placeholder="Search company..."
-                                value={matchSearchQuery}
-                                onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
-                            />
-                        </div>
-                    </div>
-
-
-                    <div className="match-list">
-                        {resumeMatches
-                            .filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()))
-                            .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
-                            .map((item, index) => (
-                                <div className="match-card" key={index}>
-
-                                    <div className="match-card-header">
-                                        <div className="match-logo-details">
-                                            <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
-                                                <img
-                                                    src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                    alt={item.company}
-                                                    className="company-logo-img"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                    }}
-                                                />
-                                                <span style={{ color: item.logoColor, display: 'none' }}>
-                                                    {item.logoLetter || item.company.charAt(0)}
-                                                </span>
-                                            </div>
-                                            <h4 className="match-company-name">{item.company}</h4>
-                                        </div>
-
-                                        <div className="match-score-container">
-                                            <span className="match-score-text">{item.score}% Match</span>
-                                            <div className="score-progress-track">
-                                                <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-
-                                    <div className="match-card-details">
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Location :</span>
-                                            <strong>{item.location}</strong>
-                                        </div>
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Job Role :</span>
-                                            <strong>{item.role}</strong>
-                                        </div>
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Deadline :</span>
-                                            <strong>{item.deadline}</strong>
-                                        </div>
-                                    </div>
-
+            {activeTab === 'dashboard' && (
+                <section className="metrics-grid">
+                    {metrics.map((metric) => (
+                        <div className="metric-card" key={metric.id}>
+                            <div className="metric-header">
+                                <div className={`metric-icon-wrapper ${metric.colorClass}`}>
+                                    {metric.icon}
                                 </div>
-                            ))}
-                    </div>
 
-
-
-
-                    {(() => {
-                        const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                        const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE);
-
-                        return totalPages > 1 ? (
-                            <div className="sd-pagination">
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={matchPage === 1}
-                                    onClick={() => setMatchPage(p => p - 1)}
-                                >
-                                    ← Prev
-                                </button>
-                                <span className="sd-page-info">
-                                    {matchPage} / {totalPages}
-                                </span>
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={matchPage >= totalPages}
-                                    onClick={() => setMatchPage(p => p + 1)}
-                                >
-                                    Next →
-                                </button>
+                                <div className="metric-info">
+                                    <span className="metric-title"> {metric.title}</span>
+                                    <span className="metric-value">{metric.value}</span>
+                                </div>
                             </div>
-                        ) : null;
-                    })()}
-                </section>
 
-            </main>
+
+                            <div className="metric-progress-container">
+                                <div className={`metric-progress-bar ${metric.colorClass}`}
+
+                                    style={{ width: `${metric.progess || metric.progress}%` }}>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    ))}
+
+                </section>
+            )}
+
+
+
+
+            {activeTab === 'dashboard' && (
+                <main className="dashboard-main-content">
+
+
+                    <section className="dashboard-column jobs-column">
+                        <div className="column-card-header">
+                            <h3>Latest Job Opportunities</h3>
+                        </div>
+
+                        <div className="job-list">
+                            {jobs
+                                .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
+                                .map((job) => {
+                                    const isApplied = appliedJobs.includes(job.id);
+                                    return (
+                                        <div className="job-card" key={job.id}>
+                                            <div className="job-card-header">
+                                                <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
+                                                    <img
+                                                        src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                        alt={job.company}
+                                                        className="company-logo-img"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                        }}
+                                                    />
+                                                    <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
+                                                        {job.logoLetter || job.company.charAt(0)}
+                                                    </span>
+                                                </div>
+                                                <h4 className="company-name">{job.company}</h4>
+                                                <button
+                                                    className={`btn-apply ${isApplied ? 'applied' : ''}`}
+                                                    disabled={isApplied}
+                                                    onClick={() => handleApplyClick(job)}
+                                                >
+                                                    {isApplied ? "Applied" : "Apply"}
+                                                </button>
+                                            </div>
+                                            <div className="job-details-meta">
+                                                <div className="meta-item">
+                                                    <MapPin size={14} className="meta-icon" />
+                                                    <span className="meta-label">Location</span>
+                                                    <span className="meta-sep">:</span>
+                                                    <strong>{job.location}</strong>
+                                                </div>
+                                                <div className="meta-item">
+                                                    <Briefcase size={14} className="meta-icon" />
+                                                    <span className="meta-label">Job Role</span>
+                                                    <span className="meta-sep">:</span>
+                                                    <strong>{job.role}</strong>
+                                                </div>
+                                                <div className="meta-item">
+                                                    <Calendar size={14} className="meta-icon" />
+                                                    <span className="meta-label">Deadline</span>
+                                                    <span className="meta-sep">:</span>
+                                                    <strong className="meta-deadline">{job.deadline}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+
+
+                        <div className="sd-pagination">
+                            <button
+                                className="sd-page-btn"
+                                disabled={jobsPage === 1}
+                                onClick={() => setJobsPage(p => p - 1)}
+                            >
+                                ← Prev
+                            </button>
+                            <span className="sd-page-info">
+                                {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                            </span>
+                            <button
+                                className="sd-page-btn"
+                                disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                onClick={() => setJobsPage(p => p + 1)}
+                            >
+                                Next →
+                            </button>
+                        </div>
+                    </section>
+
+
+                    <section className="dashboard-column match-column">
+                        <div className="column-card-header">
+                            <h3>Resume Match Status</h3>
+                            <div className="search-bar-wrapper">
+                                <Search className="search-icon" size={16} />
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Search company..."
+                                    value={matchSearchQuery}
+                                    onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
+                                />
+                            </div>
+                        </div>
+
+
+                        <div className="match-list">
+                            {resumeMatches
+                                .filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()))
+                                .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
+                                .map((item, index) => (
+                                    <div className="match-card" key={index}>
+
+                                        <div className="match-card-header">
+                                            <div className="match-logo-details">
+                                                <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
+                                                    <img
+                                                        src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                        alt={item.company}
+                                                        className="company-logo-img"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                        }}
+                                                    />
+                                                    <span style={{ color: item.logoColor, display: 'none' }}>
+                                                        {item.logoLetter || item.company.charAt(0)}
+                                                    </span>
+                                                </div>
+                                                <h4 className="match-company-name">{item.company}</h4>
+                                            </div>
+
+                                            <div className="match-score-container">
+                                                <span className="match-score-text">{item.score}% Match</span>
+                                                <div className="score-progress-track">
+                                                    <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div className="match-card-details">
+                                            <div className="match-detail-item">
+                                                <span className="match-detail-label">Location :</span>
+                                                <strong>{item.location}</strong>
+                                            </div>
+                                            <div className="match-detail-item">
+                                                <span className="match-detail-label">Job Role :</span>
+                                                <strong>{item.role}</strong>
+                                            </div>
+                                            <div className="match-detail-item">
+                                                <span className="match-detail-label">Deadline :</span>
+                                                <strong>{item.deadline}</strong>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                ))}
+                        </div>
+
+
+
+
+                        {(() => {
+                            const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                            const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE);
+
+                            return totalPages > 1 ? (
+                                <div className="sd-pagination">
+                                    <button
+                                        className="sd-page-btn"
+                                        disabled={matchPage === 1}
+                                        onClick={() => setMatchPage(p => p - 1)}
+                                    >
+                                        ← Prev
+                                    </button>
+                                    <span className="sd-page-info">
+                                        {matchPage} / {totalPages}
+                                    </span>
+                                    <button
+                                        className="sd-page-btn"
+                                        disabled={matchPage >= totalPages}
+                                        onClick={() => setMatchPage(p => p + 1)}
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            ) : null;
+                        })()}
+                    </section>
+
+                </main>
             )}
 
 
