@@ -74,35 +74,10 @@ function AdminDashboard({ onNavigate }) {
     const [drafts, setDrafts] = useState([]);
 
     //Applicants mock data
-    const initialApplicants = [
-        {
-            id: 1, name: 'Priya Sharma', company: 'Google',
-            degree: 'B.Tech', branch: 'Computer Science',
-            cgpa: 8.23, year: '2026 Passout', match: 90,
-            date: '2026-07-05'
-        },
-
-        {
-            id: 2, name: 'John Doe', company: 'Microsoft',
-            degree: 'B.Tech', branch: 'Information Technology',
-            cgpa: 7.5, year: '2026 Passput', match: 80,
-            date: '2026-07-02'
-        },
-
-        {
-            id: 3, name: 'Amit Kumar', company: 'Infosys',
-            degree: 'B.Tech', branch: 'Computer Science',
-            cgpa: 7.8, year: '2026 Passout', match: 75,
-            date: '2026-07-06'
-        }
-    ];
-
-    const [matchingApplicants, setMatchingApplicants] = useState([]);
-
     const [applicants, setApplicants] =
-        useState(initialApplicants);
+        useState([]);
     const [filteredApplicants, setFilteredApplicants] =
-        useState(initialApplicants);
+        useState([]);
 
     // 5.Form state for adding a new job
     const [newJob, setNewJob] = useState({
@@ -191,18 +166,22 @@ function AdminDashboard({ onNavigate }) {
                 const response = await getAdminApplicantsMatching();
                 if (response.data && Array.isArray(response.data)) {
                     const mapped = response.data.map(app => {
-                        const nameParts = (app.studentName || 'S').trim().split(' ');
-                        const initials = nameParts.length >= 2 ? (nameParts[0][0] + nameParts[1][0]).toUpperCase() : nameParts[0].substring(0, 2).toUpperCase();
+                        const dateObj = new Date();
+                        const dateString = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                         return {
                             id: app.id || Date.now() + Math.random(),
                             name: app.studentName || 'Student',
-                            initials: initials,
-                            role: app.jobRole || 'SDE',
+                            company: app.jobRole || 'SDE',
+                            degree: app.degree || 'B.Tech',
+                            branch: app.branch || 'Computer Science',
                             cgpa: app.cgpa || 8.0,
-                            match: app.matchScore || Math.floor(Math.random() * 20) + 80 // fallback 80-99%
+                            year: app.passingYear || '2026 Passout',
+                            match: app.matchScore || Math.floor(Math.random() * 20) + 80,
+                            date: app.appliedDate || dateString
                         };
                     });
-                    setMatchingApplicants(mapped);
+                    setApplicants(mapped);
+                    setFilteredApplicants(mapped);
                 }
             } catch (error) {
                 console.error("Failed to fetch matching applicants", error);
