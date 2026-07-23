@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -407,12 +407,18 @@ export default function QueriesStories() {
         setIsDriveModalOpen(true);
     };
 
-    const confirmDeleteDrive = () => {
+    const confirmDeleteDrive = async () => {
         if (!deletingDrive) return;
-        const updatedDrives = drives.filter(d => d.id !== deletingDrive.id);
-        setDrives(updatedDrives);
-        setDeletingDrive(null);
-        triggerToast("Placement drive deleted successfully!", "success");
+        try {
+            await deletePlacementDrive(deletingDrive.id);
+            const updatedDrives = drives.filter(d => d.id !== deletingDrive.id);
+            setDrives(updatedDrives);
+            setDeletingDrive(null);
+            triggerToast("Placement drive deleted successfully!", "success");
+        } catch (error) {
+            console.error("Failed to delete placement drive:", error);
+            triggerToast("Failed to delete placement drive.", "error");
+        }
     };
 
     const handleSaveDrive = async (e) => {
@@ -424,28 +430,47 @@ export default function QueriesStories() {
         const logoUrl = `https://www.google.com/s2/favicons?domain=${driveForm.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`;
 
         if (editingDrive) {
-            // Update existing (Frontend mock logic left intact until update API is added)
-            const updatedDrives = drives.map(d => {
-                if (d.id === editingDrive.id) {
-                    return {
-                        ...d,
-                        companyName: driveForm.company,
-                        logo: logoUrl,
-                        jobRole: driveForm.role,
-                        location: driveForm.location,
-                        driveDate: driveForm.date,
-                        driveTime: driveForm.time,
-                        venue: driveForm.venue,
-                        status: driveForm.status,
-                        targetStudent: driveForm.targetStudent,
-                        specificStudentName: "" // Assuming empty unless specified
-                    };
-                }
-                return d;
-            });
-            setDrives(updatedDrives);
-            triggerToast("Placement drive updated successfully!", "success");
-            setIsDriveModalOpen(false);
+            // Update existing via API
+            try {
+                const payload = {
+                    companyName: driveForm.company,
+                    jobRole: driveForm.role,
+                    location: driveForm.location,
+                    venue: driveForm.venue || "",
+                    driveDate: driveForm.date || "2026-07-23", 
+                    driveTime: driveForm.time || "",
+                    status: driveForm.status || "Open",
+                    targetStudent: driveForm.targetStudent,
+                    specificStudentName: ""
+                };
+                
+                await updatePlacementDrive(editingDrive.id, payload);
+                
+                const updatedDrives = drives.map(d => {
+                    if (d.id === editingDrive.id) {
+                        return {
+                            ...d,
+                            company: driveForm.company,
+                            logo: logoUrl,
+                            role: driveForm.role,
+                            location: driveForm.location,
+                            date: driveForm.date,
+                            time: driveForm.time,
+                            venue: driveForm.venue,
+                            status: driveForm.status,
+                            targetStudent: driveForm.targetStudent,
+                            specificStudentName: "" // Assuming empty unless specified
+                        };
+                    }
+                    return d;
+                });
+                setDrives(updatedDrives);
+                triggerToast("Placement drive updated successfully!", "success");
+                setIsDriveModalOpen(false);
+            } catch (error) {
+                console.error("Error updating placement drive:", error);
+                triggerToast("Failed to update placement drive.", "error");
+            }
         } else {
             // Add new via API
             try {
