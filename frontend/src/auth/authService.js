@@ -171,6 +171,24 @@ export const deletePlacementDrive = (id) => {
     });
 };
 
+export const getAllTopPlacedStudents = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/top-placed-student/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const addTopPlacedStudent = (studentData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/api/admin/top-placed-student/add", studentData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const getAllQueries = () => {
     const token = localStorage.getItem("token");
     return api.get("/api/admin/query/all", {

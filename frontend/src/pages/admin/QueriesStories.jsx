@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -525,6 +525,38 @@ export default function QueriesStories() {
     });
 
     useEffect(() => {
+        const fetchStories = async () => {
+            try {
+                const response = await getAllTopPlacedStudents();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedStories = response.data.map(s => {
+                        const isBoy = Math.random() > 0.5;
+                        const randomId = Math.floor(Math.random() * 50) + 1;
+                        const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
+
+                        return {
+                            id: s.id,
+                            name: s.studentName,
+                            avatar: avatarUrl,
+                            company: s.companyName,
+                            companyColor: '#eff6ff',
+                            companyTextColor: '#2563eb',
+                            role: s.skills || 'Placed Student',
+                            packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
+                            storyText: `Secured placement at ${s.companyName} with CGPA of ${s.cgpa || 'N/A'}.`,
+                            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                        };
+                    });
+                    setStories(mappedStories.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch top placed students:", error);
+            }
+        };
+        fetchStories();
+    }, []);
+
+    useEffect(() => {
         localStorage.setItem("placement_stories", JSON.stringify(stories));
     }, [stories]);
 
@@ -583,41 +615,59 @@ export default function QueriesStories() {
     };
 
     // Handle form submission to publish stories
-    const handlePublishStory = (e) => {
+    const handlePublishStory = async (e) => {
         e.preventDefault();
         if (!storyForm.studentName || !storyForm.companyName || !storyForm.jobRole) {
             return;
         }
 
-        const randomId = Math.floor(Math.random() * 50) + 1;
-        const isBoy = Math.random() > 0.5;
-        const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
+        try {
+            const packageValue = parseFloat(storyForm.package) || 0;
+            
+            const payload = {
+                studentName: storyForm.studentName,
+                companyName: storyForm.companyName,
+                packageLpa: packageValue,
+                cgpa: 8.5, // Defaulting as it's not in the form
+                skills: storyForm.jobRole // Mapping role to skills as per API payload
+            };
+            
+            const response = await addTopPlacedStudent(payload);
+            const createdStudent = response.data || { ...payload, id: Date.now() };
 
-        const newStory = {
-            id: Date.now(),
-            name: storyForm.studentName,
-            avatar: storyForm.photo || avatarUrl,
-            company: storyForm.companyName,
-            companyColor: '#eff6ff',
-            companyTextColor: '#2563eb',
-            role: storyForm.jobRole,
-            packageAmt: storyForm.package ? (storyForm.package.toLowerCase().includes('lpa') ? storyForm.package : `${storyForm.package} LPA`) : '6.0 LPA',
-            storyText: storyForm.storyText || `Secured a ${storyForm.jobRole} role at ${storyForm.companyName}.`,
-            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-        };
+            const isBoy = Math.random() > 0.5;
+            const randomId = Math.floor(Math.random() * 50) + 1;
+            const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
 
-        setStories([newStory, ...stories]);
-        triggerToast("Placement story published successfully!", "success");
+            const newStory = {
+                id: createdStudent.id,
+                name: createdStudent.studentName,
+                avatar: storyForm.photo || avatarUrl,
+                company: createdStudent.companyName,
+                companyColor: '#eff6ff',
+                companyTextColor: '#2563eb',
+                role: createdStudent.skills,
+                packageAmt: createdStudent.packageLpa ? `${createdStudent.packageLpa} LPA` : '6.0 LPA',
+                storyText: storyForm.storyText || `Secured placement at ${createdStudent.companyName}.`,
+                date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
 
-        // Reset form inputs after publishing
-        setStoryForm({
-            studentName: '',
-            companyName: '',
-            jobRole: '',
-            package: '',
-            storyText: '',
-            photo: ''
-        });
+            setStories([newStory, ...stories]);
+            triggerToast("Placement story published successfully!", "success");
+
+            // Reset form inputs after publishing
+            setStoryForm({
+                studentName: '',
+                companyName: '',
+                jobRole: '',
+                package: '',
+                storyText: '',
+                photo: ''
+            });
+        } catch (error) {
+            console.error("Failed to publish placement story:", error);
+            triggerToast("Failed to publish story.", "error");
+        }
     };
 
     return (
