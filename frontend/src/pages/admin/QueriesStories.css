@@ -4,12 +4,14 @@
     flex-direction: column;
     gap: 24px;
     width: 100%;
+    padding-bottom: 48px;
 }
 
 .qs-row {
     display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
+    grid-template-columns: 1.2fr 0.8fr;
     gap: 24px;
+    align-items: start;
 }
 
 @media (max-width: 1200px) {
@@ -22,13 +24,11 @@
 .qs-panel {
     background-color: #ffffff;
     border-radius: 20px;
-    padding: 24px;
+    padding: 28px 28px 24px 28px;
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
     border: 1px solid #f1f5f9;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    min-height: 480px;
 }
 
 .queries-card-full {
@@ -44,7 +44,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     gap: 16px;
 }
 
@@ -544,7 +544,7 @@
 }
 
 .qs-drives-table td {
-    padding: 14px 16px;
+    padding: 12px 16px;
     font-size: 0.82rem;
     color: #1e293b;
     font-weight: 600;
@@ -678,21 +678,21 @@
 .stories-vertical-list {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     width: 100%;
-    margin-top: 16px;
+    margin-top: 18px;
     flex: 1;
 }
 
 .story-card-item {
-    border: 1px solid #f1f5f9;
-    border-radius: 16px;
-    padding: 20px;
+    border: 1px solid #e8edf5;
+    border-radius: 14px;
+    padding: 16px 18px;
     background-color: #ffffff;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
     transition: all 0.2s ease;
 }
 
@@ -792,8 +792,9 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-top: 20px;
-    padding-top: 16px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #f1f5f9;
 }
 
 .stories-nav-btn {
@@ -888,15 +889,13 @@
     border-color: #e2e8f0;
 }
 
-/* Layout height alignment fixes to prevent empty gaps */
+/* Layout spacing fixes */
 .placement-stories-card {
-    justify-content: flex-start !important;
-    gap: 20px;
+    gap: 0;
 }
 
 .placement-drives-card {
-    justify-content: flex-start !important;
-    gap: 20px;
+    gap: 0;
 }
 
 .panel-footer-links {
