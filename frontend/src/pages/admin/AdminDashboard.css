@@ -185,7 +185,8 @@
 
 
 /*Stat Cards Styles*/
-.stats-grid {
+.dashboard-main .stats-grid,
+.admin-dashboard-container .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
@@ -194,8 +195,9 @@
 }
 
 @media (max-width: 900px) {
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .dashboard-main .stats-grid,
+    .admin-dashboard-container .stats-grid {
+        grid-template-columns: 1fr ;
     }
 }
 
