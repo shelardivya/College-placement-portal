@@ -609,3 +609,43 @@
     line-height: 1.5;
     margin: 0;
 }
+
+/* StudHub Pagination Footer Controls */
+.sh-pagination-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.stories-nav-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background-color: #ffffff;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.stories-nav-btn:hover:not(:disabled) {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.stories-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stories-page-info {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #64748b;
+}

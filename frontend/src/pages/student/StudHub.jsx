@@ -201,14 +201,21 @@ export default function StudHub() {
             return new Date("9999-12-31");
         }
     };
-    activeDrives.sort((a, b) => getParsedDate(a.date) - getParsedDate(b.date));
-    const nextEvent = activeDrives[0];
-
-    // Stories state
+    // Stories state & pagination
     const [stories] = useState(() => {
         const stored = localStorage.getItem("placement_stories");
         return stored ? JSON.parse(stored) : initialStories;
     });
+    const [storiesPage, setStoriesPage] = useState(1);
+    const STORIES_PER_PAGE = 2;
+    const totalStoriesPages = Math.ceil(stories.length / STORIES_PER_PAGE) || 1;
+    const paginatedStories = stories.slice((storiesPage - 1) * STORIES_PER_PAGE, storiesPage * STORIES_PER_PAGE);
+
+    // Drives list & pagination
+    const drivesList = activeDrives.length > 0 ? activeDrives : (studentFilteredDrives.length > 0 ? studentFilteredDrives : initialDrives);
+    const [drivesPage, setDrivesPage] = useState(1);
+    const totalDrivePages = drivesList.length || 1;
+    const currentDrive = drivesList[Math.min(drivesPage - 1, drivesList.length - 1)] || drivesList[0];
 
     // Queries state
     const [queries, setQueries] = useState(() => {
@@ -318,41 +325,68 @@ export default function StudHub() {
                                 <span>Check back soon!</span>
                             </div>
                         ) : (
-                            <div className="sh-stories-list">
-                                {stories.map((story) => (
-                                    <div key={story.id} className="sh-story-card">
-                                        <div className="sh-story-top">
-                                            <img
-                                                src={story.avatar}
-                                                alt={story.name}
-                                                className="sh-story-avatar"
-                                                onError={(e) => { e.target.style.display = 'none'; }}
-                                            />
-                                            <div className="sh-story-info">
-                                                <h4 className="sh-story-name">{story.name}</h4>
-                                                <span
-                                                    className="sh-company-badge"
-                                                    style={{ backgroundColor: story.companyColor || '#eff6ff', color: story.companyTextColor || '#2563eb' }}
-                                                >
-                                                    {story.company}
-                                                </span>
+                            <>
+                                <div className="sh-stories-list">
+                                    {paginatedStories.map((story) => (
+                                        <div key={story.id} className="sh-story-card">
+                                            <div className="sh-story-top">
+                                                <img
+                                                    src={story.avatar}
+                                                    alt={story.name}
+                                                    className="sh-story-avatar"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                                <div className="sh-story-info">
+                                                    <h4 className="sh-story-name">{story.name}</h4>
+                                                    <span
+                                                        className="sh-company-badge"
+                                                        style={{ backgroundColor: story.companyColor || '#eff6ff', color: story.companyTextColor || '#2563eb' }}
+                                                    >
+                                                        {story.company}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="sh-story-body">
+                                                <p className="sh-role-line" style={{ color: story.companyTextColor || '#2563eb' }}>
+                                                    {story.role}
+                                                </p>
+                                                <p className="sh-story-quote">
+                                                    &ldquo;{story.storyText || `Secured a ${story.role} role at ${story.company}.`}&rdquo;
+                                                </p>
+                                                <div className="sh-story-footer">
+                                                    <span className="sh-package-tag">💰 {story.packageAmt || 'Not Disclosed'}</span>
+                                                    <span className="sh-date-tag">📅 {story.date}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="sh-story-body">
-                                            <p className="sh-role-line" style={{ color: story.companyTextColor || '#2563eb' }}>
-                                                {story.role}
-                                            </p>
-                                            <p className="sh-story-quote">
-                                                &ldquo;{story.storyText || `Secured a ${story.role} role at ${story.company}.`}&rdquo;
-                                            </p>
-                                            <div className="sh-story-footer">
-                                                <span className="sh-package-tag">💰 {story.packageAmt || 'Not Disclosed'}</span>
-                                                <span className="sh-date-tag">📅 {story.date}</span>
-                                            </div>
-                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Stories Pagination Controls */}
+                                {totalStoriesPages > 1 && (
+                                    <div className="sh-pagination-wrapper">
+                                        <button
+                                            type="button"
+                                            className="stories-nav-btn"
+                                            onClick={() => setStoriesPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={storiesPage === 1}
+                                        >
+                                            &larr; Prev
+                                        </button>
+                                        <span className="stories-page-info">
+                                            Page {storiesPage} of {totalStoriesPages}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="stories-nav-btn"
+                                            onClick={() => setStoriesPage(prev => Math.min(prev + 1, totalStoriesPages))}
+                                            disabled={storiesPage === totalStoriesPages}
+                                        >
+                                            Next &rarr;
+                                        </button>
                                     </div>
-                                ))}
-                            </div>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -401,8 +435,11 @@ export default function StudHub() {
                 <div className="studhub-right">
                     {/* 3. Campus Placement Drives Widget */}
                     <div className="sh-panel campus-event-panel">
-                        <div className="campus-drives-header">
+                        <div className="campus-drives-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <h3 className="event-panel-title">Campus Placement Drives</h3>
+                            <span className="sh-count-badge" style={{ backgroundColor: '#eff6ff', color: '#2563eb', padding: '4px 12px', borderRadius: '99px', fontSize: '0.75rem', fontWeight: '700' }}>
+                                {totalDrivePages} {totalDrivePages === 1 ? 'Drive' : 'Drives'}
+                            </span>
                         </div>
                         
                         <div className="next-event-card">
@@ -410,7 +447,7 @@ export default function StudHub() {
                                 <div className="event-icon-box">
                                     <Calendar className="event-purple-icon" size={20} />
                                 </div>
-                                <h2 className="event-company-title">{nextEvent ? `${nextEvent.company} Drive` : "Google Drive"}</h2>
+                                <h2 className="event-company-title">{currentDrive ? `${currentDrive.company} Drive` : "Google Drive"}</h2>
                             </div>
                             
                             <div className="event-details-card-box">
@@ -422,7 +459,7 @@ export default function StudHub() {
                                     <div className="detail-item-content">
                                         <span className="detail-field-label">DATE</span>
                                         <div className="detail-badge-box">
-                                            {nextEvent ? nextEvent.date : "20 Jul 2026"}
+                                            {currentDrive ? currentDrive.date : "20 Jul 2026"}
                                         </div>
                                     </div>
                                 </div>
@@ -435,7 +472,7 @@ export default function StudHub() {
                                     <div className="detail-item-content">
                                         <span className="detail-field-label">TIME</span>
                                         <div className="detail-badge-box">
-                                            {nextEvent ? (nextEvent.time.includes("Onwards") ? nextEvent.time : `${nextEvent.time} Onwards`) : "10:00 AM Onwards"}
+                                            {currentDrive ? (currentDrive.time?.includes("Onwards") ? currentDrive.time : `${currentDrive.time} Onwards`) : "10:00 AM Onwards"}
                                         </div>
                                     </div>
                                 </div>
@@ -448,7 +485,7 @@ export default function StudHub() {
                                     <div className="detail-item-content">
                                         <span className="detail-field-label">LOCATION</span>
                                         <div className="detail-badge-box">
-                                            {nextEvent ? nextEvent.location : "Bangalore"}
+                                            {currentDrive ? currentDrive.location : "Bangalore"}
                                         </div>
                                     </div>
                                 </div>
@@ -464,7 +501,7 @@ export default function StudHub() {
                                             <div className="detail-item-content">
                                                 <span className="detail-field-label">VENUE</span>
                                                 <div className="detail-badge-box">
-                                                    {nextEvent ? nextEvent.venue || "Seminar Hall A" : "Seminar Hall A"}
+                                                    {currentDrive ? currentDrive.venue || "Seminar Hall A" : "Seminar Hall A"}
                                                 </div>
                                             </div>
                                         </div>
@@ -477,7 +514,7 @@ export default function StudHub() {
                                             <div className="detail-item-content">
                                                 <span className="detail-field-label">JOB ROLE</span>
                                                 <div className="detail-badge-box">
-                                                    {nextEvent ? nextEvent.role || "SDE Intern" : "SDE Intern"}
+                                                    {currentDrive ? currentDrive.role || "SDE Intern" : "SDE Intern"}
                                                 </div>
                                             </div>
                                         </div>
@@ -490,8 +527,8 @@ export default function StudHub() {
                                             <div className="detail-item-content">
                                                 <span className="detail-field-label">DRIVE STATUS</span>
                                                 <div>
-                                                    <span className={`drive-status-pill badge-${(nextEvent?.status || 'open').toLowerCase()}`}>
-                                                        {(nextEvent?.status || 'OPEN').toUpperCase()}
+                                                    <span className={`drive-status-pill badge-${(currentDrive?.status || 'open').toLowerCase()}`}>
+                                                        {(currentDrive?.status || 'OPEN').toUpperCase()}
                                                     </span>
                                                 </div>
                                             </div>
@@ -505,7 +542,7 @@ export default function StudHub() {
                                             <div className="detail-item-content">
                                                 <span className="detail-field-label">TARGET AUDIENCE</span>
                                                 <div className="detail-badge-box">
-                                                    {nextEvent ? (nextEvent.targetStudent === 'All' || !nextEvent.targetStudent ? 'All Students' : nextEvent.targetStudent) : "All Students"}
+                                                    {currentDrive ? (currentDrive.targetStudent === 'All' || !currentDrive.targetStudent ? 'All Students' : currentDrive.targetStudent) : "All Students"}
                                                 </div>
                                             </div>
                                         </div>
@@ -518,7 +555,7 @@ export default function StudHub() {
                                             <div className="detail-item-content full-width-content">
                                                 <span className="detail-field-label">ABOUT DRIVE</span>
                                                 <div className="detail-about-box">
-                                                    {nextEvent?.about || "Google is conducting an on-campus recruitment drive for the SDE Intern role."}
+                                                    {currentDrive?.about || "Conducting an on-campus recruitment drive for qualified students."}
                                                 </div>
                                             </div>
                                         </div>
@@ -532,6 +569,31 @@ export default function StudHub() {
                             >
                                 {showDriveDetails ? "Hide Details" : "View Details"}
                             </button>
+
+                            {/* Drives Pagination Controls */}
+                            {totalDrivePages > 1 && (
+                                <div className="sh-pagination-wrapper" style={{ marginTop: '16px' }}>
+                                    <button
+                                        type="button"
+                                        className="stories-nav-btn"
+                                        onClick={() => setDrivesPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={drivesPage === 1}
+                                    >
+                                        &larr; Prev Drive
+                                    </button>
+                                    <span className="stories-page-info">
+                                        Drive {drivesPage} of {totalDrivePages}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        className="stories-nav-btn"
+                                        onClick={() => setDrivesPage(prev => Math.min(prev + 1, totalDrivePages))}
+                                        disabled={drivesPage === totalDrivePages}
+                                    >
+                                        Next Drive &rarr;
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
