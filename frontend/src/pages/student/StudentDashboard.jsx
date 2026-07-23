@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile, updateStudentProfile, getStudentDashboardStats } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -443,19 +443,30 @@ export default function
     };
 
     // Handles password change submission
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
             alert("New passwords do not match!");
             return;
         }
 
-        alert("Password updated successfully!");
-        setIsChangePasswordOpen(false);
-        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        setShowCurrentPassword(false);
-        setShowNewPassword(false);
-        setShowConfirmPassword(false);
+        try {
+            await changePassword({
+                currentPassword: passwordForm.currentPassword,
+                newPassword: passwordForm.newPassword,
+                confirmPassword: passwordForm.confirmPassword
+            });
+
+            alert("Password updated successfully!");
+            setIsChangePasswordOpen(false);
+            setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            setShowCurrentPassword(false);
+            setShowNewPassword(false);
+            setShowConfirmPassword(false);
+        } catch (error) {
+            console.error("Error changing password:", error);
+            alert(error.response?.data?.message || "Failed to change password. Please check your current password.");
+        }
     };
 
     // Handles raising a student query

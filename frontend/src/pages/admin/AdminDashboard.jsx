@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -691,7 +691,7 @@ function AdminDashboard({ onNavigate }) {
     };
 
     // Change password submit handler
-    const handleUpdatePassword = (e) => {
+    const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setValidationError(true);
@@ -702,21 +702,36 @@ function AdminDashboard({ onNavigate }) {
             return;
         }
 
-        setValidationError(false);
-        setToastType('success');
-        setToastMessage("Admin password changed successfully!");
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
+        try {
+            await changePassword({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+                confirmPassword: passwordData.confirmPassword
+            });
 
-        setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        });
-        setShowAdminCurrentPassword(false);
-        setShowAdminNewPassword(false);
-        setShowAdminConfirmPassword(false);
-        setIsProfileModalOpen(false);
+            setValidationError(false);
+            setToastType('success');
+            setToastMessage("Admin password changed successfully!");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+
+            setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+            setShowAdminCurrentPassword(false);
+            setShowAdminNewPassword(false);
+            setShowAdminConfirmPassword(false);
+            setIsProfileModalOpen(false);
+        } catch (error) {
+            console.error("Error changing password:", error);
+            setValidationError(true);
+            setToastType('error');
+            setToastMessage(error.response?.data?.message || "Failed to change password. Please check your current password.");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     const handleCloseProfileModal = () => {

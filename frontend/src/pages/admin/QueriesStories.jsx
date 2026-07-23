@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -91,6 +92,38 @@ export default function QueriesStories() {
     });
 
     useEffect(() => {
+        const fetchQueries = async () => {
+            try {
+                const response = await getAllQueries();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedQueries = response.data.map(q => {
+                        const nameParts = (q.studentName || 'Student').split(' ');
+                        const avatar = nameParts.length > 1 ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
+                        
+                        return {
+                            ...q,
+                            id: q.id,
+                            name: q.studentName,
+                            course: q.department,
+                            avatar: avatar.toUpperCase(),
+                            colorClass: 'blue',
+                            title: q.subject,
+                            message: q.description,
+                            status: (q.status || 'pending').toLowerCase(),
+                            reply: q.adminReply,
+                            date: new Date(q.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        };
+                    });
+                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch queries:", error);
+            }
+        };
+        fetchQueries();
+    }, []);
+
+    useEffect(() => {
         localStorage.setItem("student_queries", JSON.stringify(queries));
     }, [queries]);
 
@@ -104,22 +137,31 @@ export default function QueriesStories() {
     const [replyingQuery, setReplyingQuery] = useState(null);
     const [replyText, setReplyText] = useState('');
 
-    const handleSendReply = (e) => {
+    const handleSendReply = async (e) => {
         e.preventDefault();
-        if (!replyingQuery) return;
-        setQueries(prevQueries => prevQueries.map(q => {
-            if (q.id === replyingQuery.id) {
-                return {
-                    ...q,
-                    status: 'resolved',
-                    reply: replyText
-                };
-            }
-            return q;
-        }));
-        triggerToast("Reply sent to student query successfully!", "success");
-        setReplyingQuery(null);
-        setReplyText('');
+        if (!replyingQuery || !replyText.trim()) return;
+        
+        try {
+            await replyToQuery(replyingQuery.id, replyText);
+            
+            setQueries(prevQueries => prevQueries.map(q => {
+                if (q.id === replyingQuery.id) {
+                    return {
+                        ...q,
+                        status: 'resolved',
+                        reply: replyText
+                    };
+                }
+                return q;
+            }));
+            
+            triggerToast("Reply sent to student query successfully!", "success");
+            setReplyingQuery(null);
+            setReplyText('');
+        } catch (error) {
+            console.error("Failed to reply to query:", error);
+            triggerToast("Failed to send reply.", "error");
+        }
     };
 
     // Helper calculations for status counts
@@ -276,6 +318,33 @@ export default function QueriesStories() {
     });
 
     useEffect(() => {
+        const fetchDrives = async () => {
+            try {
+                const response = await getAllPlacementDrives();
+                if (response.data && Array.isArray(response.data)) {
+                    // Map backend schema to frontend schema
+                    const mappedDrives = response.data.map(d => ({
+                        ...d,
+                        id: d.id,
+                        company: d.companyName,
+                        role: d.jobRole,
+                        location: d.location,
+                        date: d.driveDate,
+                        time: d.driveTime,
+                        status: d.status,
+                        venue: d.venue || "",
+                        targetStudent: d.targetStudent || "All"
+                    }));
+                    setDrives(mappedDrives);
+                }
+            } catch (error) {
+                console.error("Failed to fetch placement drives:", error);
+            }
+        };
+        fetchDrives();
+    }, []);
+
+    useEffect(() => {
         localStorage.setItem("placement_drives", JSON.stringify(drives));
     }, [drives]);
 
@@ -346,7 +415,7 @@ export default function QueriesStories() {
         triggerToast("Placement drive deleted successfully!", "success");
     };
 
-    const handleSaveDrive = (e) => {
+    const handleSaveDrive = async (e) => {
         e.preventDefault();
         if (!driveForm.company || !driveForm.role) {
             return;
@@ -355,45 +424,69 @@ export default function QueriesStories() {
         const logoUrl = `https://www.google.com/s2/favicons?domain=${driveForm.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`;
 
         if (editingDrive) {
-            // Update existing
+            // Update existing (Frontend mock logic left intact until update API is added)
             const updatedDrives = drives.map(d => {
                 if (d.id === editingDrive.id) {
                     return {
                         ...d,
-                        company: driveForm.company,
+                        companyName: driveForm.company,
                         logo: logoUrl,
-                        role: driveForm.role,
+                        jobRole: driveForm.role,
                         location: driveForm.location,
-                        date: driveForm.date,
-                        time: driveForm.time,
+                        driveDate: driveForm.date,
+                        driveTime: driveForm.time,
                         venue: driveForm.venue,
                         status: driveForm.status,
-                        targetStudent: driveForm.targetStudent
+                        targetStudent: driveForm.targetStudent,
+                        specificStudentName: "" // Assuming empty unless specified
                     };
                 }
                 return d;
             });
             setDrives(updatedDrives);
             triggerToast("Placement drive updated successfully!", "success");
+            setIsDriveModalOpen(false);
         } else {
-            // Add new
-            const newDrive = {
-                id: Date.now(),
-                company: driveForm.company,
-                logo: logoUrl,
-                role: driveForm.role,
-                location: driveForm.location,
-                date: driveForm.date,
-                time: driveForm.time,
-                venue: driveForm.venue,
-                status: driveForm.status,
-                targetStudent: driveForm.targetStudent
-            };
-            setDrives([newDrive, ...drives]);
-            triggerToast("Placement drive created successfully!", "success");
-        }
+            // Add new via API
+            try {
+                const payload = {
+                    companyName: driveForm.company,
+                    jobRole: driveForm.role,
+                    location: driveForm.location,
+                    venue: driveForm.venue || "",
+                    driveDate: driveForm.date || "2026-07-23", // default fallback or parse correctly
+                    driveTime: driveForm.time || "",
+                    status: driveForm.status || "Open",
+                    targetStudent: driveForm.targetStudent,
+                    specificStudentName: "" // Modify if you add this field to form
+                };
 
-        setIsDriveModalOpen(false);
+                const response = await addPlacementDrive(payload);
+
+                // Map response back to frontend schema so UI renders correctly
+                const createdDrive = response.data || { ...payload, id: Date.now() };
+                const newDrive = {
+                    ...createdDrive,
+                    id: createdDrive.id,
+                    company: createdDrive.companyName || driveForm.company,
+                    logo: logoUrl,
+                    role: createdDrive.jobRole || driveForm.role,
+                    location: createdDrive.location || driveForm.location,
+                    date: createdDrive.driveDate || driveForm.date,
+                    time: createdDrive.driveTime || driveForm.time,
+                    status: createdDrive.status || driveForm.status,
+                    venue: createdDrive.venue || driveForm.venue,
+                    targetStudent: createdDrive.targetStudent || driveForm.targetStudent
+                };
+
+                setDrives([newDrive, ...drives]);
+                triggerToast("Placement drive created successfully!", "success");
+                setIsDriveModalOpen(false);
+            } catch (error) {
+                console.error("Error creating placement drive:", error);
+                triggerToast("Failed to create placement drive.", "error");
+            }
+        }
     };
 
     const [driveSearch, setDriveSearch] = useState('');

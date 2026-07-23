@@ -134,3 +134,48 @@ export const getAdminRecentPosts = () => {
         }
     });
 };
+
+export const getAllPlacementDrives = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/placement-drive/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const addPlacementDrive = (driveData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/api/admin/placement-drive/add", driveData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAllQueries = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/query/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const replyToQuery = (id, replyText) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/api/admin/query/${id}/reply`, { reply: replyText }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const changePassword = (passwordData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/auth/change-password", passwordData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
