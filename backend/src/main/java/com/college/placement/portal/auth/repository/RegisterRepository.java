@@ -14,6 +14,7 @@ public interface RegisterRepository extends JpaRepository<RegisterEntity, Long> 
     boolean existsByEmail(String email);
     boolean existsByMobile(String mobile);
     Optional<RegisterEntity> findById(Long id);
+    Optional<RegisterEntity> findByFullName(String fullName);
 
     // ==========================================
 // Department Analytics
