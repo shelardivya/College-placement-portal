@@ -138,9 +138,9 @@ function AdminDashboard({ onNavigate }) {
                 const response = await getAdminProfile();
                 if (response.data) {
                     setAdminProfile({
-                        name: response.data.name || 'Admin',
+                        name: response.data.fullName || response.data.name || 'Admin',
                         email: response.data.email || 'admin@example.com',
-                        phone: response.data.phone || '',
+                        phone: response.data.mobile || response.data.phone || '',
                         role: response.data.role || 'System Administrator'
                     });
                     console.log("Admin profile fetched:", response.data);
