@@ -97,8 +97,8 @@ export default function QueriesStories() {
                 const response = await getAllQueries();
                 if (response.data && Array.isArray(response.data)) {
                     const mappedQueries = response.data.map(q => {
-                        const nameParts = (q.studentName || 'Student').split(' ');
-                        const avatar = nameParts.length > 1 ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
+                        const nameParts = (q.studentName || q.name || 'Student').trim().split(' ');
+                        const avatar = nameParts.length > 1 && nameParts[1] ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
                         
                         return {
                             ...q,
@@ -176,9 +176,9 @@ export default function QueriesStories() {
 
     // Filter student queries based on search keyword and selected status pill
     const filteredQueries = queries.filter(q => {
-        const matchesSearch = q.name.toLowerCase().includes(querySearch.toLowerCase()) ||
-            q.title.toLowerCase().includes(querySearch.toLowerCase()) ||
-            q.message.toLowerCase().includes(querySearch.toLowerCase());
+        const matchesSearch = (q.name || "").toLowerCase().includes(querySearch.toLowerCase()) ||
+            (q.title || "").toLowerCase().includes(querySearch.toLowerCase()) ||
+            (q.message || "").toLowerCase().includes(querySearch.toLowerCase());
         const matchesStatus = queryFilter === 'all' || q.status === queryFilter;
         return matchesSearch && matchesStatus;
     });
@@ -326,11 +326,11 @@ export default function QueriesStories() {
                     const mappedDrives = response.data.map(d => ({
                         ...d,
                         id: d.id,
-                        company: d.companyName,
-                        role: d.jobRole,
-                        location: d.location,
-                        date: d.driveDate,
-                        time: d.driveTime,
+                        company: d.companyName || d.company || "Unknown Company",
+                        role: d.jobRole || d.role || "Unknown Role",
+                        location: d.location || "Unknown Location",
+                        date: d.driveDate || d.date || "TBD",
+                        time: d.driveTime || d.time || "TBD",
                         status: d.status,
                         venue: d.venue || "",
                         targetStudent: d.targetStudent || "All"
@@ -568,8 +568,8 @@ export default function QueriesStories() {
 
     // Filter drives list based on company name or role search
     const filteredDrives = drives.filter(d =>
-        d.company.toLowerCase().includes(driveSearch.toLowerCase()) ||
-        d.role.toLowerCase().includes(driveSearch.toLowerCase())
+        (d.company || "").toLowerCase().includes(driveSearch.toLowerCase()) ||
+        (d.role || "").toLowerCase().includes(driveSearch.toLowerCase())
     );
 
     // Drives pagination calculations
