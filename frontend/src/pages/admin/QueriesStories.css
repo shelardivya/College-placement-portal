@@ -899,12 +899,14 @@
     justify-content: flex-start !important;
     min-height: 0;
     padding: 28px;
+    align-self: flex-start;
 }
 
 .placement-drives-card {
     justify-content: flex-start !important;
     min-height: 0;
     padding: 28px;
+    align-self: flex-start;
 }
 
 .panel-footer-links {

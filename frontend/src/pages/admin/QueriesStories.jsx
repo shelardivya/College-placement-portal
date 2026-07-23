@@ -788,7 +788,7 @@ export default function QueriesStories() {
                                             <td>
                                                 <div className="company-logo-cell">
                                                     <img
-                                                        src={drive.logo?.includes('clearbit') ? `https://www.google.com/s2/favicons?domain=${drive.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128` : drive.logo}
+                                                        src={drive.logo && !drive.logo.includes('clearbit') ? drive.logo : `https://www.google.com/s2/favicons?domain=${drive.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
                                                         alt={drive.company}
                                                         style={{
                                                             width: '28px',
