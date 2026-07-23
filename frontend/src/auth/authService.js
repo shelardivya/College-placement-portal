@@ -234,3 +234,21 @@ export const applyForJob = (jobId, formData) => {
         }
     });
 };
+
+export const getStudentQueries = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/student/query", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const submitStudentQuery = (queryData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/api/student/query", queryData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
