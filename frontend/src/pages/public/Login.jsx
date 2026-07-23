@@ -216,12 +216,13 @@ function Login({ onNavigate, initialView }) {
                 const response = await forgotPassword(formData.email);
                 console.log("Forgot Password Response:", response.data);
 
-                setToastMessage("Reset link sent successfully!");
+                setToastMessage("Reset link sent successfully! Check your email.");
                 setToastType('success');
                 setShowToast(true);
                 setTimeout(() => {
                     setShowToast(false);
-                    setLoginView('reset');
+                    // Return to login instead of auto-showing the reset view
+                    setLoginView('login');
                 }, 2500);
             } catch (error) {
                 console.error("Forgot Password Error:", error);
