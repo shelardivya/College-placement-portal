@@ -465,6 +465,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Enter new password"
                                                 value={formData.password}
                                                 onChange={handleChange}
+                                                autoComplete="new-password"
                                                 required
                                             />
                                             <button
@@ -487,6 +488,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
+                                                autoComplete="new-password"
                                                 required
                                             />
                                             <button
