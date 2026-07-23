@@ -18,20 +18,7 @@ const api = axios.create({
     }
 });
 
-// Interceptor to match the rewrite behavior previously handled by the proxy:
-// Prepend '/api' only for '/admin/job/' routes, since our baseURL is now direct.
 
-
-
-
-api.interceptors.request.use((config) => {
-    if (config.url && config.url.startsWith('/admin/')) {
-        config.url = `/api${config.url}`;
-    }
-    return config;
-}, (error) => {
-    return Promise.reject(error);
-});
 
 
 

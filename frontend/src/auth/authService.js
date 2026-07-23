@@ -119,7 +119,7 @@ export const getStudentDashboardStats = () => {
 
 export const getAdminStudentAnalyticsDashboard = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/student-analytics/dashboard", {
+    return api.get("/admin/student-analytics/dashboard", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -128,7 +128,7 @@ export const getAdminStudentAnalyticsDashboard = () => {
 
 export const getAdminRecentPosts = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/dashboard/recent-posts", {
+    return api.get("/admin/dashboard/recent-posts", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -137,7 +137,7 @@ export const getAdminRecentPosts = () => {
 
 export const getAllPlacementDrives = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/placement-drive/all", {
+    return api.get("/admin/placement-drive/all", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -146,7 +146,7 @@ export const getAllPlacementDrives = () => {
 
 export const addPlacementDrive = (driveData) => {
     const token = localStorage.getItem("token");
-    return api.post("/api/admin/placement-drive/add", driveData, {
+    return api.post("/admin/placement-drive/add", driveData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -155,7 +155,7 @@ export const addPlacementDrive = (driveData) => {
 
 export const updatePlacementDrive = (id, driveData) => {
     const token = localStorage.getItem("token");
-    return api.put(`/api/admin/placement-drive/update/${id}`, driveData, {
+    return api.put(`/admin/placement-drive/update/${id}`, driveData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -164,7 +164,7 @@ export const updatePlacementDrive = (id, driveData) => {
 
 export const deletePlacementDrive = (id) => {
     const token = localStorage.getItem("token");
-    return api.delete(`/api/admin/placement-drive/delete/${id}`, {
+    return api.delete(`/admin/placement-drive/delete/${id}`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -173,7 +173,7 @@ export const deletePlacementDrive = (id) => {
 
 export const getAllTopPlacedStudents = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/top-placed-student/all", {
+    return api.get("/admin/top-placed-student/all", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -182,7 +182,7 @@ export const getAllTopPlacedStudents = () => {
 
 export const addTopPlacedStudent = (studentData) => {
     const token = localStorage.getItem("token");
-    return api.post("/api/admin/top-placed-student/add", studentData, {
+    return api.post("/admin/top-placed-student/add", studentData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -191,7 +191,7 @@ export const addTopPlacedStudent = (studentData) => {
 
 export const getAllQueries = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/query/all", {
+    return api.get("/admin/query/all", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -200,7 +200,7 @@ export const getAllQueries = () => {
 
 export const replyToQuery = (id, replyText) => {
     const token = localStorage.getItem("token");
-    return api.put(`/api/admin/query/${id}/reply`, { reply: replyText }, {
+    return api.put(`/admin/query/${id}/reply`, { reply: replyText }, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -218,7 +218,7 @@ export const changePassword = (passwordData) => {
 
 export const getLatestJobs = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/student/jobs/latest", {
+    return api.get("/student/jobs/latest", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -227,7 +227,7 @@ export const getLatestJobs = () => {
 
 export const applyForJob = (jobId, formData) => {
     const token = localStorage.getItem("token");
-    return api.post(`/api/student/jobs/${jobId}/apply`, formData, {
+    return api.post(`/student/jobs/${jobId}/apply`, formData, {
         headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -237,7 +237,7 @@ export const applyForJob = (jobId, formData) => {
 
 export const getStudentQueries = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/student/query", {
+    return api.get("/student/query", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -246,7 +246,7 @@ export const getStudentQueries = () => {
 
 export const submitStudentQuery = (queryData) => {
     const token = localStorage.getItem("token");
-    return api.post("/api/student/query", queryData, {
+    return api.post("/student/query", queryData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -255,7 +255,7 @@ export const submitStudentQuery = (queryData) => {
 
 export const getTopSkillsAnalytics = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/student-analytics/top-skills", {
+    return api.get("/admin/student-analytics/top-skills", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -264,7 +264,7 @@ export const getTopSkillsAnalytics = () => {
 
 export const getPlacementCgpaAnalytics = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/student-analytics/placement-cgpa", {
+    return api.get("/admin/student-analytics/placement-cgpa", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -273,7 +273,7 @@ export const getPlacementCgpaAnalytics = () => {
 
 export const getDepartmentAnalytics = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/student-analytics/department", {
+    return api.get("/admin/student-analytics/department", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -291,7 +291,7 @@ export const getStudentResumeMatch = () => {
 
 export const getAdminApplicantsMatching = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/admin/applicants/matching", {
+    return api.get("/admin/applicants/matching", {
         headers: {
             Authorization: `Bearer ${token}`
         }

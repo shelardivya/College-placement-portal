@@ -209,6 +209,7 @@ export default function StudentAnalytics() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState('success');
 
     const [formData, setFormData] = useState({
         name: '',
@@ -272,9 +273,11 @@ export default function StudentAnalytics() {
                 company: ''
             });
             setToastMessage('Student added successfully!');
+            setToastType('success');
         } catch (error) {
             console.error("Failed to add top placed student", error);
             setToastMessage('Failed to add student. Please try again.');
+            setToastType('error');
         }
         setShowToast(true);
         setTimeout(() => {
@@ -833,11 +836,11 @@ export default function StudentAnalytics() {
                 </div>
             )}
 
-            {/* Success Toast */}
+            {/* Toast */}
             {showToast && (
-                <div className="toast-notification">
-                    <div className="toast-icon-bg">
-                        <Check size={16} />
+                <div className={`toast-notification ${toastType}`}>
+                    <div className="toast-icon-bg" style={{ backgroundColor: toastType === 'error' ? '#fee2e2' : '#dcfce7', color: toastType === 'error' ? '#ef4444' : '#22c55e' }}>
+                        {toastType === 'error' ? <X size={16} /> : <Check size={16} />}
                     </div>
                     <span className="toast-text">{toastMessage}</span>
                     <button className="toast-close-btn" onClick={() => setShowToast(false)}>
