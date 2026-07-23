@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -157,13 +157,14 @@ function AdminDashboard({ onNavigate }) {
     });
 
 
+    const [recentPosts, setRecentPosts] = useState([]);
+
     useEffect(() => {
         const fetchAdminProfile = async () => {
             try {
                 const response = await getAdminProfile();
                 if (response.data) {
-                    // Update the state with the actual data from the backend
-                    setProfileData({
+                    setAdminProfile({
                         name: response.data.name || 'Admin',
                         email: response.data.email || 'admin@example.com',
                         phone: response.data.phone || '',
@@ -173,11 +174,22 @@ function AdminDashboard({ onNavigate }) {
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
+            }
+        };
 
+        const fetchRecentPosts = async () => {
+            try {
+                const response = await getAdminRecentPosts();
+                if (response.data) {
+                    setRecentPosts(response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching recent posts:", error);
             }
         };
 
         fetchAdminProfile();
+        fetchRecentPosts();
     }, []);
 
 
@@ -1038,66 +1050,56 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
 
                                         <div className='postings-list'>
-                                            {paginatedJobs.map((job) => (
-                                                <div key={job.id} className='posting-card-item'>
+                                            {recentPosts && recentPosts.length > 0 ? (
+                                                recentPosts.map((post, index) => (
+                                                    <div key={index} className='posting-card-item'>
 
-                                                    <div className='posting-card-logo-wrap'>
-                                                        <img
-                                                            src={job.logoUrl}
-                                                            alt={job.company}
-                                                            className='posting-company-logo'
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                e.target.nextSibling.style.display = 'flex';
-                                                            }}
-                                                        />
-                                                        <div className='posting-logo-fallback' style={{ display: 'none' }}>
-                                                            <Briefcase size={18} />
-                                                        </div>
-                                                    </div>
-
-
-                                                    <div className='posting-card-body'>
-
-                                                        <h5 className='posting-card-title'>{job.company}</h5>
-
-
-                                                        <div className='posting-info-rows'>
-                                                            {job.location && (
-                                                                <div className='posting-info-row'>
-                                                                    <span className='posting-info-icon'>📍</span>
-                                                                    <span className='posting-info-label'>Location</span>
-                                                                    <span className='posting-info-sep'>:</span>
-                                                                    <span className='posting-info-value'>{job.location}</span>
-                                                                </div>
-                                                            )}
-                                                            <div className='posting-info-row'>
-                                                                <span className='posting-info-icon'>👤</span>
-                                                                <span className='posting-info-label'>Job Role</span>
-                                                                <span className='posting-info-sep'>:</span>
-                                                                <span className='posting-info-value'>{job.title}</span>
+                                                        <div className='posting-card-logo-wrap'>
+                                                            <div className='posting-logo-fallback'>
+                                                                <Briefcase size={18} />
                                                             </div>
-                                                            {job.deadline && (
+                                                        </div>
+
+                                                        <div className='posting-card-body'>
+                                                            <h5 className='posting-card-title'>{post.companyName}</h5>
+                                                            <div className='posting-info-rows'>
+                                                                {post.location && (
+                                                                    <div className='posting-info-row'>
+                                                                        <span className='posting-info-icon'>📍</span>
+                                                                        <span className='posting-info-label'>Location</span>
+                                                                        <span className='posting-info-sep'>:</span>
+                                                                        <span className='posting-info-value'>{post.location}</span>
+                                                                    </div>
+                                                                )}
                                                                 <div className='posting-info-row'>
-                                                                    <span className='posting-info-icon'>📅</span>
-                                                                    <span className='posting-info-label'>Deadline</span>
+                                                                    <span className='posting-info-icon'>👤</span>
+                                                                    <span className='posting-info-label'>Job Role</span>
                                                                     <span className='posting-info-sep'>:</span>
-                                                                    <span className='posting-info-value posting-info-deadline'>{formatDeadline(job.deadline)}</span>
+                                                                    <span className='posting-info-value'>{post.jobRole}</span>
                                                                 </div>
+                                                                {post.deadline && (
+                                                                    <div className='posting-info-row'>
+                                                                        <span className='posting-info-icon'>📅</span>
+                                                                        <span className='posting-info-label'>Deadline</span>
+                                                                        <span className='posting-info-sep'>:</span>
+                                                                        <span className='posting-info-value posting-info-deadline'>{formatDeadline(post.deadline)}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className='posting-card-status'>
+                                                            {post.status && post.status.toLowerCase() === 'expired' ? (
+                                                                <span className='badge-expired'>Expired</span>
+                                                            ) : (
+                                                                <span className='badge-active'>{post.status || 'Active'}</span>
                                                             )}
                                                         </div>
                                                     </div>
-
-
-                                                    <div className='posting-card-status'>
-                                                        {job.deadline && new Date(job.deadline) < new Date() ? (
-                                                            <span className='badge-expired'>Expired</span>
-                                                        ) : (
-                                                            <span className='badge-active'>Active</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                ))
+                                            ) : (
+                                                <div className='no-postings'>No recent postings found.</div>
+                                            )}
                                         </div>
 
                                         <div className='pagination-controls'>

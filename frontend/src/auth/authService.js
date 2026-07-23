@@ -116,3 +116,21 @@ export const getStudentDashboardStats = () => {
         }
     });
 };
+
+export const getAdminStudentAnalyticsDashboard = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/student-analytics/dashboard", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminRecentPosts = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/dashboard/recent-posts", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
