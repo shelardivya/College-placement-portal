@@ -20,7 +20,7 @@ const initialDrives = [
     {
         id: 1,
         company: 'Google',
-        logo: 'https://logo.clearbit.com/google.com',
+        logo: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
         role: 'SDE Intern',
         location: 'Bangalore',
         date: '20 Jul 2026',
@@ -33,7 +33,7 @@ const initialDrives = [
     {
         id: 2,
         company: 'Amazon',
-        logo: 'https://logo.clearbit.com/amazon.com',
+        logo: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=128',
         role: 'Backend Developer',
         location: 'Hyderabad',
         date: '25 Jul 2026',
@@ -46,7 +46,7 @@ const initialDrives = [
     {
         id: 3,
         company: 'TCS',
-        logo: 'https://logo.clearbit.com/tcs.com',
+        logo: 'https://www.google.com/s2/favicons?domain=tcs.com&sz=128',
         role: 'System Engineer',
         location: 'Pune',
         date: '30 Jul 2026',
@@ -59,7 +59,7 @@ const initialDrives = [
     {
         id: 4,
         company: 'Infosys',
-        logo: 'https://logo.clearbit.com/infosys.com',
+        logo: 'https://www.google.com/s2/favicons?domain=infosys.com&sz=128',
         role: 'Full Stack Developer',
         location: 'Mysore',
         date: '05 Aug 2026',
@@ -72,7 +72,7 @@ const initialDrives = [
     {
         id: 5,
         company: 'Cognizant',
-        logo: 'https://logo.clearbit.com/cognizant.com',
+        logo: 'https://www.google.com/s2/favicons?domain=cognizant.com&sz=128',
         role: 'QA Engineer',
         location: 'Chennai',
         date: '12 Aug 2026',
@@ -85,7 +85,7 @@ const initialDrives = [
     {
         id: 6,
         company: 'Wipro',
-        logo: 'https://logo.clearbit.com/wipro.com',
+        logo: 'https://www.google.com/s2/favicons?domain=wipro.com&sz=128',
         role: 'System Associate',
         location: 'Kochi',
         date: '18 Aug 2026',
