@@ -463,7 +463,26 @@ export default function StudHub() {
                         <div className="next-event-card">
                             <div className="event-card-header-row">
                                 <div className="event-icon-box">
-                                    <Calendar className="event-purple-icon" size={20} />
+                                    {currentDrive?.logo ? (
+                                        <img
+                                            src={currentDrive.logo}
+                                            alt={currentDrive.company}
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                objectFit: 'contain',
+                                                borderRadius: '8px',
+                                                border: '1px solid #e2e8f0',
+                                                background: '#ffffff',
+                                                padding: '3px'
+                                            }}
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.nextSibling.style.display = 'block';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <Calendar className="event-purple-icon" size={20} style={{ display: currentDrive?.logo ? 'none' : 'block' }} />
                                 </div>
                                 <h2 className="event-company-title">{currentDrive ? `${currentDrive.company} Drive` : "Google Drive"}</h2>
                             </div>
