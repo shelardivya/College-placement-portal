@@ -152,7 +152,7 @@ export default function QueriesStories() {
         {
             id: 1,
             company: 'Google',
-            logo: 'https://logo.clearbit.com/google.com',
+            logo: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
             role: 'SDE Intern',
             location: 'Bangalore',
             date: '20 Jul 2026',
@@ -165,7 +165,7 @@ export default function QueriesStories() {
         {
             id: 2,
             company: 'Amazon',
-            logo: 'https://logo.clearbit.com/amazon.com',
+            logo: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=128',
             role: 'Backend Developer',
             location: 'Hyderabad',
             date: '25 Jul 2026',
@@ -178,7 +178,7 @@ export default function QueriesStories() {
         {
             id: 3,
             company: 'TCS',
-            logo: 'https://logo.clearbit.com/tcs.com',
+            logo: 'https://www.google.com/s2/favicons?domain=tcs.com&sz=128',
             role: 'System Engineer',
             location: 'Pune',
             date: '30 Jul 2026',
@@ -191,7 +191,7 @@ export default function QueriesStories() {
         {
             id: 4,
             company: 'Infosys',
-            logo: 'https://logo.clearbit.com/infosys.com',
+            logo: 'https://www.google.com/s2/favicons?domain=infosys.com&sz=128',
             role: 'Full Stack Developer',
             location: 'Mysore',
             date: '05 Aug 2026',
@@ -204,7 +204,7 @@ export default function QueriesStories() {
         {
             id: 5,
             company: 'Cognizant',
-            logo: 'https://logo.clearbit.com/cognizant.com',
+            logo: 'https://www.google.com/s2/favicons?domain=cognizant.com&sz=128',
             role: 'QA Engineer',
             location: 'Chennai',
             date: '12 Aug 2026',
@@ -217,7 +217,7 @@ export default function QueriesStories() {
         {
             id: 6,
             company: 'Wipro',
-            logo: 'https://logo.clearbit.com/wipro.com',
+            logo: 'https://www.google.com/s2/favicons?domain=wipro.com&sz=128',
             role: 'System Associate',
             location: 'Kochi',
             date: '18 Aug 2026',
@@ -341,7 +341,7 @@ export default function QueriesStories() {
             return;
         }
 
-        const logoUrl = `https://logo.clearbit.com/${driveForm.company.toLowerCase().replace(/\s+/g, '')}.com`;
+        const logoUrl = `https://www.google.com/s2/favicons?domain=${driveForm.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`;
 
         if (editingDrive) {
             // Update existing
@@ -855,7 +855,7 @@ export default function QueriesStories() {
                         </table>
                     </div>
 
-                    <div className="table-card-footer" style={{ marginTop: 'auto', paddingTop: '12px' }}>
+                    <div className="table-card-footer" style={{ paddingTop: '12px' }}>
                         <div className="pagination-wrapper">
                             <button
                                 className="pagination-btn"

@@ -47,7 +47,7 @@ function AdminDashboard({ onNavigate }) {
             company: 'Google', status: 'Active',
             date: '05 July 2026',
             deadline: '2026-07-20',
-            logoUrl: 'https://logo.clearbit.com/google.com',
+            logoUrl: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
             location: 'Bangalore, India'
         },
 
@@ -56,7 +56,7 @@ function AdminDashboard({ onNavigate }) {
             company: 'Microsoft', status: 'Active',
             date: '04 July 2026',
             deadline: '2026-07-18',
-            logoUrl: 'https://logo.clearbit.com/microsoft.com',
+            logoUrl: 'https://www.google.com/s2/favicons?domain=microsoft.com&sz=128',
             location: 'Hyderabad, India'
         },
 
@@ -65,7 +65,7 @@ function AdminDashboard({ onNavigate }) {
             company: 'Infosys', status: 'Active',
             date: '03 July 2026',
             deadline: '2026-07-15',
-            logoUrl: 'https://logo.clearbit.com/infosys.com',
+            logoUrl: 'https://www.google.com/s2/favicons?domain=infosys.com&sz=128',
             location: 'Pune, India'
         }
     ]);
@@ -710,7 +710,7 @@ function AdminDashboard({ onNavigate }) {
         };
         const lower = company.toLowerCase().trim();
         const domain = domainMap[lower] || `${lower.replace(/\s+/g, '')}.com`;
-        const logoUrl = `https://logo.clearbit.com/${domain}`;
+        const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
         return (
             <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>

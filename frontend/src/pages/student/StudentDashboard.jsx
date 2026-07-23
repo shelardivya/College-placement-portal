@@ -40,7 +40,7 @@ const initialDrives = [
     {
         id: 1,
         company: 'Google',
-        logo: 'https://logo.clearbit.com/google.com',
+        logo: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
         role: 'SDE Intern',
         location: 'Bangalore',
         date: '20 Jul 2026',
@@ -53,7 +53,7 @@ const initialDrives = [
     {
         id: 2,
         company: 'Amazon',
-        logo: 'https://logo.clearbit.com/amazon.com',
+        logo: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=128',
         role: 'Backend Developer',
         location: 'Hyderabad',
         date: '25 Jul 2026',
@@ -66,7 +66,7 @@ const initialDrives = [
     {
         id: 3,
         company: 'TCS',
-        logo: 'https://logo.clearbit.com/tcs.com',
+        logo: 'https://www.google.com/s2/favicons?domain=tcs.com&sz=128',
         role: 'System Engineer',
         location: 'Pune',
         date: '30 Jul 2026',
@@ -79,7 +79,7 @@ const initialDrives = [
     {
         id: 4,
         company: 'Infosys',
-        logo: 'https://logo.clearbit.com/infosys.com',
+        logo: 'https://www.google.com/s2/favicons?domain=infosys.com&sz=128',
         role: 'Full Stack Developer',
         location: 'Mysore',
         date: '05 Aug 2026',
@@ -92,7 +92,7 @@ const initialDrives = [
     {
         id: 5,
         company: 'Cognizant',
-        logo: 'https://logo.clearbit.com/cognizant.com',
+        logo: 'https://www.google.com/s2/favicons?domain=cognizant.com&sz=128',
         role: 'QA Engineer',
         location: 'Chennai',
         date: '12 Aug 2026',
@@ -105,7 +105,7 @@ const initialDrives = [
     {
         id: 6,
         company: 'Wipro',
-        logo: 'https://logo.clearbit.com/wipro.com',
+        logo: 'https://www.google.com/s2/favicons?domain=wipro.com&sz=128',
         role: 'System Associate',
         location: 'Kochi',
         date: '18 Aug 2026',
@@ -577,7 +577,7 @@ export default function
         {
             id: "google-backend",
             company: "Google",
-            logoUrl: "https://logo.clearbit.com/google.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=google.com&sz=128",
             location: "Mumbai",
             role: "Backend Developer",
             deadline: "30-June-2026",
@@ -595,7 +595,7 @@ export default function
         {
             id: "ibm-frontend",
             company: "IBM",
-            logoUrl: "https://logo.clearbit.com/ibm.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=ibm.com&sz=128",
             location: "Pune",
             role: "Frontend Developer",
             deadline: "25-June-2026",
@@ -613,7 +613,7 @@ export default function
         {
             id: "infosys-systems",
             company: "Infosys",
-            logoUrl: "https://logo.clearbit.com/infosys.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=infosys.com&sz=128",
             location: "Bangalore",
             role: "Systems Engineer",
             deadline: "28-June-2026",
@@ -631,7 +631,7 @@ export default function
         {
             id: "microsoft-cloud",
             company: "Microsoft",
-            logoUrl: "https://logo.clearbit.com/microsoft.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
             location: "Hyderabad",
             role: "Cloud Solution Architect",
             deadline: "10-July-2026",
@@ -648,7 +648,7 @@ export default function
         {
             id: "amazon-sde",
             company: "Amazon",
-            logoUrl: "https://logo.clearbit.com/amazon.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
             location: "Chennai",
             role: "Software Dev Engineer (SDE I)",
             deadline: "15-July-2026",
@@ -666,7 +666,7 @@ export default function
     const resumeMatches = [
         {
             company: "Google",
-            logoUrl: "https://logo.clearbit.com/google.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=google.com&sz=128",
             role: "Data Scientist",
             location: "Mumbai",
             deadline: "30-June-2026",
@@ -676,7 +676,7 @@ export default function
         },
         {
             company: "IBM",
-            logoUrl: "https://logo.clearbit.com/ibm.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=ibm.com&sz=128",
             role: "Frontend Developer",
             location: "Pune",
             deadline: "25-June-2026",
@@ -686,7 +686,7 @@ export default function
         },
         {
             company: "Infosys",
-            logoUrl: "https://logo.clearbit.com/infosys.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=infosys.com&sz=128",
             role: "Systems Engineer",
             location: "Bangalore",
             deadline: "28-June-2026",
@@ -696,7 +696,7 @@ export default function
         },
         {
             company: "Microsoft",
-            logoUrl: "https://logo.clearbit.com/microsoft.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
             role: "Cloud Solution Architect",
             location: "Hyderabad",
             deadline: "10-July-2026",
@@ -706,7 +706,7 @@ export default function
         },
         {
             company: "Amazon",
-            logoUrl: "https://logo.clearbit.com/amazon.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
             role: "Software Dev Engineer",
             location: "Chennai",
             deadline: "15-July-2026",
@@ -716,7 +716,7 @@ export default function
         },
         {
             company: "TCS",
-            logoUrl: "https://logo.clearbit.com/tcs.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=tcs.com&sz=128",
             role: "Assistant Engineer",
             location: "Mumbai",
             deadline: "05-July-2026",
@@ -726,7 +726,7 @@ export default function
         },
         {
             company: "Wipro",
-            logoUrl: "https://logo.clearbit.com/wipro.com",
+            logoUrl: "https://www.google.com/s2/favicons?domain=wipro.com&sz=128",
             role: "Project Engineer",
             location: "Pune",
             deadline: "02-July-2026",
@@ -936,7 +936,7 @@ export default function
                                         <div className="job-card-header">
                                             <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
                                                 <img
-                                                    src={job.logoUrl || job.logo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                                    src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
                                                     alt={job.company}
                                                     className="company-logo-img"
                                                     onError={(e) => {
@@ -1032,7 +1032,7 @@ export default function
                                         <div className="match-logo-details">
                                             <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
                                                 <img
-                                                    src={item.logoUrl || item.logo || `https://logo.clearbit.com/${item.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                                    src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
                                                     alt={item.company}
                                                     className="company-logo-img"
                                                     onError={(e) => {
