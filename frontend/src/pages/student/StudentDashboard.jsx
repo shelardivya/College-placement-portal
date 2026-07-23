@@ -1075,9 +1075,9 @@ export default function
 
                         {(() => {
                             const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                            const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE);
+                            const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
 
-                            return totalPages > 1 ? (
+                            return (
                                 <div className="sd-pagination">
                                     <button
                                         className="sd-page-btn"
@@ -1097,7 +1097,7 @@ export default function
                                         Next →
                                     </button>
                                 </div>
-                            ) : null;
+                            );
                         })()}
                     </section>
 
