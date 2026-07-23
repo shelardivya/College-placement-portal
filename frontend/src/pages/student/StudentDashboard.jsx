@@ -788,7 +788,7 @@ export default function
     return (
         <div className="dashboard-container">
 
-            {/*Header Section*/}
+
             <header className="dashboard-header">
 
                 <div className="header-logo">
@@ -816,7 +816,7 @@ export default function
                 <div className="header-actions">
                     <span className="role-badge">Student</span>
 
-                    {/* Notification Dropdown */}
+
                     <div className="notification-bell-container">
                         <div className="notification-bell" onClick={() => {
                             setIsNotificationSidebarOpen(true);
@@ -829,7 +829,7 @@ export default function
                         </div>
                     </div>
 
-                    {/* Profile Dropdown */}
+
                     <div className="profile-container">
                         <div className="profile-avatar" onClick={() => {
                             setIsProfileDropdownOpen(!isProfileDropdownOpen);
@@ -870,7 +870,7 @@ export default function
                 </div>
             </header>
 
-            {/*Welcome Banner*/}
+
             {activeTab === 'dashboard' && (
             <section className="welcome-section">
                 <div className="welcome-content">
@@ -883,7 +883,7 @@ export default function
             </section>
             )}
 
-            {/*Metric Boxes*/}
+
             {activeTab === 'dashboard' && (
             <section className="metrics-grid">
                 {metrics.map((metric) => (
@@ -899,7 +899,7 @@ export default function
                             </div>
                         </div>
 
-                        {/*Progress Bar Line Wrapper*/}
+
                         <div className="metric-progress-container">
                             <div className={`metric-progress-bar ${metric.colorClass}`}
 
@@ -916,11 +916,11 @@ export default function
 
 
 
-            {/*MAin two column content*/}
+
             {activeTab === 'dashboard' && (
             <main className="dashboard-main-content">
 
-                {/*LEft column : latest job opportunities */}
+
                 <section className="dashboard-column jobs-column">
                     <div className="column-card-header">
                         <h3>Latest Job Opportunities</h3>
@@ -982,7 +982,7 @@ export default function
                             })}
                     </div>
 
-                    {/* Jobs Pagination */}
+
                     <div className="sd-pagination">
                         <button
                             className="sd-page-btn"
@@ -1004,7 +1004,7 @@ export default function
                     </div>
                 </section>
 
-                {/*Right Column : Resume Match Status */}
+
                 <section className="dashboard-column match-column">
                     <div className="column-card-header">
                         <h3>Resume Match Status</h3>
@@ -1027,7 +1027,7 @@ export default function
                             .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
                             .map((item, index) => (
                                 <div className="match-card" key={index}>
-                                    {/* Top Row: Logo + Company Name on left, Score stack on right */}
+
                                     <div className="match-card-header">
                                         <div className="match-logo-details">
                                             <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
@@ -1055,7 +1055,7 @@ export default function
                                         </div>
                                     </div>
 
-                                    {/* Middle Details Stacked below each other */}
+
                                     <div className="match-card-details">
                                         <div className="match-detail-item">
                                             <span className="match-detail-label">Location :</span>
@@ -1077,7 +1077,7 @@ export default function
 
 
 
-                    {/* Match Pagination */}
+
                     {(() => {
                         const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
                         const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE);
@@ -1109,16 +1109,16 @@ export default function
             </main>
             )}
 
-            {/* Stud Hub page */}
+
             {activeTab === 'studhub' && <StudHub />}
 
-            {/* Job Requirements Modal Popup Overlay */}
+
             {selectedJob && (() => {
                 const eligibility = getJobEligibility(selectedJob);
                 return (
                     <div className="modal-overlay" onClick={handleCancleApply}>
                         <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
-                            {/* Modal Header */}
+
                             <div className="modal-header">
                                 <h4>Job Details & Eligibility</h4>
                                 <button className="close-btn" onClick={handleCancleApply}>
@@ -1126,7 +1126,7 @@ export default function
                                 </button>
                             </div>
 
-                            {/* Modal Form Content */}
+
                             <div className="modal-form">
                                 <div className="form-group">
                                     <label>Company Name</label>
@@ -1286,14 +1286,14 @@ export default function
             })()}
 
 
-            {/* View/Edit Profile Modal */}
+
             {isProfileModalOpen && (
                 <div className="modal-overlay" onClick={() => {
                     setIsProfileModalOpen(false);
                     setIsEditingProfile(false);
                 }}>
                     <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
-                        {/* Modal Header */}
+
                         <div className="modal-header">
                             <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
                             <button className="close-btn" onClick={() => {
@@ -1304,7 +1304,7 @@ export default function
                             </button>
                         </div>
 
-                        {/* Modal Form Content */}
+
                         <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
                             <div className="form-row">
                                 <div className="form-group half-width">
@@ -1479,7 +1479,7 @@ export default function
                 </div>
             )}
 
-            {/* Change Password Modal Overlay */}
+
             {isChangePasswordOpen && (
                 <div className="modal-overlay" onClick={() => {
                     setIsChangePasswordOpen(false);
@@ -1584,7 +1584,7 @@ export default function
                 </div>
             )}
 
-            {/* Notifications Sidebar Panel */}
+
             {isNotificationSidebarOpen && (
                 <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
                     <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
@@ -1613,7 +1613,7 @@ export default function
                 </div>
             )}
 
-            {/* TOAST NOTIFICATION COMPONENT */}
+
 
             {showToast && (
                 <div className={`sd-toast-notification ${toastType}`}>

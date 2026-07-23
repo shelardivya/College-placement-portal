@@ -308,7 +308,7 @@ export default function StudHub() {
 
     return (
         <div className="studhub-container">
-            {/* Stud Hub Welcome Banner */}
+
             <div className="studhub-banner">
                 <div className="studhub-banner-text">
                     <h2>Stud Hub <span>🚀</span></h2>
@@ -319,11 +319,11 @@ export default function StudHub() {
                 </div>
             </div>
 
-            {/* Two-column layout */}
+
             <div className="studhub-grid">
-                {/* Left column */}
+
                 <div className="studhub-left">
-                    {/* 1. Placement Success Stories */}
+
                     <div className="sh-panel">
                         <div className="sh-panel-header">
                             <div className="sh-panel-title-group">
@@ -380,7 +380,7 @@ export default function StudHub() {
                                     ))}
                                 </div>
 
-                                {/* Stories Pagination Controls */}
+
                                 {totalStoriesPages > 1 && (
                                     <div className="sh-pagination-wrapper">
                                         <button
@@ -408,7 +408,7 @@ export default function StudHub() {
                         )}
                     </div>
 
-                    {/* 2. Raise a Query */}
+
                     <div className="sh-panel sh-query-panel">
                         <div className="sh-panel-header">
                             <div className="sh-panel-title-group">
@@ -449,9 +449,9 @@ export default function StudHub() {
                     </div>
                 </div>
 
-                {/* Right column */}
+
                 <div className="studhub-right">
-                    {/* 3. Campus Placement Drives Widget */}
+
                     <div className="sh-panel campus-event-panel">
                         <div className="campus-drives-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <h3 className="event-panel-title">Campus Placement Drives</h3>
@@ -488,7 +488,7 @@ export default function StudHub() {
                             </div>
                             
                             <div className="event-details-card-box">
-                                {/* 1. DATE */}
+
                                 <div className="event-detail-row">
                                     <div className="event-detail-icon-wrapper">
                                         <Calendar size={16} />
@@ -501,7 +501,7 @@ export default function StudHub() {
                                     </div>
                                 </div>
 
-                                {/* 2. TIME */}
+
                                 <div className="event-detail-row">
                                     <div className="event-detail-icon-wrapper">
                                         <Clock size={16} />
@@ -514,7 +514,7 @@ export default function StudHub() {
                                     </div>
                                 </div>
 
-                                {/* 3. LOCATION */}
+
                                 <div className="event-detail-row">
                                     <div className="event-detail-icon-wrapper">
                                         <MapPin size={16} />
@@ -527,10 +527,10 @@ export default function StudHub() {
                                     </div>
                                 </div>
 
-                                {/* Expanded items when View Details is clicked */}
+
                                 {showDriveDetails && (
                                     <>
-                                        {/* 4. VENUE */}
+
                                         <div className="event-detail-row">
                                             <div className="event-detail-icon-wrapper">
                                                 <Building size={16} />
@@ -543,7 +543,7 @@ export default function StudHub() {
                                             </div>
                                         </div>
 
-                                        {/* 5. JOB ROLE */}
+
                                         <div className="event-detail-row">
                                             <div className="event-detail-icon-wrapper">
                                                 <Briefcase size={16} />
@@ -556,7 +556,7 @@ export default function StudHub() {
                                             </div>
                                         </div>
 
-                                        {/* 6. DRIVE STATUS */}
+
                                         <div className="event-detail-row">
                                             <div className="event-detail-icon-wrapper">
                                                 <CheckCircle2 size={16} />
@@ -571,7 +571,7 @@ export default function StudHub() {
                                             </div>
                                         </div>
 
-                                        {/* 7. TARGET AUDIENCE */}
+
                                         <div className="event-detail-row">
                                             <div className="event-detail-icon-wrapper">
                                                 <User size={16} />
@@ -584,7 +584,7 @@ export default function StudHub() {
                                             </div>
                                         </div>
 
-                                        {/* 8. ABOUT DRIVE */}
+
                                         <div className="event-detail-row full-width-row">
                                             <div className="event-detail-icon-wrapper">
                                                 <FileText size={16} />
@@ -607,7 +607,7 @@ export default function StudHub() {
                                 {showDriveDetails ? "Hide Details" : "View Details"}
                             </button>
 
-                            {/* Drives Pagination Controls */}
+
                             {totalDrivePages > 1 && (
                                 <div className="sh-pagination-wrapper" style={{ marginTop: '16px' }}>
                                     <button
@@ -634,7 +634,7 @@ export default function StudHub() {
                         </div>
                     </div>
 
-                    {/* 4. Query Responses Panel */}
+
                     <div className="sh-panel query-responses-panel">
                         <div className="sh-panel-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                             <div className="sh-panel-title-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -646,7 +646,7 @@ export default function StudHub() {
                             </span>
                         </div>
 
-                        {/* Segmented Filter Pills (Image 2) */}
+
                         <div className="query-filter-segment">
                             <div className="query-segment-container">
                                 <button
@@ -666,7 +666,7 @@ export default function StudHub() {
                             </div>
                         </div>
 
-                        {/* Query Cards List */}
+
                         <div className="query-responses-list">
                             {paginatedQueryResponses.length > 0 ? (
                                 paginatedQueryResponses.map((query) => (
@@ -692,7 +692,7 @@ export default function StudHub() {
                                             </div>
                                         </div>
 
-                                        {/* Admin Reply Box (Green Box from Image 1) */}
+
                                         <div className="admin-reply-box">
                                             <span className="reply-header-label">ADMIN REPLY:</span>
                                             <p className="reply-text-content">
@@ -708,7 +708,7 @@ export default function StudHub() {
                             )}
                         </div>
 
-                        {/* Independent Pagination Control */}
+
                         <div className="stories-pagination-footer" style={{ paddingBottom: '20px' }}>
                             <button
                                 type="button"
@@ -736,7 +736,7 @@ export default function StudHub() {
                 </div>
             </div>
 
-            {/* TOAST NOTIFICATION COMPONENT */}
+
             {showToast && (
                 <div className={`toast-notification ${toastType}`}>
                     <div className="toast-content">

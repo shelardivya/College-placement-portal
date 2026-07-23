@@ -1,4 +1,4 @@
-/*Layout Structures*/
+
 .queries-stories-container {
     display: flex;
     flex-direction: column;
@@ -13,7 +13,7 @@
     gap: 24px;
 }
 
-/* Bottom row: Manage Drives (left) + Published Stories (right) — give equal width */
+
 .qs-row-bottom {
     grid-template-columns: 1.05fr 0.95fr;
 }
@@ -378,7 +378,7 @@
     color: #4f46e5;
 }
 
-/* 2. Publish Story Panel Form Fields */
+
 .publish-form-body {
     display: flex;
     flex-direction: column;
@@ -504,7 +504,7 @@
     background-color: #4f46e5;
 }
 
-/* 3. Manage Placement Drives Table */
+
 .header-actions-group {
     display: flex;
     align-items: center;
@@ -587,6 +587,7 @@
     gap: 6px;
     color: #1e293b;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .icon-text-cell svg {
@@ -661,7 +662,7 @@
     border-color: #ef4444;
 }
 
-/* 4. Placement Stories Layout styling */
+
 .header-view-all {
     font-size: 0.82rem;
     font-weight: 600;
@@ -894,7 +895,7 @@
     border-color: #e2e8f0;
 }
 
-/* Bottom row panel overrides — Manage Drives + Published Stories */
+
 .placement-stories-card {
     justify-content: flex-start !important;
     min-height: 0;
