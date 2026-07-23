@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -527,12 +527,10 @@ export default function QueriesStories() {
     useEffect(() => {
         const fetchStories = async () => {
             try {
-                const response = await getAllTopPlacedStudents();
+                const response = await getAllPlacementStories();
                 if (response.data && Array.isArray(response.data)) {
                     const mappedStories = response.data.map(s => {
-                        const isBoy = Math.random() > 0.5;
-                        const randomId = Math.floor(Math.random() * 50) + 1;
-                        const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
+                        const avatarUrl = s.photoPath || 'https://via.placeholder.com/150';
 
                         return {
                             id: s.id,
@@ -541,16 +539,16 @@ export default function QueriesStories() {
                             company: s.companyName,
                             companyColor: '#eff6ff',
                             companyTextColor: '#2563eb',
-                            role: s.skills || 'Placed Student',
+                            role: s.jobRole || 'Placed Student',
                             packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
-                            storyText: `Secured placement at ${s.companyName} with CGPA of ${s.cgpa || 'N/A'}.`,
-                            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                            storyText: s.successStory || `Secured placement at ${s.companyName}.`,
+                            date: new Date(s.createdAt || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                         };
                     });
                     setStories(mappedStories.sort((a, b) => b.id - a.id));
                 }
             } catch (error) {
-                console.error("Failed to fetch top placed students:", error);
+                console.error("Failed to fetch placement stories:", error);
             }
         };
         fetchStories();
@@ -623,32 +621,44 @@ export default function QueriesStories() {
 
         try {
             const packageValue = parseFloat(storyForm.package) || 0;
-            
             const payload = {
                 studentName: storyForm.studentName,
                 companyName: storyForm.companyName,
-                packageLpa: packageValue,
-                cgpa: 8.5, // Defaulting as it's not in the form
-                skills: storyForm.jobRole // Mapping role to skills as per API payload
+                package: packageValue,
+                jobRole: storyForm.jobRole,
+                storyText: storyForm.storyText || `Secured placement at ${storyForm.companyName}.`
             };
             
-            const response = await addTopPlacedStudent(payload);
-            const createdStudent = response.data || { ...payload, id: Date.now() };
+            // Note: In a real scenario, you'd pass the actual File object from the file input to publishPlacementStory.
+            // Since the UI only stores a data URL in storyForm.photo right now, we can convert it to a Blob, or just pass null if not strictly enforced.
+            // For simplicity, passing null as the file since the UI just has a preview string.
+            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:') 
+                ? await (await fetch(storyForm.photo)).blob() 
+                : null;
+            
+            let photoFile = null;
+            if (photoBlob) {
+                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
+            }
 
+            const response = await publishPlacementStory(payload, photoFile);
+            
+            // The backend returns a string message or a PlacementStoryResponseDto.
+            // We can fetch all stories again, or just optimistically add it.
             const isBoy = Math.random() > 0.5;
             const randomId = Math.floor(Math.random() * 50) + 1;
             const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
 
             const newStory = {
-                id: createdStudent.id,
-                name: createdStudent.studentName,
+                id: Date.now(),
+                name: storyForm.studentName,
                 avatar: storyForm.photo || avatarUrl,
-                company: createdStudent.companyName,
+                company: storyForm.companyName,
                 companyColor: '#eff6ff',
                 companyTextColor: '#2563eb',
-                role: createdStudent.skills,
-                packageAmt: createdStudent.packageLpa ? `${createdStudent.packageLpa} LPA` : '6.0 LPA',
-                storyText: storyForm.storyText || `Secured placement at ${createdStudent.companyName}.`,
+                role: storyForm.jobRole,
+                packageAmt: payload.package ? `${payload.package} LPA` : '6.0 LPA',
+                storyText: payload.storyText,
                 date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
             };
 
@@ -666,7 +676,8 @@ export default function QueriesStories() {
             });
         } catch (error) {
             console.error("Failed to publish placement story:", error);
-            triggerToast("Failed to publish story.", "error");
+            const errorMsg = error.response?.data?.message || error.response?.data || error.message || "Failed to publish story.";
+            triggerToast(`Error: ${typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)}`, "error");
         }
     };
 
