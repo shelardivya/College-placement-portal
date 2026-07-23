@@ -68,3 +68,24 @@ export const publishDraft = (id) => {
         }
     });
 };
+
+
+
+export const getAdminProfile = () => {
+    const token = localStorage.getItem("token");
+
+    return api.get("/api/admin/profile", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentProfile = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/student/profile", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
