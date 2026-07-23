@@ -1019,7 +1019,7 @@ function AdminDashboard({ onNavigate }) {
                                         <span className='stat-label'>Active Posting</span>
                                         <h3 className='stat-value'>{jobs.length}</h3>
                                         <span className='stat-trend green-trend'>
-                                            ↑ 12% <span className='trend-subtext'>from last month</span>
+                                            0% <span className='trend-subtext'>from last month</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1030,9 +1030,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Total Students</span>
-                                        <h3 className='stat-value'>500</h3>
+                                        <h3 className='stat-value'>0</h3>
                                         <span className='stat-trend green-trend'>
-                                            ↑ 8% <span className='trend-subtext'>from last month</span>
+                                            0% <span className='trend-subtext'>from last month</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1043,9 +1043,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Resume Received</span>
-                                        <h3 className='stat-value'>120</h3>
+                                        <h3 className='stat-value'>0</h3>
                                         <span className='stat-trend green-trend'>
-                                            ↑ 15% <span className='trend-subtext'>from last month</span>
+                                            0% <span className='trend-subtext'>from last month</span>
                                         </span>
                                     </div>
                                 </div>
