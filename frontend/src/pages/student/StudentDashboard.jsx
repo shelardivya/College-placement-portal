@@ -734,6 +734,7 @@ export default function
         let experience = "Fresher";
         let roleOverview = job.additionalInfo || job.additionalinfo || "This is a full-time role.";
 
+        // Safely parse company name to prevent page crash on Apply
         const companyName = String(job.company || "").toLowerCase();
         
         if (companyName.includes("google")) {
