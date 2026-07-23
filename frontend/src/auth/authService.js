@@ -252,3 +252,30 @@ export const submitStudentQuery = (queryData) => {
         }
     });
 };
+
+export const getTopSkillsAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/student-analytics/top-skills", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getPlacementCgpaAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/student-analytics/placement-cgpa", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getDepartmentAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/student-analytics/department", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
