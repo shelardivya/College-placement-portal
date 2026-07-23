@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getStudentProfile } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -330,6 +331,25 @@ export default function
     };
 
     const [profile, setProfile] = useState(getInitialProfile());
+
+    useEffect(() => {
+        const fetchStudentProfile = async () => {
+            try {
+                const response = await getStudentProfile();
+                if (response.data) {
+                    setProfile(prev => ({
+                        ...prev,
+                        ...response.data
+                    }));
+                    console.log("Student profile fetched:", response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching student profile:", error);
+            }
+        };
+
+        fetchStudentProfile();
+    }, []);
 
     // Password change form state
     const [passwordForm, setPasswordForm] = useState({

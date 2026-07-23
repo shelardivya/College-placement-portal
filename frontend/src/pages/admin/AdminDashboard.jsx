@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -155,6 +155,32 @@ function AdminDashboard({ onNavigate }) {
         newPassword: '',
         confirmPassword: ''
     });
+
+
+    useEffect(() => {
+        const fetchAdminProfile = async () => {
+            try {
+                const response = await getAdminProfile();
+                if (response.data) {
+                    // Update the state with the actual data from the backend
+                    setProfileData({
+                        name: response.data.name || 'Admin',
+                        email: response.data.email || 'admin@example.com',
+                        phone: response.data.phone || '',
+                        role: response.data.role || 'System Administrator'
+                    });
+                    console.log("Admin profile fetched:", response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching admin profile:", error);
+
+            }
+        };
+
+        fetchAdminProfile();
+    }, []);
+
+
 
     // Admin password visibility states
     const [showAdminCurrentPassword, setShowAdminCurrentPassword] = useState(false);
@@ -761,54 +787,54 @@ function AdminDashboard({ onNavigate }) {
 
 
             <header className='admin-header'>
-                    <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
-                        <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
-                            <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
-                        </div>
+                <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
+                    <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                        <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+                    </div>
 
-                        <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
-                            {[
-                                { id: 'dashboard', label: 'Dashboard' },
-                                { id: 'analytics', label: 'Student Analytics' },
-                                { id: 'queries', label: 'Queries & Stories' }
-                            ].map(item => (
-                                <button
-                                    key={item.id}
-                                    className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(item.id)}
-                                    style={{
-                                        border: 'none',
-                                        background: 'transparent',
-                                        color: activeTab === item.id ? '#2563eb' : '#64748b',
-                                        fontWeight: activeTab === item.id ? '600' : '500',
-                                        fontSize: '0.95rem',
-                                        cursor: 'pointer',
-                                        padding: '8px 0',
-                                        position: 'relative',
-                                        transition: 'color 0.2s ease',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px'
-                                    }}
-                                >
-                                    <span>{item.label}</span>
-                                    {activeTab === item.id && (
-                                        <span style={{
-                                            position: 'absolute',
-                                            bottom: '-6px',
-                                            left: 0,
-                                            right: 0,
-                                            height: '2px',
-                                            backgroundColor: '#2563eb',
-                                            borderRadius: '2px'
-                                        }} />
-                                    )}
-                                </button>
-                            ))}
-                        </nav>
+                    <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                        {[
+                            { id: 'dashboard', label: 'Dashboard' },
+                            { id: 'analytics', label: 'Student Analytics' },
+                            { id: 'queries', label: 'Queries & Stories' }
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
+                                onClick={() => setActiveTab(item.id)}
+                                style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    color: activeTab === item.id ? '#2563eb' : '#64748b',
+                                    fontWeight: activeTab === item.id ? '600' : '500',
+                                    fontSize: '0.95rem',
+                                    cursor: 'pointer',
+                                    padding: '8px 0',
+                                    position: 'relative',
+                                    transition: 'color 0.2s ease',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <span>{item.label}</span>
+                                {activeTab === item.id && (
+                                    <span style={{
+                                        position: 'absolute',
+                                        bottom: '-6px',
+                                        left: 0,
+                                        right: 0,
+                                        height: '2px',
+                                        backgroundColor: '#2563eb',
+                                        borderRadius: '2px'
+                                    }} />
+                                )}
+                            </button>
+                        ))}
+                    </nav>
 
-                        <div className='header-right'>
+                    <div className='header-right'>
                         <span className='role-badge'>Admin</span>
 
                         <div className='notification-wrapper' onClick={() => {
@@ -885,365 +911,365 @@ function AdminDashboard({ onNavigate }) {
                         <>
 
 
-                    <section className='greeting-section'>
-                        <div className='greeting-content'>
-                            <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
-                            <p>Here's what's happening with your placement portal today.</p>
-                        </div>
-                        <div className='greeting-date-badge'>
-                            <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        </div>
-                    </section>
-
-
-                    <section className='stats-grid'>
-                        <div className='stat-card'>
-                            <div className='stat-icon-wrapper blue-icon'>
-                                <FileText size={20} />
-                            </div>
-                            <div className='stat-details'>
-                                <span className='stat-label'>Active Posting</span>
-                                <h3 className='stat-value'>{jobs.length}</h3>
-                                <span className='stat-trend green-trend'>
-                                    ↑ 12% <span className='trend-subtext'>from last month</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className='stat-card'>
-                            <div className='stat-icon-wrapper green-icon'>
-                                <Users size={20} />
-                            </div>
-                            <div className='stat-details'>
-                                <span className='stat-label'>Total Students</span>
-                                <h3 className='stat-value'>500</h3>
-                                <span className='stat-trend green-trend'>
-                                    ↑ 8% <span className='trend-subtext'>from last month</span>
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className='stat-card'>
-                            <div className='stat-icon-wrapper purple-icon'>
-                                <Briefcase size={20} />
-                            </div>
-                            <div className='stat-details'>
-                                <span className='stat-label'>Resume Received</span>
-                                <h3 className='stat-value'>120</h3>
-                                <span className='stat-trend green-trend'>
-                                    ↑ 15% <span className='trend-subtext'>from last month</span>
-                                </span>
-                            </div>
-                        </div>
-                    </section>
-
-
-                    <div className='dashboard-grid-lower'>
-
-
-                        <div className='lower-left-column'>
-                            <div className='card-box posting-management-card'>
-                                <div className='card-box-header'>
-                                    <h4>Placement Posting Management</h4>
-                                    <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
-                                        < Plus size={16} />
-                                        Create New Job Posting
-                                    </button>
+                            <section className='greeting-section'>
+                                <div className='greeting-content'>
+                                    <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
+                                    <p>Here's what's happening with your placement portal today.</p>
                                 </div>
+                                <div className='greeting-date-badge'>
+                                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                </div>
+                            </section>
 
-                                <div className='drafts-list'>
-                                    <div className='drafts-section-header'>
-                                        <h5>Saved Drafts ({drafts.length})</h5>
+
+                            <section className='stats-grid'>
+                                <div className='stat-card'>
+                                    <div className='stat-icon-wrapper blue-icon'>
+                                        <FileText size={20} />
                                     </div>
-
-                                    {drafts.map(draft => (
-                                        <div key={draft.id} className='draft-item'>
-                                            <div className='draft-info'>
-                                                <span className='badge-draft'>Draft</span>
-                                                <div>
-                                                    <h6>{draft.title}</h6>
-                                                    <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
-                                                </div>
-                                            </div>
-
-                                            <div className='draft-actions'>
-                                                <button
-                                                    className='btn-resume-draft'
-                                                    onClick={() => handleEditDraft(draft.id)}
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    className='btn-publish-draft'
-                                                    onClick={() => handlePublishDraft(draft.id)}
-                                                >
-                                                    Publish
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className='card-box recent-postings-card'>
-                                <div className='card-box-header'>
-                                    <h4>Recent Postings</h4>
+                                    <div className='stat-details'>
+                                        <span className='stat-label'>Active Posting</span>
+                                        <h3 className='stat-value'>{jobs.length}</h3>
+                                        <span className='stat-trend green-trend'>
+                                            ↑ 12% <span className='trend-subtext'>from last month</span>
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <div className='postings-list'>
-                                    {paginatedJobs.map((job) => (
-                                        <div key={job.id} className='posting-card-item'>
-
-                                            <div className='posting-card-logo-wrap'>
-                                                <img
-                                                    src={job.logoUrl}
-                                                    alt={job.company}
-                                                    className='posting-company-logo'
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.nextSibling.style.display = 'flex';
-                                                    }}
-                                                />
-                                                <div className='posting-logo-fallback' style={{ display: 'none' }}>
-                                                    <Briefcase size={18} />
-                                                </div>
-                                            </div>
-
-
-                                            <div className='posting-card-body'>
-
-                                                <h5 className='posting-card-title'>{job.company}</h5>
-
-
-                                                <div className='posting-info-rows'>
-                                                    {job.location && (
-                                                        <div className='posting-info-row'>
-                                                            <span className='posting-info-icon'>📍</span>
-                                                            <span className='posting-info-label'>Location</span>
-                                                            <span className='posting-info-sep'>:</span>
-                                                            <span className='posting-info-value'>{job.location}</span>
-                                                        </div>
-                                                    )}
-                                                    <div className='posting-info-row'>
-                                                        <span className='posting-info-icon'>👤</span>
-                                                        <span className='posting-info-label'>Job Role</span>
-                                                        <span className='posting-info-sep'>:</span>
-                                                        <span className='posting-info-value'>{job.title}</span>
-                                                    </div>
-                                                    {job.deadline && (
-                                                        <div className='posting-info-row'>
-                                                            <span className='posting-info-icon'>📅</span>
-                                                            <span className='posting-info-label'>Deadline</span>
-                                                            <span className='posting-info-sep'>:</span>
-                                                            <span className='posting-info-value posting-info-deadline'>{formatDeadline(job.deadline)}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-
-                                            <div className='posting-card-status'>
-                                                {job.deadline && new Date(job.deadline) < new Date() ? (
-                                                    <span className='badge-expired'>Expired</span>
-                                                ) : (
-                                                    <span className='badge-active'>Active</span>
-                                                )}
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className='stat-card'>
+                                    <div className='stat-icon-wrapper green-icon'>
+                                        <Users size={20} />
+                                    </div>
+                                    <div className='stat-details'>
+                                        <span className='stat-label'>Total Students</span>
+                                        <h3 className='stat-value'>500</h3>
+                                        <span className='stat-trend green-trend'>
+                                            ↑ 8% <span className='trend-subtext'>from last month</span>
+                                        </span>
+                                    </div>
                                 </div>
 
-                                <div className='pagination-controls'>
-                                    <button
-                                        className='btn-pagination'
-                                        disabled={jobsCurrentPage === 1}
-                                        onClick={() => setJobsCurrentPage(prev => prev - 1)}
-                                    >
-                                        Previous
-                                    </button>
-                                    <span className='pagination-info'>
-                                        Page {jobsCurrentPage} of {totalJobsPages || 1}
-                                    </span>
-                                    <button
-                                        className='btn-pagination'
-                                        disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
-                                        onClick={() => setJobsCurrentPage(prev => prev + 1)}
-                                    >
-                                        Next
-                                    </button>
+                                <div className='stat-card'>
+                                    <div className='stat-icon-wrapper purple-icon'>
+                                        <Briefcase size={20} />
+                                    </div>
+                                    <div className='stat-details'>
+                                        <span className='stat-label'>Resume Received</span>
+                                        <h3 className='stat-value'>120</h3>
+                                        <span className='stat-trend green-trend'>
+                                            ↑ 15% <span className='trend-subtext'>from last month</span>
+                                        </span>
+                                    </div>
                                 </div>
-
-                            </div>
-
-                        </div>
+                            </section>
 
 
-                        <div className='lower-right-column'>
-                            <div className='card-box applicants-card'>
-                                <div className='card-box-header search-filter-header'>
-                                    <h4>Applicants Matching Your Requirements</h4>
-                                    <div className="search-filter-row">
-                                        <div className="search-box-wrapper">
-                                            <input
-                                                type="text"
-                                                placeholder="Search by name..."
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value)}
-                                            />
-                                            <button className="search-btn">
-                                                <Search size={16} />
+                            <div className='dashboard-grid-lower'>
+
+
+                                <div className='lower-left-column'>
+                                    <div className='card-box posting-management-card'>
+                                        <div className='card-box-header'>
+                                            <h4>Placement Posting Management</h4>
+                                            <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
+                                                < Plus size={16} />
+                                                Create New Job Posting
                                             </button>
                                         </div>
 
-                                        <div className="custom-dropdown-container">
-                                            <span className="filter-label">Filter by</span>
+                                        <div className='drafts-list'>
+                                            <div className='drafts-section-header'>
+                                                <h5>Saved Drafts ({drafts.length})</h5>
+                                            </div>
+
+                                            {drafts.map(draft => (
+                                                <div key={draft.id} className='draft-item'>
+                                                    <div className='draft-info'>
+                                                        <span className='badge-draft'>Draft</span>
+                                                        <div>
+                                                            <h6>{draft.title}</h6>
+                                                            <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className='draft-actions'>
+                                                        <button
+                                                            className='btn-resume-draft'
+                                                            onClick={() => handleEditDraft(draft.id)}
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                        <button
+                                                            className='btn-publish-draft'
+                                                            onClick={() => handlePublishDraft(draft.id)}
+                                                        >
+                                                            Publish
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className='card-box recent-postings-card'>
+                                        <div className='card-box-header'>
+                                            <h4>Recent Postings</h4>
+                                        </div>
+
+                                        <div className='postings-list'>
+                                            {paginatedJobs.map((job) => (
+                                                <div key={job.id} className='posting-card-item'>
+
+                                                    <div className='posting-card-logo-wrap'>
+                                                        <img
+                                                            src={job.logoUrl}
+                                                            alt={job.company}
+                                                            className='posting-company-logo'
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'flex';
+                                                            }}
+                                                        />
+                                                        <div className='posting-logo-fallback' style={{ display: 'none' }}>
+                                                            <Briefcase size={18} />
+                                                        </div>
+                                                    </div>
+
+
+                                                    <div className='posting-card-body'>
+
+                                                        <h5 className='posting-card-title'>{job.company}</h5>
+
+
+                                                        <div className='posting-info-rows'>
+                                                            {job.location && (
+                                                                <div className='posting-info-row'>
+                                                                    <span className='posting-info-icon'>📍</span>
+                                                                    <span className='posting-info-label'>Location</span>
+                                                                    <span className='posting-info-sep'>:</span>
+                                                                    <span className='posting-info-value'>{job.location}</span>
+                                                                </div>
+                                                            )}
+                                                            <div className='posting-info-row'>
+                                                                <span className='posting-info-icon'>👤</span>
+                                                                <span className='posting-info-label'>Job Role</span>
+                                                                <span className='posting-info-sep'>:</span>
+                                                                <span className='posting-info-value'>{job.title}</span>
+                                                            </div>
+                                                            {job.deadline && (
+                                                                <div className='posting-info-row'>
+                                                                    <span className='posting-info-icon'>📅</span>
+                                                                    <span className='posting-info-label'>Deadline</span>
+                                                                    <span className='posting-info-sep'>:</span>
+                                                                    <span className='posting-info-value posting-info-deadline'>{formatDeadline(job.deadline)}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+
+                                                    <div className='posting-card-status'>
+                                                        {job.deadline && new Date(job.deadline) < new Date() ? (
+                                                            <span className='badge-expired'>Expired</span>
+                                                        ) : (
+                                                            <span className='badge-active'>Active</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className='pagination-controls'>
                                             <button
-                                                className="dropdown-btn"
-                                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                                                className='btn-pagination'
+                                                disabled={jobsCurrentPage === 1}
+                                                onClick={() => setJobsCurrentPage(prev => prev - 1)}
                                             >
-                                                {filterBy} <ChevronDown size={14} />
+                                                Previous
                                             </button>
-                                            {isFilterDropdownOpen && (
-                                                <div className="dropdown-menu">
-                                                    <div className="dropdown-item" onClick={() => handleFilterByChange('By Date')}>By Date</div>
-                                                    <div className="dropdown-item" onClick={() => handleFilterByChange('By Company Name')}>By Company Name</div>
-                                                </div>
-                                            )}
+                                            <span className='pagination-info'>
+                                                Page {jobsCurrentPage} of {totalJobsPages || 1}
+                                            </span>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
+                                                onClick={() => setJobsCurrentPage(prev => prev + 1)}
+                                            >
+                                                Next
+                                            </button>
                                         </div>
 
+                                    </div>
 
-                                        {filterBy === 'By Date' && (
-                                            <div className="custom-date-picker-container" ref={datePickerRef}>
-                                                <button
-                                                    className="date-picker-trigger"
-                                                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                                                >
-                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
-                                                    <Calendar size={14} style={{ marginLeft: '8px' }} />
-                                                </button>
+                                </div>
 
-                                                {isDatePickerOpen && (
-                                                    <div className="custom-calendar-popup">
-                                                        <div className="calendar-header">
-                                                            <button onClick={handlePrevMonth}>&lt;</button>
-                                                            <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
-                                                            <button onClick={handleNextMonth}>&gt;</button>
-                                                        </div>
-                                                        <div className="calendar-weekdays">
-                                                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                                                <span key={d}>{d}</span>
-                                                            ))}
-                                                        </div>
-                                                        <div className="calendar-days">
 
-                                                            {Array.from({ length: firstDayIndex }).map((_, i) => (
-                                                                <span key={`empty-${i}`} className="empty-day"></span>
-                                                            ))}
+                                <div className='lower-right-column'>
+                                    <div className='card-box applicants-card'>
+                                        <div className='card-box-header search-filter-header'>
+                                            <h4>Applicants Matching Your Requirements</h4>
+                                            <div className="search-filter-row">
+                                                <div className="search-box-wrapper">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search by name..."
+                                                        value={searchTerm}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                    <button className="search-btn">
+                                                        <Search size={16} />
+                                                    </button>
+                                                </div>
 
-                                                            {Array.from({ length: totalDays }).map((_, i) => {
-                                                                const day = i + 1;
-                                                                const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                                const isSelected = filterDate === dateStr;
-                                                                return (
-                                                                    <button
-                                                                        key={day}
-                                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
-                                                                        onClick={() => {
-                                                                            setFilterDate(dateStr);
-                                                                            setIsDatePickerOpen(false);
-                                                                        }}
-                                                                    >
-                                                                        {day}
-                                                                    </button>
-                                                                );
-                                                            })}
+                                                <div className="custom-dropdown-container">
+                                                    <span className="filter-label">Filter by</span>
+                                                    <button
+                                                        className="dropdown-btn"
+                                                        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                                                    >
+                                                        {filterBy} <ChevronDown size={14} />
+                                                    </button>
+                                                    {isFilterDropdownOpen && (
+                                                        <div className="dropdown-menu">
+                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Date')}>By Date</div>
+                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Company Name')}>By Company Name</div>
                                                         </div>
-                                                        <div className="calendar-footer">
-                                                            <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                                            <button className="calendar-today-btn" onClick={() => {
-                                                                const today = new Date();
-                                                                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                                setFilterDate(todayStr);
-                                                                setIsDatePickerOpen(false);
-                                                            }}>Today</button>
-                                                        </div>
+                                                    )}
+                                                </div>
+
+
+                                                {filterBy === 'By Date' && (
+                                                    <div className="custom-date-picker-container" ref={datePickerRef}>
+                                                        <button
+                                                            className="date-picker-trigger"
+                                                            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                                                        >
+                                                            {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
+                                                            <Calendar size={14} style={{ marginLeft: '8px' }} />
+                                                        </button>
+
+                                                        {isDatePickerOpen && (
+                                                            <div className="custom-calendar-popup">
+                                                                <div className="calendar-header">
+                                                                    <button onClick={handlePrevMonth}>&lt;</button>
+                                                                    <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
+                                                                    <button onClick={handleNextMonth}>&gt;</button>
+                                                                </div>
+                                                                <div className="calendar-weekdays">
+                                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                                        <span key={d}>{d}</span>
+                                                                    ))}
+                                                                </div>
+                                                                <div className="calendar-days">
+
+                                                                    {Array.from({ length: firstDayIndex }).map((_, i) => (
+                                                                        <span key={`empty-${i}`} className="empty-day"></span>
+                                                                    ))}
+
+                                                                    {Array.from({ length: totalDays }).map((_, i) => {
+                                                                        const day = i + 1;
+                                                                        const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                                        const isSelected = filterDate === dateStr;
+                                                                        return (
+                                                                            <button
+                                                                                key={day}
+                                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                                                onClick={() => {
+                                                                                    setFilterDate(dateStr);
+                                                                                    setIsDatePickerOpen(false);
+                                                                                }}
+                                                                            >
+                                                                                {day}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                                <div className="calendar-footer">
+                                                                    <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
+                                                                    <button className="calendar-today-btn" onClick={() => {
+                                                                        const today = new Date();
+                                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                                        setFilterDate(todayStr);
+                                                                        setIsDatePickerOpen(false);
+                                                                    }}>Today</button>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
-                                            </div>
-                                        )}
-                                        {filterBy === 'By Company Name' && (
-                                            <input
-                                                type="text"
-                                                className="filter-company-input"
-                                                placeholder="Enter company name..."
-                                                value={filterCompany}
-                                                onChange={(e) => setFilterCompany(e.target.value)}
-                                            />
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className='applicants-list'>
-                                    {paginatedApplicants.map((app) => (
-                                        <div key={app.id} className='applicant-item'>
-
-                                            <div className='applicant-top'>
-                                                {getCompanyLogo(app.company)}
-
-                                                <div className='applicant-details'>
-                                                    <h5>{app.company}</h5>
-
-                                                    <span className='applicant-name'>👤{app.name}</span>
-                                                    <span className='applicant-education'>{app.degree} - {app.branch}</span>
-                                                    <div className='applicant-tags'>
-                                                        <span className='tag-cgpa'>{app.cgpa}CGPA</span>
-                                                        <span className='tag-passout'>{app.year}</span>
-                                                        <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
-                                                    </div>
-                                                </div>
-
-                                                <div className='match-status'>
-                                                    <span className='match-percent'>
-                                                        {app.match}% Match
-                                                    </span>
-
-                                                    <div className='progress-bar-bg'>
-                                                        <div className='progress-bar-fill'
-                                                            style={{ width: `${app.match}%` }}>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
+                                                {filterBy === 'By Company Name' && (
+                                                    <input
+                                                        type="text"
+                                                        className="filter-company-input"
+                                                        placeholder="Enter company name..."
+                                                        value={filterCompany}
+                                                        onChange={(e) => setFilterCompany(e.target.value)}
+                                                    />
+                                                )}
                                             </div>
                                         </div>
-                                    ))}
+
+                                        <div className='applicants-list'>
+                                            {paginatedApplicants.map((app) => (
+                                                <div key={app.id} className='applicant-item'>
+
+                                                    <div className='applicant-top'>
+                                                        {getCompanyLogo(app.company)}
+
+                                                        <div className='applicant-details'>
+                                                            <h5>{app.company}</h5>
+
+                                                            <span className='applicant-name'>👤{app.name}</span>
+                                                            <span className='applicant-education'>{app.degree} - {app.branch}</span>
+                                                            <div className='applicant-tags'>
+                                                                <span className='tag-cgpa'>{app.cgpa}CGPA</span>
+                                                                <span className='tag-passout'>{app.year}</span>
+                                                                <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className='match-status'>
+                                                            <span className='match-percent'>
+                                                                {app.match}% Match
+                                                            </span>
+
+                                                            <div className='progress-bar-bg'>
+                                                                <div className='progress-bar-fill'
+                                                                    style={{ width: `${app.match}%` }}>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className='pagination-controls'>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={applicantsCurrentPage === 1}
+                                                onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
+                                            >
+                                                Previous
+                                            </button>
+                                            <span className='pagination-info'>
+                                                Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
+                                            </span>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
+                                                onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+
+
+                                    </div>
                                 </div>
-
-                                <div className='pagination-controls'>
-                                    <button
-                                        className='btn-pagination'
-                                        disabled={applicantsCurrentPage === 1}
-                                        onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
-                                    >
-                                        Previous
-                                    </button>
-                                    <span className='pagination-info'>
-                                        Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
-                                    </span>
-                                    <button
-                                        className='btn-pagination'
-                                        disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
-                                        onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-
-
                             </div>
-                        </div>
-                    </div>
-                    </>
+                        </>
                     )}
 
                     {activeTab === 'analytics' && (
