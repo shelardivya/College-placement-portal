@@ -739,7 +739,7 @@ export default function QueriesStories() {
             </div> {/* End of top qs-row */}
 
             {/* Second row layout containing Manage Placement Drives and Published Placement Stories side by side */}
-            <div className="qs-row" style={{ marginTop: '24px' }}>
+            <div className="qs-row qs-row-bottom" style={{ marginTop: '24px' }}>
 
                 {/* 3. Manage Placement Drives Panel */}
                 <div className="qs-panel placement-drives-card">

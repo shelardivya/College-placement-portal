@@ -13,6 +13,11 @@
     gap: 24px;
 }
 
+/* Bottom row: Manage Drives (left) + Published Stories (right) — give equal width */
+.qs-row-bottom {
+    grid-template-columns: 1.1fr 0.9fr;
+}
+
 @media (max-width: 1200px) {
     .qs-row {
         grid-template-columns: 1fr;
@@ -525,7 +530,6 @@
 }
 
 .qs-table-wrapper {
-    flex: 1;
     overflow-x: auto;
 }
 
