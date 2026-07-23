@@ -277,12 +277,12 @@ export default function StudHub() {
         }
     };
 
-    const handleToggleResolveQuery = (queryId) => {
+    const handleResolveQuery = (queryId) => {
         setQueries(prev => {
             const source = prev.length > 0 ? prev : initialStudentQueries;
             const updated = source.map(q => {
                 if (q.id === queryId) {
-                    return { ...q, status: q.status === 'resolved' ? 'pending' : 'resolved' };
+                    return { ...q, status: 'resolved' };
                 }
                 return q;
             });
@@ -636,15 +636,23 @@ export default function StudHub() {
                                     <div key={query.id} className="query-response-card">
                                         <div className="query-card-header-line">
                                             <h4 className="query-card-title">{query.title || query.subject || 'Student Query'}</h4>
-                                            <button
-                                                type="button"
-                                                className={`query-status-pill-btn ${query.status === 'resolved' ? 'resolved' : 'pending'}`}
-                                                onClick={() => handleToggleResolveQuery(query.id)}
-                                                title="Click to resolve query"
-                                            >
-                                                <CheckCircle2 size={13} />
-                                                {query.status === 'resolved' ? 'Resolved' : 'Query Resolved'}
-                                            </button>
+                                            <div className="query-status-action-wrapper">
+                                                {query.status !== 'resolved' && (
+                                                    <div className="query-click-popup">
+                                                        Click to mark resolved &rarr;
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    className={`query-status-pill-btn ${query.status === 'resolved' ? 'resolved' : 'pending'}`}
+                                                    onClick={() => handleResolveQuery(query.id)}
+                                                    disabled={query.status === 'resolved'}
+                                                    title={query.status === 'resolved' ? 'Resolved' : 'Click to mark query as resolved'}
+                                                >
+                                                    <CheckCircle2 size={13} />
+                                                    {query.status === 'resolved' ? 'Resolved' : 'Query Resolved'}
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {/* Admin Reply Box (Green Box from Image 1) */}
