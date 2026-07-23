@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAdminStudentAnalyticsDashboard } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -76,6 +77,26 @@ function getDonutSegments(data, cx = 50, cy = 50, r = 38, innerR = 24) {
 
 // main component
 export default function StudentAnalytics() {
+    const [analyticsStats, setAnalyticsStats] = useState({
+        placedStudents: 0,
+        placementRate: 0,
+        highestPackage: 0,
+        averagePackage: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await getAdminStudentAnalyticsDashboard();
+                if (response.data) {
+                    setAnalyticsStats(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch admin student analytics:", error);
+            }
+        };
+        fetchStats();
+    }, []);
 
     // Department Wise Distribution — 
     const departmentData = [
@@ -278,7 +299,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-blue">
                     <div className="stat-text-group">
                         <span className="stat-label">Placed Students</span>
-                        <h3 className="stat-value">3</h3>
+                        <h3 className="stat-value">{analyticsStats.placedStudents}</h3>
                         <span className="stat-subtext">Total placed this year</span>
                     </div>
                     <div className="stat-icon-container bg-light-blue">
@@ -289,7 +310,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-green">
                     <div className="stat-text-group">
                         <span className="stat-label">Placement Rate</span>
-                        <h3 className="stat-value">75%</h3>
+                        <h3 className="stat-value">{analyticsStats.placementRate}%</h3>
                         <span className="stat-subtext">% of eligible students placed</span>
                     </div>
                     <div className="stat-icon-container bg-light-green">
@@ -300,7 +321,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-orange">
                     <div className="stat-text-group">
                         <span className="stat-label">Highest Package</span>
-                        <h3 className="stat-value">10,00,000</h3>
+                        <h3 className="stat-value">{analyticsStats.highestPackage.toLocaleString()}</h3>
                         <span className="stat-subtext">Top package offered</span>
                     </div>
                     <div className="stat-icon-container bg-light-orange">
@@ -311,7 +332,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-purple">
                     <div className="stat-text-group">
                         <span className="stat-label">Average Package</span>
-                        <h3 className="stat-value">2,00,000</h3>
+                        <h3 className="stat-value">{analyticsStats.averagePackage.toLocaleString()}</h3>
                         <span className="stat-subtext">Average package offered</span>
                     </div>
                     <div className="stat-icon-container bg-light-purple">
