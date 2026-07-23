@@ -41,7 +41,14 @@ function Login({ onNavigate, initialView }) {
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
         const initialEmail = params.get('email') || '';
-        const initialPass = initialEmail ? '12345678' : '';
+        let initialPass = '';
+        if (initialEmail) {
+            const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+            const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+            if (matched && matched.password) {
+                initialPass = matched.password;
+            }
+        }
         return {
             email: initialEmail,
             password: initialPass,
@@ -50,12 +57,19 @@ function Login({ onNavigate, initialView }) {
         };
     });
 
-    //Handles values change in inputs with auto-fill support for email
+    //Handles values change in inputs with dynamic stored password lookup
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (name === 'email') {
-            const trimmed = value.trim();
-            const autoPass = trimmed !== '' ? '12345678' : '';
+            const trimmed = value.trim().toLowerCase();
+            let autoPass = '';
+            if (trimmed !== '') {
+                const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+                const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+                if (matchedProfile && matchedProfile.password) {
+                    autoPass = matchedProfile.password;
+                }
+            }
             setFormData(prev => ({
                 ...prev,
                 email: value,
@@ -345,29 +359,6 @@ function Login({ onNavigate, initialView }) {
                         )}
 
                         <form onSubmit={handleSubmit} className="form-grid-login">
-                            {/* QUICK DEMO AUTO-FILL CHIPS */}
-                            {loginView === 'login' && (
-                                <div className="quick-autofill-bar">
-                                    <span className="autofill-label">⚡ Quick Fill:</span>
-                                    <button
-                                        type="button"
-                                        className="autofill-chip student-chip"
-                                        onClick={() => setFormData({ email: 'sam@gmail.com', password: '12345678', confirmPassword: '12345678', rememberMe: false })}
-                                        title="Auto-fill Student credentials"
-                                    >
-                                        Student
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="autofill-chip admin-chip"
-                                        onClick={() => setFormData({ email: 'saurabh@gmail.com', password: '12345678', confirmPassword: '12345678', rememberMe: false })}
-                                        title="Auto-fill Admin credentials"
-                                    >
-                                        Admin
-                                    </button>
-                                </div>
-                            )}
-
                             {/* EMAIL INPUT (Login & Forgot views) */}
                             {loginView !== 'reset' && (
                                 <div className="input-group full-width">

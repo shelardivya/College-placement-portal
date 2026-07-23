@@ -643,17 +643,12 @@ export default function StudentAnalytics() {
                 <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
                     <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <div className="modal-title-group">
-                                <div className="modal-icon-badge">
-                                    <Trophy size={20} />
-                                </div>
-                                <div>
-                                    <h3 className="modal-title">Add Top Placed Student</h3>
-                                    <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
-                                </div>
+                            <div>
+                                <h3 className="modal-title">Add Top Placed Student</h3>
+                                <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
                             </div>
-                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)} title="Close">
-                                <X size={18} />
+                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                                <X size={20} />
                             </button>
                         </div>
 
@@ -688,9 +683,6 @@ export default function StudentAnalytics() {
                                             <option value="IT">IT</option>
                                             <option value="BCA">BCA</option>
                                             <option value="MCA">MCA</option>
-                                            <option value="ECE">ECE</option>
-                                            <option value="ME">ME</option>
-                                            <option value="Civil">Civil</option>
                                         </select>
                                         <ChevronDown size={16} className="select-chevron" />
                                     </div>
@@ -710,7 +702,6 @@ export default function StudentAnalytics() {
                                             <option value="2024">2024</option>
                                             <option value="2025">2025</option>
                                             <option value="2026">2026</option>
-                                            <option value="2027">2027</option>
                                         </select>
                                         <ChevronDown size={16} className="select-chevron" />
                                     </div>
@@ -753,7 +744,7 @@ export default function StudentAnalytics() {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="e.g. Full Stack, Data Science, Backend"
+                                        placeholder="e.g. Full Stack, Data Science, Back"
                                         value={formData.skill}
                                         onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
                                     />
@@ -773,8 +764,6 @@ export default function StudentAnalytics() {
                                     />
                                 </div>
                             </div>
-
-                            <div className="modal-footer-divider"></div>
 
                             <div className="modal-actions">
                                 <button

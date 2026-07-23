@@ -258,6 +258,7 @@ function Registration({ onNavigate }) {
             const newProfile = { 
                 fullName: formData.fullname,
                 email: formData.email,
+                password: formData.password,
                 phone: formData.mobile,
                 branch: formData.department,
                 passingYear: formData.year,
