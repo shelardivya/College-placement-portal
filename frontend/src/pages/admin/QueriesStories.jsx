@@ -543,7 +543,6 @@ export default function QueriesStories() {
                                         <div className="action-links-group">
                                             <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
                                             <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
-                                            <button className="icon-menu-btn"><MoreVertical size={16} /></button>
                                         </div>
                                     </div>
                                 </div>
