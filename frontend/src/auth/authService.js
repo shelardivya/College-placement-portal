@@ -73,8 +73,7 @@ export const publishDraft = (id) => {
 
 export const getAdminProfile = () => {
     const token = localStorage.getItem("token");
-
-    return api.get("/api/admin/profile", {
+    return api.get("/admin/profile", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -83,7 +82,7 @@ export const getAdminProfile = () => {
 
 export const getStudentProfile = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/student/profile", {
+    return api.get("/student/profile", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -92,25 +91,27 @@ export const getStudentProfile = () => {
 
 export const updateAdminProfile = (profileData) => {
     const token = localStorage.getItem("token");
-    return api.put("/api/admin/profile", profileData, {
+    return api.put("/admin/profile", profileData, {
         headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
         }
     });
 };
 
 export const updateStudentProfile = (profileData) => {
     const token = localStorage.getItem("token");
-    return api.put("/api/student/profile", profileData, {
+    return api.put("/student/profile", profileData, {
         headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
         }
     });
 };
 
 export const getStudentDashboardStats = () => {
     const token = localStorage.getItem("token");
-    return api.get("/api/student/dashboard/stats", {
+    return api.get("/student/dashboard/stats", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -200,7 +201,11 @@ export const getAllQueries = () => {
 
 export const replyToQuery = (id, replyText) => {
     const token = localStorage.getItem("token");
-    return api.put(`/admin/query/${id}/reply`, { reply: replyText }, {
+    return api.put(`/admin/query/${id}/reply`, { 
+        reply: replyText,
+        adminReply: replyText,
+        response: replyText
+    }, {
         headers: {
             Authorization: `Bearer ${token}`
         }
