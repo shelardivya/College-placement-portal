@@ -349,7 +349,10 @@ export default function StudHub() {
                                                     src={story.avatar}
                                                     alt={story.name}
                                                     className="sh-story-avatar"
-                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.name)}&background=2563eb&color=fff`;
+                                                    }}
                                                 />
                                                 <div className="sh-story-info">
                                                     <h4 className="sh-story-name">{story.name}</h4>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     Search,
     MoreVertical,
@@ -425,14 +425,33 @@ export default function QueriesStories() {
     const paginatedStories = stories.slice(indexOfFirstStory, indexOfLastStory);
     const totalStoryPages = Math.ceil(stories.length / storiesPerPage);
 
+    const fileInputRef = useRef(null);
+
     // Form state for publishing student success stories
     const [storyForm, setStoryForm] = useState({
         studentName: '',
         companyName: '',
         jobRole: '',
         package: '',
-        storyText: ''
+        storyText: '',
+        photo: ''
     });
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) {
+                triggerToast("Photo size exceeds 5MB limit", "error");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setStoryForm(prev => ({ ...prev, photo: reader.result }));
+                triggerToast("Photo attached successfully!", "success");
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     // Handle form submission to publish stories
     const handlePublishStory = (e) => {
@@ -448,12 +467,12 @@ export default function QueriesStories() {
         const newStory = {
             id: Date.now(),
             name: storyForm.studentName,
-            avatar: avatarUrl,
+            avatar: storyForm.photo || avatarUrl,
             company: storyForm.companyName,
             companyColor: '#eff6ff',
             companyTextColor: '#2563eb',
             role: storyForm.jobRole,
-            packageAmt: storyForm.package || 'Not Disclosed',
+            packageAmt: storyForm.package ? (storyForm.package.toLowerCase().includes('lpa') ? storyForm.package : `${storyForm.package} LPA`) : '6.0 LPA',
             storyText: storyForm.storyText || `Secured a ${storyForm.jobRole} role at ${storyForm.companyName}.`,
             date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
         };
@@ -467,7 +486,8 @@ export default function QueriesStories() {
             companyName: '',
             jobRole: '',
             package: '',
-            storyText: ''
+            storyText: '',
+            photo: ''
         });
     };
 
@@ -614,10 +634,40 @@ export default function QueriesStories() {
                     <form onSubmit={handlePublishStory} className="publish-form-body">
                         {/* Upper Row containing upload photo dashed card and name/company inputs */}
                         <div className="form-upper-row">
-                            <div className="upload-photo-zone">
-                                <Upload size={24} className="upload-cloud-icon" />
-                                <span className="upload-label">Upload Photo</span>
-                                <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
+                            <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    accept="image/*"
+                                    style={{ display: 'none' }}
+                                    onChange={handlePhotoChange}
+                                />
+                                {storyForm.photo ? (
+                                    <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                        <img
+                                            src={storyForm.photo}
+                                            alt="Preview"
+                                            style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                                        />
+                                        <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
+                                        <button
+                                            type="button"
+                                            style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setStoryForm(prev => ({ ...prev, photo: '' }));
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <Upload size={24} className="upload-cloud-icon" />
+                                        <span className="upload-label">Upload Photo</span>
+                                        <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
+                                    </>
+                                )}
                             </div>
                             <div className="inputs-block">
                                 <div className="form-group-field">
