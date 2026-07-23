@@ -215,15 +215,18 @@ textarea:focus {
 .search-container input,
 .search-box input,
 .filter-search input,
+.table-search-expanded input,
 .search-box-wrapper input:focus,
 .search-container input:focus,
 .search-box input:focus,
-.filter-search input:focus {
+.filter-search input:focus,
+.table-search-expanded input:focus,
+.table-search-expanded input:focus-visible {
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 10px 16px;
+  outline: none;
 }
 
 /* Center and fix search button icon alignment */
@@ -296,4 +299,12 @@ table tr:nth-child(even) td {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   box-shadow: var(--shadow-sm);
+}
+
+/* Global Toast Notification Base Reset */
+.toast-notification,
+.sd-toast-notification,
+.admin-toast-notification {
+  height: auto !important;
+  max-height: max-content;
 }

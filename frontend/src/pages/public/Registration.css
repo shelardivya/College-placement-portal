@@ -702,21 +702,23 @@
 .register-page .toast-notification {
     position: fixed;
     top: 24px;
+    bottom: auto;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(16, 185, 129, 0.25);
     border-radius: 12px;
-    padding: 16px 20px;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    padding: 14px 20px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
     display: flex;
     flex-direction: column;
     gap: 8px;
     z-index: 9999;
-    min-width: 320px;
+    min-width: 280px;
     max-width: 420px;
+    height: auto;
     overflow: hidden;
     animation: slideInDown 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
