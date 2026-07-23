@@ -186,18 +186,19 @@ function Login({ onNavigate, initialView }) {
                         }
                     }
 
+                    setToastMessage("Login successful!");
+                    setToastType('success');
+                    setShowToast(true);
+
+                    setTimeout(() => {
+                        setShowToast(false);
+                        onNavigate(isAdmin ? 'admin' : 'student');
+                    }, 1500);
+
+                } else {
+                    // Backend returned 200 OK but no token (e.g. user not registered)
+                    throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
                 }
-
-                setToastMessage("Login successful!");
-                setToastType('success');
-                setShowToast(true);
-
-                setTimeout(() => {
-                    setShowToast(false);
-                    onNavigate(isAdmin ? 'admin' : 'student');
-                }, 1500);
-
-
             } catch (error) {
                 console.error("Login Error:", error);
                 const errorMsg = error.response?.data?.message || "Invalid email or password";
