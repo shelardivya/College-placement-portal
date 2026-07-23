@@ -279,3 +279,21 @@ export const getDepartmentAnalytics = () => {
         }
     });
 };
+
+export const getStudentResumeMatch = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/resume-match", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminApplicantsMatching = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/applicants/matching", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
