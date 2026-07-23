@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, getStudentDashboardStats } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -332,6 +332,8 @@ export default function
 
     const [profile, setProfile] = useState(getInitialProfile());
 
+    const [dashboardStats, setDashboardStats] = useState(null);
+
     useEffect(() => {
         const fetchStudentProfile = async () => {
             try {
@@ -348,7 +350,20 @@ export default function
             }
         };
 
+        const fetchDashboardStats = async () => {
+            try {
+                const response = await getStudentDashboardStats();
+                if (response.data) {
+                    setDashboardStats(response.data);
+                    console.log("Dashboard stats fetched:", response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            }
+        };
+
         fetchStudentProfile();
+        fetchDashboardStats();
     }, []);
 
     // Password change form state
@@ -373,29 +388,54 @@ export default function
         setIsEditingProfile(true);
     };
 
-    const handleSaveProfile = () => {
-        setProfile({ ...tempProfile });
-        localStorage.setItem("user", JSON.stringify({
-            ...JSON.parse(localStorage.getItem("user") || "{}"),
-            fullName: tempProfile.fullName,
-            email: tempProfile.email,
-            phone: tempProfile.phone,
-            branch: tempProfile.branch,
-            passingYear: tempProfile.passingYear,
-            cgpa: tempProfile.cgpa,
-            skills: tempProfile.skills,
-            linkedinUrl: tempProfile.linkedinUrl,
-            githubUrl: tempProfile.githubUrl
-        }));
-        setIsEditingProfile(false);
+    const handleSaveProfile = async () => {
+        try {
+            // Map state to API payload based on Swagger specs
+            const payload = {
+                fullName: tempProfile.fullName || "",
+                email: tempProfile.email || "",
+                mobile: tempProfile.phone || "",
+                course: "", // Frontend doesn't currently collect this
+                department: tempProfile.branch || "",
+                currentYear: tempProfile.passingYear || "",
+                cgpa: parseFloat(tempProfile.cgpa) || 0.0,
+                skills: tempProfile.skills || "",
+                linkedinUrl: tempProfile.linkedinUrl || "",
+                githubUrl: tempProfile.githubUrl || "",
+                role: "Student" // Optional default
+            };
 
-        // Show Toast Notification
-        setToastMessage("Profile updated successfully!");
-        setToastType("success");
-        setShowToast(true);
-        setTimeout(() => {
-            setShowToast(false);
-        }, 3000);
+            await updateStudentProfile(payload);
+
+            setProfile({ ...tempProfile });
+            localStorage.setItem("user", JSON.stringify({
+                ...JSON.parse(localStorage.getItem("user") || "{}"),
+                fullName: tempProfile.fullName,
+                email: tempProfile.email,
+                phone: tempProfile.phone,
+                branch: tempProfile.branch,
+                passingYear: tempProfile.passingYear,
+                cgpa: tempProfile.cgpa,
+                skills: tempProfile.skills,
+                linkedinUrl: tempProfile.linkedinUrl,
+                githubUrl: tempProfile.githubUrl
+            }));
+            setIsEditingProfile(false);
+
+            // Show Toast Notification
+            setToastMessage("Profile updated successfully!");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Failed to update profile:", error);
+            setToastMessage("Failed to update profile.");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -557,38 +597,38 @@ export default function
         {
             id: "profile",
             title: "Profile Completed",
-            value: `${profileCompletion}%`,
+            value: dashboardStats ? `${dashboardStats.profileCompleted || 0}%` : `${profileCompletion}%`,
             icon: <User className="metric-icon-blue" />,
             colorClass: "blue",
-            progress: profileCompletion,
-            progess: profileCompletion
+            progress: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion,
+            progess: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion
         },
         {
             id: "selected",
             title: "Selected",
-            value: "5",
+            value: dashboardStats ? String(dashboardStats.selected || 0) : "0",
             icon: <CheckCircle2 className="metric-icon-green" />,
             colorClass: "green",
-            progress: 50,
-            progess: 50
+            progress: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0
         },
         {
             id: "pending",
             title: "Pending",
-            value: "3",
+            value: dashboardStats ? String(dashboardStats.pending || 0) : "0",
             icon: <Clock className="metric-icon-orange" />,
             colorClass: "orange",
-            progress: 30,
-            progess: 30
+            progress: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0
         },
         {
             id: "rejected",
             title: "Rejected",
-            value: "6",
+            value: dashboardStats ? String(dashboardStats.rejected || 0) : "0",
             icon: <XCircle className="metric-icon-red" />,
             colorClass: "red",
-            progress: 60,
-            progess: 60
+            progress: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0
         }
     ];
 

@@ -89,3 +89,30 @@ export const getStudentProfile = () => {
         }
     });
 };
+
+export const updateAdminProfile = (profileData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/api/admin/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const updateStudentProfile = (profileData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/api/student/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentDashboardStats = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/student/dashboard/stats", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};

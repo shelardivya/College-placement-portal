@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -637,24 +637,45 @@ function AdminDashboard({ onNavigate }) {
     };
 
     // Update profile submit handler
-    const handleUpdateProfile = (e) => {
+    const handleUpdateProfile = async (e) => {
         e.preventDefault();
 
-        // Persist to localStorage under admin_user key
-        const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
-        const updatedUser = {
-            ...loggedInAdmin,
-            fullName: adminProfile.name,
-            email: adminProfile.email,
-            phone: adminProfile.phone
-        };
-        localStorage.setItem("admin_user", JSON.stringify(updatedUser));
+        try {
+            // Map state to API payload
+            const payload = {
+                fullName: adminProfile.name,
+                email: adminProfile.email,
+                mobile: adminProfile.phone,
+                role: adminProfile.role || "System Administrator"
+            };
 
-        setToastType('success');
-        setToastMessage("Admin profile updated successfully!");
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-        setIsProfileModalOpen(false);
+            await updateAdminProfile(payload);
+
+            // Persist to localStorage under admin_user key as fallback
+            const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+            const updatedUser = {
+                ...loggedInAdmin,
+                fullName: adminProfile.name,
+                email: adminProfile.email,
+                phone: adminProfile.phone
+            };
+            localStorage.setItem("admin_user", JSON.stringify(updatedUser));
+            
+            // Also update the profileData state if not already done
+            setProfileData(prev => ({ ...prev, ...adminProfile }));
+
+            setToastType('success');
+            setToastMessage("Admin profile updated successfully!");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+            setIsProfileModalOpen(false);
+        } catch (error) {
+            console.error("Failed to update profile:", error);
+            setToastType('error');
+            setToastMessage("Failed to update profile.");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     // Change password submit handler
