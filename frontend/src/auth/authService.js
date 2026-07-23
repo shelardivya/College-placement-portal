@@ -125,3 +125,12 @@ export const getAdminStudentAnalyticsDashboard = () => {
         }
     });
 };
+
+export const getAdminRecentPosts = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/dashboard/recent-posts", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
