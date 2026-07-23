@@ -775,7 +775,7 @@ function AdminDashboard({ onNavigate }) {
                     <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
                         <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
-                            <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>College Portal</span>
+                            <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                         </div>
 
                         <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>

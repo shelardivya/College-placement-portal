@@ -355,8 +355,8 @@ function Registration({ onNavigate }) {
                 <div className="register-left">
                     {/* Application Header Logo */}
                     <div className="register-logo-section">
-                        <GraduationCap className="logo-icon" size={28} />
-                        <span className="college-name">College Placement Portal</span>
+                        <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
+                        <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                     </div>
 
                     {/* Dashboard Glassmorphic Illustration */}
@@ -753,7 +753,7 @@ function Registration({ onNavigate }) {
                     </div>
 
                     <div className="form-footer-copyright">
-                        © 2026 College Placement Portal
+                        © 2026 Campus_Hire
                     </div>
                 </div>
             </div>

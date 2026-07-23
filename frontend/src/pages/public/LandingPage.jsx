@@ -47,10 +47,8 @@ function LandingPage({ onNavigate }) {
             <header className='navbar'>
                 <div className='nav-container'>
                     <div className='logo-section'>
-                        <GraduationCap
-                            className='logo-icon' size={28} />
-
-                        <span className='college-name'>College Placement Portal</span>
+                        <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                        <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                     </div>
                     <nav className='nav-menu'>
                         <a href="#home">Home</a>

@@ -781,7 +781,7 @@ export default function
 
                 <div className="header-logo">
                     <GraduationCap className="logo-icon" />
-                    <h1>College Placement Portal</h1>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</h1>
                 </div>
 
                 <div className="student-nav-tabs">
