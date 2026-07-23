@@ -93,8 +93,7 @@ export const updateAdminProfile = (profileData) => {
     const token = localStorage.getItem("token");
     return api.put("/admin/profile", profileData, {
         headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            Authorization: `Bearer ${token}`
         }
     });
 };
@@ -103,8 +102,7 @@ export const updateStudentProfile = (profileData) => {
     const token = localStorage.getItem("token");
     return api.put("/student/profile", profileData, {
         headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            Authorization: `Bearer ${token}`
         }
     });
 };
@@ -266,8 +264,7 @@ export const applyForJob = (jobId, formData) => {
     const token = localStorage.getItem("token");
     return api.post(`/student/jobs/${jobId}/apply`, formData, {
         headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
+            Authorization: `Bearer ${token}`
         }
     });
 };

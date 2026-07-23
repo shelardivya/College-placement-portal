@@ -11,7 +11,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL
+    baseURL: "https://campus-hire.duckdns.org/api"
 });
 
 api.interceptors.request.use((config) => {
@@ -27,3 +27,6 @@ api.interceptors.request.use((config) => {
 });
 
 export default api;
+
+
+// import.meta.env.VITE_API_BASE_URL
