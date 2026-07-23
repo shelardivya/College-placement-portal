@@ -577,6 +577,7 @@ export default function
         {
             id: "google-backend",
             company: "Google",
+            logoUrl: "https://logo.clearbit.com/google.com",
             location: "Mumbai",
             role: "Backend Developer",
             deadline: "30-June-2026",
@@ -594,6 +595,7 @@ export default function
         {
             id: "ibm-frontend",
             company: "IBM",
+            logoUrl: "https://logo.clearbit.com/ibm.com",
             location: "Pune",
             role: "Frontend Developer",
             deadline: "25-June-2026",
@@ -611,6 +613,7 @@ export default function
         {
             id: "infosys-systems",
             company: "Infosys",
+            logoUrl: "https://logo.clearbit.com/infosys.com",
             location: "Bangalore",
             role: "Systems Engineer",
             deadline: "28-June-2026",
@@ -628,6 +631,7 @@ export default function
         {
             id: "microsoft-cloud",
             company: "Microsoft",
+            logoUrl: "https://logo.clearbit.com/microsoft.com",
             location: "Hyderabad",
             role: "Cloud Solution Architect",
             deadline: "10-July-2026",
@@ -644,6 +648,7 @@ export default function
         {
             id: "amazon-sde",
             company: "Amazon",
+            logoUrl: "https://logo.clearbit.com/amazon.com",
             location: "Chennai",
             role: "Software Dev Engineer (SDE I)",
             deadline: "15-July-2026",
@@ -661,6 +666,7 @@ export default function
     const resumeMatches = [
         {
             company: "Google",
+            logoUrl: "https://logo.clearbit.com/google.com",
             role: "Data Scientist",
             location: "Mumbai",
             deadline: "30-June-2026",
@@ -670,6 +676,7 @@ export default function
         },
         {
             company: "IBM",
+            logoUrl: "https://logo.clearbit.com/ibm.com",
             role: "Frontend Developer",
             location: "Pune",
             deadline: "25-June-2026",
@@ -679,6 +686,7 @@ export default function
         },
         {
             company: "Infosys",
+            logoUrl: "https://logo.clearbit.com/infosys.com",
             role: "Systems Engineer",
             location: "Bangalore",
             deadline: "28-June-2026",
@@ -688,6 +696,7 @@ export default function
         },
         {
             company: "Microsoft",
+            logoUrl: "https://logo.clearbit.com/microsoft.com",
             role: "Cloud Solution Architect",
             location: "Hyderabad",
             deadline: "10-July-2026",
@@ -697,6 +706,7 @@ export default function
         },
         {
             company: "Amazon",
+            logoUrl: "https://logo.clearbit.com/amazon.com",
             role: "Software Dev Engineer",
             location: "Chennai",
             deadline: "15-July-2026",
@@ -706,6 +716,7 @@ export default function
         },
         {
             company: "TCS",
+            logoUrl: "https://logo.clearbit.com/tcs.com",
             role: "Assistant Engineer",
             location: "Mumbai",
             deadline: "05-July-2026",
@@ -715,6 +726,7 @@ export default function
         },
         {
             company: "Wipro",
+            logoUrl: "https://logo.clearbit.com/wipro.com",
             role: "Project Engineer",
             location: "Pune",
             deadline: "02-July-2026",
@@ -922,8 +934,19 @@ export default function
                                 return (
                                     <div className="job-card" key={job.id}>
                                         <div className="job-card-header">
-                                            <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor }}>
-                                                <span style={{ color: job.logoColor || job.logoClor }}>{job.logoLetter}</span>
+                                            <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
+                                                <img
+                                                    src={job.logoUrl || job.logo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                                    alt={job.company}
+                                                    className="company-logo-img"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                    }}
+                                                />
+                                                <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
+                                                    {job.logoLetter || job.company.charAt(0)}
+                                                </span>
                                             </div>
                                             <h4 className="company-name">{job.company}</h4>
                                             <button
@@ -1007,8 +1030,19 @@ export default function
                                     {/* Top Row: Logo + Company Name on left, Score stack on right */}
                                     <div className="match-card-header">
                                         <div className="match-logo-details">
-                                            <div className="logo-mini-badge" style={{ borderColor: item.logoColor }}>
-                                                <span style={{ color: item.logoColor }}>{item.logoLetter}</span>
+                                            <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
+                                                <img
+                                                    src={item.logoUrl || item.logo || `https://logo.clearbit.com/${item.company.toLowerCase().replace(/\s+/g, '')}.com`}
+                                                    alt={item.company}
+                                                    className="company-logo-img"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                    }}
+                                                />
+                                                <span style={{ color: item.logoColor, display: 'none' }}>
+                                                    {item.logoLetter || item.company.charAt(0)}
+                                                </span>
                                             </div>
                                             <h4 className="match-company-name">{item.company}</h4>
                                         </div>
@@ -1381,7 +1415,7 @@ export default function
                                             />
                                             {profile.linkedinUrl && (
                                                 <a href={profile.linkedinUrl} target="_blank" rel="noreferrer" className="link-visit-btn">
-                                                    <ExternalLink size={14} /> Visit
+                                                    <ExternalLink size={14} /> Visit LinkedIn
                                                 </a>
                                             )}
                                         </div>
@@ -1408,7 +1442,7 @@ export default function
                                             />
                                             {profile.githubUrl && (
                                                 <a href={profile.githubUrl} target="_blank" rel="noreferrer" className="link-visit-btn">
-                                                    <ExternalLink size={14} /> Visit
+                                                    <ExternalLink size={14} /> Visit GitHub
                                                 </a>
                                             )}
                                         </div>
