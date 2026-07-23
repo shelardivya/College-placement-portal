@@ -152,3 +152,30 @@ export const addPlacementDrive = (driveData) => {
         }
     });
 };
+
+export const getAllQueries = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/query/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const replyToQuery = (id, replyText) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/api/admin/query/${id}/reply`, { reply: replyText }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const changePassword = (passwordData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/auth/change-password", passwordData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};

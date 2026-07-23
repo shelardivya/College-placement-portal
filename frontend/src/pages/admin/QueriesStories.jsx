@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -92,6 +92,38 @@ export default function QueriesStories() {
     });
 
     useEffect(() => {
+        const fetchQueries = async () => {
+            try {
+                const response = await getAllQueries();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedQueries = response.data.map(q => {
+                        const nameParts = (q.studentName || 'Student').split(' ');
+                        const avatar = nameParts.length > 1 ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
+                        
+                        return {
+                            ...q,
+                            id: q.id,
+                            name: q.studentName,
+                            course: q.department,
+                            avatar: avatar.toUpperCase(),
+                            colorClass: 'blue',
+                            title: q.subject,
+                            message: q.description,
+                            status: (q.status || 'pending').toLowerCase(),
+                            reply: q.adminReply,
+                            date: new Date(q.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                        };
+                    });
+                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch queries:", error);
+            }
+        };
+        fetchQueries();
+    }, []);
+
+    useEffect(() => {
         localStorage.setItem("student_queries", JSON.stringify(queries));
     }, [queries]);
 
@@ -105,22 +137,31 @@ export default function QueriesStories() {
     const [replyingQuery, setReplyingQuery] = useState(null);
     const [replyText, setReplyText] = useState('');
 
-    const handleSendReply = (e) => {
+    const handleSendReply = async (e) => {
         e.preventDefault();
-        if (!replyingQuery) return;
-        setQueries(prevQueries => prevQueries.map(q => {
-            if (q.id === replyingQuery.id) {
-                return {
-                    ...q,
-                    status: 'resolved',
-                    reply: replyText
-                };
-            }
-            return q;
-        }));
-        triggerToast("Reply sent to student query successfully!", "success");
-        setReplyingQuery(null);
-        setReplyText('');
+        if (!replyingQuery || !replyText.trim()) return;
+        
+        try {
+            await replyToQuery(replyingQuery.id, replyText);
+            
+            setQueries(prevQueries => prevQueries.map(q => {
+                if (q.id === replyingQuery.id) {
+                    return {
+                        ...q,
+                        status: 'resolved',
+                        reply: replyText
+                    };
+                }
+                return q;
+            }));
+            
+            triggerToast("Reply sent to student query successfully!", "success");
+            setReplyingQuery(null);
+            setReplyText('');
+        } catch (error) {
+            console.error("Failed to reply to query:", error);
+            triggerToast("Failed to send reply.", "error");
+        }
     };
 
     // Helper calculations for status counts
