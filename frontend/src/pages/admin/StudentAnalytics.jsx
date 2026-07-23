@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -84,6 +84,12 @@ export default function StudentAnalytics() {
         averagePackage: 0
     });
 
+    const [departmentData, setDepartmentData] = useState([]);
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [cgpaData, setCgpaData] = useState([]);
+    const [maxStudents, setMaxStudents] = useState(40);
+    const [skillsData, setSkillsData] = useState([]);
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -95,42 +101,71 @@ export default function StudentAnalytics() {
                 console.error("Failed to fetch admin student analytics:", error);
             }
         };
+
+        const fetchDepartmentData = async () => {
+            try {
+                const res = await getDepartmentAnalytics();
+                if (res.data) {
+                    setTotalStudents(res.data.totalStudents || 0);
+                    const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
+                    if (res.data.departments && Array.isArray(res.data.departments)) {
+                        const mapped = res.data.departments.map((d, index) => ({
+                            label: d.department,
+                            count: d.count,
+                            percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
+                            color: colors[index % colors.length]
+                        }));
+                        setDepartmentData(mapped);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch department analytics", e);
+            }
+        };
+
+        const fetchCgpaData = async () => {
+            try {
+                const res = await getPlacementCgpaAnalytics();
+                if (res.data && Array.isArray(res.data)) {
+                    const mapped = res.data.map(c => ({
+                        range: c.range,
+                        students: c.count
+                    }));
+                    setCgpaData(mapped);
+                    const maxCount = Math.max(...mapped.map(d => d.students), 0);
+                    setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
+                }
+            } catch (e) {
+                console.error("Failed to fetch CGPA analytics", e);
+            }
+        };
+
+        const fetchSkillsData = async () => {
+            try {
+                const res = await getTopSkillsAnalytics();
+                if (res.data && Array.isArray(res.data)) {
+                    const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
+                    
+                    // Assuming 'count' is the percentage or we can just use count as a rough percentage for the UI bar width
+                    const mapped = res.data.map((s, index) => ({
+                        skill: s.skill,
+                        percentage: s.count,
+                        color: colors[index % colors.length]
+                    }));
+                    setSkillsData(mapped);
+                }
+            } catch (e) {
+                console.error("Failed to fetch skills analytics", e);
+            }
+        };
+
         fetchStats();
+        fetchDepartmentData();
+        fetchCgpaData();
+        fetchSkillsData();
     }, []);
 
-    // Department Wise Distribution — 
-    const departmentData = [
-        { label: 'Computer Science', count: 180, percentage: 36, color: '#1e3a6e' }, // Dark Navy
-        { label: 'Information Technology', count: 110, percentage: 22, color: '#6c8dd6' }, // Periwinkle Blue
-        { label: 'BCA', count: 60, percentage: 12, color: '#06b6d4' }, // Cyan
-        { label: 'MCA', count: 40, percentage: 8, color: '#a5b4fc' }, // Soft Blue
-        { label: 'Others', count: 110, percentage: 22, color: '#e2e8f0' }, // Light grey
-    ];
-    const totalStudents = 500;
-
     const segments = getDonutSegments(departmentData);
-
-    //Placement by CGPA data from image
-    const cgpaData = [
-        { range: '<6', students: 7 },
-        { range: '6 - 7', students: 15 },
-        { range: '7 - 8', students: 23 },
-        { range: '8 - 9', students: 28 },
-        { range: '9 - 10', students: 32 },
-    ];
-
-    const maxStudents = 40; //y-axis max round number above 32
-
-    // top skills in demand data from image
-    const skillsData = [
-        { skill: 'Java', percentage: 62, color: '#1e3a6e' }, // dark navy
-        { skill: 'Python', percentage: 58, color: '#3b82f6' }, // blue
-        { skill: 'SQL', percentage: 40, color: '#8b5cf6' }, // purple
-        { skill: 'PHP', percentage: 32, color: '#06b6d4' }, // cyan
-        { skill: 'React', percentage: 16, color: '#f59e0b' }, // orange
-        { skill: 'C++', percentage: 13, color: '#10b981' }, // green
-        { skill: 'C', percentage: 8, color: '#f43f5e' }, // rose
-    ];
 
     //Top Placed Students data from image
     const initialTopStudentsData = [
