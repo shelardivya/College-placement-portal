@@ -5,6 +5,7 @@
     display: flex;
     flex-direction: column;
     gap: 24px;
+    padding-bottom: 48px;
 }
 
 /*Header Navbar Styles*/
@@ -357,7 +358,8 @@
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
     gap: 40px;
-    padding: 0 40px;
+    padding: 0 40px 48px 40px;
+    margin-bottom: 24px;
 }
 
 

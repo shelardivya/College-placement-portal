@@ -10,11 +10,24 @@ import {
     Clock,
     ChevronLeft,
     ChevronRight,
-    X
+    X,
+    CheckCircle2,
+    XCircle
 } from 'lucide-react';
 import './QueriesStories.css';
 
 export default function QueriesStories() {
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState("success");
+    const [showToast, setShowToast] = useState(false);
+
+    const triggerToast = (msg, type = "success") => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
     // 1. Initial Mock data for Student Queries
     const initialQueries = [
         {
@@ -104,6 +117,7 @@ export default function QueriesStories() {
             }
             return q;
         }));
+        triggerToast("Reply sent to student query successfully!", "success");
         setReplyingQuery(null);
         setReplyText('');
     };
@@ -318,6 +332,7 @@ export default function QueriesStories() {
         const updatedDrives = drives.filter(d => d.id !== deletingDrive.id);
         setDrives(updatedDrives);
         setDeletingDrive(null);
+        triggerToast("Placement drive deleted successfully!", "success");
     };
 
     const handleSaveDrive = (e) => {
@@ -348,6 +363,7 @@ export default function QueriesStories() {
                 return d;
             });
             setDrives(updatedDrives);
+            triggerToast("Placement drive updated successfully!", "success");
         } else {
             // Add new
             const newDrive = {
@@ -363,6 +379,7 @@ export default function QueriesStories() {
                 targetStudent: driveForm.targetStudent
             };
             setDrives([newDrive, ...drives]);
+            triggerToast("Placement drive created successfully!", "success");
         }
 
         setIsDriveModalOpen(false);
@@ -442,6 +459,7 @@ export default function QueriesStories() {
         };
 
         setStories([newStory, ...stories]);
+        triggerToast("Placement story published successfully!", "success");
 
         // Reset form inputs after publishing
         setStoryForm({
@@ -1156,6 +1174,21 @@ export default function QueriesStories() {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+
+            {/* TOAST NOTIFICATION COMPONENT */}
+            {showToast && (
+                <div className={`toast-notification ${toastType}`}>
+                    <div className="toast-content">
+                        {toastType === 'success' ? (
+                            <CheckCircle2 className="toast-icon" size={18} />
+                        ) : (
+                            <XCircle className="toast-icon" size={18} />
+                        )}
+                        <span>{toastMessage}</span>
+                    </div>
+                    <div className="toast-progress-bar"></div>
                 </div>
             )}
         </div>

@@ -9,6 +9,7 @@ import {
     Building,
     Briefcase,
     CheckCircle2,
+    XCircle,
     User,
     FileText
 } from "lucide-react";
@@ -232,6 +233,18 @@ export default function StudHub() {
     const [querySubject, setQuerySubject] = useState("");
     const [queryMessage, setQueryMessage] = useState("");
 
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState("");
+    const [toastType, setToastType] = useState("success");
+    const [showToast, setShowToast] = useState(false);
+
+    const triggerToast = (msg, type = "success") => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
     const handleRaiseQuery = (e) => {
         e.preventDefault();
         if (!querySubject.trim() || !queryMessage.trim()) return;
@@ -248,6 +261,7 @@ export default function StudHub() {
         setQueries(prev => [newQuery, ...prev]);
         setQuerySubject("");
         setQueryMessage("");
+        triggerToast("Query submitted successfully! Admin will respond shortly.", "success");
     };
 
     // Segmented filter tab and separate pagination states for Query Responses
@@ -289,6 +303,7 @@ export default function StudHub() {
             localStorage.setItem("student_queries", JSON.stringify(updated));
             return updated;
         });
+        triggerToast("Query marked as resolved!", "success");
     };
 
     return (
@@ -698,6 +713,21 @@ export default function StudHub() {
                     </div>
                 </div>
             </div>
+
+            {/* TOAST NOTIFICATION COMPONENT */}
+            {showToast && (
+                <div className={`toast-notification ${toastType}`}>
+                    <div className="toast-content">
+                        {toastType === 'success' ? (
+                            <CheckCircle2 className="toast-icon" size={18} />
+                        ) : (
+                            <XCircle className="toast-icon" size={18} />
+                        )}
+                        <span>{toastMessage}</span>
+                    </div>
+                    <div className="toast-progress-bar"></div>
+                </div>
+            )}
         </div>
     );
 }

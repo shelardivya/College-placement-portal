@@ -543,6 +543,20 @@ function Login({ onNavigate, initialView }) {
                 </div>
             </div>
 
+            {/* TOAST NOTIFICATION COMPONENT */}
+            {showToast && (
+                <div className={`toast-notification ${toastType}`}>
+                    <div className="toast-content">
+                        {toastType === 'success' ? (
+                            <CheckCircle2 className="toast-icon" size={18} />
+                        ) : (
+                            <XCircle className="toast-icon" size={18} />
+                        )}
+                        <span>{toastMessage}</span>
+                    </div>
+                    <div className="toast-progress-bar"></div>
+                </div>
+            )}
         </div>
     );
 }
