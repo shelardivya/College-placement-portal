@@ -230,7 +230,8 @@ export const publishPlacementStory = (storyData, photoFile) => {
 
     return api.post(`/admin/story/create?${params.toString()}`, formData, {
         headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
         }
     });
 };
