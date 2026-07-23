@@ -28,12 +28,5 @@ api.interceptors.request.use((config) => {
 }, (error) => {
     return Promise.reject(error);
 });
-//     if (config.url && config.url.includes('/admin/job/')) {
-//         config.url = `/api${config.url}`;
-//     }
-//     return config;
-// }, (error) => {
-//     return Promise.reject(error);
-// });
 
 export default api;
