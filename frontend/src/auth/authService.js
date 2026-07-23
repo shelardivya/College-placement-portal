@@ -153,6 +153,24 @@ export const addPlacementDrive = (driveData) => {
     });
 };
 
+export const updatePlacementDrive = (id, driveData) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/api/admin/placement-drive/update/${id}`, driveData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const deletePlacementDrive = (id) => {
+    const token = localStorage.getItem("token");
+    return api.delete(`/api/admin/placement-drive/delete/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const getAllQueries = () => {
     const token = localStorage.getItem("token");
     return api.get("/api/admin/query/all", {
