@@ -634,13 +634,17 @@
     flex-shrink: 0;
 }
 
-.table-search-input-expanded {
-    border: none;
-    outline: none;
-    background: transparent;
+.table-search-input-expanded,
+.table-search-input-expanded:focus,
+.table-search-input-expanded:focus-visible {
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
     font-size: 0.85rem;
     width: 100%;
     color: #0f172a;
+    padding: 0;
 }
 
 .table-search-input-expanded::placeholder {
@@ -1102,10 +1106,12 @@
 }
 
 /* Success Toast Notification at Bottom Right */
-.toast-notification {
+.students-table-card .toast-notification {
     position: fixed;
     bottom: 24px;
     right: 24px;
+    top: auto ;
+    height: auto ;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
