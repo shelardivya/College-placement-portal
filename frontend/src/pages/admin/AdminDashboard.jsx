@@ -759,7 +759,7 @@ function AdminDashboard({ onNavigate }) {
     return (
         <div className='admin-dashboard-container'>
 
-            {/*HEADER /NAVBAR*/}
+
             <header className='admin-header'>
                     <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
                         <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -879,12 +879,12 @@ function AdminDashboard({ onNavigate }) {
 
             <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
 
-                {/*MAIN DASHBOARD PANEL*/}
+
                 <main className='dashboard-main'>
                     {activeTab === 'dashboard' && (
                         <>
 
-                    {/*GREETING SECTION*/}
+
                     <section className='greeting-section'>
                         <div className='greeting-content'>
                             <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
@@ -895,7 +895,7 @@ function AdminDashboard({ onNavigate }) {
                         </div>
                     </section>
 
-                    {/*STATS SECTION*/}
+
                     <section className='stats-grid'>
                         <div className='stat-card'>
                             <div className='stat-icon-wrapper blue-icon'>
@@ -937,10 +937,10 @@ function AdminDashboard({ onNavigate }) {
                         </div>
                     </section>
 
-                    {/*LOWER GRID LAYOUT */}
+
                     <div className='dashboard-grid-lower'>
 
-                        {/*LEFT COLUMN: PLACEMENT MANAGEMENT AND RECENT POSTINGS */}
+
                         <div className='lower-left-column'>
                             <div className='card-box posting-management-card'>
                                 <div className='card-box-header'>
@@ -993,7 +993,7 @@ function AdminDashboard({ onNavigate }) {
                                 <div className='postings-list'>
                                     {paginatedJobs.map((job) => (
                                         <div key={job.id} className='posting-card-item'>
-                                            {/* Company Logo */}
+
                                             <div className='posting-card-logo-wrap'>
                                                 <img
                                                     src={job.logoUrl}
@@ -1009,12 +1009,12 @@ function AdminDashboard({ onNavigate }) {
                                                 </div>
                                             </div>
 
-                                            {/* Job Info */}
+
                                             <div className='posting-card-body'>
-                                                {/* Company Name as Title */}
+
                                                 <h5 className='posting-card-title'>{job.company}</h5>
 
-                                                {/* Stacked info rows */}
+
                                                 <div className='posting-info-rows'>
                                                     {job.location && (
                                                         <div className='posting-info-row'>
@@ -1041,7 +1041,7 @@ function AdminDashboard({ onNavigate }) {
                                                 </div>
                                             </div>
 
-                                            {/* Status badge on right */}
+
                                             <div className='posting-card-status'>
                                                 {job.deadline && new Date(job.deadline) < new Date() ? (
                                                     <span className='badge-expired'>Expired</span>
@@ -1077,7 +1077,7 @@ function AdminDashboard({ onNavigate }) {
 
                         </div>
 
-                        {/*Right Column Applicants*/}
+
                         <div className='lower-right-column'>
                             <div className='card-box applicants-card'>
                                 <div className='card-box-header search-filter-header'>
@@ -1111,7 +1111,7 @@ function AdminDashboard({ onNavigate }) {
                                             )}
                                         </div>
 
-                                        {/* Dynamic filtering inputs */}
+
                                         {filterBy === 'By Date' && (
                                             <div className="custom-date-picker-container" ref={datePickerRef}>
                                                 <button
@@ -1135,11 +1135,11 @@ function AdminDashboard({ onNavigate }) {
                                                             ))}
                                                         </div>
                                                         <div className="calendar-days">
-                                                            {/* Render empty cells for padding */}
+
                                                             {Array.from({ length: firstDayIndex }).map((_, i) => (
                                                                 <span key={`empty-${i}`} className="empty-day"></span>
                                                             ))}
-                                                            {/* Render month days */}
+
                                                             {Array.from({ length: totalDays }).map((_, i) => {
                                                                 const day = i + 1;
                                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1264,7 +1264,7 @@ function AdminDashboard({ onNavigate }) {
                             e.stopPropagation()
                         }>
 
-                            {/*Modal Header*/}
+
                             <div className='modal-header'>
                                 <h4>Add Job Posting</h4>
                                 <button className='close-btn' onClick={() =>
@@ -1274,7 +1274,7 @@ function AdminDashboard({ onNavigate }) {
                                 </button>
                             </div>
 
-                            {/*Modal Form*/}
+
                             <form className='modal-form' onSubmit={handlePostJob}>
                                 <div className='form-group'>
                                     <label>Company Name</label>
@@ -1422,11 +1422,11 @@ function AdminDashboard({ onNavigate }) {
                                                         ))}
                                                     </div>
                                                     <div className="calendar-days">
-                                                        {/* Render empty cells for padding */}
+
                                                         {Array.from({ length: modalFirstDayIndex }).map((_, i) => (
                                                             <span key={`empty-${i}`} className="empty-day"></span>
                                                         ))}
-                                                        {/* Render month days */}
+
                                                         {Array.from({ length: modalTotalDays }).map((_, i) => {
                                                             const day = i + 1;
                                                             const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1484,7 +1484,7 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-                {/* 3. TOAST NOTIFICATION */}
+
                 {showToast && (
                     <div className={`admin-toast-notification ${toastType}`}>
                         <span className="admin-toast-icon">
@@ -1494,10 +1494,10 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-                {/* 4. PROFILE SETTINGS MODAL */}
+
                 {isProfileModalOpen && (
                     <div className='modal-overlay' onClick={handleCloseProfileModal}>
-                        <div className='add-job-modal profile-settings-modal' onClick={(e) => e.stopPropagation()}>                            {/* Modal Header */}
+                        <div className='add-job-modal profile-settings-modal' onClick={(e) => e.stopPropagation()}>
                             <div className='modal-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <h4>
                                     {profileTab === 'edit'
@@ -1533,7 +1533,7 @@ function AdminDashboard({ onNavigate }) {
                                 </div>
                             </div>
 
-                            {/* Tab Contents */}
+
                             {profileTab === 'edit' ? (
                                 isEditingProfile ? (
                                     <form className='modal-form' onSubmit={handleUpdateProfile}>
@@ -1690,7 +1690,7 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
-                {/* Notifications Sidebar Panel */}
+
                 {isNotificationSidebarOpen && (
                     <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
                         <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>

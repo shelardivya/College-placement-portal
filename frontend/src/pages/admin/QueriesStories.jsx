@@ -283,6 +283,17 @@ export default function QueriesStories() {
     const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
     const [editingDrive, setEditingDrive] = useState(null);
     const [deletingDrive, setDeletingDrive] = useState(null);
+
+    const [targetSearchTerm, setTargetSearchTerm] = useState('');
+    const [showTargetDropdown, setShowTargetDropdown] = useState(false);
+    
+    const availableStudents = [
+        { email: "all", name: "All Students (Selected for Everyone)" },
+        { email: "student@portal.edu", name: "student@portal.edu (Default Student)" },
+        { email: "priya@college.edu.in", name: "priya@college.edu.in (Priya Sharma)" },
+        { email: "rahul@college.edu.in", name: "rahul@college.edu.in (Rahul Patil)" },
+        { email: "sneha@college.edu.in", name: "sneha@college.edu.in (Sneha Jadhav)" }
+    ];
     const [driveForm, setDriveForm] = useState({
         company: '',
         role: '',
@@ -493,10 +504,10 @@ export default function QueriesStories() {
 
     return (
         <div className="queries-stories-container">
-            {/* Grid wrapper to place cards side by side */}
+
             <div className="qs-row">
 
-                {/* 1. Student Queries Card */}
+
                 <div className="qs-panel queries-card">
                     <div className="qs-panel-header">
                         <div>
@@ -526,7 +537,7 @@ export default function QueriesStories() {
                         </div>
                     </div>
 
-                    {/* Filter Pills */}
+
                     <div className="pills-wrapper">
                         <button className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
                             All ({totalQueriesCount})
@@ -539,7 +550,7 @@ export default function QueriesStories() {
                         </button>
                     </div>
 
-                    {/* Queries List */}
+
                     <div className="queries-list-scroll">
                         {paginatedQueries.length > 0 ? (
                             paginatedQueries.map((query) => (
@@ -590,7 +601,7 @@ export default function QueriesStories() {
                         )}
                     </div>
 
-                    {/* Centered Pagination controls block */}
+
                     <div className="table-card-footer">
                         <div className="pagination-wrapper">
                             <button
@@ -622,7 +633,7 @@ export default function QueriesStories() {
                     </div>
                 </div>
 
-                {/* 2. Publish Story Form Panel */}
+
                 <div className="qs-panel publish-story-card">
                     <div className="qs-panel-header">
                         <div>
@@ -632,7 +643,7 @@ export default function QueriesStories() {
                     </div>
 
                     <form onSubmit={handlePublishStory} className="publish-form-body">
-                        {/* Upper Row containing upload photo dashed card and name/company inputs */}
+
                         <div className="form-upper-row">
                             <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
                                 <input
@@ -693,7 +704,7 @@ export default function QueriesStories() {
                             </div>
                         </div>
 
-                        {/* Split inputs for Role and Package */}
+
                         <div className="form-grid-row">
                             <div className="form-group-field">
                                 <label className="field-label">Job Role</label>
@@ -717,7 +728,7 @@ export default function QueriesStories() {
                             </div>
                         </div>
 
-                        {/* Full width Success Story textarea field */}
+
                         <div className="form-group-field full-width">
                             <label className="field-label">Success Story</label>
                             <textarea
@@ -729,19 +740,19 @@ export default function QueriesStories() {
                             ></textarea>
                         </div>
 
-                        {/* Submit button aligned to right */}
+
                         <div className="form-submit-row">
                             <button type="submit" className="btn-primary-purple">Publish Story</button>
                         </div>
                     </form>
                 </div>
 
-            </div> {/* End of top qs-row */}
+            </div>
 
-            {/* Second row layout containing Manage Placement Drives and Published Placement Stories side by side */}
+
             <div className="qs-row qs-row-bottom" style={{ marginTop: '24px' }}>
 
-                {/* 3. Manage Placement Drives Panel */}
+
                 <div className="qs-panel placement-drives-card">
                     <div className="qs-panel-header">
                         <div>
@@ -766,7 +777,7 @@ export default function QueriesStories() {
                         </div>
                     </div>
 
-                    {/* Placement Drives List Table */}
+
                     <div className="qs-table-wrapper">
                         <table className="qs-drives-table">
                             <thead>
@@ -788,7 +799,7 @@ export default function QueriesStories() {
                                             <td>
                                                 <div className="company-logo-cell">
                                                     <img
-                                                        src={drive.logo && !drive.logo.includes('clearbit') ? drive.logo : `https://www.google.com/s2/favicons?domain=${drive.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                        src={`https://www.google.com/s2/favicons?domain=${drive.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
                                                         alt={drive.company}
                                                         style={{
                                                             width: '28px',
@@ -886,7 +897,7 @@ export default function QueriesStories() {
                     </div>
                 </div>
 
-                {/* 4. Published Placement Stories Panel */}
+
                 <div className="qs-panel placement-stories-card">
                     <div className="qs-panel-header">
                         <div>
@@ -895,7 +906,7 @@ export default function QueriesStories() {
                         </div>
                     </div>
 
-                    {/* Vertical Stack of Story Cards */}
+
                     <div className="stories-vertical-list">
                         {paginatedStories.map((story) => (
                             <div key={story.id} className="story-card-item">
@@ -943,7 +954,7 @@ export default function QueriesStories() {
                         ))}
                     </div>
 
-                    {/* Bottom Pagination Control */}
+
                     <div className="stories-pagination-footer">
                         <button
                             className="stories-nav-btn"
@@ -969,7 +980,7 @@ export default function QueriesStories() {
 
             </div>
 
-            {/* Add / Edit Placement Drive Modal */}
+
             {isDriveModalOpen && (
                 <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
                     <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
@@ -1064,17 +1075,55 @@ export default function QueriesStories() {
                                 </div>
                                 <div className="qs-form-group">
                                     <label className="form-label">Target Student *</label>
-                                    <select
-                                        className="form-input-control"
-                                        value={driveForm.targetStudent}
-                                        onChange={(e) => setDriveForm({ ...driveForm, targetStudent: e.target.value })}
-                                    >
-                                        <option value="All Students (Selected for Everyone)">All Students (Selected for Everyone)</option>
-                                        <option value="student@portal.edu">student@portal.edu (Default Student)</option>
-                                        <option value="priya@college.edu.in">priya@college.edu.in (Priya Sharma)</option>
-                                        <option value="rahul@college.edu.in">rahul@college.edu.in (Rahul Patil)</option>
-                                        <option value="sneha@college.edu.in">sneha@college.edu.in (Sneha Jadhav)</option>
-                                    </select>
+                                    <div className="multi-select-container" style={{ position: 'relative' }}>
+                                        <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
+                                            {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
+                                                <span key={idx} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {target}
+                                                    <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
+                                                        setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
+                                                    }}>&times;</span>
+                                                </span>
+                                            ))}
+                                            <input
+                                                type="text"
+                                                value={targetSearchTerm}
+                                                onChange={(e) => { setTargetSearchTerm(e.target.value); setShowTargetDropdown(true); }}
+                                                onFocus={() => setShowTargetDropdown(true)}
+                                                onBlur={() => setTimeout(() => setShowTargetDropdown(false), 200)}
+                                                style={{ border: 'none', outline: 'none', flex: 1, minWidth: '100px', background: 'transparent' }}
+                                                placeholder={driveForm.targetStudent ? "" : "Search student..."}
+                                            />
+                                        </div>
+                                        {showTargetDropdown && (
+                                            <div className="multi-select-dropdown" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', marginTop: '4px', zIndex: 10, maxHeight: '150px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                                                {availableStudents
+                                                    .filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase()))
+                                                    .map((student, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
+                                                            onMouseDown={(e) => e.preventDefault()}
+                                                            onClick={() => {
+                                                                const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t);
+                                                                if (!currentTargets.includes(student.name)) {
+                                                                    setDriveForm({ ...driveForm, targetStudent: [...currentTargets, student.name].join(', ') });
+                                                                }
+                                                                setTargetSearchTerm('');
+                                                                setShowTargetDropdown(false);
+                                                            }}
+                                                        >
+                                                            <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
+                                                        </div>
+                                                ))}
+                                                {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
+                                                    <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className="qs-form-group full-width">
                                     <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
@@ -1100,7 +1149,7 @@ export default function QueriesStories() {
                 </div>
             )}
 
-            {/* Delete Placement Drive Confirmation Modal */}
+
             {deletingDrive && (
                 <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
                     <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -1123,7 +1172,7 @@ export default function QueriesStories() {
                 </div>
             )}
 
-            {/* View Student Query Details Modal */}
+
             {viewingQuery && (
                 <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
                     <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
@@ -1194,7 +1243,7 @@ export default function QueriesStories() {
                 </div>
             )}
 
-            {/* Reply to Query Modal */}
+
             {replyingQuery && (
                 <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
                     <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
@@ -1245,7 +1294,7 @@ export default function QueriesStories() {
                 </div>
             )}
 
-            {/* TOAST NOTIFICATION COMPONENT */}
+
             {showToast && (
                 <div className={`toast-notification ${toastType}`}>
                     <div className="toast-content">
