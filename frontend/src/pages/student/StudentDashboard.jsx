@@ -1146,7 +1146,7 @@ export default function
                                 <div className="form-group">
                                     <label>Job Requirements</label>
                                     <div className="read-only-requirements-list">
-                                        {selectedJob.requirements.map((req, idx) => (
+                                        {(selectedJob.requirements || []).map((req, idx) => (
                                             <div className="requirement-bullet-item" key={idx}>
                                                 <span className="requirement-bullet-dot"></span>
                                                 <span className="requirement-text">{req}</span>
