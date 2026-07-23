@@ -70,12 +70,8 @@ function AdminDashboard({ onNavigate }) {
         }
     ]);
 
-    //Mock Draft Lists
-    const [drafts, setDrafts] =
-        useState([
-            { id: 1, title: 'UX Designer Intern', company: 'Amazon', lastSaved: '2 hours ago' },
-            { id: 2, title: 'Graduate Engineer', company: 'TCS', lastSaved: '1 day ago' }
-        ]);
+    // Draft Lists State
+    const [drafts, setDrafts] = useState([]);
 
     //Applicants mock data
     const initialApplicants = [
@@ -213,9 +209,27 @@ function AdminDashboard({ onNavigate }) {
             }
         };
 
+        const fetchDrafts = async () => {
+            try {
+                const response = await getDrafts();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedDrafts = response.data.map(d => ({
+                        id: d.id,
+                        title: d.jobRoleOverview || d.title || 'Untitled Draft',
+                        company: d.companyName || d.company || 'Unknown Company',
+                        lastSaved: new Date(d.createdAt || Date.now()).toLocaleDateString()
+                    }));
+                    setDrafts(mappedDrafts);
+                }
+            } catch (error) {
+                console.error("Failed to fetch drafts", error);
+            }
+        };
+
         fetchAdminProfile();
         fetchRecentPosts();
         fetchApplicantsMatching();
+        fetchDrafts();
     }, []);
 
 
