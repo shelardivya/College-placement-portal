@@ -237,8 +237,8 @@ function Login({ onNavigate, initialView }) {
                 {/* LEFT COLUMN: Branding & Recent Placements */}
                 <div className="login-left">
                     <div className="login-logo-section">
-                        <GraduationCap className="logo-icon" size={28} />
-                        <span className="college-name">College Placement Portal</span>
+                        <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
+                        <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                     </div>
 
                     <div className="brand-text-section">
@@ -504,7 +504,7 @@ function Login({ onNavigate, initialView }) {
                         {/* BOTTOM ACTION LINK (Login view only) */}
                         {loginView === 'login' && (
                             <div className="form-bottom-link-login">
-                                New to College Placement Portal?{' '}
+                                New to Campus_Hire?{' '}
                                 <span className="link-span-register" onClick={() => onNavigate('register')}>
                                     Create Student Account
                                 </span>
@@ -513,7 +513,7 @@ function Login({ onNavigate, initialView }) {
                     </div>
 
                     <div className="form-footer-copyright">
-                        © 2026  · College Placement Portal
+                        © 2026  · Campus_Hire
                     </div>
                 </div>
             </div>

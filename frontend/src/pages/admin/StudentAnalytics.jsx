@@ -643,18 +643,25 @@ export default function StudentAnalytics() {
                 <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
                     <div className="modal-container" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <div>
-                                <h3 className="modal-title">Add Top Placed Student</h3>
-                                <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
+                            <div className="modal-title-group">
+                                <div className="modal-icon-badge">
+                                    <Trophy size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="modal-title">Add Top Placed Student</h3>
+                                    <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
+                                </div>
                             </div>
-                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)} title="Close">
                                 <X size={18} />
                             </button>
                         </div>
 
                         <form onSubmit={handleAddStudent} className="modal-form">
                             <div className="form-group">
-                                <label className="form-label">Student Full Name *</label>
+                                <label className="form-label">
+                                    Student Full Name <span className="required-star">*</span>
+                                </label>
                                 <input
                                     type="text"
                                     className="form-input"
@@ -667,7 +674,9 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Branch *</label>
+                                    <label className="form-label">
+                                        Branch <span className="required-star">*</span>
+                                    </label>
                                     <div className="select-wrapper">
                                         <select
                                             className="form-select"
@@ -688,7 +697,9 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Passing Year *</label>
+                                    <label className="form-label">
+                                        Passing Year <span className="required-star">*</span>
+                                    </label>
                                     <div className="select-wrapper">
                                         <select
                                             className="form-select"
@@ -708,7 +719,9 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">CGPA (out of 10) *</label>
+                                    <label className="form-label">
+                                        CGPA (out of 10) <span className="required-star">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-input"
@@ -720,7 +733,9 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Package (LPA) *</label>
+                                    <label className="form-label">
+                                        Package (LPA) <span className="required-star">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-input"
@@ -738,14 +753,16 @@ export default function StudentAnalytics() {
                                     <input
                                         type="text"
                                         className="form-input"
-                                        placeholder="e.g. Full Stack, Data Science, Back..."
+                                        placeholder="e.g. Full Stack, Data Science, Backend"
                                         value={formData.skill}
                                         onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">Company Name *</label>
+                                    <label className="form-label">
+                                        Company Name <span className="required-star">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         className="form-input"
@@ -756,6 +773,8 @@ export default function StudentAnalytics() {
                                     />
                                 </div>
                             </div>
+
+                            <div className="modal-footer-divider"></div>
 
                             <div className="modal-actions">
                                 <button
