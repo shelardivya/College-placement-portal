@@ -7,8 +7,10 @@ import com.college.placement.portal.admin.repository.PlacementStoryRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.File;
 import java.io.IOException;
@@ -95,20 +97,77 @@ public class PlacementStoryService {
                     UUID.randomUUID() + extension;
 
             Path uploadPath =
-                    Paths.get(uploadDir,
-                            "placement-story");
+                    Paths.get(uploadDir, "placement-story");
+
+// ==========================================
+// Create Folder If Not Exists
+// ==========================================
+
+            try {
+
+                if (!Files.exists(uploadPath)) {
+
+                    Files.createDirectories(uploadPath);
+
+                }
+
+            } catch (IOException e) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unable to create upload folder. Check server permission."
+                );
+
+            }
+
+// ==========================================
+// Check Folder Exists
+// ==========================================
 
             if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Upload folder does not exist."
+                );
+
+            }
+
+// ==========================================
+// Check Folder Permission
+// ==========================================
+
+            if (!Files.isWritable(uploadPath)) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Permission denied. Upload folder is not writable."
+                );
+
             }
 
             Path filePath =
                     uploadPath.resolve(fileName);
 
-            Files.copy(
-                    photo.getInputStream(),
-                    filePath
-            );
+// ==========================================
+// Upload File
+// ==========================================
+
+            try {
+
+                Files.copy(
+                        photo.getInputStream(),
+                        filePath
+                );
+
+            } catch (IOException e) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unable to upload file."
+                );
+
+            }
 
             story.setPhotoPath(
                     "uploads/placement-story/" + fileName
@@ -284,22 +343,79 @@ public class PlacementStoryService {
             Path uploadPath =
                     Paths.get(uploadDir, "placement-story");
 
+// ==========================================
+// Create Folder If Not Exists
+// ==========================================
+
+            try {
+
+                if (!Files.exists(uploadPath)) {
+
+                    Files.createDirectories(uploadPath);
+
+                }
+
+            } catch (IOException e) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unable to create upload folder. Check server permission."
+                );
+
+            }
+
+// ==========================================
+// Check Folder Exists
+// ==========================================
+
             if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Upload folder does not exist."
+                );
+
+            }
+
+// ==========================================
+// Check Folder Permission
+// ==========================================
+
+            if (!Files.isWritable(uploadPath)) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Permission denied. Upload folder is not writable."
+                );
+
             }
 
             Path filePath =
                     uploadPath.resolve(fileName);
 
-            Files.copy(
-                    photo.getInputStream(),
-                    filePath
-            );
+// ==========================================
+// Upload File
+// ==========================================
+
+            try {
+
+                Files.copy(
+                        photo.getInputStream(),
+                        filePath
+                );
+
+            } catch (IOException e) {
+
+                throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Unable to upload file."
+                );
+
+            }
 
             story.setPhotoPath(
                     "uploads/placement-story/" + fileName
             );
-
         }
 
         placementStoryRepository.save(story);
