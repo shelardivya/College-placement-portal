@@ -692,8 +692,7 @@ function AdminDashboard({ onNavigate }) {
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
             
-            // Also update the profileData state if not already done
-            setProfileData(prev => ({ ...prev, ...adminProfile }));
+
 
             setToastType('success');
             setToastMessage("Admin profile updated successfully!");
@@ -836,8 +835,8 @@ function AdminDashboard({ onNavigate }) {
     };
 
     // Jobs Pagination Calculations
-    const totalJobsPages = Math.ceil(jobs.length / JOBS_PER_PAGE);
-    const paginatedJobs = jobs.slice(
+    const totalJobsPages = Math.ceil(recentPosts.length / JOBS_PER_PAGE);
+    const paginatedRecentPosts = recentPosts.slice(
         (jobsCurrentPage - 1) * JOBS_PER_PAGE,
         jobsCurrentPage * JOBS_PER_PAGE
     );
@@ -1084,8 +1083,8 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
 
                                         <div className='postings-list'>
-                                            {recentPosts && recentPosts.length > 0 ? (
-                                                recentPosts.slice(0, 5).map((post, index) => (
+                                            {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
+                                                paginatedRecentPosts.map((post, index) => (
                                                     <div key={index} className='posting-card-item'>
 
                                                         <div className='posting-card-logo-wrap'>
@@ -1136,6 +1135,25 @@ function AdminDashboard({ onNavigate }) {
                                             )}
                                         </div>
 
+                                        <div className='pagination-controls'>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={jobsCurrentPage === 1}
+                                                onClick={() => setJobsCurrentPage(prev => prev - 1)}
+                                            >
+                                                Previous
+                                            </button>
+                                            <span className='pagination-info'>
+                                                Page {jobsCurrentPage} of {totalJobsPages || 1}
+                                            </span>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
+                                                onClick={() => setJobsCurrentPage(prev => prev + 1)}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
 
                                     </div>
 
@@ -1248,7 +1266,7 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
 
                                         <div className='applicants-list'>
-                                            {filteredApplicants.slice(0, 5).map((app) => (
+                                            {paginatedApplicants.map((app) => (
                                                 <div key={app.id} className='applicant-item'>
 
                                                     <div className='applicant-top'>
