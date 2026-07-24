@@ -1085,7 +1085,7 @@ function AdminDashboard({ onNavigate }) {
 
                                         <div className='postings-list'>
                                             {recentPosts && recentPosts.length > 0 ? (
-                                                recentPosts.map((post, index) => (
+                                                recentPosts.slice(0, 5).map((post, index) => (
                                                     <div key={index} className='posting-card-item'>
 
                                                         <div className='posting-card-logo-wrap'>
@@ -1136,25 +1136,6 @@ function AdminDashboard({ onNavigate }) {
                                             )}
                                         </div>
 
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === 1}
-                                                onClick={() => setJobsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {jobsCurrentPage} of {totalJobsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
-                                                onClick={() => setJobsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
 
                                     </div>
 
@@ -1267,7 +1248,7 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
 
                                         <div className='applicants-list'>
-                                            {paginatedApplicants.map((app) => (
+                                            {filteredApplicants.slice(0, 5).map((app) => (
                                                 <div key={app.id} className='applicant-item'>
 
                                                     <div className='applicant-top'>
@@ -1302,25 +1283,6 @@ function AdminDashboard({ onNavigate }) {
                                             ))}
                                         </div>
 
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === 1}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
 
 
                                     </div>
