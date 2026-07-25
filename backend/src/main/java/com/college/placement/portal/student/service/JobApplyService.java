@@ -9,6 +9,8 @@ import com.college.placement.portal.student.Dto.JobDetailsDto;
 import com.college.placement.portal.student.Dto.LatestJobDto;
 import com.college.placement.portal.student.entity.JobApplyEntity;
 import com.college.placement.portal.student.repository.JobApplyRepository;
+import com.college.placement.portal.student.util.ResumeMatcher;
+import com.college.placement.portal.student.util.ResumeParser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -26,14 +28,20 @@ public class JobApplyService {
     private final AddJobRepository repository;
     private final RegisterRepository registerRepository;
     private final JobApplyRepository jobApplyRepository;
+    private final ResumeParser resumeParser;
+    private final ResumeMatcher resumeMatcher;
 
     public JobApplyService(AddJobRepository repository,
                            RegisterRepository registerRepository,
-                           JobApplyRepository jobApplyRepository) {
+                           JobApplyRepository jobApplyRepository,
+                           ResumeParser resumeParser,
+                           ResumeMatcher resumeMatcher) {
 
         this.repository = repository;
         this.registerRepository = registerRepository;
         this.jobApplyRepository = jobApplyRepository;
+        this.resumeParser = resumeParser;
+        this.resumeMatcher = resumeMatcher;
     }
 
     // ====================================================
@@ -166,15 +174,129 @@ public class JobApplyService {
         File destination = new File(folder, uniqueFileName);
 
         resume.transferTo(destination.getAbsoluteFile());
+        // ===========================================
+// Resume Match Percentage
+// ===========================================
 
+        String resumeText =
+                resumeParser.extractText(
+                        destination.getAbsolutePath()
+                );
+
+        String jobText =
+                (job.getJobRequirements() == null ? "" : job.getJobRequirements())
+                        + " "
+                        + (job.getJobRoleOverview() == null ? "" : job.getJobRoleOverview())
+                        + " "
+                        + (job.getDegree() == null ? "" : job.getDegree())
+                        + " "
+                        + (job.getBranch() == null ? "" : job.getBranch())
+                        + " "
+                        + (job.getExperience() == null ? "" : job.getExperience());
+
+        int resumeMatch =
+                resumeMatcher.calculateMatchPercentage(
+                        resumeText,
+                        jobText
+                );
+        // ===========================================
+// AI Scoring Logic
+// ===========================================
+
+        int score = resumeMatch;
+        System.out.println("Resume Match = " + resumeMatch);
+        System.out.println("Final Score = " + score);
+
+
+// CGPA Match (+5)
+
+        if (student.getCgpa() != null &&
+                job.getMinCgpa() != null &&
+                student.getCgpa() >= job.getMinCgpa()) {
+
+            score += 5;
+
+        }
+
+// Degree Match (+5)
+
+        if (student.getCourse() != null &&
+                job.getDegree() != null &&
+                student.getCourse().equalsIgnoreCase(job.getDegree())) {
+
+            score += 5;
+
+        }
+
+// Branch Match (+5)
+
+        if (student.getDepartment() != null &&
+                job.getBranch() != null &&
+                student.getDepartment().equalsIgnoreCase(job.getBranch())) {
+
+            score += 5;
+
+        }
+
+// Passing Year / Current Year (+5)
+
+        if (student.getCurrentYear() != null &&
+                job.getPassingYear() != null &&
+                student.getCurrentYear().equalsIgnoreCase(job.getPassingYear())) {
+
+            score += 5;
+
+        }
+
+// Experience (+5)
+
+        if (job.getExperience() != null &&
+                job.getExperience().equalsIgnoreCase("Fresher")) {
+
+            score += 5;
+
+        }
+
+// Maximum Score = 100
+
+        if (score > 100) {
+            score = 100;
+        }
+        System.out.println("========================");
+        System.out.println("Resume Match = " + resumeMatch);
+        System.out.println("Final Score = " + score);
+        System.out.println("========================");
         JobApplyEntity application =
                 new JobApplyEntity();
 
         application.setStudent(student);
+
         application.setJob(job);
+
         application.setResumeName(originalFileName);
+
         application.setResumePath(destination.getAbsolutePath());
-        application.setStatus("PENDING");
+
+// Save Match Percentage
+        application.setMatchPercentage(score);
+
+// Auto Status
+
+        if (score >= 70) {
+
+            application.setStatus("SELECTED");
+
+        }
+        else if (score >= 50) {
+
+            application.setStatus("PENDING");
+
+        }
+        else {
+
+            application.setStatus("REJECTED");
+
+        }
 
         jobApplyRepository.save(application);
 
