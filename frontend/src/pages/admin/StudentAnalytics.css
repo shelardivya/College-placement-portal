@@ -306,6 +306,9 @@
     border: 1px solid #f1f5f9;
     border-top: 3px solid transparent;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* colored top border per card position */
