@@ -87,10 +87,16 @@ export default function StudHub() {
                         message: q.description,
                         status: q.status ? q.status.toLowerCase() : 'pending',
                         reply: q.adminReply || 'Your query has been submitted. Admin team will respond shortly.',
-                        date: (q.createdAt && Array.isArray(q.createdAt) 
-                            ? new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2])
-                            : new Date(q.createdAt || Date.now())
-                        ).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                        date: (() => {
+                            try {
+                                if (!q.createdAt) return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                                if (Array.isArray(q.createdAt)) return new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2]).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                                const parsed = new Date(q.createdAt);
+                                return isNaN(parsed) ? q.createdAt.split('T')[0] : parsed.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                            } catch (e) {
+                                return "Recently";
+                            }
+                        })()
                     }));
                     // Sort so newest is first
                     setQueries(mappedQueries.sort((a, b) => b.id - a.id));
