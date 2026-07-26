@@ -216,6 +216,9 @@ function Login({ onNavigate, initialView }) {
                 const response = await forgotPassword(formData.email);
                 console.log("Forgot Password Response:", response.data);
 
+                // Store the requested email to prevent URL manipulation on reset
+                localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
+
                 setToastMessage("Reset link sent successfully! Check your email.");
                 setToastType('success');
                 setShowToast(true);
@@ -245,6 +248,16 @@ function Login({ onNavigate, initialView }) {
                 return;
             }
 
+            // Check if this device/browser was the one that actually requested the reset
+            const allowedEmail = localStorage.getItem('allowed_reset_email');
+            if (!allowedEmail || allowedEmail !== formData.email.trim().toLowerCase()) {
+                setToastMessage("Unauthorized request. Please request a new reset link from this device.");
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 4000);
+                return;
+            }
+
             try {
                 // Call the backend reset-password API
                 const response = await resetPassword({
@@ -261,6 +274,7 @@ function Login({ onNavigate, initialView }) {
                     setShowToast(false);
                     setLoginView('login');
                     setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
+                    localStorage.removeItem('allowed_reset_email');
                 }, 2000);
             } catch (error) {
                 console.error("Reset Password Error:", error);
