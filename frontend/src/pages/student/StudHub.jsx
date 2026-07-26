@@ -87,7 +87,10 @@ export default function StudHub() {
                         message: q.description,
                         status: q.status ? q.status.toLowerCase() : 'pending',
                         reply: q.adminReply || 'Your query has been submitted. Admin team will respond shortly.',
-                        date: new Date(q.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+                        date: (q.createdAt && Array.isArray(q.createdAt) 
+                            ? new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2])
+                            : new Date(q.createdAt || Date.now())
+                        ).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
                     }));
                     // Sort so newest is first
                     setQueries(mappedQueries.sort((a, b) => b.id - a.id));

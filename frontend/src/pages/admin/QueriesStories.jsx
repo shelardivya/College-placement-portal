@@ -111,7 +111,10 @@ export default function QueriesStories() {
                             message: q.description,
                             status: (q.status || 'pending').toLowerCase(),
                             reply: q.adminReply,
-                            date: new Date(q.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                            date: (q.createdAt && Array.isArray(q.createdAt) 
+                                ? new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2])
+                                : new Date(q.createdAt || Date.now())
+                            ).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
                         };
                     });
                     setQueries(mappedQueries.sort((a, b) => b.id - a.id));
@@ -357,11 +360,12 @@ export default function QueriesStories() {
     const [showTargetDropdown, setShowTargetDropdown] = useState(false);
     
     const availableStudents = [
-        { email: "all", name: "All Students (Selected for Everyone)" },
-        { email: "student@portal.edu", name: "student@portal.edu (Default Student)" },
-        { email: "priya@college.edu.in", name: "priya@college.edu.in (Priya Sharma)" },
-        { email: "rahul@college.edu.in", name: "rahul@college.edu.in (Rahul Patil)" },
-        { email: "sneha@college.edu.in", name: "sneha@college.edu.in (Sneha Jadhav)" }
+        { email: "all", name: "All Students" },
+        { email: "student@portal.edu", name: "Default Student" },
+        { email: "priya@college.edu.in", name: "Priya Sharma" },
+        { email: "rahul@college.edu.in", name: "Rahul Patil" },
+        { email: "sneha@college.edu.in", name: "Sneha Jadhav" },
+        { email: "jayashri@gmail.com", name: "Jayashri Patil" }
     ];
     const [driveForm, setDriveForm] = useState({
         company: '',
@@ -441,7 +445,7 @@ export default function QueriesStories() {
                     driveTime: driveForm.time || "",
                     status: driveForm.status || "Open",
                     targetStudent: driveForm.targetStudent,
-                    specificStudentName: ""
+                    specificStudentName: driveForm.customTarget || ""
                 };
                 
                 await updatePlacementDrive(editingDrive.id, payload);
@@ -483,7 +487,7 @@ export default function QueriesStories() {
                     driveTime: driveForm.time || "",
                     status: driveForm.status || "Open",
                     targetStudent: driveForm.targetStudent,
-                    specificStudentName: "" // Modify if you add this field to form
+                    specificStudentName: driveForm.customTarget || ""
                 };
 
                 const response = await addPlacementDrive(payload);
@@ -542,7 +546,10 @@ export default function QueriesStories() {
                             role: s.jobRole || 'Placed Student',
                             packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
                             storyText: s.successStory || `Secured placement at ${s.companyName}.`,
-                            date: new Date(s.createdAt || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                            date: (s.createdAt && Array.isArray(s.createdAt) 
+                                ? new Date(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2])
+                                : new Date(s.createdAt || Date.now())
+                            ).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
                         };
                     });
                     setStories(mappedStories.sort((a, b) => b.id - a.id));

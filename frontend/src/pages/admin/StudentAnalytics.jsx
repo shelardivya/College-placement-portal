@@ -110,7 +110,7 @@ export default function StudentAnalytics() {
                     const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
                     if (res.data.departments && Array.isArray(res.data.departments)) {
                         const mapped = res.data.departments.map((d, index) => ({
-                            label: d.department,
+                            label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
                             count: d.count,
                             percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
                             color: colors[index % colors.length]
@@ -432,8 +432,8 @@ export default function StudentAnalytics() {
                         <svg viewBox="0 0 280 180" className="bar-chart-svg">
 
                             {/* y-axis grid lines and labels */}
-                            {[0, 10, 20, 30, 40].map((val) => {
-                                const y = 20 + ((maxStudents - val) / maxStudents) * 120;
+                            {Array.from({ length: Math.floor(maxStudents / 10) + 1 }, (_, i) => i * 10).map((val) => {
+                                const y = 20 + ((maxStudents - val) / (maxStudents || 1)) * 120;
                                 return (
                                     <g key={val}>
                                         <line
@@ -458,13 +458,19 @@ export default function StudentAnalytics() {
                                 return (
                                     <g key={i}>
                                         <rect
-                                            x={x} y={y}
-                                            width={barWidth} height={barHeight}
+                                            x={x} y="20"
+                                            width={barWidth} height="120"
+                                            rx="4" ry="4"
+                                            fill="#eff6ff"
+                                        />
+                                        <rect
+                                            x={x} y={barHeight === 0 ? 138 : y}
+                                            width={barWidth} height={barHeight === 0 ? 2 : barHeight}
                                             rx="4" ry="4"
                                             className="bar-rect"
                                         />
                                         <text
-                                            x={x + barWidth / 2} y={y - 5}
+                                            x={x + barWidth / 2} y={barHeight === 0 ? 134 : y - 5}
                                             textAnchor="middle"
                                             className="bar-value-text"
                                         >
