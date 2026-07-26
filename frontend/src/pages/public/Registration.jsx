@@ -638,7 +638,8 @@ function Registration({ onNavigate }) {
                                         required
                                     >
                                         <option value="" disabled hidden>Select Department</option>
-                                        <option value="Computer Science and Applications">Computer Science and Applications</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Computer Applications">Computer Applications</option>
                                     </select>
                                 </div>
                                 {errors.department && <span className="error-message">{errors.department}</span>}

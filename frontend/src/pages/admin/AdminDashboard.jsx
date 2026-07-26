@@ -223,7 +223,7 @@ function AdminDashboard({ onNavigate }) {
     const JOBS_PER_PAGE = 3;
 
     const [applicantsCurrentPage, setApplicantsCurrentPage] = useState(1);
-    const APPLICANTS_PER_PAGE = 3;
+    const APPLICANTS_PER_PAGE = 5;
 
     // Secondary filter inputs states
     const [filterDate, setFilterDate] = useState('');
@@ -1301,7 +1301,25 @@ function AdminDashboard({ onNavigate }) {
                                             ))}
                                         </div>
 
-
+                                        <div className='pagination-controls'>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={applicantsCurrentPage === 1}
+                                                onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
+                                            >
+                                                Previous
+                                            </button>
+                                            <span className='pagination-info'>
+                                                Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
+                                            </span>
+                                            <button
+                                                className='btn-pagination'
+                                                disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
+                                                onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
 
                                     </div>
                                 </div>
