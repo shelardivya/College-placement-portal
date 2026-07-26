@@ -675,6 +675,12 @@ export default function
                 if (jobList.length > 0) {
                     const mappedJobs = jobList.map(job => {
                         const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
+                        
+                        const reqString = job.jobRequirements || job.requirements || job.skillsRequired || "";
+                        const requirementsArray = reqString 
+                            ? reqString.split(/[,\n]/).map(req => req.trim()).filter(Boolean) 
+                            : ["No specific requirements listed"];
+
                         return {
                             id: job.id,
                             company: job.companyName,
@@ -683,8 +689,13 @@ export default function
                             location: job.location,
                             role: job.jobRoleOverview,
                             deadline: job.deadline,
-                            requirements: ["See detailed description for requirements"],
-                            additionalinfo: job.jobRoleOverview
+                            requirements: requirementsArray.length > 0 ? requirementsArray : ["No specific requirements listed"],
+                            additionalinfo: job.jobRoleOverview,
+                            degree: job.degree,
+                            branch: job.branch,
+                            minCgpa: job.minCgpa,
+                            passingYear: job.passingYear,
+                            experience: job.experience
                         };
                     });
                     setJobs(mappedJobs);
@@ -727,47 +738,13 @@ export default function
 
     const getJobEligibility = (job) => {
         if (!job) return {};
-        let degree = "BE/B.Tech";
-        let branch = "Computer Science / IT";
-        let minCgpa = "6.5";
-        let passingYear = "2026";
-        let experience = "Fresher";
+        
+        let degree = job.degree || "Not specified";
+        let branch = job.branch || "Not specified";
+        let minCgpa = job.minCgpa !== undefined && job.minCgpa !== null ? String(job.minCgpa) : "Not specified";
+        let passingYear = job.passingYear || "Not specified";
+        let experience = job.experience || "Not specified";
         let roleOverview = job.additionalInfo || job.additionalinfo || "This is a full-time role.";
-
-        // Safely parse company name to prevent page crash on Apply
-        const companyName = String(job.company || "").toLowerCase();
-
-        if (companyName.includes("google")) {
-            degree = "BE/B.Tech";
-            branch = "Computer Science or related";
-            minCgpa = "7.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (companyName.includes("ibm")) {
-            degree = "BE/B.Tech/MCA";
-            branch = "Computer Science or IT";
-            minCgpa = "6.5";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (companyName.includes("infosys")) {
-            degree = "BE/B.Tech/M.Tech/MCA/M.Sc";
-            branch = "CS or related fields";
-            minCgpa = "6.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (companyName.includes("microsoft")) {
-            degree = "BE/B.Tech/MCA/M.Tech";
-            branch = "CS/IT";
-            minCgpa = "7.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (companyName.includes("amazon")) {
-            degree = "BE/B.Tech";
-            branch = "CS/IT";
-            minCgpa = "7.5";
-            passingYear = "2026";
-            experience = "Fresher";
-        }
 
         return { degree, branch, minCgpa, passingYear, experience, roleOverview };
     };
