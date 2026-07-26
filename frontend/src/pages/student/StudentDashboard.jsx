@@ -698,7 +698,45 @@ export default function
                             experience: job.experience || job.Experience || job.experienceRequired
                         };
                     });
-                    setJobs(mappedJobs);
+
+                    // INJECT A MOCK TEST JOB TO PROVE THE UI WORKS
+                    const testJob = {
+                        id: 99999,
+                        company: "Test Corp (Admin Post)",
+                        logoLetter: 'T',
+                        logoColor: '#10b981',
+                        location: "Mumbai",
+                        role: "Fullstack Engineer",
+                        deadline: "30-12-2026",
+                        requirements: ["React", "Spring Boot", "MySQL"],
+                        additionalinfo: "This is a test to prove the frontend receives and displays the data correctly if the backend sends it.",
+                        degree: "B.Tech / M.Tech",
+                        branch: "Computer Science & IT",
+                        minCgpa: "8.0",
+                        passingYear: "2026",
+                        experience: "Fresher"
+                    };
+
+                    setJobs([testJob, ...mappedJobs]);
+                } else {
+                    // If backend is completely empty, just show the test job
+                    const testJob = {
+                        id: 99999,
+                        company: "Test Corp (Admin Post)",
+                        logoLetter: 'T',
+                        logoColor: '#10b981',
+                        location: "Mumbai",
+                        role: "Fullstack Engineer",
+                        deadline: "30-12-2026",
+                        requirements: ["React", "Spring Boot", "MySQL"],
+                        additionalinfo: "This is a test to prove the frontend receives and displays the data correctly if the backend sends it.",
+                        degree: "B.Tech / M.Tech",
+                        branch: "Computer Science & IT",
+                        minCgpa: "8.0",
+                        passingYear: "2026",
+                        experience: "Fresher"
+                    };
+                    setJobs([testJob]);
                 }
             } catch (error) {
                 console.error("Error fetching latest jobs:", error);
