@@ -446,7 +446,10 @@ export default function
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert("New passwords do not match!");
+            setToastMessage("New passwords do not match!");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
             return;
         }
 
@@ -457,7 +460,10 @@ export default function
                 confirmPassword: passwordForm.confirmPassword
             });
 
-            alert("Password updated successfully!");
+            setToastMessage("Password updated successfully!");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
             setIsChangePasswordOpen(false);
             setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
             setShowCurrentPassword(false);
@@ -465,7 +471,10 @@ export default function
             setShowConfirmPassword(false);
         } catch (error) {
             console.error("Error changing password:", error);
-            alert(error.response?.data?.message || "Failed to change password. Please check your current password.");
+            setToastMessage(error.response?.data?.message || "Failed to change password. Please check your current password.");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
         }
     };
 
