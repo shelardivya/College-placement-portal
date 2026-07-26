@@ -683,19 +683,19 @@ export default function
 
                         return {
                             id: job.id,
-                            company: job.companyName,
+                            company: job.companyName || job.company,
                             logoLetter: firstLetter,
                             logoColor: '#2563eb',
-                            location: job.location,
-                            role: job.jobRoleOverview,
+                            location: job.location || "Remote",
+                            role: job.jobRoleOverview || job.jobRole || job.title,
                             deadline: job.deadline,
                             requirements: requirementsArray.length > 0 ? requirementsArray : ["No specific requirements listed"],
-                            additionalinfo: job.jobRoleOverview,
-                            degree: job.degree,
-                            branch: job.branch,
-                            minCgpa: job.minCgpa,
-                            passingYear: job.passingYear,
-                            experience: job.experience
+                            additionalinfo: job.jobRoleOverview || job.jobRole || job.title,
+                            degree: job.degree || job.Degree || job.degreeRequired,
+                            branch: job.branch || job.Branch || job.branchRequired,
+                            minCgpa: job.minCgpa !== undefined ? job.minCgpa : (job.MinCgpa !== undefined ? job.MinCgpa : job.cgpa),
+                            passingYear: job.passingYear || job.PassingYear || job.year,
+                            experience: job.experience || job.Experience || job.experienceRequired
                         };
                     });
                     setJobs(mappedJobs);
@@ -739,12 +739,14 @@ export default function
     const getJobEligibility = (job) => {
         if (!job) return {};
         
-        let degree = job.degree || "Not specified";
-        let branch = job.branch || "Not specified";
-        let minCgpa = job.minCgpa !== undefined && job.minCgpa !== null ? String(job.minCgpa) : "Not specified";
-        let passingYear = job.passingYear || "Not specified";
-        let experience = job.experience || "Not specified";
-        let roleOverview = job.additionalInfo || job.additionalinfo || "This is a full-time role.";
+        let degree = job.degree || job.Degree || job.degreeRequired || "Not specified";
+        let branch = job.branch || job.Branch || job.branchRequired || "Not specified";
+        let minCgpa = (job.minCgpa !== undefined && job.minCgpa !== null) ? String(job.minCgpa) :
+                      (job.MinCgpa !== undefined && job.MinCgpa !== null) ? String(job.MinCgpa) :
+                      (job.cgpa !== undefined && job.cgpa !== null) ? String(job.cgpa) : "Not specified";
+        let passingYear = job.passingYear || job.PassingYear || job.year || "Not specified";
+        let experience = job.experience || job.Experience || job.experienceRequired || "Not specified";
+        let roleOverview = job.additionalInfo || job.additionalinfo || job.jobRoleOverview || "This is a full-time role.";
 
         return { degree, branch, minCgpa, passingYear, experience, roleOverview };
     };
