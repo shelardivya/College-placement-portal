@@ -699,8 +699,18 @@ export default function QueriesStories() {
             });
         } catch (error) {
             console.error("Failed to publish placement story:", error);
-            const errorMsg = error.response?.data?.message || error.response?.data || error.message || "Failed to publish story.";
-            triggerToast(`Error: ${typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)}`, "error");
+            
+            // Handle Nginx 413 or HTML responses
+            let errorMsg = "Failed to publish story.";
+            if (error.response?.status === 413) {
+                errorMsg = "Photo is large size";
+            } else if (typeof error.response?.data === 'string' && error.response.data.includes('<html')) {
+                errorMsg = `Server Error (${error.response?.status || 'Unknown'}). Please try again.`;
+            } else {
+                errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
+            }
+            
+            triggerToast(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg), "error");
         }
     };
 
