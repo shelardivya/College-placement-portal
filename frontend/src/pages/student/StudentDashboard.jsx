@@ -699,44 +699,7 @@ export default function
                         };
                     });
 
-                    // INJECT A MOCK TEST JOB TO PROVE THE UI WORKS
-                    const testJob = {
-                        id: 99999,
-                        company: "Test Corp (Admin Post)",
-                        logoLetter: 'T',
-                        logoColor: '#10b981',
-                        location: "Mumbai",
-                        role: "Fullstack Engineer",
-                        deadline: "30-12-2026",
-                        requirements: ["React", "Spring Boot", "MySQL"],
-                        additionalinfo: "This is a test to prove the frontend receives and displays the data correctly if the backend sends it.",
-                        degree: "B.Tech / M.Tech",
-                        branch: "Computer Science & IT",
-                        minCgpa: "8.0",
-                        passingYear: "2026",
-                        experience: "Fresher"
-                    };
-
-                    setJobs([testJob, ...mappedJobs]);
-                } else {
-                    // If backend is completely empty, just show the test job
-                    const testJob = {
-                        id: 99999,
-                        company: "Test Corp (Admin Post)",
-                        logoLetter: 'T',
-                        logoColor: '#10b981',
-                        location: "Mumbai",
-                        role: "Fullstack Engineer",
-                        deadline: "30-12-2026",
-                        requirements: ["React", "Spring Boot", "MySQL"],
-                        additionalinfo: "This is a test to prove the frontend receives and displays the data correctly if the backend sends it.",
-                        degree: "B.Tech / M.Tech",
-                        branch: "Computer Science & IT",
-                        minCgpa: "8.0",
-                        passingYear: "2026",
-                        experience: "Fresher"
-                    };
-                    setJobs([testJob]);
+                    setJobs(mappedJobs);
                 }
             } catch (error) {
                 console.error("Error fetching latest jobs:", error);
@@ -1036,57 +999,65 @@ export default function
 
 
                         <div className="match-list">
-                            {resumeMatches
-                                .filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()))
-                                .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
-                                .map((item, index) => (
-                                    <div className="match-card" key={index}>
-
-                                        <div className="match-card-header">
-                                            <div className="match-logo-details">
-                                                <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
-                                                    <img
-                                                        src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                        alt={item.company}
-                                                        className="company-logo-img"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                        }}
-                                                    />
-                                                    <span style={{ color: item.logoColor, display: 'none' }}>
-                                                        {item.logoLetter || item.company.charAt(0)}
-                                                    </span>
-                                                </div>
-                                                <h4 className="match-company-name">{item.company}</h4>
-                                            </div>
-
-                                            <div className="match-score-container">
-                                                <span className="match-score-text">{item.score}% Match</span>
-                                                <div className="score-progress-track">
-                                                    <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
-                                                </div>
-                                            </div>
+                            {(() => {
+                                const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                            <p>No resume matches found.</p>
                                         </div>
+                                    );
+                                }
+                                return filtered
+                                    .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
+                                    .map((item, index) => (
+                                        <div className="match-card" key={index}>
 
+                                            <div className="match-card-header">
+                                                <div className="match-logo-details">
+                                                    <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
+                                                        <img
+                                                            src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                            alt={item.company}
+                                                            className="company-logo-img"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                            }}
+                                                        />
+                                                        <span style={{ color: item.logoColor, display: 'none' }}>
+                                                            {item.logoLetter || item.company.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="match-company-name">{item.company}</h4>
+                                                </div>
 
-                                        <div className="match-card-details">
-                                            <div className="match-detail-item">
-                                                <span className="match-detail-label">Location :</span>
-                                                <strong>{item.location}</strong>
+                                                <div className="match-score-container">
+                                                    <span className="match-score-text">{item.score}% Match</span>
+                                                    <div className="score-progress-track">
+                                                        <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="match-detail-item">
-                                                <span className="match-detail-label">Job Role :</span>
-                                                <strong>{item.role}</strong>
+
+                                            <div className="match-card-details">
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Location :</span>
+                                                    <strong>{item.location}</strong>
+                                                </div>
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Job Role :</span>
+                                                    <strong>{item.role}</strong>
+                                                </div>
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Deadline :</span>
+                                                    <strong>{item.deadline}</strong>
+                                                </div>
                                             </div>
-                                            <div className="match-detail-item">
-                                                <span className="match-detail-label">Deadline :</span>
-                                                <strong>{item.deadline}</strong>
-                                            </div>
+
                                         </div>
-
-                                    </div>
-                                ))}
+                                    ));
+                            })()}
                         </div>
 
 

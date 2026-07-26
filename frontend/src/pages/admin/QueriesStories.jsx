@@ -969,6 +969,7 @@ export default function QueriesStories() {
                                         className="form-input-control"
                                         value={storyForm.studentName}
                                         onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
+                                        required
                                     />
                                 </div>
                                 <div className="form-group-field">
@@ -979,6 +980,7 @@ export default function QueriesStories() {
                                         className="form-input-control"
                                         value={storyForm.companyName}
                                         onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
+                                        required
                                     />
                                 </div>
                             </div>
@@ -994,6 +996,7 @@ export default function QueriesStories() {
                                     className="form-input-control"
                                     value={storyForm.jobRole}
                                     onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
+                                    required
                                 />
                             </div>
                             <div className="form-group-field">
@@ -1017,6 +1020,7 @@ export default function QueriesStories() {
                                 rows={4}
                                 value={storyForm.storyText}
                                 onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
+                                required
                             ></textarea>
                         </div>
 
