@@ -1137,7 +1137,7 @@ export default function
                                 <div className="form-group">
                                     <label>Job Role Overview</label>
                                     <textarea
-                                        value={`${selectedJob.role}. ${eligibility.roleOverview}`}
+                                        value={selectedJob.role || "Not specified"}
                                         disabled
                                         rows={3}
                                         className="read-only-textarea"
