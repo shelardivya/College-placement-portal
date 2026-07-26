@@ -579,7 +579,7 @@ export default function
                             role: m.role || 'Job Role',
                             location: m.location || 'Location',
                             deadline: m.deadline || 'Upcoming',
-                            score: m.matchScore || Math.floor(Math.random() * 40) + 60, // Fallback random score 60-99
+                            score: m.matchScore !== undefined ? m.matchScore : 0, 
                             logoLetter: firstLetter,
                             logoColor: '#ea4335' // Default
                         };

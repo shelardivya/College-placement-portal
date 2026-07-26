@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentQueries, submitStudentQuery } from '../../auth/authService';
+import { getStudentQueries, submitStudentQuery, getStudentPlacementStories, getStudentPlacementDrives } from '../../auth/authService';
 import {
     Award,
     MessageSquare,
@@ -29,11 +29,7 @@ export default function StudHub() {
     const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
     const [showDriveDetails, setShowDriveDetails] = useState(false);
 
-    // Sync drives from localStorage
-    const [drives] = useState(() => {
-        const stored = localStorage.getItem("placement_drives");
-        return stored ? JSON.parse(stored) : initialDrives;
-    });
+    const [drives, setDrives] = useState(initialDrives);
 
     // Filter drives targeted to this student
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
@@ -54,11 +50,7 @@ export default function StudHub() {
             return new Date("9999-12-31");
         }
     };
-    // Stories state & pagination
-    const [stories] = useState(() => {
-        const stored = localStorage.getItem("placement_stories");
-        return stored ? JSON.parse(stored) : initialStories;
-    });
+    const [stories, setStories] = useState(initialStories);
     const [storiesPage, setStoriesPage] = useState(1);
     const STORIES_PER_PAGE = 2;
     const totalStoriesPages = Math.ceil(stories.length / STORIES_PER_PAGE) || 1;
@@ -106,6 +98,70 @@ export default function StudHub() {
             }
         };
         fetchQueries();
+    }, []);
+
+    useEffect(() => {
+        const fetchStories = async () => {
+            try {
+                const response = await getStudentPlacementStories();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedStories = response.data.map(story => {
+                        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(story.studentName)}&background=2563eb&color=fff`;
+                        return {
+                            id: story.id,
+                            name: story.studentName,
+                            avatar: story.photoUrl || avatarUrl,
+                            company: story.companyName,
+                            companyColor: '#eff6ff',
+                            companyTextColor: '#2563eb',
+                            role: story.jobRole,
+                            packageAmt: story.packageLpa ? `${story.packageLpa} LPA` : 'Not Disclosed',
+                            storyText: story.successStory,
+                            date: (() => {
+                                try {
+                                    if (!story.createdAt) return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                    if (Array.isArray(story.createdAt)) return new Date(story.createdAt[0], story.createdAt[1] - 1, story.createdAt[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                    const parsed = new Date(story.createdAt);
+                                    return isNaN(parsed) ? story.createdAt.split('T')[0] : parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                } catch (e) {
+                                    return "Recently";
+                                }
+                            })()
+                        };
+                    });
+                    setStories(mappedStories.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch placement stories:", error);
+            }
+        };
+
+        const fetchDrives = async () => {
+            try {
+                const response = await getStudentPlacementDrives();
+                if (response.data && Array.isArray(response.data)) {
+                    const mappedDrives = response.data.map(d => ({
+                        id: d.id,
+                        company: d.companyName,
+                        role: d.jobRole,
+                        date: d.driveDate,
+                        time: d.driveTime || 'TBA',
+                        venue: d.venue || 'TBA',
+                        eligibility: d.eligibilityCriteria || 'Not Specified',
+                        status: (d.status || 'Upcoming').toLowerCase(),
+                        logoLetter: d.companyName ? d.companyName.charAt(0).toUpperCase() : 'C',
+                        logoColor: '#2563eb',
+                        targetStudent: d.targetStudent || 'all'
+                    }));
+                    setDrives(mappedDrives.sort((a, b) => b.id - a.id));
+                }
+            } catch (error) {
+                console.error("Failed to fetch placement drives:", error);
+            }
+        };
+
+        fetchStories();
+        fetchDrives();
     }, []);
 
     // Sync queries back to localStorage

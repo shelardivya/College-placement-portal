@@ -519,9 +519,7 @@ export default function QueriesStories() {
             
             // The backend returns a string message or a PlacementStoryResponseDto.
             // We can fetch all stories again, or just optimistically add it.
-            const isBoy = Math.random() > 0.5;
-            const randomId = Math.floor(Math.random() * 50) + 1;
-            const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.studentName)}&background=2563eb&color=fff`;
 
             const newStory = {
                 id: Date.now(),
@@ -531,7 +529,7 @@ export default function QueriesStories() {
                 companyColor: '#eff6ff',
                 companyTextColor: '#2563eb',
                 role: storyForm.jobRole,
-                packageAmt: payload.package ? `${payload.package} LPA` : '6.0 LPA',
+                packageAmt: payload.package ? `${payload.package} LPA` : 'Not Disclosed',
                 storyText: payload.storyText,
                 date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
             };

@@ -169,10 +169,10 @@ function AdminDashboard({ onNavigate }) {
                             name: app.studentName || 'Student',
                             company: app.jobRole || 'SDE',
                             degree: app.degree || 'B.Tech',
-                            branch: app.branch || 'Computer Science',
-                            cgpa: app.cgpa || 8.0,
-                            year: app.passingYear || '2026 Passout',
-                            match: app.matchScore || Math.floor(Math.random() * 20) + 80,
+                            branch: app.branch || 'N/A',
+                            cgpa: app.cgpa || 0.0,
+                            year: app.passingYear || 'N/A',
+                            match: app.matchScore !== undefined ? app.matchScore : 0,
                             date: app.appliedDate || dateString
                         };
                     });
