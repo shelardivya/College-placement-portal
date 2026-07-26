@@ -30,52 +30,7 @@ export default function QueriesStories() {
         setTimeout(() => setShowToast(false), 3000);
     };
     // 1. Initial Mock data for Student Queries
-    const initialQueries = [
-        {
-            id: 1,
-            name: 'Rahul Patil',
-            course: 'B.Sc Computer Science',
-            avatar: 'RP',
-            colorClass: 'blue',
-            title: 'Resume not uploading',
-            message: 'I am unable to upload my resume. It shows error please help me resolve this issue.',
-            date: '2 May 2025',
-            status: 'resolved'
-        },
-        {
-            id: 2,
-            name: 'Sneha Jadhav',
-            course: 'BCA',
-            avatar: 'SJ',
-            colorClass: 'purple',
-            title: 'Profile strength calculation',
-            message: 'How is profile strength calculated? I want to improve my score.',
-            date: '1 May 2025',
-            status: 'resolved'
-        },
-        {
-            id: 3,
-            name: 'Aditya More',
-            course: 'B.Sc IT',
-            avatar: 'AM',
-            colorClass: 'green',
-            title: 'TCS Drive Eligibility',
-            message: 'Am I eligible for the TCS drive? Please confirm my eligibility.',
-            date: '30 Apr 2025',
-            status: 'resolved'
-        },
-        {
-            id: 4,
-            name: 'Priya Deshmukh',
-            course: 'B.Com',
-            avatar: 'PD',
-            colorClass: 'orange',
-            title: 'Documents required',
-            message: 'Please provide the list of documents required for placement registration.',
-            date: '29 Apr 2025',
-            status: 'resolved'
-        }
-    ];
+    const initialQueries = [];
 
     // React States for student queries and pagination
     const [queries, setQueries] = useState(() => {
@@ -111,10 +66,16 @@ export default function QueriesStories() {
                             message: q.description,
                             status: (q.status || 'pending').toLowerCase(),
                             reply: q.adminReply,
-                            date: (q.createdAt && Array.isArray(q.createdAt) 
-                                ? new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2])
-                                : new Date(q.createdAt || Date.now())
-                            ).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                            date: (() => {
+                                try {
+                                    if (!q.createdAt) return new Date().toLocaleDateString();
+                                    if (Array.isArray(q.createdAt)) return new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2]).toLocaleDateString();
+                                    const parsed = new Date(q.createdAt);
+                                    return isNaN(parsed) ? q.createdAt.split('T')[0] : parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                } catch (e) {
+                                    return "Recently";
+                                }
+                            })()
                         };
                     });
                     setQueries(mappedQueries.sort((a, b) => b.id - a.id));
@@ -193,126 +154,10 @@ export default function QueriesStories() {
     const totalPages = Math.ceil(filteredQueries.length / itemsPerPage);
 
     // Mock Data for Placement Drives
-    const initialDrives = [
-        {
-            id: 1,
-            company: 'Google',
-            logo: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
-            role: 'SDE Intern',
-            location: 'Bangalore',
-            date: '20 Jul 2026',
-            time: '10:00 AM',
-            status: 'open',
-            venue: 'Seminar Hall A',
-            about: 'Google is conducting an on-campus recruitment drive for the SDE Intern role.',
-            targetStudent: 'All'
-        },
-        {
-            id: 2,
-            company: 'Amazon',
-            logo: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=128',
-            role: 'Backend Developer',
-            location: 'Hyderabad',
-            date: '25 Jul 2026',
-            time: '11:30 AM',
-            status: 'upcoming',
-            venue: 'Seminar Hall A',
-            about: 'Amazon is conducting an on-campus recruitment drive for the Backend Developer role.',
-            targetStudent: 'All'
-        },
-        {
-            id: 3,
-            company: 'TCS',
-            logo: 'https://www.google.com/s2/favicons?domain=tcs.com&sz=128',
-            role: 'System Engineer',
-            location: 'Pune',
-            date: '30 Jul 2026',
-            time: '09:00 AM',
-            status: 'closed',
-            venue: 'Seminar Hall B',
-            about: 'TCS is conducting a mass campus recruitment drive for System Engineers.',
-            targetStudent: 'All'
-        },
-        {
-            id: 4,
-            company: 'Infosys',
-            logo: 'https://www.google.com/s2/favicons?domain=infosys.com&sz=128',
-            role: 'Full Stack Developer',
-            location: 'Mysore',
-            date: '05 Aug 2026',
-            time: '02:00 PM',
-            status: 'upcoming',
-            venue: 'Seminar Hall A',
-            about: 'Infosys is conducting an on-campus drive for the Full Stack Developer role.',
-            targetStudent: 'All'
-        },
-        {
-            id: 5,
-            company: 'Cognizant',
-            logo: 'https://www.google.com/s2/favicons?domain=cognizant.com&sz=128',
-            role: 'QA Engineer',
-            location: 'Chennai',
-            date: '12 Aug 2026',
-            time: '10:00 AM',
-            status: 'upcoming',
-            venue: 'Online / MS Teams',
-            about: 'Cognizant is conducting a virtual campus drive for the QA Engineer role.',
-            targetStudent: 'All'
-        },
-        {
-            id: 6,
-            company: 'Wipro',
-            logo: 'https://www.google.com/s2/favicons?domain=wipro.com&sz=128',
-            role: 'System Associate',
-            location: 'Kochi',
-            date: '18 Aug 2026',
-            time: '11:00 AM',
-            status: 'upcoming',
-            venue: 'Placement Cell Lab 2',
-            about: 'Wipro is conducting an on-campus drive for System Associates.',
-            targetStudent: 'All'
-        }
-    ];
+    const initialDrives = [];
 
     // Mock Data for Published Placement Stories
-    const initialStories = [
-        {
-            id: 1,
-            name: 'Nithisha Yadav',
-            avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-            company: 'Thoughtworks',
-            companyColor: '#f3e8ff',
-            companyTextColor: '#8b5cf6',
-            role: 'Software Engineer',
-            packageAmt: '8.5 LPA',
-            storyText: 'Secured a Software Engineer role at Thoughtworks. The preparation drives helped me refine my technical skills.',
-            date: '10 Apr 2025'
-        },
-        {
-            id: 2,
-            name: 'Prabhat Pundeer',
-            avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
-            company: 'Snabbits',
-            companyColor: '#fffbeb',
-            companyTextColor: '#d97706',
-            role: 'SDE Intern',
-            packageAmt: '6.0 LPA',
-            storyText: 'Delighted to join Snabbits as an SDE Intern. Grateful to the control center mentors for guidance.',
-            date: '8 Apr 2025'
-        },
-        {
-            id: 3,
-            name: 'Deepak Kumar',
-            avatar: 'https://randomuser.me/api/portraits/men/22.jpg',
-            company: 'Mindstix',
-            companyColor: '#eff6ff',
-            companyTextColor: '#2563eb',
-            role: 'Full Stack Developer',
-            packageAmt: '12.0 LPA',
-            storyText: 'Landed a Full Stack Developer role at Mindstix. Consistent project building was key to cracking the interviews.',
-            date: '5 Apr 2025'
-        }
-    ];
+    const initialStories = [];
 
     // State for placement drives and pagination
     const [drives, setDrives] = useState(() => {
@@ -546,10 +391,16 @@ export default function QueriesStories() {
                             role: s.jobRole || 'Placed Student',
                             packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
                             storyText: s.successStory || `Secured placement at ${s.companyName}.`,
-                            date: (s.createdAt && Array.isArray(s.createdAt) 
-                                ? new Date(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2])
-                                : new Date(s.createdAt || Date.now())
-                            ).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                            date: (() => {
+                                try {
+                                    if (!s.createdAt) return new Date().toLocaleDateString();
+                                    if (Array.isArray(s.createdAt)) return new Date(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2]).toLocaleDateString();
+                                    const parsed = new Date(s.createdAt);
+                                    return isNaN(parsed) ? s.createdAt.split('T')[0] : parsed.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                                } catch (e) {
+                                    return "Recently";
+                                }
+                            })()
                         };
                     });
                     setStories(mappedStories.sort((a, b) => b.id - a.id));
@@ -668,9 +519,7 @@ export default function QueriesStories() {
             
             // The backend returns a string message or a PlacementStoryResponseDto.
             // We can fetch all stories again, or just optimistically add it.
-            const isBoy = Math.random() > 0.5;
-            const randomId = Math.floor(Math.random() * 50) + 1;
-            const avatarUrl = `https://randomuser.me/api/portraits/${isBoy ? 'men' : 'women'}/${randomId}.jpg`;
+            const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.studentName)}&background=2563eb&color=fff`;
 
             const newStory = {
                 id: Date.now(),
@@ -680,7 +529,7 @@ export default function QueriesStories() {
                 companyColor: '#eff6ff',
                 companyTextColor: '#2563eb',
                 role: storyForm.jobRole,
-                packageAmt: payload.package ? `${payload.package} LPA` : '6.0 LPA',
+                packageAmt: payload.package ? `${payload.package} LPA` : 'Not Disclosed',
                 storyText: payload.storyText,
                 date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
             };

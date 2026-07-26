@@ -362,3 +362,21 @@ export const getAdminApplicantsMatching = () => {
         }
     });
 };
+
+export const getStudentPlacementStories = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/story/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentPlacementDrives = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placement-drive/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
