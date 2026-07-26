@@ -34,6 +34,10 @@ public class JobApplyEntity {
 
     private String status;
 
+    // Match Percentage
+
+    private Integer matchPercentage;
+
     private LocalDateTime appliedAt = LocalDateTime.now();
 
     public Long getId() {
@@ -78,6 +82,13 @@ public class JobApplyEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public Integer getMatchPercentage() {
+        return matchPercentage;
+    }
+
+    public void setMatchPercentage(Integer matchPercentage) {
+        this.matchPercentage = matchPercentage;
     }
 
     public LocalDateTime getAppliedAt() {

@@ -8,6 +8,7 @@ import com.college.placement.portal.admin.entity.AddJobEntity;
 import com.college.placement.portal.admin.entity.PlacementRecordEntity;
 import com.college.placement.portal.admin.repository.AddJobRepository;
 import com.college.placement.portal.admin.repository.PlacementRecordRepository;
+import com.college.placement.portal.admin.repository.TopPlacedStudentRepository;
 import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import org.springframework.stereotype.Service;
@@ -23,30 +24,29 @@ public class StudentAnalyticsService {
     private final PlacementRecordRepository placementRecordRepository;
     private final RegisterRepository registerRepository;
     private final AddJobRepository addJobRepository;
+    private final TopPlacedStudentRepository topPlacedStudentRepository;
     public StudentAnalyticsService(
             PlacementRecordRepository placementRecordRepository,
             RegisterRepository registerRepository,
-            AddJobRepository addJobRepository
+            AddJobRepository addJobRepository,
+            TopPlacedStudentRepository topPlacedStudentRepository
     ) {
         this.placementRecordRepository = placementRecordRepository;
         this.registerRepository = registerRepository;
         this.addJobRepository = addJobRepository;
+        this.topPlacedStudentRepository = topPlacedStudentRepository;
     }
 
     // ==========================================
     // Dashboard Stat Cards
     // ==========================================
-
     public StudentAnalyticsDto getDashboardStats() {
 
         StudentAnalyticsDto dto = new StudentAnalyticsDto();
 
-        long placedStudents = placementRecordRepository.count();
+        long placedStudents = topPlacedStudentRepository.count();
 
-        long totalStudents = registerRepository.findAll()
-                .stream()
-                .filter(student -> student.getRole() == Role.STUDENT)
-                .count();
+        long totalStudents = registerRepository.countByRole(Role.STUDENT);
 
         double placementRate = 0;
 
@@ -54,8 +54,11 @@ public class StudentAnalyticsService {
             placementRate = (placedStudents * 100.0) / totalStudents;
         }
 
-        Double highestPackage = placementRecordRepository.getHighestPackage();
-        Double averagePackage = placementRecordRepository.getAveragePackage();
+        Double highestPackage =
+                topPlacedStudentRepository.getHighestPackage();
+
+        Double averagePackage =
+                topPlacedStudentRepository.getAveragePackage();
 
         dto.setPlacedStudents(placedStudents);
         dto.setPlacementRate(Math.round(placementRate * 100.0) / 100.0);
@@ -64,7 +67,6 @@ public class StudentAnalyticsService {
 
         return dto;
     }
-
     // ==========================================
 // Department Distribution
 // ==========================================

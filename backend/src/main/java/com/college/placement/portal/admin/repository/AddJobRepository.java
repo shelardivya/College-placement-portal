@@ -4,6 +4,7 @@ import com.college.placement.portal.admin.entity.AddJobEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,5 +27,12 @@ public interface AddJobRepository extends JpaRepository<AddJobEntity, Long> {
     List<AddJobEntity> findByStatusAndDeadlineGreaterThanEqual(
             String status,
             LocalDate date
+    );
+    long countByStatusIgnoreCase(String status);
+
+    long countByStatusIgnoreCaseAndCreatedAtBetween(
+            String status,
+            LocalDateTime start,
+            LocalDateTime end
     );
 }
