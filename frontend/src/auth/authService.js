@@ -242,6 +242,37 @@ export const getAllPlacementStories = () => {
     });
 };
 
+export const updatePlacementStory = (id, storyData, photoFile) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    if (photoFile) {
+        formData.append("photo", photoFile);
+    }
+    
+    const params = new URLSearchParams({
+        studentName: storyData.studentName,
+        companyName: storyData.companyName,
+        jobRole: storyData.jobRole,
+        packageLpa: storyData.package,
+        successStory: storyData.storyText
+    });
+
+    return api.put(`/admin/story/update/${id}?${params.toString()}`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const deletePlacementStory = (id) => {
+    const token = localStorage.getItem("token");
+    return api.delete(`/admin/story/delete/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const changePassword = (passwordData) => {
     const token = localStorage.getItem("token");
     return api.put("/auth/change-password", passwordData, {
