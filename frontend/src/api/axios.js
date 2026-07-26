@@ -16,11 +16,13 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
     // Nginx strips the first /api from the URL. The Spring Boot controllers 
-    // for admin routes are inconsistently mapped to /api/admin/... 
-    // (while student routes are correctly mapped to /student/...)
-    // So we must manually prepend an extra /api only to admin routes!
-    if (config.url && config.url.startsWith('/admin/')) {
-        config.url = `/api${config.url}`;
+    // are inconsistently mapped: most admin/student routes are mapped to /api/admin/... 
+    // and /api/student/..., BUT /student/resume-match is missing the /api prefix!
+    if (config.url) {
+        if (config.url.startsWith('/admin/') || 
+           (config.url.startsWith('/student/') && !config.url.includes('resume-match'))) {
+            config.url = `/api${config.url}`;
+        }
     }
     return config;
 }, (error) => {
