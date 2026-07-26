@@ -1,0 +1,51 @@
+name: Auto Deploy to AWS App Server
+
+on:
+  push:
+    branches:
+      - develop 
+
+jobs:
+  deploy-to-server:
+    runs-on: self-hosted 
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Deploy Frontend Files
+        run: |
+          sudo rm -rf /opt/frontend_app/*
+          sudo cp -r frontend/dist/* /opt/frontend_app/
+          sudo chown -R frontend_user:frontend_user /opt/frontend_app/
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Backend
+        run: |
+          cd backend
+          mvn clean package -DskipTests=true
+
+      - name: Deploy Backend Files & Restart Services
+        run: |
+          sudo rm -f /opt/backend_app/*.jar
+          sudo cp backend/target/*.jar /opt/backend_app/
+          sudo chown -R backend_user:backend_user /opt/backend_app/
+          
+          sudo systemctl restart backend.service
+          sudo systemctl restart nginx
