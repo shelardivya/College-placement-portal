@@ -572,6 +572,7 @@ export default function QueriesStories() {
     const [editingStory, setEditingStory] = useState(null);
     const [deletingStory, setDeletingStory] = useState(null);
     const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+    const [confirmingPublish, setConfirmingPublish] = useState(false);
 
     // Reset stories page to 1 when filter changes
     useEffect(() => {
@@ -921,7 +922,7 @@ export default function QueriesStories() {
                         </div>
                     </div>
 
-                    <form onSubmit={handlePublishStory} className="publish-form-body">
+                    <form onSubmit={(e) => { e.preventDefault(); setConfirmingPublish(true); }} className="publish-form-body">
 
                         <div className="form-upper-row">
                             <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
@@ -1728,6 +1729,27 @@ export default function QueriesStories() {
                             </button>
                             <button type="button" className="btn-delete-confirm" onClick={confirmDeleteStory}>
                                 Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {confirmingPublish && (
+                <div className="qs-modal-overlay" onClick={() => setConfirmingPublish(false)}>
+                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
+                            <CheckCircle2 size={22} />
+                        </div>
+                        <h4 className="delete-modal-title">Confirm Publish</h4>
+                        <p className="delete-modal-desc">
+                            Are you sure you want to publish the success story for <strong>{storyForm.studentName || "this student"}</strong>?
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button type="button" className="btn-delete-cancel" onClick={() => setConfirmingPublish(false)}>
+                                Cancel
+                            </button>
+                            <button type="button" className="btn-primary-purple" onClick={(e) => { setConfirmingPublish(false); handlePublishStory(e); }}>
+                                Yes, Publish
                             </button>
                         </div>
                     </div>
