@@ -67,8 +67,8 @@ export default function StudHub() {
     // Drives list & pagination
     const drivesList = activeDrives.length > 0 ? activeDrives : (studentFilteredDrives.length > 0 ? studentFilteredDrives : initialDrives);
     const [drivesPage, setDrivesPage] = useState(1);
-    const totalDrivePages = drivesList.length || 1;
-    const currentDrive = drivesList[Math.min(drivesPage - 1, drivesList.length - 1)] || drivesList[0];
+    const totalDrivePages = drivesList.length;
+    const currentDrive = drivesList.length > 0 ? drivesList[Math.min(drivesPage - 1, drivesList.length - 1)] : null;
 
     // Queries state
     const [queries, setQueries] = useState(() => {
@@ -348,178 +348,184 @@ export default function StudHub() {
                             </span>
                         </div>
                         
-                        <div className="next-event-card">
-                            <div className="event-card-header-row">
-                                <div className="event-icon-box">
-                                    {currentDrive?.logo ? (
-                                        <img
-                                            src={currentDrive.logo}
-                                            alt={currentDrive.company}
-                                            style={{
-                                                width: '32px',
-                                                height: '32px',
-                                                objectFit: 'contain',
-                                                borderRadius: '8px',
-                                                border: '1px solid #e2e8f0',
-                                                background: '#ffffff',
-                                                padding: '3px'
-                                            }}
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.nextSibling.style.display = 'block';
-                                            }}
-                                        />
-                                    ) : null}
-                                    <Calendar className="event-purple-icon" size={20} style={{ display: currentDrive?.logo ? 'none' : 'block' }} />
+                        {currentDrive ? (
+                            <div className="next-event-card">
+                                <div className="event-card-header-row">
+                                    <div className="event-icon-box">
+                                        {currentDrive?.logo ? (
+                                            <img
+                                                src={currentDrive.logo}
+                                                alt={currentDrive.company}
+                                                style={{
+                                                    width: '32px',
+                                                    height: '32px',
+                                                    objectFit: 'contain',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e2e8f0',
+                                                    background: '#ffffff',
+                                                    padding: '3px'
+                                                }}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                    e.target.nextSibling.style.display = 'block';
+                                                }}
+                                            />
+                                        ) : null}
+                                        <Calendar className="event-purple-icon" size={20} style={{ display: currentDrive?.logo ? 'none' : 'block' }} />
+                                    </div>
+                                    <h2 className="event-company-title">{currentDrive.company} Drive</h2>
                                 </div>
-                                <h2 className="event-company-title">{currentDrive ? `${currentDrive.company} Drive` : "Google Drive"}</h2>
-                            </div>
-                            
-                            <div className="event-details-card-box">
+                                
+                                <div className="event-details-card-box">
 
-                                <div className="event-detail-row">
-                                    <div className="event-detail-icon-wrapper">
-                                        <Calendar size={16} />
-                                    </div>
-                                    <div className="detail-item-content">
-                                        <span className="detail-field-label">DATE</span>
-                                        <div className="detail-badge-box">
-                                            {currentDrive ? currentDrive.date : "20 Jul 2026"}
+                                    <div className="event-detail-row">
+                                        <div className="event-detail-icon-wrapper">
+                                            <Calendar size={16} />
+                                        </div>
+                                        <div className="detail-item-content">
+                                            <span className="detail-field-label">DATE</span>
+                                            <div className="detail-badge-box">
+                                                {currentDrive.date || 'TBA'}
+                                            </div>
                                         </div>
                                     </div>
+
+
+                                    <div className="event-detail-row">
+                                        <div className="event-detail-icon-wrapper">
+                                            <Clock size={16} />
+                                        </div>
+                                        <div className="detail-item-content">
+                                            <span className="detail-field-label">TIME</span>
+                                            <div className="detail-badge-box">
+                                                {currentDrive.time ? (currentDrive.time.includes("Onwards") ? currentDrive.time : `${currentDrive.time} Onwards`) : 'TBA'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div className="event-detail-row">
+                                        <div className="event-detail-icon-wrapper">
+                                            <MapPin size={16} />
+                                        </div>
+                                        <div className="detail-item-content">
+                                            <span className="detail-field-label">LOCATION</span>
+                                            <div className="detail-badge-box">
+                                                {currentDrive.location || 'TBA'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    {showDriveDetails && (
+                                        <>
+
+                                            <div className="event-detail-row">
+                                                <div className="event-detail-icon-wrapper">
+                                                    <Building size={16} />
+                                                </div>
+                                                <div className="detail-item-content">
+                                                    <span className="detail-field-label">VENUE</span>
+                                                    <div className="detail-badge-box">
+                                                        {currentDrive.venue || "TBA"}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div className="event-detail-row">
+                                                <div className="event-detail-icon-wrapper">
+                                                    <Briefcase size={16} />
+                                                </div>
+                                                <div className="detail-item-content">
+                                                    <span className="detail-field-label">JOB ROLE</span>
+                                                    <div className="detail-badge-box">
+                                                        {currentDrive.role || "TBA"}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div className="event-detail-row">
+                                                <div className="event-detail-icon-wrapper">
+                                                    <CheckCircle2 size={16} />
+                                                </div>
+                                                <div className="detail-item-content">
+                                                    <span className="detail-field-label">DRIVE STATUS</span>
+                                                    <div>
+                                                        <span className={`drive-status-pill badge-${(currentDrive.status || 'open').toLowerCase()}`}>
+                                                            {(currentDrive.status || 'OPEN').toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div className="event-detail-row">
+                                                <div className="event-detail-icon-wrapper">
+                                                    <User size={16} />
+                                                </div>
+                                                <div className="detail-item-content">
+                                                    <span className="detail-field-label">TARGET AUDIENCE</span>
+                                                    <div className="detail-badge-box">
+                                                        {currentDrive.targetStudent === 'All' || !currentDrive.targetStudent ? 'All Students' : currentDrive.targetStudent}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div className="event-detail-row full-width-row">
+                                                <div className="event-detail-icon-wrapper">
+                                                    <FileText size={16} />
+                                                </div>
+                                                <div className="detail-item-content full-width-content">
+                                                    <span className="detail-field-label">ABOUT DRIVE</span>
+                                                    <div className="detail-about-box">
+                                                        {currentDrive.about || "N/A"}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
+                                <button
+                                    className="btn-toggle-drive-details"
+                                    onClick={() => setShowDriveDetails(!showDriveDetails)}
+                                >
+                                    {showDriveDetails ? "Hide Details" : "View Details"}
+                                </button>
 
-                                <div className="event-detail-row">
-                                    <div className="event-detail-icon-wrapper">
-                                        <Clock size={16} />
+
+                                {totalDrivePages > 1 && (
+                                    <div className="sh-pagination-wrapper" style={{ marginTop: '16px' }}>
+                                        <button
+                                            type="button"
+                                            className="stories-nav-btn"
+                                            onClick={() => setDrivesPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={drivesPage === 1}
+                                        >
+                                            &larr; Prev Drive
+                                        </button>
+                                        <span className="stories-page-info">
+                                            Drive {drivesPage} of {totalDrivePages}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            className="stories-nav-btn"
+                                            onClick={() => setDrivesPage(prev => Math.min(prev + 1, totalDrivePages))}
+                                            disabled={drivesPage === totalDrivePages}
+                                        >
+                                            Next Drive &rarr;
+                                        </button>
                                     </div>
-                                    <div className="detail-item-content">
-                                        <span className="detail-field-label">TIME</span>
-                                        <div className="detail-badge-box">
-                                            {currentDrive ? (currentDrive.time?.includes("Onwards") ? currentDrive.time : `${currentDrive.time} Onwards`) : "10:00 AM Onwards"}
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                                <div className="event-detail-row">
-                                    <div className="event-detail-icon-wrapper">
-                                        <MapPin size={16} />
-                                    </div>
-                                    <div className="detail-item-content">
-                                        <span className="detail-field-label">LOCATION</span>
-                                        <div className="detail-badge-box">
-                                            {currentDrive ? currentDrive.location : "Bangalore"}
-                                        </div>
-                                    </div>
-                                </div>
-
-
-                                {showDriveDetails && (
-                                    <>
-
-                                        <div className="event-detail-row">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Building size={16} />
-                                            </div>
-                                            <div className="detail-item-content">
-                                                <span className="detail-field-label">VENUE</span>
-                                                <div className="detail-badge-box">
-                                                    {currentDrive ? currentDrive.venue || "Seminar Hall A" : "Seminar Hall A"}
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div className="event-detail-row">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Briefcase size={16} />
-                                            </div>
-                                            <div className="detail-item-content">
-                                                <span className="detail-field-label">JOB ROLE</span>
-                                                <div className="detail-badge-box">
-                                                    {currentDrive ? currentDrive.role || "SDE Intern" : "SDE Intern"}
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div className="event-detail-row">
-                                            <div className="event-detail-icon-wrapper">
-                                                <CheckCircle2 size={16} />
-                                            </div>
-                                            <div className="detail-item-content">
-                                                <span className="detail-field-label">DRIVE STATUS</span>
-                                                <div>
-                                                    <span className={`drive-status-pill badge-${(currentDrive?.status || 'open').toLowerCase()}`}>
-                                                        {(currentDrive?.status || 'OPEN').toUpperCase()}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div className="event-detail-row">
-                                            <div className="event-detail-icon-wrapper">
-                                                <User size={16} />
-                                            </div>
-                                            <div className="detail-item-content">
-                                                <span className="detail-field-label">TARGET AUDIENCE</span>
-                                                <div className="detail-badge-box">
-                                                    {currentDrive ? (currentDrive.targetStudent === 'All' || !currentDrive.targetStudent ? 'All Students' : currentDrive.targetStudent) : "All Students"}
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                        <div className="event-detail-row full-width-row">
-                                            <div className="event-detail-icon-wrapper">
-                                                <FileText size={16} />
-                                            </div>
-                                            <div className="detail-item-content full-width-content">
-                                                <span className="detail-field-label">ABOUT DRIVE</span>
-                                                <div className="detail-about-box">
-                                                    {currentDrive?.about || "Conducting an on-campus recruitment drive for qualified students."}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </>
                                 )}
                             </div>
-
-                            <button
-                                className="btn-toggle-drive-details"
-                                onClick={() => setShowDriveDetails(!showDriveDetails)}
-                            >
-                                {showDriveDetails ? "Hide Details" : "View Details"}
-                            </button>
-
-
-                            {totalDrivePages > 1 && (
-                                <div className="sh-pagination-wrapper" style={{ marginTop: '16px' }}>
-                                    <button
-                                        type="button"
-                                        className="stories-nav-btn"
-                                        onClick={() => setDrivesPage(prev => Math.max(prev - 1, 1))}
-                                        disabled={drivesPage === 1}
-                                    >
-                                        &larr; Prev Drive
-                                    </button>
-                                    <span className="stories-page-info">
-                                        Drive {drivesPage} of {totalDrivePages}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        className="stories-nav-btn"
-                                        onClick={() => setDrivesPage(prev => Math.min(prev + 1, totalDrivePages))}
-                                        disabled={drivesPage === totalDrivePages}
-                                    >
-                                        Next Drive &rarr;
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                        ) : (
+                            <div className="no-events-placeholder" style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>
+                                No upcoming campus placement drives.
+                            </div>
+                        )}
                     </div>
 
 
@@ -584,7 +590,7 @@ export default function StudHub() {
                                         <div className="admin-reply-box">
                                             <span className="reply-header-label">ADMIN REPLY:</span>
                                             <p className="reply-text-content">
-                                                {query.reply || query.adminReply || "Please clear your browser cache and upload a PDF under 5MB. Contact support if it persists."}
+                                                {query.reply || query.adminReply || "Your query has been submitted. Admin team will respond shortly."}
                                             </p>
                                         </div>
                                     </div>

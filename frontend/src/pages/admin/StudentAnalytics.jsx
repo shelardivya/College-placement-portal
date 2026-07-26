@@ -512,7 +512,7 @@ export default function StudentAnalytics() {
 
                         {/* skill rows */}
                         <div className="skills-rows">
-                            {skillsData.map((item, i) => (
+                            {skillsData.slice(0, 10).map((item, i) => (
                                 <div key={i} className="skill-row">
                                     <span className="skill-name">{item.skill}</span>
                                     <div className="skill-bar-track">
@@ -624,7 +624,11 @@ export default function StudentAnalytics() {
                                         <span className="year-pill">{student.passingYear}</span>
                                     </td>
                                     <td>
-                                        <span className="cgpa-text">{student.cgpa}</span>
+                                        <span className="cgpa-text">
+                                            {!isNaN(student.cgpa) && Number.isInteger(Number(student.cgpa))
+                                                ? Number(student.cgpa).toFixed(1)
+                                                : student.cgpa}
+                                        </span>
                                         <span className="cgpa-max">/10</span>
                                     </td>
                                     <td className="lpa-text">
