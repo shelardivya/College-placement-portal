@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -568,6 +568,16 @@ export default function QueriesStories() {
     const [storyPage, setStoryPage] = useState(1);
     const storiesPerPage = 2; // Show 2 stories per carousel slide page
 
+    const [storyYearFilter, setStoryYearFilter] = useState('all');
+    const [editingStory, setEditingStory] = useState(null);
+    const [deletingStory, setDeletingStory] = useState(null);
+    const [isStoryModalOpen, setIsStoryModalOpen] = useState(false);
+
+    // Reset stories page to 1 when filter changes
+    useEffect(() => {
+        setStoryPage(1);
+    }, [storyYearFilter]);
+
     // Reset drives page to 1 when search query changes
     useEffect(() => {
         setDrivePage(1);
@@ -579,6 +589,11 @@ export default function QueriesStories() {
         (d.role || "").toLowerCase().includes(driveSearch.toLowerCase())
     );
 
+    const filteredStories = stories.filter(s => {
+        if (storyYearFilter === 'all') return true;
+        return s.date && s.date.includes(storyYearFilter);
+    });
+
     // Drives pagination calculations
     const indexOfLastDrive = drivePage * drivesPerPage;
     const indexOfFirstDrive = indexOfLastDrive - drivesPerPage;
@@ -588,8 +603,8 @@ export default function QueriesStories() {
     // Stories pagination calculations
     const indexOfLastStory = storyPage * storiesPerPage;
     const indexOfFirstStory = indexOfLastStory - storiesPerPage;
-    const paginatedStories = stories.slice(indexOfFirstStory, indexOfLastStory);
-    const totalStoryPages = Math.ceil(stories.length / storiesPerPage);
+    const paginatedStories = filteredStories.slice(indexOfFirstStory, indexOfLastStory);
+    const totalStoryPages = Math.ceil(filteredStories.length / storiesPerPage);
 
     const fileInputRef = useRef(null);
 
@@ -685,6 +700,84 @@ export default function QueriesStories() {
             console.error("Failed to publish placement story:", error);
             const errorMsg = error.response?.data?.message || error.response?.data || error.message || "Failed to publish story.";
             triggerToast(`Error: ${typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)}`, "error");
+        }
+    };
+
+    const handleOpenEditStory = (story) => {
+        setEditingStory(story);
+        setStoryForm({
+            studentName: story.name || '',
+            companyName: story.company || '',
+            jobRole: story.role || '',
+            package: story.packageAmt ? story.packageAmt.replace(' LPA', '') : '',
+            storyText: story.storyText || '',
+            photo: story.avatar || ''
+        });
+        setIsStoryModalOpen(true);
+    };
+
+    const handleUpdateStory = async (e) => {
+        e.preventDefault();
+        if (!editingStory) return;
+        
+        try {
+            const packageValue = parseFloat(storyForm.package) || 0;
+            const payload = {
+                studentName: storyForm.studentName,
+                companyName: storyForm.companyName,
+                package: packageValue,
+                jobRole: storyForm.jobRole,
+                storyText: storyForm.storyText
+            };
+            
+            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:') 
+                ? await (await fetch(storyForm.photo)).blob() 
+                : null;
+            
+            let photoFile = null;
+            if (photoBlob) {
+                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
+            }
+
+            await updatePlacementStory(editingStory.id, payload, photoFile);
+            
+            const updatedStories = stories.map(s => {
+                if (s.id === editingStory.id) {
+                    return {
+                        ...s,
+                        name: storyForm.studentName,
+                        company: storyForm.companyName,
+                        role: storyForm.jobRole,
+                        packageAmt: payload.package ? `${payload.package} LPA` : '6.0 LPA',
+                        storyText: payload.storyText,
+                        avatar: storyForm.photo || s.avatar
+                    };
+                }
+                return s;
+            });
+            
+            setStories(updatedStories);
+            triggerToast("Placement story updated successfully!", "success");
+            setIsStoryModalOpen(false);
+            setEditingStory(null);
+            setStoryForm({ studentName: '', companyName: '', jobRole: '', package: '', storyText: '', photo: '' });
+        } catch (error) {
+            console.error("Failed to update story:", error);
+            triggerToast("Failed to update placement story.", "error");
+        }
+    };
+
+    const confirmDeleteStory = async () => {
+        if (!deletingStory) return;
+        try {
+            await deletePlacementStory(deletingStory.id);
+            const updatedStories = stories.filter(s => s.id !== deletingStory.id);
+            setStories(updatedStories);
+            setDeletingStory(null);
+            triggerToast("Placement story deleted successfully!", "success");
+        } catch (error) {
+            console.error("Failed to delete placement story:", error);
+            triggerToast("Failed to delete placement story.", "error");
         }
     };
 
@@ -1090,6 +1183,18 @@ export default function QueriesStories() {
                             <h3 className="panel-title">Published Placement Stories</h3>
                             <p className="panel-subtitle">Manage and edit published placement stories.</p>
                         </div>
+                        <div className="header-actions-group">
+                            <select
+                                className="status-select-dropdown"
+                                value={storyYearFilter}
+                                onChange={(e) => setStoryYearFilter(e.target.value)}
+                            >
+                                <option value="all">All Years</option>
+                                <option value="2026">2026</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                            </select>
+                        </div>
                     </div>
 
 
@@ -1124,7 +1229,17 @@ export default function QueriesStories() {
                                             </span>
                                         </div>
                                     </div>
-                                    <span className="story-package-badge">{story.packageAmt}</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                        <span className="story-package-badge">{story.packageAmt}</span>
+                                        <div className="actions-button-row" style={{ display: 'flex', gap: '6px' }}>
+                                            <button className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button className="action-icon-btn delete" onClick={() => setDeletingStory(story)}>
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="story-quote-card">
@@ -1476,6 +1591,145 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            {isStoryModalOpen && (
+                <div className="qs-modal-overlay" onClick={() => setIsStoryModalOpen(false)}>
+                    <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="qs-modal-header">
+                            <div>
+                                <h4 className="modal-title">Edit Placement Story</h4>
+                                <p className="modal-subtitle">Update details or fix typos in the published story.</p>
+                            </div>
+                            <button className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdateStory} className="qs-modal-form">
+                            <div className="qs-form-grid">
+                                <div className="qs-form-group full-width">
+                                    <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()} style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            accept="image/*"
+                                            style={{ display: 'none' }}
+                                            onChange={handlePhotoChange}
+                                        />
+                                        {storyForm.photo ? (
+                                            <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                                <img
+                                                    src={storyForm.photo}
+                                                    alt="Preview"
+                                                    style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                                                />
+                                                <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
+                                                <button
+                                                    type="button"
+                                                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setStoryForm(prev => ({ ...prev, photo: '' }));
+                                                    }}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                <Upload size={20} className="upload-cloud-icon" />
+                                                <span className="upload-label">Upload New Photo</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="qs-form-group">
+                                    <label className="form-label">Student Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={storyForm.studentName}
+                                        onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
+                                        placeholder="e.g. John Doe"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label className="form-label">Company Name *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={storyForm.companyName}
+                                        onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
+                                        placeholder="e.g. Google"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label className="form-label">Job Role *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={storyForm.jobRole}
+                                        onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
+                                        placeholder="e.g. Software Engineer"
+                                    />
+                                </div>
+                                <div className="qs-form-group">
+                                    <label className="form-label">Package (LPA) *</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="form-input-control"
+                                        value={storyForm.package}
+                                        onChange={(e) => setStoryForm({ ...storyForm, package: e.target.value })}
+                                        placeholder="e.g. 12"
+                                    />
+                                </div>
+                                <div className="qs-form-group full-width">
+                                    <label className="form-label">Success Story *</label>
+                                    <textarea
+                                        required
+                                        className="form-textarea-control"
+                                        rows={4}
+                                        value={storyForm.storyText}
+                                        onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
+                                    ></textarea>
+                                </div>
+                            </div>
+                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <button type="button" className="qs-cancel-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                    <Edit2 size={16} style={{ marginRight: '6px' }} /> Update Story
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {deletingStory && (
+                <div className="qs-modal-overlay" onClick={() => setDeletingStory(null)}>
+                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon-bg">
+                            <Trash2 size={22} />
+                        </div>
+                        <h4 className="delete-modal-title">Delete Placement Story</h4>
+                        <p className="delete-modal-desc">
+                            Are you sure you want to delete the story for <strong>{deletingStory.name}</strong>? This action cannot be undone.
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button type="button" className="btn-delete-cancel" onClick={() => setDeletingStory(null)}>
+                                Cancel
+                            </button>
+                            <button type="button" className="btn-delete-confirm" onClick={confirmDeleteStory}>
+                                Yes, Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
