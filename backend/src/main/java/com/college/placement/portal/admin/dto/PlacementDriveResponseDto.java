@@ -15,11 +15,9 @@ public class PlacementDriveResponseDto {
 
     private String location;
 
-    @JsonFormat(pattern = "dd/MM/yyyy")
-    private LocalDate driveDate;
+    private String driveDate;
 
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime driveTime;
+    private String driveTime;
 
     private String status;
 
@@ -59,22 +57,21 @@ public class PlacementDriveResponseDto {
         this.location = location;
     }
 
-    public LocalDate getDriveDate() {
+    public String getDriveDate() {
         return driveDate;
     }
 
-    public void setDriveDate(LocalDate driveDate) {
+    public void setDriveDate(String driveDate) {
         this.driveDate = driveDate;
     }
 
-    public LocalTime getDriveTime() {
+    public String getDriveTime() {
         return driveTime;
     }
 
-    public void setDriveTime(LocalTime driveTime) {
+    public void setDriveTime(String driveTime) {
         this.driveTime = driveTime;
     }
-
     public String getStatus() {
         return status;
     }

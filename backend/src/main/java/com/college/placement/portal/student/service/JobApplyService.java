@@ -5,6 +5,7 @@ import com.college.placement.portal.admin.repository.AddJobRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.exception.DuplicateResourceException;
 import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import com.college.placement.portal.student.Dto.JobDetailsDto;
 import com.college.placement.portal.student.Dto.LatestJobDto;
 import com.college.placement.portal.student.entity.JobApplyEntity;
@@ -30,18 +31,21 @@ public class JobApplyService {
     private final JobApplyRepository jobApplyRepository;
     private final ResumeParser resumeParser;
     private final ResumeMatcher resumeMatcher;
+    private final NotificationHelper notificationHelper;
 
     public JobApplyService(AddJobRepository repository,
                            RegisterRepository registerRepository,
                            JobApplyRepository jobApplyRepository,
                            ResumeParser resumeParser,
-                           ResumeMatcher resumeMatcher) {
+                           ResumeMatcher resumeMatcher,
+                           NotificationHelper notificationHelper) {
 
         this.repository = repository;
         this.registerRepository = registerRepository;
         this.jobApplyRepository = jobApplyRepository;
         this.resumeParser = resumeParser;
         this.resumeMatcher = resumeMatcher;
+        this.notificationHelper = notificationHelper;
     }
 
     // ====================================================
@@ -299,6 +303,16 @@ public class JobApplyService {
         }
 
         jobApplyRepository.save(application);
+        notificationHelper.createNotification(
+                null,
+                "ADMIN",
+                "New Job Application",
+                student.getFullName()
+                        + " applied for "
+                        + job.getCompanyName()
+                        + " - "
+                        + job.getJobRoleOverview()
+        );
 
         return "Application submitted successfully.";
     }
