@@ -4,6 +4,7 @@ import com.college.placement.portal.admin.dto.AdminQueryResponseDto;
 import com.college.placement.portal.admin.dto.ReplyQueryRequestDto;
 import com.college.placement.portal.admin.entity.StudentQueryEntity;
 import com.college.placement.portal.admin.repository.StudentQueryRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -14,13 +15,14 @@ import java.util.List;
 public class AdminQueryService {
 
     private final StudentQueryRepository studentQueryRepository;
-
+    private final NotificationHelper notificationHelper;
     public AdminQueryService(
-            StudentQueryRepository studentQueryRepository
+            StudentQueryRepository studentQueryRepository,
+            NotificationHelper notificationHelper
     ) {
         this.studentQueryRepository = studentQueryRepository;
+        this.notificationHelper = notificationHelper;
     }
-
     // ==========================================
     // View All Queries
     // ==========================================
@@ -96,6 +98,17 @@ public class AdminQueryService {
         query.setResolvedAt(LocalDateTime.now());
 
         studentQueryRepository.save(query);
+        // ==========================================
+// Notify Student
+// ==========================================
+
+        notificationHelper.createNotification(
+                query.getStudent(),
+                "STUDENT",
+                "Query Replied",
+                "Your query \"" + query.getSubject()
+                        + "\" has been replied by Admin."
+        );
 
         return "Reply submitted successfully.";
 

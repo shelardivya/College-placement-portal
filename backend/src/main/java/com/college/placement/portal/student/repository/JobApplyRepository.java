@@ -5,6 +5,7 @@ import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.student.entity.JobApplyEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface JobApplyRepository
@@ -30,4 +31,17 @@ public interface JobApplyRepository
     );
 
     long countByStudent(RegisterEntity student);
+    // ==========================================
+// Dashboard Analytics
+// ==========================================
+
+    // Total Resume Received
+    long count();
+
+    // Last Month Resume Received
+    long countByAppliedAtBetween(
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
 }

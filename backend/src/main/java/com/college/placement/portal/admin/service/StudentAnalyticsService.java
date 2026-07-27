@@ -12,6 +12,8 @@ import com.college.placement.portal.admin.repository.TopPlacedStudentRepository;
 import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import org.springframework.stereotype.Service;
+import java.time.LocalDateTime;
+import com.college.placement.portal.student.repository.JobApplyRepository;
 import java.util.HashMap;
 import java.util.Comparator;
 import java.util.Map;
@@ -25,16 +27,19 @@ public class StudentAnalyticsService {
     private final RegisterRepository registerRepository;
     private final AddJobRepository addJobRepository;
     private final TopPlacedStudentRepository topPlacedStudentRepository;
+    private final JobApplyRepository jobApplyRepository;
     public StudentAnalyticsService(
             PlacementRecordRepository placementRecordRepository,
             RegisterRepository registerRepository,
             AddJobRepository addJobRepository,
-            TopPlacedStudentRepository topPlacedStudentRepository
+            TopPlacedStudentRepository topPlacedStudentRepository,
+            JobApplyRepository jobApplyRepository
     ) {
         this.placementRecordRepository = placementRecordRepository;
         this.registerRepository = registerRepository;
         this.addJobRepository = addJobRepository;
         this.topPlacedStudentRepository = topPlacedStudentRepository;
+        this.jobApplyRepository = jobApplyRepository;
     }
 
     // ==========================================
@@ -43,6 +48,10 @@ public class StudentAnalyticsService {
     public StudentAnalyticsDto getDashboardStats() {
 
         StudentAnalyticsDto dto = new StudentAnalyticsDto();
+
+        // ==========================================
+        // Placement Cards
+        // ==========================================
 
         long placedStudents = topPlacedStudentRepository.count();
 
@@ -54,16 +63,106 @@ public class StudentAnalyticsService {
             placementRate = (placedStudents * 100.0) / totalStudents;
         }
 
-        Double highestPackage =
-                topPlacedStudentRepository.getHighestPackage();
+        Double highestPackage = topPlacedStudentRepository.getHighestPackage();
 
-        Double averagePackage =
-                topPlacedStudentRepository.getAveragePackage();
+        Double averagePackage = topPlacedStudentRepository.getAveragePackage();
 
         dto.setPlacedStudents(placedStudents);
         dto.setPlacementRate(Math.round(placementRate * 100.0) / 100.0);
         dto.setHighestPackage(highestPackage);
         dto.setAveragePackage(Math.round(averagePackage * 100.0) / 100.0);
+
+        // ==========================================
+        // Date Range
+        // ==========================================
+
+        LocalDateTime now = LocalDateTime.now();
+
+        LocalDateTime firstDayCurrentMonth =
+                now.withDayOfMonth(1)
+                        .withHour(0)
+                        .withMinute(0)
+                        .withSecond(0)
+                        .withNano(0);
+
+        LocalDateTime firstDayLastMonth =
+                firstDayCurrentMonth.minusMonths(1);
+
+        // ==========================================
+        // Active Posts
+        // ==========================================
+
+        long totalActivePosts =
+                addJobRepository.countByStatusIgnoreCase("ACTIVE");
+
+        long lastMonthActivePosts =
+                addJobRepository.countLastMonthActiveJobs(
+                        firstDayLastMonth,
+                        firstDayCurrentMonth
+                );
+
+        double activeGrowth = 0;
+
+        if (lastMonthActivePosts > 0) {
+            activeGrowth =
+                    ((totalActivePosts - lastMonthActivePosts) * 100.0)
+                            / lastMonthActivePosts;
+        }
+
+        dto.setTotalActivePosts(totalActivePosts);
+        dto.setActivePostsGrowth(
+                Math.round(activeGrowth * 100.0) / 100.0
+        );
+
+        // ==========================================
+        // Students
+        // ==========================================
+
+        long lastMonthStudents =
+                registerRepository.countByRoleAndCreatedAtBetween(
+                        Role.STUDENT,
+                        firstDayLastMonth,
+                        firstDayCurrentMonth
+                );
+
+        double studentGrowth = 0;
+
+        if (lastMonthStudents > 0) {
+            studentGrowth =
+                    ((totalStudents - lastMonthStudents) * 100.0)
+                            / lastMonthStudents;
+        }
+
+        dto.setTotalStudents(totalStudents);
+        dto.setStudentGrowth(
+                Math.round(studentGrowth * 100.0) / 100.0
+        );
+
+        // ==========================================
+        // Resume Received
+        // ==========================================
+
+        long totalResume =
+                jobApplyRepository.count();
+
+        long lastMonthResume =
+                jobApplyRepository.countByAppliedAtBetween(
+                        firstDayLastMonth,
+                        firstDayCurrentMonth
+                );
+
+        double resumeGrowth = 0;
+
+        if (lastMonthResume > 0) {
+            resumeGrowth =
+                    ((totalResume - lastMonthResume) * 100.0)
+                            / lastMonthResume;
+        }
+
+        dto.setTotalResumeReceived(totalResume);
+        dto.setResumeGrowth(
+                Math.round(resumeGrowth * 100.0) / 100.0
+        );
 
         return dto;
     }

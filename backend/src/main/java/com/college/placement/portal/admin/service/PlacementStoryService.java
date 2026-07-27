@@ -5,7 +5,9 @@ import com.college.placement.portal.admin.dto.PlacementStoryResponseDto;
 import com.college.placement.portal.admin.entity.PlacementStoryEntity;
 import com.college.placement.portal.admin.repository.PlacementStoryRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
+import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -24,16 +26,19 @@ public class PlacementStoryService {
 
     private final PlacementStoryRepository placementStoryRepository;
     private final RegisterRepository registerRepository;
+    private final NotificationHelper notificationHelper;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
 
     public PlacementStoryService(
             PlacementStoryRepository placementStoryRepository,
-            RegisterRepository registerRepository
+            RegisterRepository registerRepository,
+            NotificationHelper notificationHelper
     ) {
         this.placementStoryRepository = placementStoryRepository;
         this.registerRepository = registerRepository;
+        this.notificationHelper = notificationHelper;
     }
 
     // ==========================================
@@ -176,6 +181,25 @@ public class PlacementStoryService {
         }
 
         placementStoryRepository.save(story);
+        // ==========================================
+// Notify All Students
+// ==========================================
+
+        for (RegisterEntity studentUser :
+                registerRepository.findAllByRole(Role.STUDENT)) {
+
+            notificationHelper.createNotification(
+                    studentUser,
+                    "STUDENT",
+                    "New Placement Story",
+                    story.getStudent().getFullName()
+                            + " got placed at "
+                            + story.getCompanyName()
+                            + ".\nRole : "
+                            + story.getJobRole()
+            );
+
+        }
 
         return "Placement Story Published Successfully.";
 

@@ -5,6 +5,7 @@ import com.college.placement.portal.admin.repository.StudentQueryRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import com.college.placement.portal.student.Dto.StudentQueryResponseDto;
 import com.college.placement.portal.student.Dto.SubmitQueryRequestDto;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,15 +21,18 @@ public class StudentQueryService {
     private final StudentQueryRepository studentQueryRepository;
     private final RegisterRepository registerRepository;
     private final RegisterJWT registerJWT;
+    private final NotificationHelper notificationHelper;
 
     public StudentQueryService(
             StudentQueryRepository studentQueryRepository,
             RegisterRepository registerRepository,
-            RegisterJWT registerJWT
+            RegisterJWT registerJWT,
+            NotificationHelper notificationHelper
     ) {
         this.studentQueryRepository = studentQueryRepository;
         this.registerRepository = registerRepository;
         this.registerJWT = registerJWT;
+        this.notificationHelper = notificationHelper;
     }
 
     // ==========================================
@@ -62,6 +66,14 @@ public class StudentQueryService {
         query.setCreatedAt(LocalDateTime.now());
 
         studentQueryRepository.save(query);
+        notificationHelper.createNotification(
+                null,
+                "ADMIN",
+                "New Student Query",
+                student.getFullName()
+                        + " submitted a new query.\nSubject : "
+                        + request.getSubject()
+        );
 
         return "Query Submitted Successfully.";
 
