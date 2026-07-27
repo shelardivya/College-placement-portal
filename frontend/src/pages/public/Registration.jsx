@@ -258,6 +258,7 @@ function Registration({ onNavigate }) {
             const newProfile = { 
                 fullName: formData.fullname,
                 email: formData.email,
+                password: formData.password,
                 phone: formData.mobile,
                 branch: formData.department,
                 passingYear: formData.year,
@@ -355,8 +356,8 @@ function Registration({ onNavigate }) {
                 <div className="register-left">
                     {/* Application Header Logo */}
                     <div className="register-logo-section">
-                        <GraduationCap className="logo-icon" size={28} />
-                        <span className="college-name">College Placement Portal</span>
+                        <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
+                        <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                     </div>
 
                     {/* Dashboard Glassmorphic Illustration */}
@@ -637,7 +638,8 @@ function Registration({ onNavigate }) {
                                         required
                                     >
                                         <option value="" disabled hidden>Select Department</option>
-                                        <option value="Computer Science and Applications">Computer Science and Applications</option>
+                                        <option value="Computer Science">Computer Science</option>
+                                        <option value="Computer Applications">Computer Applications</option>
                                     </select>
                                 </div>
                                 {errors.department && <span className="error-message">{errors.department}</span>}
@@ -753,7 +755,7 @@ function Registration({ onNavigate }) {
                     </div>
 
                     <div className="form-footer-copyright">
-                        © 2026 College Placement Portal
+                        © 2026 Campus_Hire
                     </div>
                 </div>
             </div>

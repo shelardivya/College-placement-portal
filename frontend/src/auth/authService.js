@@ -68,3 +68,315 @@ export const publishDraft = (id) => {
         }
     });
 };
+
+
+
+export const getAdminProfile = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/profile", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentProfile = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/profile", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const updateAdminProfile = (profileData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/admin/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const updateStudentProfile = (profileData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/student/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentDashboardStats = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/dashboard/stats", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminStudentAnalyticsDashboard = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/student-analytics/dashboard", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminRecentPosts = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/dashboard/recent-posts", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAllPlacementDrives = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/placement-drive/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const addPlacementDrive = (driveData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/admin/placement-drive/add", driveData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const updatePlacementDrive = (id, driveData) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/admin/placement-drive/update/${id}`, driveData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const deletePlacementDrive = (id) => {
+    const token = localStorage.getItem("token");
+    return api.delete(`/admin/placement-drive/delete/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAllTopPlacedStudents = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/top-placed-student/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const addTopPlacedStudent = (studentData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/admin/top-placed-student/add", studentData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAllQueries = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/query/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const replyToQuery = (id, replyText) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/admin/query/${id}/reply`, { 
+        reply: replyText,
+        adminReply: replyText,
+        response: replyText
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const publishPlacementStory = (storyData, photoFile) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    if (photoFile) {
+        formData.append("photo", photoFile);
+    }
+    
+    // Add query parameters for the story data
+    const params = new URLSearchParams({
+        studentName: storyData.studentName,
+        companyName: storyData.companyName,
+        jobRole: storyData.jobRole,
+        packageLpa: storyData.package,
+        successStory: storyData.storyText
+    });
+
+    return api.post(`/admin/story/create?${params.toString()}`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAllPlacementStories = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/story/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const updatePlacementStory = (id, storyData, photoFile) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    if (photoFile) {
+        formData.append("photo", photoFile);
+    }
+    
+    const params = new URLSearchParams({
+        studentName: storyData.studentName,
+        companyName: storyData.companyName,
+        jobRole: storyData.jobRole,
+        packageLpa: storyData.package,
+        successStory: storyData.storyText
+    });
+
+    return api.put(`/admin/story/update/${id}?${params.toString()}`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const deletePlacementStory = (id) => {
+    const token = localStorage.getItem("token");
+    return api.delete(`/admin/story/delete/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const changePassword = (passwordData) => {
+    const token = localStorage.getItem("token");
+    return api.put("/auth/change-password", passwordData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getLatestJobs = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/jobs/latest", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const applyForJob = (jobId, formData) => {
+    const token = localStorage.getItem("token");
+    return api.post(`/student/jobs/${jobId}/apply`, formData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentQueries = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/query", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const submitStudentQuery = (queryData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/student/query", queryData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getTopSkillsAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/student-analytics/top-skills", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getPlacementCgpaAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/student-analytics/placement-cgpa", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getDepartmentAnalytics = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/student-analytics/department", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentResumeMatch = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/resume-match", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminApplicantsMatching = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/applicants/matching", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentPlacementStories = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/story/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentPlacementDrives = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placement-drive/all", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};

@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
     Trophy,
     Wallet,
-    Coffee
+    Coffee,
+    Search,
+    Plus,
+    X,
+    ChevronDown,
+    Check
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -71,107 +77,220 @@ function getDonutSegments(data, cx = 50, cy = 50, r = 38, innerR = 24) {
 
 // main component
 export default function StudentAnalytics() {
+    const [analyticsStats, setAnalyticsStats] = useState({
+        placedStudents: 0,
+        placementRate: 0,
+        highestPackage: 0,
+        averagePackage: 0
+    });
 
-    // Department Wise Distribution — 
-    const departmentData = [
-        { label: 'Computer Science', count: 180, percentage: 36, color: '#1e3a6e' }, // Dark Navy
-        { label: 'Information Technology', count: 110, percentage: 22, color: '#6c8dd6' }, // Periwinkle Blue
-        { label: 'BCA', count: 60, percentage: 12, color: '#06b6d4' }, // Cyan
-        { label: 'MCA', count: 40, percentage: 8, color: '#a5b4fc' }, // Soft Blue
-        { label: 'Others', count: 110, percentage: 22, color: '#e2e8f0' }, // Light grey
-    ];
-    const totalStudents = 500;
+    const [departmentData, setDepartmentData] = useState([]);
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [cgpaData, setCgpaData] = useState([]);
+    const [maxStudents, setMaxStudents] = useState(40);
+    const [skillsData, setSkillsData] = useState([]);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await getAdminStudentAnalyticsDashboard();
+                if (response.data) {
+                    setAnalyticsStats(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch admin student analytics:", error);
+            }
+        };
+
+        const fetchDepartmentData = async () => {
+            try {
+                const res = await getDepartmentAnalytics();
+                if (res.data) {
+                    setTotalStudents(res.data.totalStudents || 0);
+                    const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
+                    if (res.data.departments && Array.isArray(res.data.departments)) {
+                        const mapped = res.data.departments.map((d, index) => ({
+                            label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
+                            count: d.count,
+                            percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
+                            color: colors[index % colors.length]
+                        }));
+                        setDepartmentData(mapped);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch department analytics", e);
+            }
+        };
+
+        const fetchCgpaData = async () => {
+            try {
+                const res = await getPlacementCgpaAnalytics();
+                if (res.data && Array.isArray(res.data)) {
+                    const mapped = res.data.map(c => ({
+                        range: c.range,
+                        students: c.count
+                    }));
+                    setCgpaData(mapped);
+                    const maxCount = Math.max(...mapped.map(d => d.students), 0);
+                    setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
+                }
+            } catch (e) {
+                console.error("Failed to fetch CGPA analytics", e);
+            }
+        };
+
+        const fetchSkillsData = async () => {
+            try {
+                const res = await getTopSkillsAnalytics();
+                if (res.data && Array.isArray(res.data)) {
+                    const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
+                    
+                    // Assuming 'count' is the percentage or we can just use count as a rough percentage for the UI bar width
+                    const mapped = res.data.map((s, index) => ({
+                        skill: s.skill,
+                        percentage: s.count,
+                        color: colors[index % colors.length]
+                    }));
+                    setSkillsData(mapped);
+                }
+            } catch (e) {
+                console.error("Failed to fetch skills analytics", e);
+            }
+        };
+
+        fetchStats();
+        fetchDepartmentData();
+        fetchCgpaData();
+        fetchSkillsData();
+
+        const fetchTopStudents = async () => {
+            try {
+                const response = await getAllTopPlacedStudents();
+                if (response.data && Array.isArray(response.data)) {
+                    const mapped = response.data.map((s, index) => {
+                        const nameParts = (s.studentName || '').trim().split(' ');
+                        let initials = 'ST';
+                        if (nameParts.length >= 2) {
+                            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                        } else if (nameParts[0]) {
+                            initials = nameParts[0].substring(0, 2).toUpperCase();
+                        }
+                        return {
+                            id: s.id,
+                            rank: index + 1,
+                            name: s.studentName,
+                            initials: initials,
+                            branch: 'CS', // Hardcoded fallback if not in API
+                            passingYear: '2026', // Hardcoded fallback if not in API
+                            cgpa: s.cgpa || '9.0',
+                            lpa: s.packageLpa || '12',
+                            skill: s.skills || 'Full Stack',
+                            skillColor: '#f3e8ff',
+                            skillTextColor: '#a855f7',
+                            company: s.companyName,
+                            companyColor: '#c2410c'
+                        };
+                    });
+                    setStudentsList(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch top placed students", error);
+            }
+        };
+        fetchTopStudents();
+    }, []);
 
     const segments = getDonutSegments(departmentData);
 
-    //Placement by CGPA data from image
-    const cgpaData = [
-        { range: '<6', students: 7 },
-        { range: '6 - 7', students: 15 },
-        { range: '7 - 8', students: 23 },
-        { range: '8 - 9', students: 28 },
-        { range: '9 - 10', students: 32 },
-    ];
-
-    const maxStudents = 40; //y-axis max round number above 32
-
-    // top skills in demand data from image
-    const skillsData = [
-        { skill: 'Java', percentage: 62, color: '#1e3a6e' }, // dark navy
-        { skill: 'Python', percentage: 58, color: '#3b82f6' }, // blue
-        { skill: 'SQL', percentage: 40, color: '#8b5cf6' }, // purple
-        { skill: 'PHP', percentage: 32, color: '#06b6d4' }, // cyan
-        { skill: 'React', percentage: 16, color: '#f59e0b' }, // orange
-        { skill: 'C++', percentage: 13, color: '#10b981' }, // green
-        { skill: 'C', percentage: 8, color: '#f43f5e' }, // rose
-    ];
-
-    //Top Placed Students data from image
-    const topStudentsData = [
-        {
-            rank: 1, name: 'Priya Sharma', initials: 'PS', cgpa: '9.4',
-            lpa: '28', skill: 'Full Stack', skillColor: '#f3e8ff',
-            skillTextColor: '#a855f7', company: 'Amazon',
-            companyColor: '#c2410c'
-        },
-
-        {
-            rank: 2, name: 'Rahul Desai', initials: 'RD',
-            cgpa: '9.1', lpa: '22', skill: 'Data Science',
-            skillColor: '#dbeafe', skillTextColor: '#2563eb',
-            company: 'Microsoft', companyColor: '#4f5e7b'
-        },
-
-        {
-            rank: 3, name: 'Sneha Kulkarni', initials: 'SK',
-            cgpa: '8.8', lpa: '18', skill: 'Backend',
-            skillColor: '#dcfce7',
-            skillTextColor: '#16a34a', company: 'Apple',
-            companyColor: '#1e293b'
-        },
-
-        {
-            rank: 4, name: 'Aarav Mehta', initials: 'AM',
-            cgpa: '8.5', lpa: '14', skill: 'Cooking',
-            skillColor: '#ecfeff', skillTextColor: '#0891b2',
-            company: 'Suresh Tea House', companyColor: '#475569'
-        },
-
-        {
-            rank: 5, name: 'Diya Jadav', initials: 'DJ',
-            cgpa: '8.4', lpa: '12', skill: 'React Native',
-            skillColor: '#f3e8ff', skillTextColor: '#a855f7',
-            company: 'Microsoft', companyColor: '#4f5e7b'
-        },
-
-        {
-            rank: 6, name: 'Harsh Patil', initials: 'HP',
-            cgpa: '8.2', lpa: '10', skill: 'Backend',
-            skillColor: '#dcfce7', skillTextColor: '#16a34a',
-            company: 'Amazon', companyColor: '#c2410c'
-        },
-
-        {
-            rank: 7, name: 'Neha Shah', initials: 'NS',
-            cgpa: '8.0', lpa: '8', skill: 'Data Science',
-            skillColor: '#dbeafe', skillTextColor: '#2563eb',
-            company: 'Apple', companyColor: '#1e293b'
-        },
-
-        {
-            rank: 8, name: 'Karan Malhotra', initials: 'KM',
-            cgpa: '7.8', lpa: '7', skill: 'Cloud',
-            skillColor: '#ecfeff', skillTextColor: '#0891b2',
-            company: 'Suresh Tea House', companyColor: '#475569'
-        },
-    ];
-
+    const [studentsList, setStudentsList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState('success');
 
-    const filteredStudents = topStudentsData.filter(student =>
+    const [formData, setFormData] = useState({
+        name: '',
+        branch: 'CS',
+        passingYear: '2026',
+        cgpa: '',
+        lpa: '',
+        skill: '',
+        company: ''
+    });
+
+    const handleAddStudent = async (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.cgpa || !formData.lpa || !formData.company) return;
+
+        try {
+            const payload = {
+                studentName: formData.name,
+                companyName: formData.company,
+                packageLpa: parseFloat(formData.lpa) || 12,
+                cgpa: parseFloat(formData.cgpa) || 9.0,
+                skills: formData.skill || 'Full Stack'
+            };
+
+            const response = await addTopPlacedStudent(payload);
+            const savedStudent = response.data || payload;
+
+            const nameParts = (savedStudent.studentName || '').trim().split(' ');
+            let initials = 'ST';
+            if (nameParts.length >= 2) {
+                initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+            } else if (nameParts[0]) {
+                initials = nameParts[0].substring(0, 2).toUpperCase();
+            }
+
+            const newStudent = {
+                id: savedStudent.id || Date.now(),
+                rank: studentsList.length + 1,
+                name: savedStudent.studentName,
+                initials: initials,
+                branch: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026',
+                cgpa: savedStudent.cgpa,
+                lpa: savedStudent.packageLpa,
+                skill: savedStudent.skills || 'Full Stack',
+                skillColor: '#f3e8ff',
+                skillTextColor: '#a855f7',
+                company: savedStudent.companyName,
+                companyColor: '#2563eb'
+            };
+
+            setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
+            setIsModalOpen(false);
+            setFormData({
+                name: '',
+                branch: 'CS',
+                passingYear: '2026',
+                cgpa: '',
+                lpa: '',
+                skill: '',
+                company: ''
+            });
+            setToastMessage('Student added successfully!');
+            setToastType('success');
+        } catch (error) {
+            console.error("Failed to add top placed student", error);
+            setToastMessage('Failed to add student. Please try again.');
+            setToastType('error');
+        }
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+        }, 4000);
+    };
+
+    const filteredStudents = studentsList.filter(student =>
         student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.skill.toLowerCase().includes(searchQuery.toLowerCase())
+        student.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (student.branch && student.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (student.passingYear && student.passingYear.toString().includes(searchQuery))
     );
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -210,7 +329,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-blue">
                     <div className="stat-text-group">
                         <span className="stat-label">Placed Students</span>
-                        <h3 className="stat-value">3</h3>
+                        <h3 className="stat-value">{analyticsStats.placedStudents}</h3>
                         <span className="stat-subtext">Total placed this year</span>
                     </div>
                     <div className="stat-icon-container bg-light-blue">
@@ -221,7 +340,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-green">
                     <div className="stat-text-group">
                         <span className="stat-label">Placement Rate</span>
-                        <h3 className="stat-value">75%</h3>
+                        <h3 className="stat-value">{analyticsStats.placementRate}%</h3>
                         <span className="stat-subtext">% of eligible students placed</span>
                     </div>
                     <div className="stat-icon-container bg-light-green">
@@ -232,7 +351,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-orange">
                     <div className="stat-text-group">
                         <span className="stat-label">Highest Package</span>
-                        <h3 className="stat-value">10,00,000</h3>
+                        <h3 className="stat-value">{analyticsStats.highestPackage.toLocaleString()}</h3>
                         <span className="stat-subtext">Top package offered</span>
                     </div>
                     <div className="stat-icon-container bg-light-orange">
@@ -243,7 +362,7 @@ export default function StudentAnalytics() {
                 <div className="stat-card theme-purple">
                     <div className="stat-text-group">
                         <span className="stat-label">Average Package</span>
-                        <h3 className="stat-value">2,00,000</h3>
+                        <h3 className="stat-value">{analyticsStats.averagePackage.toLocaleString()}</h3>
                         <span className="stat-subtext">Average package offered</span>
                     </div>
                     <div className="stat-icon-container bg-light-purple">
@@ -313,8 +432,8 @@ export default function StudentAnalytics() {
                         <svg viewBox="0 0 280 180" className="bar-chart-svg">
 
                             {/* y-axis grid lines and labels */}
-                            {[0, 10, 20, 30, 40].map((val) => {
-                                const y = 20 + ((maxStudents - val) / maxStudents) * 120;
+                            {Array.from({ length: Math.floor(maxStudents / 10) + 1 }, (_, i) => i * 10).map((val) => {
+                                const y = 20 + ((maxStudents - val) / (maxStudents || 1)) * 120;
                                 return (
                                     <g key={val}>
                                         <line
@@ -339,13 +458,19 @@ export default function StudentAnalytics() {
                                 return (
                                     <g key={i}>
                                         <rect
-                                            x={x} y={y}
-                                            width={barWidth} height={barHeight}
+                                            x={x} y="20"
+                                            width={barWidth} height="120"
+                                            rx="4" ry="4"
+                                            fill="#eff6ff"
+                                        />
+                                        <rect
+                                            x={x} y={barHeight === 0 ? 138 : y}
+                                            width={barWidth} height={barHeight === 0 ? 2 : barHeight}
                                             rx="4" ry="4"
                                             className="bar-rect"
                                         />
                                         <text
-                                            x={x + barWidth / 2} y={y - 5}
+                                            x={x + barWidth / 2} y={barHeight === 0 ? 134 : y - 5}
                                             textAnchor="middle"
                                             className="bar-value-text"
                                         >
@@ -393,7 +518,7 @@ export default function StudentAnalytics() {
 
                         {/* skill rows */}
                         <div className="skills-rows">
-                            {skillsData.map((item, i) => (
+                            {skillsData.slice(0, 10).map((item, i) => (
                                 <div key={i} className="skill-row">
                                     <span className="skill-name">{item.skill}</span>
                                     <div className="skill-bar-track">
@@ -430,14 +555,43 @@ export default function StudentAnalytics() {
                         <h3 className="table-card-title">Top Placed Students</h3>
                         <span className="table-title-badge">Leaderboard</span>
                     </div>
-                    <div className="table-search-wrapper">
-                        <input
-                            type="text"
-                            placeholder="Search student..."
-                            className="table-search-input"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
+                    <div className="table-header-actions">
+                        {!isSearchOpen ? (
+                            <button
+                                className="table-search-toggle-btn"
+                                onClick={() => setIsSearchOpen(true)}
+                                title="Search"
+                            >
+                                <Search size={18} />
+                            </button>
+                        ) : (
+                            <div className="table-search-expanded">
+                                <Search size={16} className="search-icon" />
+                                <input
+                                    type="text"
+                                    placeholder="Search student..."
+                                    className="table-search-input-expanded"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    autoFocus
+                                />
+                                <button
+                                    className="search-clear-btn"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setIsSearchOpen(false);
+                                    }}
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        )}
+                        <button
+                            className="add-student-btn"
+                            onClick={() => setIsModalOpen(true)}
+                        >
+                            <Plus size={16} /> Add Top Placed Student
+                        </button>
                     </div>
                 </div>
 
@@ -447,6 +601,8 @@ export default function StudentAnalytics() {
                             <tr>
                                 <th>#</th>
                                 <th>STUDENT NAME</th>
+                                <th>BRANCH</th>
+                                <th>PASSING YEAR</th>
                                 <th>CGPA</th>
                                 <th>LPA</th>
                                 <th>SKILLS</th>
@@ -468,7 +624,17 @@ export default function StudentAnalytics() {
                                         </div>
                                     </td>
                                     <td>
-                                        <span className="cgpa-text">{student.cgpa}</span>
+                                        <span className="branch-pill">{student.branch}</span>
+                                    </td>
+                                    <td>
+                                        <span className="year-pill">{student.passingYear}</span>
+                                    </td>
+                                    <td>
+                                        <span className="cgpa-text">
+                                            {!isNaN(student.cgpa) && Number.isInteger(Number(student.cgpa))
+                                                ? Number(student.cgpa).toFixed(1)
+                                                : student.cgpa}
+                                        </span>
                                         <span className="cgpa-max">/10</span>
                                     </td>
                                     <td className="lpa-text">
@@ -490,7 +656,7 @@ export default function StudentAnalytics() {
                                             {COMPANY_LOGOS[student.company] || <Coffee size={16} color="#86efac" style={{ marginRight: '8px', fill: '#86efac', flexShrink: 0 }} />}
                                             <span
                                                 className="company-text"
-                                                style={{ color: student.companyColor }}
+                                                style={{ color: student.companyColor || '#1e293b' }}
                                             >
                                                 {student.company}
                                             </span>
@@ -532,6 +698,166 @@ export default function StudentAnalytics() {
                     )}
                 </div>
             </div>
+
+            {/* Add Top Placed Student Modal */}
+            {isModalOpen && (
+                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+                    <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div>
+                                <h3 className="modal-title">Add Top Placed Student</h3>
+                                <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
+                            </div>
+                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddStudent} className="modal-form">
+                            <div className="form-group">
+                                <label className="form-label">
+                                    Student Full Name <span className="required-star">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g. Priya Sharma"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Branch <span className="required-star">*</span>
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            className="form-select"
+                                            value={formData.branch}
+                                            onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                                            required
+                                        >
+                                            <option value="CS">CS</option>
+                                            <option value="IT">IT</option>
+                                            <option value="BCA">BCA</option>
+                                            <option value="MCA">MCA</option>
+                                        </select>
+                                        <ChevronDown size={16} className="select-chevron" />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Passing Year <span className="required-star">*</span>
+                                    </label>
+                                    <div className="select-wrapper">
+                                        <select
+                                            className="form-select"
+                                            value={formData.passingYear}
+                                            onChange={(e) => setFormData({ ...formData, passingYear: e.target.value })}
+                                            required
+                                        >
+                                            <option value="2024">2024</option>
+                                            <option value="2025">2025</option>
+                                            <option value="2026">2026</option>
+                                        </select>
+                                        <ChevronDown size={16} className="select-chevron" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        CGPA (out of 10) <span className="required-star">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. 9.4"
+                                        value={formData.cgpa}
+                                        onChange={(e) => setFormData({ ...formData, cgpa: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Package (LPA) <span className="required-star">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. 28"
+                                        value={formData.lpa}
+                                        onChange={(e) => setFormData({ ...formData, lpa: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <label className="form-label">Primary Skill</label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Full Stack, Data Science, Back"
+                                        value={formData.skill}
+                                        onChange={(e) => setFormData({ ...formData, skill: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        Company Name <span className="required-star">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Amazon, Microsoft, Apple"
+                                        value={formData.company}
+                                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    className="btn-cancel"
+                                    onClick={() => setIsModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn-submit"
+                                >
+                                    <Plus size={16} /> Add to Leaderboard
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast */}
+            {showToast && (
+                <div className={`toast-notification ${toastType}`}>
+                    <div className="toast-icon-bg" style={{ backgroundColor: toastType === 'error' ? '#fee2e2' : '#dcfce7', color: toastType === 'error' ? '#ef4444' : '#22c55e' }}>
+                        {toastType === 'error' ? <X size={16} /> : <Check size={16} />}
+                    </div>
+                    <span className="toast-text">{toastMessage}</span>
+                    <button className="toast-close-btn" onClick={() => setShowToast(false)}>
+                        <X size={14} />
+                    </button>
+                </div>
+            )}
 
         </div>
     );
