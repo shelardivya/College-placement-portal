@@ -641,10 +641,10 @@ export default function
                         const firstLetter = m.companyName ? m.companyName.charAt(0).toUpperCase() : 'C';
                         return {
                             company: m.companyName || 'Company',
-                            role: m.role || 'Job Role',
+                            role: m.jobRole || m.role || 'Job Role',
                             location: m.location || 'Location',
                             deadline: m.deadline || 'Upcoming',
-                            score: m.matchScore !== undefined ? m.matchScore : 0, 
+                            score: m.matchPercentage !== undefined ? m.matchPercentage : (m.matchScore !== undefined ? m.matchScore : 0),
                             logoLetter: firstLetter,
                             logoColor: '#ea4335' // Default
                         };
