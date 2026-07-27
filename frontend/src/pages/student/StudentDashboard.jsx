@@ -499,8 +499,17 @@ export default function
 
             } catch (error) {
                 console.error("Failed to apply for job:", error);
-                setToastMessage("Failed to apply for the job. Please try again.");
-                setToastType('error');
+                if (error.response && error.response.status === 409) {
+                    setToastMessage(error.response.data?.message || "You have already applied for this job.");
+                    setToastType('error');
+                    setAppliedJobs(prev => [...new Set([...prev, selectedJob.id])]);
+                    setSelectedJob(null);
+                    setResumeFile(null);
+                    setResumeFileName("");
+                } else {
+                    setToastMessage("Failed to apply for the job. Please try again.");
+                    setToastType('error');
+                }
                 setShowToast(true);
                 setTimeout(() => setShowToast(false), 3000);
             }
