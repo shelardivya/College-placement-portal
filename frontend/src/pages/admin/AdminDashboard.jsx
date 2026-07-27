@@ -208,14 +208,14 @@ function AdminDashboard({ onNavigate }) {
                         const dateString = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
                         return {
                             id: app.id || Date.now() + Math.random(),
-                            name: app.studentName || 'Student',
-                            company: app.jobRole || 'SDE',
-                            degree: app.degree || 'B.Tech',
-                            branch: app.branch || 'N/A',
-                            cgpa: app.cgpa || 0.0,
-                            year: app.passingYear || 'N/A',
-                            match: app.matchScore !== undefined ? app.matchScore : 0,
-                            date: app.appliedDate || dateString
+                            name: app.studentName || '',
+                            company: app.jobRole || '',
+                            degree: app.degree || '',
+                            branch: app.branch || '',
+                            cgpa: app.cgpa || '',
+                            year: app.passingYear || '',
+                            match: app.matchScore !== undefined ? app.matchScore : '',
+                            date: app.appliedDate || ''
                         };
                     });
                     setApplicants(mapped);
