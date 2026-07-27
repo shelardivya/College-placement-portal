@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob, getStudentResumeMatch } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -148,8 +148,50 @@ export default function
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-    // Notification Mock Data
+    // Notification Data
     const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchNotifications = async () => {
+        try {
+            const response = await getStudentNotifications();
+            if (response.data) {
+                const data = Array.isArray(response.data) ? response.data : 
+                             (response.data.content ? response.data.content : []);
+                // Sort by date descending (assuming it's not already sorted, optional but good UX)
+                const sorted = data.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+                setNotifications(sorted);
+            }
+            
+            const countResponse = await getStudentUnreadCount();
+            if (countResponse.data !== undefined) {
+                // If it returns an object like { count: 5 } or just a number
+                const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                setUnreadCount(count);
+            }
+        } catch (error) {
+            console.error("Error fetching notifications or unread count:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllStudentNotificationsAsRead();
+            await fetchNotifications();
+            setToastMessage("All notifications marked as read");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } catch (error) {
+            console.error("Error marking all read:", error);
+        }
+    };
+
+
 
     const getSkillColorClass = (skill) => {
         const s = skill.toLowerCase().trim();
@@ -649,8 +691,8 @@ export default function
                             setIsProfileDropdownOpen(false);
                         }}>
                             <Bell className="bell-icon" />
-                            {notifications.length > 0 && (
-                                <span className="bell-badge">{notifications.length}</span>
+                            {unreadCount > 0 && (
+                                <span className="bell-badge">{unreadCount}</span>
                             )}
                         </div>
                     </div>
@@ -1434,20 +1476,37 @@ export default function
                                 <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
                                 <h4 style={{ margin: 0 }}>Notifications</h4>
                             </div>
-                            <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                <X size={18} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                {unreadCount > 0 && (
+                                    <button 
+                                        onClick={handleMarkAllRead}
+                                        style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                    >
+                                        Mark all as read
+                                    </button>
+                                )}
+                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
                         </div>
                         <div className="sidebar-body">
                             {notifications.length === 0 ? (
                                 <p className="no-notifications">No new notifications</p>
                             ) : (
-                                notifications.map((notif) => (
-                                    <div key={notif.id} className="notification-item">
-                                        <p>{notif.text}</p>
-                                        <span className="notif-date">{notif.date}</span>
-                                    </div>
-                                ))
+                                notifications.map((notif) => {
+                                    const isRead = notif.read || notif.status === 'read';
+                                    return (
+                                        <div 
+                                            key={notif.id} 
+                                            className="notification-item" 
+                                            style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
+                                        >
+                                            <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
+                                            <span className="notif-date">{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date}</span>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
                     </div>

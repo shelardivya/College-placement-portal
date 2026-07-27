@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -105,6 +105,48 @@ function AdminDashboard({ onNavigate }) {
     // Notifications Sidebar State
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchNotifications = async () => {
+        try {
+            const response = await getAdminNotifications();
+            if (response.data) {
+                const data = Array.isArray(response.data) ? response.data : 
+                             (response.data.content ? response.data.content : []);
+                const sorted = data.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+                setNotifications(sorted);
+            }
+            
+            const countResponse = await getAdminUnreadCount();
+            if (countResponse.data !== undefined) {
+                const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                setUnreadCount(count);
+            }
+        } catch (error) {
+            console.error("Error fetching admin notifications or unread count:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllAdminNotificationsAsRead();
+            await fetchNotifications();
+            setToastMessage("All admin notifications marked as read");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } catch (error) {
+            console.error("Error marking all admin read:", error);
+        }
+    };
+
+
+
+
 
     // Profile Settings Modal States
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -904,8 +946,8 @@ function AdminDashboard({ onNavigate }) {
                             setIsProfileOpen(false);
                         }} style={{ cursor: 'pointer' }}>
                             <Bell className='bell-icon' size={22} />
-                            {notifications.length > 0 && (
-                                <span className='notification-badge'>{notifications.length}</span>
+                            {unreadCount > 0 && (
+                                <span className='notification-badge'>{unreadCount}</span>
                             )}
                         </div>
 
@@ -1776,20 +1818,37 @@ function AdminDashboard({ onNavigate }) {
                                     <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
                                     <h4 style={{ margin: 0 }}>Notifications</h4>
                                 </div>
-                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                    <X size={18} />
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                    {unreadCount > 0 && (
+                                        <button 
+                                            onClick={handleMarkAllRead}
+                                            style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    )}
+                                    <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                        <X size={18} />
+                                    </button>
+                                </div>
                             </div>
                             <div className="sidebar-body">
                                 {notifications.length === 0 ? (
                                     <p className="no-notifications">No new notifications</p>
                                 ) : (
-                                    notifications.map((notif) => (
-                                        <div key={notif.id} className="notification-item">
-                                            <p>{notif.text}</p>
-                                            <span className="notif-date">{notif.date}</span>
-                                        </div>
-                                    ))
+                                    notifications.map((notif) => {
+                                        const isRead = notif.read || notif.status === 'read';
+                                        return (
+                                            <div 
+                                                key={notif.id} 
+                                                className="notification-item" 
+                                                style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
+                                            >
+                                                <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
+                                                <span className="notif-date">{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date}</span>
+                                            </div>
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
