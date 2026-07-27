@@ -376,7 +376,7 @@ function Login({ onNavigate, initialView }) {
                         {loginView === 'login' && (
                             <div className="form-header">
                                 <h2>Welcome Back</h2>
-                                <p>Sign in to your PlacePort account</p>
+                                <p>Sign in to your Campus_Hire account</p>
                             </div>
                         )}
                         {loginView === 'forgot' && (
