@@ -539,17 +539,7 @@ export default function StudHub() {
                                             </div>
 
 
-                                            <div className="event-detail-row full-width-row">
-                                                <div className="event-detail-icon-wrapper">
-                                                    <FileText size={16} />
-                                                </div>
-                                                <div className="detail-item-content full-width-content">
-                                                    <span className="detail-field-label">ABOUT DRIVE</span>
-                                                    <div className="detail-about-box">
-                                                        {currentDrive.about || "N/A"}
-                                                    </div>
-                                                </div>
-                                            </div>
+
                                         </>
                                     )}
                                 </div>
