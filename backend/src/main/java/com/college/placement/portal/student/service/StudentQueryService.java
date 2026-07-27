@@ -172,4 +172,57 @@ public class StudentQueryService {
 
     }
 
+    // ==========================================
+// Student Resolve Query
+// ==========================================
+
+    public String resolveQuery(
+            Long id,
+            HttpServletRequest httpRequest
+    ) {
+
+        String header = httpRequest.getHeader("Authorization");
+
+        String token = header.substring(7);
+
+        String email = registerJWT.extractEmail(token);
+
+        RegisterEntity student =
+                registerRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Student not found."));
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Query not found."));
+
+        // Security Check
+        if (!query.getStudent().getId().equals(student.getId())) {
+            throw new IllegalArgumentException("Unauthorized access.");
+        }
+
+        query.setStatus("RESOLVED");
+
+        query.setResolvedAt(LocalDateTime.now());
+
+        studentQueryRepository.save(query);
+        // ==========================================
+// Notify Admin
+// ==========================================
+
+        notificationHelper.createNotification(
+                null,
+                "ADMIN",
+                "Query Resolved",
+                student.getFullName()
+                        + " marked query \""
+                        + query.getSubject()
+                        + "\" as resolved."
+        );
+
+        return "Query marked as resolved.";
+
+    }
+
 }

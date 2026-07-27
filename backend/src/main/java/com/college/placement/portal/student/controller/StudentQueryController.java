@@ -78,5 +78,20 @@ public class StudentQueryController {
         );
 
     }
+    // ==========================================
+// Mark Query Resolved
+// ==========================================
+
+    @PutMapping("/resolve/{id}")
+    public ResponseEntity<String> resolveQuery(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                studentQueryService.resolveQuery(id, request)
+        );
+
+    }
 
 }
