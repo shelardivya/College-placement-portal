@@ -616,7 +616,8 @@ export default function
                             branch: job.branch || job.Branch || job.branchRequired,
                             minCgpa: job.minCgpa !== undefined ? job.minCgpa : (job.MinCgpa !== undefined ? job.MinCgpa : job.cgpa),
                             passingYear: job.passingYear || job.PassingYear || job.year,
-                            experience: job.experience || job.Experience || job.experienceRequired
+                            experience: job.experience || job.Experience || job.experienceRequired,
+                            isApplied: job.applied || job.isApplied || job.hasApplied || false
                         };
                     });
 
@@ -822,7 +823,7 @@ export default function
                                 jobs
                                     .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
                                     .map((job) => {
-                                        const isApplied = appliedJobs.includes(job.id);
+                                        const isApplied = job.isApplied || appliedJobs.includes(job.id);
                                         return (
                                             <div className="job-card" key={job.id}>
                                                 <div className="job-card-header">
