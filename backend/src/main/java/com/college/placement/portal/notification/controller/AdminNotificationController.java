@@ -1,0 +1,4 @@
+package com.college.placement.portal.notification.controller;
+
+public class AdminNotificationController {
+}
