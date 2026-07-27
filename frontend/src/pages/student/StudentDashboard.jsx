@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob, getStudentResumeMatch } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -33,128 +34,16 @@ import {
     Plus
 } from "lucide-react";
 import "./StudentDashboard.css";
+import StudHub from "./StudHub";
 
 // Default fallback mock data for Placement Drives
-const initialDrives = [
-    {
-        id: 1,
-        company: 'Google',
-        logo: 'https://logo.clearbit.com/google.com',
-        role: 'SDE Intern',
-        location: 'Bangalore',
-        date: '20 Jul 2026',
-        time: '10:00 AM',
-        status: 'open',
-        venue: 'Seminar Hall A',
-        about: 'Google is conducting an on-campus recruitment drive for the SDE Intern role.',
-        targetStudent: 'All'
-    },
-    {
-        id: 2,
-        company: 'Amazon',
-        logo: 'https://logo.clearbit.com/amazon.com',
-        role: 'Backend Developer',
-        location: 'Hyderabad',
-        date: '25 Jul 2026',
-        time: '11:30 AM',
-        status: 'upcoming',
-        venue: 'Seminar Hall A',
-        about: 'Amazon is conducting an on-campus recruitment drive for the Backend Developer role.',
-        targetStudent: 'All'
-    },
-    {
-        id: 3,
-        company: 'TCS',
-        logo: 'https://logo.clearbit.com/tcs.com',
-        role: 'System Engineer',
-        location: 'Pune',
-        date: '30 Jul 2026',
-        time: '09:00 AM',
-        status: 'closed',
-        venue: 'Seminar Hall B',
-        about: 'TCS is conducting a mass campus recruitment drive for System Engineers.',
-        targetStudent: 'All'
-    },
-    {
-        id: 4,
-        company: 'Infosys',
-        logo: 'https://logo.clearbit.com/infosys.com',
-        role: 'Full Stack Developer',
-        location: 'Mysore',
-        date: '05 Aug 2026',
-        time: '02:00 PM',
-        status: 'upcoming',
-        venue: 'Seminar Hall A',
-        about: 'Infosys is conducting an on-campus drive for the Full Stack Developer role.',
-        targetStudent: 'All'
-    },
-    {
-        id: 5,
-        company: 'Cognizant',
-        logo: 'https://logo.clearbit.com/cognizant.com',
-        role: 'QA Engineer',
-        location: 'Chennai',
-        date: '12 Aug 2026',
-        time: '10:00 AM',
-        status: 'upcoming',
-        venue: 'Online / MS Teams',
-        about: 'Cognizant is conducting a virtual campus drive for the QA Engineer role.',
-        targetStudent: 'All'
-    },
-    {
-        id: 6,
-        company: 'Wipro',
-        logo: 'https://logo.clearbit.com/wipro.com',
-        role: 'System Associate',
-        location: 'Kochi',
-        date: '18 Aug 2026',
-        time: '11:00 AM',
-        status: 'upcoming',
-        venue: 'Placement Cell Lab 2',
-        about: 'Wipro is conducting an on-campus drive for System Associates.',
-        targetStudent: 'All'
-    }
-];
+const initialDrives = [];
 
 // Default fallback mock data for Placement Stories
-const initialStories = [
-    {
-        id: 1,
-        name: 'Nithisha Yadav',
-        avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-        company: 'Thoughtworks',
-        companyColor: '#f3e8ff',
-        companyTextColor: '#8b5cf6',
-        role: 'Software Engineer',
-        packageAmt: '8.5 LPA',
-        storyText: 'Secured a Software Engineer role at Thoughtworks. The preparation drives helped me refine my technical skills.',
-        date: '10 Apr 2025'
-    },
-    {
-        id: 2,
-        name: 'Prabhat Pundeer',
-        avatar: 'https://randomuser.me/api/portraits/men/46.jpg',
-        company: 'Snabbits',
-        companyColor: '#fffbeb',
-        companyTextColor: '#d97706',
-        role: 'SDE Intern',
-        packageAmt: '6.0 LPA',
-        storyText: 'Delighted to join Snabbits as an SDE Intern. Grateful to the control center mentors for guidance.',
-        date: '8 Apr 2025'
-    },
-    {
-        id: 3,
-        name: 'Deepak Kumar',
-        avatar: 'https://randomuser.me/api/portraits/men/22.jpg',
-        company: 'Mindstix',
-        companyColor: '#eff6ff',
-        companyTextColor: '#2563eb',
-        role: 'Full Stack Developer',
-        packageAmt: '12.0 LPA',
-        storyText: 'Landed a Full Stack Developer role at Mindstix. Consistent project building was key to cracking the interviews.',
-        date: '5 Apr 2025'
-    }
-];
+const initialStories = [];
+
+// Default fallback mock data for Student Queries & Responses
+const initialStudentQueries = [];
 
 export default function
     StudentDashboard({ onNavigate }) {
@@ -169,6 +58,7 @@ export default function
     };
 
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'studhub'
+    const [showDriveDetails, setShowDriveDetails] = useState(false);
 
     // Sync states from localStorage (with mock fallbacks)
     const [drives, setDrives] = useState(() => {
@@ -182,13 +72,13 @@ export default function
             const today = new Date();
             const tomorrow = new Date(today);
             tomorrow.setDate(today.getDate() + 1);
-            
+
             const eventDate = new Date(dateStr);
             if (isNaN(eventDate.getTime())) return false;
-            
+
             return eventDate.getDate() === tomorrow.getDate() &&
-                   eventDate.getMonth() === tomorrow.getMonth() &&
-                   eventDate.getFullYear() === tomorrow.getFullYear();
+                eventDate.getMonth() === tomorrow.getMonth() &&
+                eventDate.getFullYear() === tomorrow.getFullYear();
         } catch (e) {
             return false;
         }
@@ -217,24 +107,9 @@ export default function
     activeDrives.sort((a, b) => getParsedDate(a.date) - getParsedDate(b.date));
     const nextEvent = activeDrives[0];
 
-    const [stories, setStories] = useState(() => {
-        const stored = localStorage.getItem("placement_stories");
-        return stored ? JSON.parse(stored) : initialStories;
-    });
 
-    const [queries, setQueries] = useState(() => {
-        const stored = localStorage.getItem("student_queries");
-        return stored ? JSON.parse(stored) : [];
-    });
 
-    // Write back student queries when updated locally
-    useEffect(() => {
-        localStorage.setItem("student_queries", JSON.stringify(queries));
-    }, [queries]);
 
-    // Student Query Form states
-    const [querySubject, setQuerySubject] = useState("");
-    const [queryMessage, setQueryMessage] = useState("");
 
     //Component state
     const [selectedJob, setSelectedJob] =
@@ -274,11 +149,7 @@ export default function
     const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
     // Notification Mock Data
-    const [notifications, setNotifications] = useState([
-        { id: 1, text: "Google application deadline is tomorrow!", date: "Today" },
-        { id: 2, text: "Your resume match score for IBM is 75%.", date: "Yesterday" },
-        { id: 3, text: "New Job opening: Systems Engineer at Infosys.", date: "2 days ago" }
-    ]);
+    const [notifications, setNotifications] = useState([]);
 
     const getSkillColorClass = (skill) => {
         const s = skill.toLowerCase().trim();
@@ -308,6 +179,40 @@ export default function
 
     const [profile, setProfile] = useState(getInitialProfile());
 
+    const [dashboardStats, setDashboardStats] = useState(null);
+
+    useEffect(() => {
+        const fetchStudentProfile = async () => {
+            try {
+                const response = await getStudentProfile();
+                if (response.data) {
+                    setProfile(prev => ({
+                        ...prev,
+                        ...response.data
+                    }));
+                    console.log("Student profile fetched:", response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching student profile:", error);
+            }
+        };
+
+        const fetchDashboardStats = async () => {
+            try {
+                const response = await getStudentDashboardStats();
+                if (response.data) {
+                    setDashboardStats(response.data);
+                    console.log("Dashboard stats fetched:", response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            }
+        };
+
+        fetchStudentProfile();
+        fetchDashboardStats();
+    }, []);
+
     // Password change form state
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: "",
@@ -330,29 +235,54 @@ export default function
         setIsEditingProfile(true);
     };
 
-    const handleSaveProfile = () => {
-        setProfile({ ...tempProfile });
-        localStorage.setItem("user", JSON.stringify({
-            ...JSON.parse(localStorage.getItem("user") || "{}"),
-            fullName: tempProfile.fullName,
-            email: tempProfile.email,
-            phone: tempProfile.phone,
-            branch: tempProfile.branch,
-            passingYear: tempProfile.passingYear,
-            cgpa: tempProfile.cgpa,
-            skills: tempProfile.skills,
-            linkedinUrl: tempProfile.linkedinUrl,
-            githubUrl: tempProfile.githubUrl
-        }));
-        setIsEditingProfile(false);
+    const handleSaveProfile = async () => {
+        try {
+            // Map state to API payload based on Swagger specs
+            const payload = {
+                fullName: tempProfile.fullName || "",
+                email: tempProfile.email || "",
+                mobile: tempProfile.phone || "",
+                course: "", // Frontend doesn't currently collect this
+                department: tempProfile.branch || "",
+                currentYear: tempProfile.passingYear || "",
+                cgpa: parseFloat(tempProfile.cgpa) || 0.0,
+                skills: tempProfile.skills || "",
+                linkedinUrl: tempProfile.linkedinUrl || "",
+                githubUrl: tempProfile.githubUrl || "",
+                role: "Student" // Optional default
+            };
 
-        // Show Toast Notification
-        setToastMessage("Profile updated successfully!");
-        setToastType("success");
-        setShowToast(true);
-        setTimeout(() => {
-            setShowToast(false);
-        }, 3000);
+            await updateStudentProfile(payload);
+
+            setProfile({ ...tempProfile });
+            localStorage.setItem("user", JSON.stringify({
+                ...JSON.parse(localStorage.getItem("user") || "{}"),
+                fullName: tempProfile.fullName,
+                email: tempProfile.email,
+                phone: tempProfile.phone,
+                branch: tempProfile.branch,
+                passingYear: tempProfile.passingYear,
+                cgpa: tempProfile.cgpa,
+                skills: tempProfile.skills,
+                linkedinUrl: tempProfile.linkedinUrl,
+                githubUrl: tempProfile.githubUrl
+            }));
+            setIsEditingProfile(false);
+
+            // Show Toast Notification
+            setToastMessage("Profile updated successfully!");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => {
+                setShowToast(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Failed to update profile:", error);
+            setToastMessage("Failed to update profile.");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -360,19 +290,39 @@ export default function
     };
 
     // Handles password change submission
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-            alert("New passwords do not match!");
+            setToastMessage("New passwords do not match!");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
             return;
         }
 
-        alert("Password updated successfully!");
-        setIsChangePasswordOpen(false);
-        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        setShowCurrentPassword(false);
-        setShowNewPassword(false);
-        setShowConfirmPassword(false);
+        try {
+            await changePassword({
+                currentPassword: passwordForm.currentPassword,
+                newPassword: passwordForm.newPassword,
+                confirmPassword: passwordForm.confirmPassword
+            });
+
+            setToastMessage("Password updated successfully!");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+            setIsChangePasswordOpen(false);
+            setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+            setShowCurrentPassword(false);
+            setShowNewPassword(false);
+            setShowConfirmPassword(false);
+        } catch (error) {
+            console.error("Error changing password:", error);
+            setToastMessage(error.response?.data?.message || "Failed to change password. Please check your current password.");
+            setToastType("error");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        }
     };
 
     // Handles raising a student query
@@ -466,8 +416,8 @@ export default function
     };
 
     // 2. Triggered when the user clicks "Confirm and Apply" inside the requirements modal
-    const handleConfirmApply = () => {
-        if (!resumeFileName) {
+    const handleConfirmApply = async () => {
+        if (!resumeFileName || !resumeFile) {
             setToastMessage("Please upload your resume PDF first!");
             setToastType('error');
             setShowToast(true);
@@ -476,16 +426,28 @@ export default function
         }
 
         if (selectedJob) {
-            setAppliedJobs(prev => [...prev, selectedJob.id]);
-            setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
-            setToastType('success');
-            setShowToast(true);
-            setSelectedJob(null);
-            setResumeFile(null);
-            setResumeFileName("");
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            try {
+                const formData = new FormData();
+                formData.append('resume', resumeFile);
+
+                await applyForJob(selectedJob.id, formData);
+
+                setAppliedJobs(prev => [...prev, selectedJob.id]);
+                setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
+                setToastType('success');
+                setShowToast(true);
+
+                setSelectedJob(null);
+                setResumeFile(null);
+                setResumeFileName("");
+
+            } catch (error) {
+                console.error("Failed to apply for job:", error);
+                setToastMessage("Failed to apply for the job. Please try again.");
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            }
         }
     };
 
@@ -514,235 +476,134 @@ export default function
         {
             id: "profile",
             title: "Profile Completed",
-            value: `${profileCompletion}%`,
+            value: dashboardStats ? `${dashboardStats.profileCompleted || 0}%` : `${profileCompletion}%`,
             icon: <User className="metric-icon-blue" />,
             colorClass: "blue",
-            progress: profileCompletion,
-            progess: profileCompletion
+            progress: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion,
+            progess: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion
         },
         {
             id: "selected",
             title: "Selected",
-            value: "5",
+            value: dashboardStats ? String(dashboardStats.selected || 0) : "0",
             icon: <CheckCircle2 className="metric-icon-green" />,
             colorClass: "green",
-            progress: 50,
-            progess: 50
+            progress: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0
         },
         {
             id: "pending",
             title: "Pending",
-            value: "3",
+            value: dashboardStats ? String(dashboardStats.pending || 0) : "0",
             icon: <Clock className="metric-icon-orange" />,
             colorClass: "orange",
-            progress: 30,
-            progess: 30
+            progress: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0
         },
         {
             id: "rejected",
             title: "Rejected",
-            value: "6",
+            value: dashboardStats ? String(dashboardStats.rejected || 0) : "0",
             icon: <XCircle className="metric-icon-red" />,
             colorClass: "red",
-            progress: 60,
-            progess: 60
+            progress: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0,
+            progess: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0
         }
     ];
 
+    const [jobs, setJobs] = useState([]);
 
-    const jobs = [
-        {
-            id: "google-backend",
-            company: "Google",
-            location: "Mumbai",
-            role: "Backend Developer",
-            deadline: "30-June-2026",
-            logoLetter: "G",
-            logoClor: "#ea4335",
-            requirements: [
-                "BE/B.Tech in Computer Science or related field",
-                "Strong knowledge of Java, Spring Boot, REST APIs",
-                "Experience with databases (MySQL/PostgreSQL)",
-                "Good problem-solving skills",
-                "CGPA: 7.0 and above"
-            ],
-            additionalinfo: "This is a full-time role based in Mumbai."
-        },
-        {
-            id: "ibm-frontend",
-            company: "IBM",
-            location: "Pune",
-            role: "Frontend Developer",
-            deadline: "25-June-2026",
-            logoLetter: "IBM",
-            logoColor: "#0f62fe",
-            requirements: [
-                "BE/B.Tech/MCA in Computer Science or IT",
-                "Proficiency in React, HTML, CSS, JavaScript",
-                "Experience with responsive designs and modern CSS systems",
-                "Familiarity with Git and version control frameworks",
-                "CGPA: 6.5 and above"
-            ],
-            additionalInfo: "This is a full-time role based in Pune."
-        },
-        {
-            id: "infosys-systems",
-            company: "Infosys",
-            location: "Bangalore",
-            role: "Systems Engineer",
-            deadline: "28-June-2026",
-            logoLetter: "In",
-            logoColor: "#007cc3",
-            requirements: [
-                "BE/B.Tech/M.Tech/MCA/M.Sc in CS or related fields",
-                "Strong analytical and logical reasoning skills",
-                "Basic understanding of programming concepts (Java, Python, or C++)",
-                "Good communication skills",
-                "No active backlogs"
-            ],
-            additionalInfo: "This is a full-time role based in Bangalore."
-        },
-        {
-            id: "microsoft-cloud",
-            company: "Microsoft",
-            location: "Hyderabad",
-            role: "Cloud Solution Architect",
-            deadline: "10-July-2026",
-            logoLetter: "MS",
-            logoColor: "#f25022",
-            requirements: [
-                "BE/B.Tech/MCA/M.Tech in CS/IT",
-                "Deep understanding of Cloud Computing concepts (Azure/AWS)",
-                "Hands-on coding experience in Python, C# or Go",
-                "Excellent systems design principles"
-            ],
-            additionalInfo: "This is a full-time remote/hybrid role based in Hyderabad."
-        },
-        {
-            id: "amazon-sde",
-            company: "Amazon",
-            location: "Chennai",
-            role: "Software Dev Engineer (SDE I)",
-            deadline: "15-July-2026",
-            logoLetter: "A",
-            logoColor: "#ff9900",
-            requirements: [
-                "Strong foundation in DS & Algo",
-                "Proficiency in Java, C++ or Python",
-                "Familiarity with distributed computing and databases"
-            ],
-            additionalInfo: "This is a full-time role based in Chennai."
-        }
-    ];
+    useEffect(() => {
+        const fetchJobs = async () => {
+            try {
+                const response = await getLatestJobs();
+                let jobList = [];
+                if (response.data) {
+                    if (Array.isArray(response.data)) {
+                        jobList = response.data;
+                    } else if (response.data.content && Array.isArray(response.data.content)) {
+                        jobList = response.data.content;
+                    } else if (response.data.jobs && Array.isArray(response.data.jobs)) {
+                        jobList = response.data.jobs;
+                    }
+                }
 
-    const resumeMatches = [
-        {
-            company: "Google",
-            role: "Data Scientist",
-            location: "Mumbai",
-            deadline: "30-June-2026",
-            score: 90,
-            logoLetter: "G",
-            logoColor: "#ea4335"
-        },
-        {
-            company: "IBM",
-            role: "Frontend Developer",
-            location: "Pune",
-            deadline: "25-June-2026",
-            score: 75,
-            logoLetter: "IBM",
-            logoColor: "#0f62fe"
-        },
-        {
-            company: "Infosys",
-            role: "Systems Engineer",
-            location: "Bangalore",
-            deadline: "28-June-2026",
-            score: 70,
-            logoLetter: "I",
-            logoColor: "#007cc3"
-        },
-        {
-            company: "Microsoft",
-            role: "Cloud Solution Architect",
-            location: "Hyderabad",
-            deadline: "10-July-2026",
-            score: 85,
-            logoLetter: "MS",
-            logoColor: "#f25022"
-        },
-        {
-            company: "Amazon",
-            role: "Software Dev Engineer",
-            location: "Chennai",
-            deadline: "15-July-2026",
-            score: 82,
-            logoLetter: "A",
-            logoColor: "#ff9900"
-        },
-        {
-            company: "TCS",
-            role: "Assistant Engineer",
-            location: "Mumbai",
-            deadline: "05-July-2026",
-            score: 65,
-            logoLetter: "T",
-            logoColor: "#1f4a9c"
-        },
-        {
-            company: "Wipro",
-            role: "Project Engineer",
-            location: "Pune",
-            deadline: "02-July-2026",
-            score: 60,
-            logoLetter: "W",
-            logoColor: "#000000"
-        }
-    ];
+                if (jobList.length > 0) {
+                    const mappedJobs = jobList.map(job => {
+                        const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
+                        
+                        const reqString = job.jobRequirements || job.requirements || job.skillsRequired || "";
+                        const requirementsArray = reqString 
+                            ? reqString.split(/[,\n]/).map(req => req.trim()).filter(Boolean) 
+                            : ["No specific requirements listed"];
 
+                        return {
+                            id: job.id,
+                            company: job.companyName || job.company,
+                            logoLetter: firstLetter,
+                            logoColor: '#2563eb',
+                            location: job.location || "Remote",
+                            role: job.jobRoleOverview || job.jobRole || job.title,
+                            deadline: job.deadline,
+                            requirements: requirementsArray.length > 0 ? requirementsArray : ["No specific requirements listed"],
+                            additionalinfo: job.jobRoleOverview || job.jobRole || job.title,
+                            degree: job.degree || job.Degree || job.degreeRequired,
+                            branch: job.branch || job.Branch || job.branchRequired,
+                            minCgpa: job.minCgpa !== undefined ? job.minCgpa : (job.MinCgpa !== undefined ? job.MinCgpa : job.cgpa),
+                            passingYear: job.passingYear || job.PassingYear || job.year,
+                            experience: job.experience || job.Experience || job.experienceRequired
+                        };
+                    });
+
+                    setJobs(mappedJobs);
+                }
+            } catch (error) {
+                console.error("Error fetching latest jobs:", error);
+            }
+        };
+        fetchJobs();
+    }, []);
+
+    const [resumeMatches, setResumeMatches] = useState([]);
+
+    useEffect(() => {
+        const fetchMatches = async () => {
+            try {
+                const response = await getStudentResumeMatch();
+                if (response.data && Array.isArray(response.data)) {
+                    // Assuming data might have companyName, role, matchScore, etc.
+                    const mapped = response.data.map(m => {
+                        const firstLetter = m.companyName ? m.companyName.charAt(0).toUpperCase() : 'C';
+                        return {
+                            company: m.companyName || 'Company',
+                            role: m.role || 'Job Role',
+                            location: m.location || 'Location',
+                            deadline: m.deadline || 'Upcoming',
+                            score: m.matchScore !== undefined ? m.matchScore : 0, 
+                            logoLetter: firstLetter,
+                            logoColor: '#ea4335' // Default
+                        };
+                    });
+                    setResumeMatches(mapped);
+                }
+            } catch (error) {
+                console.error("Failed to fetch resume matches:", error);
+            }
+        };
+        fetchMatches();
+    }, []);
 
     const getJobEligibility = (job) => {
         if (!job) return {};
-        let degree = "BE/B.Tech";
-        let branch = "Computer Science / IT";
-        let minCgpa = "6.5";
-        let passingYear = "2026";
-        let experience = "Fresher";
-        let roleOverview = job.additionalInfo || job.additionalinfo || "This is a full-time role.";
-
-        const jobId = (job.id || "").toLowerCase();
-        if (jobId.includes("google")) {
-            degree = "BE/B.Tech";
-            branch = "Computer Science or related";
-            minCgpa = "7.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (jobId.includes("ibm")) {
-            degree = "BE/B.Tech/MCA";
-            branch = "Computer Science or IT";
-            minCgpa = "6.5";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (jobId.includes("infosys")) {
-            degree = "BE/B.Tech/M.Tech/MCA/M.Sc";
-            branch = "CS or related fields";
-            minCgpa = "6.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (jobId.includes("microsoft")) {
-            degree = "BE/B.Tech/MCA/M.Tech";
-            branch = "CS/IT";
-            minCgpa = "7.0";
-            passingYear = "2026";
-            experience = "Fresher";
-        } else if (jobId.includes("amazon")) {
-            degree = "BE/B.Tech";
-            branch = "CS/IT";
-            minCgpa = "7.5";
-            passingYear = "2026";
-            experience = "Fresher";
-        }
+        
+        let degree = job.degree || job.Degree || job.degreeRequired || "Not specified";
+        let branch = job.branch || job.Branch || job.branchRequired || "Not specified";
+        let minCgpa = (job.minCgpa !== undefined && job.minCgpa !== null) ? String(job.minCgpa) :
+                      (job.MinCgpa !== undefined && job.MinCgpa !== null) ? String(job.MinCgpa) :
+                      (job.cgpa !== undefined && job.cgpa !== null) ? String(job.cgpa) : "Not specified";
+        let passingYear = job.passingYear || job.PassingYear || job.year || "Not specified";
+        let experience = job.experience || job.Experience || job.experienceRequired || "Not specified";
+        let roleOverview = job.additionalInfo || job.additionalinfo || job.jobRoleOverview || "This is a full-time role.";
 
         return { degree, branch, minCgpa, passingYear, experience, roleOverview };
     };
@@ -753,12 +614,12 @@ export default function
     return (
         <div className="dashboard-container">
 
-            {/*Header Section*/}
+
             <header className="dashboard-header">
 
                 <div className="header-logo">
                     <GraduationCap className="logo-icon" />
-                    <h1>College Placement Portal</h1>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</h1>
                 </div>
 
                 <div className="student-nav-tabs">
@@ -766,20 +627,22 @@ export default function
                         className={`student-nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                         onClick={() => setActiveTab('dashboard')}
                     >
-                        Dashboard
+                        <span>Dashboard</span>
+                        {activeTab === 'dashboard' && <span className="tab-underline" />}
                     </button>
                     <button
                         className={`student-nav-tab ${activeTab === 'studhub' ? 'active' : ''}`}
                         onClick={() => setActiveTab('studhub')}
                     >
-                        Stud Hub
+                        <span>Stud Hub</span>
+                        {activeTab === 'studhub' && <span className="tab-underline" />}
                     </button>
                 </div>
 
                 <div className="header-actions">
                     <span className="role-badge">Student</span>
 
-                    {/* Notification Dropdown */}
+
                     <div className="notification-bell-container">
                         <div className="notification-bell" onClick={() => {
                             setIsNotificationSidebarOpen(true);
@@ -792,7 +655,7 @@ export default function
                         </div>
                     </div>
 
-                    {/* Profile Dropdown */}
+
                     <div className="profile-container">
                         <div className="profile-avatar" onClick={() => {
                             setIsProfileDropdownOpen(!isProfileDropdownOpen);
@@ -833,422 +696,270 @@ export default function
                 </div>
             </header>
 
-            {/*Welcome Banner*/}
+
             {activeTab === 'dashboard' && (
-            <section className="welcome-section">
-                <div className="welcome-content">
-                    <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
-                    <p>Here's whats's happening with your placement portal today.</p>
-                </div>
-                <div className="welcome-date-badge">
-                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                </div>
-            </section>
-            )}
-
-            {/*Metric Boxes*/}
-            {activeTab === 'dashboard' && (
-            <section className="metrics-grid">
-                {metrics.map((metric) => (
-                    <div className="metric-card" key={metric.id}>
-                        <div className="metric-header">
-                            <div className={`metric-icon-wrapper ${metric.colorClass}`}>
-                                {metric.icon}
-                            </div>
-
-                            <div className="metric-info">
-                                <span className="metric-title"> {metric.title}</span>
-                                <span className="metric-value">{metric.value}</span>
-                            </div>
-                        </div>
-
-                        {/*Progress Bar Line Wrapper*/}
-                        <div className="metric-progress-container">
-                            <div className={`metric-progress-bar ${metric.colorClass}`}
-
-                                style={{ width: `${metric.progess || metric.progress}%` }}>
-                            </div>
-
-                        </div>
-
-                    </div>
-                ))}
-
-            </section>
-            )}
-
-
-
-            {/*MAin two column content*/}
-            {activeTab === 'dashboard' && (
-            <main className="dashboard-main-content">
-
-                {/*LEft column : latest job opportunities */}
-                <section className="dashboard-column jobs-column">
-                    <div className="column-card-header">
-                        <h3>Latest Job Opportunities</h3>
-                    </div>
-
-                    <div className="job-list">
-                        {jobs
-                            .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                            .map((job) => {
-                                const isApplied = appliedJobs.includes(job.id);
-                                return (
-                                    <div className="job-card" key={job.id}>
-                                        <div className="job-card-header">
-                                            <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor }}>
-                                                <span style={{ color: job.logoColor || job.logoClor }}>{job.logoLetter}</span>
-                                            </div>
-                                            <h4 className="company-name">{job.company}</h4>
-                                            <button
-                                                className={`btn-apply ${isApplied ? 'applied' : ''}`}
-                                                disabled={isApplied}
-                                                onClick={() => handleApplyClick(job)}
-                                            >
-                                                {isApplied ? "Applied" : "Apply"}
-                                            </button>
-                                        </div>
-                                        <div className="job-details-meta">
-                                            <div className="meta-item">
-                                                <MapPin size={14} className="meta-icon" />
-                                                <span className="meta-label">Location</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong>{job.location}</strong>
-                                            </div>
-                                            <div className="meta-item">
-                                                <Briefcase size={14} className="meta-icon" />
-                                                <span className="meta-label">Job Role</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong>{job.role}</strong>
-                                            </div>
-                                            <div className="meta-item">
-                                                <Calendar size={14} className="meta-icon" />
-                                                <span className="meta-label">Deadline</span>
-                                                <span className="meta-sep">:</span>
-                                                <strong className="meta-deadline">{job.deadline}</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                    </div>
-
-                    {/* Jobs Pagination */}
-                    <div className="sd-pagination">
-                        <button
-                            className="sd-page-btn"
-                            disabled={jobsPage === 1}
-                            onClick={() => setJobsPage(p => p - 1)}
-                        >
-                            ← Prev
-                        </button>
-                        <span className="sd-page-info">
-                            {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                        </span>
-                        <button
-                            className="sd-page-btn"
-                            disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                            onClick={() => setJobsPage(p => p + 1)}
-                        >
-                            Next →
-                        </button>
-                    </div>
-                </section>
-
-                {/*Right Column : Resume Match Status */}
-                <section className="dashboard-column match-column">
-                    <div className="column-card-header">
-                        <h3>Resume Match Status</h3>
-                        <div className="search-bar-wrapper">
-                            <Search className="search-icon" size={16} />
-                            <input
-                                type="text"
-                                className="search-input"
-                                placeholder="Search company..."
-                                value={matchSearchQuery}
-                                onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
-                            />
-                        </div>
-                    </div>
-
-
-                    <div className="match-list">
-                        {resumeMatches
-                            .filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()))
-                            .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
-                            .map((item, index) => (
-                                <div className="match-card" key={index}>
-                                    {/* Top Row: Logo + Company Name on left, Score stack on right */}
-                                    <div className="match-card-header">
-                                        <div className="match-logo-details">
-                                            <div className="logo-mini-badge" style={{ borderColor: item.logoColor }}>
-                                                <span style={{ color: item.logoColor }}>{item.logoLetter}</span>
-                                            </div>
-                                            <h4 className="match-company-name">{item.company}</h4>
-                                        </div>
-
-                                        <div className="match-score-container">
-                                            <span className="match-score-text">{item.score}% Match</span>
-                                            <div className="score-progress-track">
-                                                <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Middle Details Stacked below each other */}
-                                    <div className="match-card-details">
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Location :</span>
-                                            <strong>{item.location}</strong>
-                                        </div>
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Job Role :</span>
-                                            <strong>{item.role}</strong>
-                                        </div>
-                                        <div className="match-detail-item">
-                                            <span className="match-detail-label">Deadline :</span>
-                                            <strong>{item.deadline}</strong>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            ))}
-                    </div>
-
-
-
-                    {/* Match Pagination */}
-                    {(() => {
-                        const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                        const totalPages = Math.ceil(filtered.length / MATCHES_PER_PAGE);
-
-                        return totalPages > 1 ? (
-                            <div className="sd-pagination">
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={matchPage === 1}
-                                    onClick={() => setMatchPage(p => p - 1)}
-                                >
-                                    ← Prev
-                                </button>
-                                <span className="sd-page-info">
-                                    {matchPage} / {totalPages}
-                                </span>
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={matchPage >= totalPages}
-                                    onClick={() => setMatchPage(p => p + 1)}
-                                >
-                                    Next →
-                                </button>
-                            </div>
-                        ) : null;
-                    })()}
-                </section>
-
-            </main>
-            )}
-
-            {/* Stud Hub page */}
-            {activeTab === 'studhub' && (
-            <div className="studhub-container">
-
-                {/* Stud Hub Welcome Banner */}
-                <div className="studhub-banner">
-                    <div className="studhub-banner-text">
-                        <h2>Stud Hub <span>🚀</span></h2>
-                        <p>Stay updated with placement stories, upcoming campus drives, and raise your queries — all in one place.</p>
+                <section className="welcome-section">
+                    <div className="welcome-content">
+                        <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
+                        <p>Here's whats's happening with your placement portal today.</p>
                     </div>
                     <div className="welcome-date-badge">
                         <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
-                </div>
-
-                {/* Two-column layout */}
-                <div className="studhub-grid">
-
-                    {/* left column */}
-                    <div className="studhub-left">
-
-                        {/* 1. Placement Success Stories */}
-                        <div className="sh-panel">
-                            <div className="sh-panel-header">
-                                <div className="sh-panel-title-group">
-                                    <Award size={18} className="sh-panel-icon" />
-                                    <h3 className="sh-panel-title">Placement Success Stories</h3>
-                                </div>
-                                <span className="sh-count-badge">{stories.length} Stories</span>
-                            </div>
-
-                            {stories.length === 0 ? (
-                                <div className="sh-empty-state">
-                                    <Award size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
-                                    <p>No placement stories published yet.</p>
-                                    <span>Check back soon!</span>
-                                </div>
-                            ) : (
-                                <div className="sh-stories-list">
-                                    {stories.map((story) => (
-                                        <div key={story.id} className="sh-story-card">
-                                            <div className="sh-story-top">
-                                                <img
-                                                    src={story.avatar}
-                                                    alt={story.name}
-                                                    className="sh-story-avatar"
-                                                    onError={(e) => { e.target.style.display = 'none'; }}
-                                                />
-                                                <div className="sh-story-info">
-                                                    <h4 className="sh-story-name">{story.name}</h4>
-                                                    <span
-                                                        className="sh-company-badge"
-                                                        style={{ backgroundColor: story.companyColor || '#eff6ff', color: story.companyTextColor || '#2563eb' }}
-                                                    >
-                                                        {story.company}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="sh-story-body">
-                                                <p className="sh-role-line" style={{ color: story.companyTextColor || '#2563eb' }}>
-                                                    {story.role}
-                                                </p>
-                                                <p className="sh-story-quote">
-                                                    &ldquo;{story.storyText || `Secured a ${story.role} role at ${story.company}.`}&rdquo;
-                                                </p>
-                                                <div className="sh-story-footer">
-                                                    <span className="sh-package-tag">💰 {story.packageAmt || 'Not Disclosed'}</span>
-                                                    <span className="sh-date-tag">📅 {story.date}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 2. Raise a Query */}
-                        <div className="sh-panel sh-query-panel">
-                            <div className="sh-panel-header">
-                                <div className="sh-panel-title-group">
-                                    <MessageSquare size={18} className="sh-panel-icon" />
-                                    <h3 className="sh-panel-title">Raise a Query</h3>
-                                </div>
-                            </div>
-                            <p className="sh-panel-subtitle">Have a question? Submit it below and our admin team will respond shortly.</p>
-
-                            <form onSubmit={handleRaiseQuery} className="sh-query-form">
-                                <div className="sh-form-group">
-                                    <label className="sh-form-label">Query Subject <span style={{ color: '#ef4444' }}>*</span></label>
-                                    <input
-                                        type="text"
-                                        className="sh-form-input"
-                                        placeholder="e.g. TCS Drive Eligibility, Resume Upload Issue"
-                                        value={querySubject}
-                                        onChange={(e) => setQuerySubject(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="sh-form-group">
-                                    <label className="sh-form-label">Description <span style={{ color: '#ef4444' }}>*</span></label>
-                                    <textarea
-                                        className="sh-form-textarea"
-                                        placeholder="Describe your query in detail..."
-                                        rows={4}
-                                        value={queryMessage}
-                                        onChange={(e) => setQueryMessage(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <button type="submit" className="sh-submit-btn">
-                                    <Plus size={16} />
-                                    Submit Query
-                                </button>
-                            </form>
-                        </div>
-
-                    </div>
-
-                    {/* right column */}
-                    <div className="studhub-right">
-
-                        {/* 3. Campus Placement Events (Next Campus Event) */}
-                        <div className="sh-panel campus-event-panel">
-                            <h3 className="event-panel-title">Next Campus Event</h3>
-                            
-                            {!nextEvent ? (
-                                <div className="sh-empty-state">
-                                    <Briefcase size={36} style={{ color: '#cbd5e1', marginBottom: '8px' }} />
-                                    <p>No upcoming campus events scheduled for you.</p>
-                                    <span>Check back soon!</span>
-                                </div>
-                            ) : (
-                                <div className="next-event-card">
-                                    <div className="event-card-header-row">
-                                        <div className="event-icon-box">
-                                            <Calendar className="event-purple-icon" size={20} />
-                                        </div>
-                                        <h2 className="event-company-title">{nextEvent.company} Drive</h2>
-                                    </div>
-                                    
-                                    <div className="event-details-list">
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Calendar size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Date</span>
-                                                <span className="detail-value">
-                                                    {nextEvent.date} {isEventTomorrow(nextEvent.date) ? "(Tomorrow)" : ""}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Clock size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Time</span>
-                                                <span className="detail-value">{nextEvent.time || "10:00 AM"} Onwards</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <MapPin size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Location</span>
-                                                <span className="detail-value">{nextEvent.location || "Main Campus"}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="event-detail-item">
-                                            <div className="event-detail-icon-wrapper">
-                                                <Building size={15} />
-                                            </div>
-                                            <div className="detail-item-text">
-                                                <span className="detail-label">Venue</span>
-                                                <span className="detail-value">{nextEvent.venue || "Seminar Hall A"}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+                </section>
             )}
 
-            {/* Job Requirements Modal Popup Overlay */}
+
+            {activeTab === 'dashboard' && (
+                <section className="metrics-grid">
+                    {metrics.map((metric) => (
+                        <div className="metric-card" key={metric.id}>
+                            <div className="metric-header">
+                                <div className={`metric-icon-wrapper ${metric.colorClass}`}>
+                                    {metric.icon}
+                                </div>
+
+                                <div className="metric-info">
+                                    <span className="metric-title"> {metric.title}</span>
+                                    <span className="metric-value">{metric.value}</span>
+                                </div>
+                            </div>
+
+
+                            <div className="metric-progress-container">
+                                <div className={`metric-progress-bar ${metric.colorClass}`}
+
+                                    style={{ width: `${metric.progess || metric.progress}%` }}>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    ))}
+
+                </section>
+            )}
+
+
+
+
+            {activeTab === 'dashboard' && (
+                <main className="dashboard-main-content">
+
+
+                    <section className="dashboard-column jobs-column">
+                        <div className="column-card-header">
+                            <h3>Latest Job Opportunities</h3>
+                        </div>
+
+                        <div className="job-list">
+                            {jobs && jobs.length > 0 ? (
+                                jobs
+                                    .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
+                                    .map((job) => {
+                                        const isApplied = appliedJobs.includes(job.id);
+                                        return (
+                                            <div className="job-card" key={job.id}>
+                                                <div className="job-card-header">
+                                                    <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
+                                                        <img
+                                                            src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                            alt={job.company}
+                                                            className="company-logo-img"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                            }}
+                                                        />
+                                                        <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
+                                                            {job.logoLetter || job.company.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="company-name">{job.company}</h4>
+                                                    <button
+                                                        className={`btn-apply ${isApplied ? 'applied' : ''}`}
+                                                        disabled={isApplied}
+                                                        onClick={() => handleApplyClick(job)}
+                                                    >
+                                                        {isApplied ? "Applied" : "Apply"}
+                                                    </button>
+                                                </div>
+                                                <div className="job-details-meta">
+                                                    <div className="meta-item">
+                                                        <MapPin size={14} className="meta-icon" />
+                                                        <span className="meta-label">Location</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong>{job.location}</strong>
+                                                    </div>
+                                                    <div className="meta-item">
+                                                        <Briefcase size={14} className="meta-icon" />
+                                                        <span className="meta-label">Job Role</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong>{job.role}</strong>
+                                                    </div>
+                                                    <div className="meta-item">
+                                                        <Calendar size={14} className="meta-icon" />
+                                                        <span className="meta-label">Deadline</span>
+                                                        <span className="meta-sep">:</span>
+                                                        <strong className="meta-deadline">{job.deadline}</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                            ) : (
+                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                    <p>No new job opportunities are currently available for your profile.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {jobs && jobs.length > JOBS_PER_PAGE && (
+                            <div className="sd-pagination">
+                                <button
+                                    className="sd-page-btn"
+                                    disabled={jobsPage === 1}
+                                    onClick={() => setJobsPage(p => p - 1)}
+                                >
+                                    ← Prev
+                                </button>
+                                <span className="sd-page-info">
+                                    {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                </span>
+                                <button
+                                    className="sd-page-btn"
+                                    disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                    onClick={() => setJobsPage(p => p + 1)}
+                                >
+                                    Next →
+                                </button>
+                            </div>
+                        )}
+                    </section>
+
+
+                    <section className="dashboard-column match-column">
+                        <div className="column-card-header">
+                            <h3>Resume Match Status</h3>
+                            <div className="search-bar-wrapper">
+                                <Search className="search-icon" size={16} />
+                                <input
+                                    type="text"
+                                    className="search-input"
+                                    placeholder="Search company..."
+                                    value={matchSearchQuery}
+                                    onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
+                                />
+                            </div>
+                        </div>
+
+
+                        <div className="match-list">
+                            {(() => {
+                                const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                                if (filtered.length === 0) {
+                                    return (
+                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                            <p>No resume matches found.</p>
+                                        </div>
+                                    );
+                                }
+                                return filtered
+                                    .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
+                                    .map((item, index) => (
+                                        <div className="match-card" key={index}>
+
+                                            <div className="match-card-header">
+                                                <div className="match-logo-details">
+                                                    <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
+                                                        <img
+                                                            src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                            alt={item.company}
+                                                            className="company-logo-img"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                            }}
+                                                        />
+                                                        <span style={{ color: item.logoColor, display: 'none' }}>
+                                                            {item.logoLetter || item.company.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <h4 className="match-company-name">{item.company}</h4>
+                                                </div>
+
+                                                <div className="match-score-container">
+                                                    <span className="match-score-text">{item.score}% Match</span>
+                                                    <div className="score-progress-track">
+                                                        <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="match-card-details">
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Location :</span>
+                                                    <strong>{item.location}</strong>
+                                                </div>
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Job Role :</span>
+                                                    <strong>{item.role}</strong>
+                                                </div>
+                                                <div className="match-detail-item">
+                                                    <span className="match-detail-label">Deadline :</span>
+                                                    <strong>{item.deadline}</strong>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    ));
+                            })()}
+                        </div>
+
+
+
+
+                        {(() => {
+                            const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                            const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
+
+                            return (
+                                <div className="sd-pagination">
+                                    <button
+                                        className="sd-page-btn"
+                                        disabled={matchPage === 1}
+                                        onClick={() => setMatchPage(p => p - 1)}
+                                    >
+                                        ← Prev
+                                    </button>
+                                    <span className="sd-page-info">
+                                        {matchPage} / {totalPages}
+                                    </span>
+                                    <button
+                                        className="sd-page-btn"
+                                        disabled={matchPage >= totalPages}
+                                        onClick={() => setMatchPage(p => p + 1)}
+                                    >
+                                        Next →
+                                    </button>
+                                </div>
+                            );
+                        })()}
+                    </section>
+
+                </main>
+            )}
+
+
+            {activeTab === 'studhub' && <StudHub />}
+
+
             {selectedJob && (() => {
                 const eligibility = getJobEligibility(selectedJob);
                 return (
                     <div className="modal-overlay" onClick={handleCancleApply}>
                         <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
-                            {/* Modal Header */}
+
                             <div className="modal-header">
                                 <h4>Job Details & Eligibility</h4>
                                 <button className="close-btn" onClick={handleCancleApply}>
@@ -1256,7 +967,7 @@ export default function
                                 </button>
                             </div>
 
-                            {/* Modal Form Content */}
+
                             <div className="modal-form">
                                 <div className="form-group">
                                     <label>Company Name</label>
@@ -1281,7 +992,7 @@ export default function
                                 <div className="form-group">
                                     <label>Job Requirements</label>
                                     <div className="read-only-requirements-list">
-                                        {selectedJob.requirements.map((req, idx) => (
+                                        {(selectedJob.requirements || []).map((req, idx) => (
                                             <div className="requirement-bullet-item" key={idx}>
                                                 <span className="requirement-bullet-dot"></span>
                                                 <span className="requirement-text">{req}</span>
@@ -1293,7 +1004,7 @@ export default function
                                 <div className="form-group">
                                     <label>Job Role Overview</label>
                                     <textarea
-                                        value={`${selectedJob.role}. ${eligibility.roleOverview}`}
+                                        value={selectedJob.role || "Not specified"}
                                         disabled
                                         rows={3}
                                         className="read-only-textarea"
@@ -1416,14 +1127,14 @@ export default function
             })()}
 
 
-            {/* View/Edit Profile Modal */}
+
             {isProfileModalOpen && (
                 <div className="modal-overlay" onClick={() => {
                     setIsProfileModalOpen(false);
                     setIsEditingProfile(false);
                 }}>
                     <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
-                        {/* Modal Header */}
+
                         <div className="modal-header">
                             <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
                             <button className="close-btn" onClick={() => {
@@ -1434,7 +1145,7 @@ export default function
                             </button>
                         </div>
 
-                        {/* Modal Form Content */}
+
                         <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
                             <div className="form-row">
                                 <div className="form-group half-width">
@@ -1545,7 +1256,7 @@ export default function
                                             />
                                             {profile.linkedinUrl && (
                                                 <a href={profile.linkedinUrl} target="_blank" rel="noreferrer" className="link-visit-btn">
-                                                    <ExternalLink size={14} /> Visit
+                                                    <ExternalLink size={14} /> Visit LinkedIn
                                                 </a>
                                             )}
                                         </div>
@@ -1572,7 +1283,7 @@ export default function
                                             />
                                             {profile.githubUrl && (
                                                 <a href={profile.githubUrl} target="_blank" rel="noreferrer" className="link-visit-btn">
-                                                    <ExternalLink size={14} /> Visit
+                                                    <ExternalLink size={14} /> Visit GitHub
                                                 </a>
                                             )}
                                         </div>
@@ -1609,7 +1320,7 @@ export default function
                 </div>
             )}
 
-            {/* Change Password Modal Overlay */}
+
             {isChangePasswordOpen && (
                 <div className="modal-overlay" onClick={() => {
                     setIsChangePasswordOpen(false);
@@ -1714,7 +1425,7 @@ export default function
                 </div>
             )}
 
-            {/* Notifications Sidebar Panel */}
+
             {isNotificationSidebarOpen && (
                 <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
                     <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
@@ -1743,7 +1454,7 @@ export default function
                 </div>
             )}
 
-            {/* TOAST NOTIFICATION COMPONENT */}
+
 
             {showToast && (
                 <div className={`sd-toast-notification ${toastType}`}>
@@ -1762,3 +1473,5 @@ export default function
 
 
 }
+
+

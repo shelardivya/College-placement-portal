@@ -11,41 +11,25 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
-    headers: {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "any-value" // Bypasses the ngrok warning screen
-    }
+    baseURL: import.meta.env.VITE_API_BASE_URL
 });
 
-// Interceptor to match the rewrite behavior previously handled by the proxy:
-// Prepend '/api' only for '/admin/job/' routes, since our baseURL is now direct.
-
-
-
-
 api.interceptors.request.use((config) => {
-    if (config.url && config.url.startsWith('/admin/')) {
-        config.url = `/api${config.url}`;
+    // Nginx strips the first /api from the URL. The Spring Boot controllers 
+    // are inconsistently mapped: most admin/student routes are mapped to /api/admin/... 
+    // and /api/student/..., BUT /student/resume-match is missing the /api prefix!
+    if (config.url) {
+        if (config.url.startsWith('/admin/') || 
+           (config.url.startsWith('/student/') && !config.url.includes('resume-match'))) {
+            config.url = `/api${config.url}`;
+        }
     }
     return config;
 }, (error) => {
     return Promise.reject(error);
 });
 
-
-
-
-
-
-
-// api.interceptors.request.use((config) => {
-//     if (config.url && config.url.includes('/admin/job/')) {
-//         config.url = `/api${config.url}`;
-//     }
-//     return config;
-// }, (error) => {
-//     return Promise.reject(error);
-// });
-
 export default api;
+
+
+// import.meta.env.VITE_API_BASE_URL

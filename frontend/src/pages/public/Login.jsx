@@ -37,26 +37,51 @@ function Login({ onNavigate, initialView }) {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
 
-    //Form inout state tracking
+    //Form input state tracking
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
+        const initialEmail = params.get('email') || '';
+        let initialPass = '';
+        if (initialEmail) {
+            const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+            const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+            if (matched && matched.password) {
+                initialPass = matched.password;
+            }
+        }
         return {
-            email: params.get('email') || '',
-            password: '',
-            confirmPassword: '',
+            email: initialEmail,
+            password: initialPass,
+            confirmPassword: initialPass,
             rememberMe: false
         };
     });
 
-    //Handles values change in inputs
+    //Handles values change in inputs with dynamic stored password lookup
     const handleChange = (e) => {
-        const { name, value, type, checked } =
-            e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ?
-                checked : value
-        }));
+        const { name, value, type, checked } = e.target;
+        if (name === 'email') {
+            const trimmed = value.trim().toLowerCase();
+            let autoPass = '';
+            if (trimmed !== '') {
+                const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+                const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+                if (matchedProfile && matchedProfile.password) {
+                    autoPass = matchedProfile.password;
+                }
+            }
+            setFormData(prev => ({
+                ...prev,
+                email: value,
+                password: autoPass,
+                confirmPassword: autoPass
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value
+            }));
+        }
     };
 
 
@@ -114,47 +139,66 @@ function Login({ onNavigate, initialView }) {
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
-                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                        if (matchedProfile) {
-                            localStorage.setItem("user", JSON.stringify(matchedProfile));
-                        } else {
-                            localStorage.setItem("user", JSON.stringify({
-                                fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
-                                email: payload.email || formData.email
+                        if (isAdmin) {
+                            // Admin: store ONLY in "admin_user" — never read from registered_profiles
+                            localStorage.setItem("admin_user", JSON.stringify({
+                                fullName: payload.fullName || payload.name || payload.adminName || "Admin",
+                                email: payload.email || formData.email,
+                                role: 'System Administrator'
                             }));
+                        } else {
+                            // Student: read from registered_profiles as before
+                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+
+                            if (matchedProfile) {
+                                localStorage.setItem("user", JSON.stringify(matchedProfile));
+                            } else {
+                                localStorage.setItem("user", JSON.stringify({
+                                    fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
+                                    email: payload.email || formData.email
+                                }));
+                            }
                         }
                     } catch {
                         const nameFromEmail = formData.email.split('@')[0];
                         const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
-                        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                        if (matchedProfile) {
-                            localStorage.setItem("user", JSON.stringify(matchedProfile));
-                        } else {
-                            localStorage.setItem("user", JSON.stringify({
-                                fullName: fallbackName,
-                                email: formData.email
+                        if (isAdmin) {
+                            localStorage.setItem("admin_user", JSON.stringify({
+                                fullName: "Admin",
+                                email: formData.email,
+                                role: 'System Administrator'
                             }));
+                        } else {
+                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
+
+                            if (matchedProfile) {
+                                localStorage.setItem("user", JSON.stringify(matchedProfile));
+                            } else {
+                                localStorage.setItem("user", JSON.stringify({
+                                    fullName: fallbackName,
+                                    email: formData.email
+                                }));
+                            }
                         }
                     }
 
+                    setToastMessage("Login successful!");
+                    setToastType('success');
+                    setShowToast(true);
+
+                    setTimeout(() => {
+                        setShowToast(false);
+                        onNavigate(isAdmin ? 'admin' : 'student');
+                    }, 1500);
+
+                } else {
+                    // Backend returned 200 OK but no token (e.g. user not registered)
+                    throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
                 }
-
-                setToastMessage("Login successful!");
-                setToastType('success');
-                setShowToast(true);
-
-                setTimeout(() => {
-                    setShowToast(false);
-                    onNavigate(isAdmin ? 'admin' : 'student');
-                }, 1500);
-
-
             } catch (error) {
                 console.error("Login Error:", error);
                 const errorMsg = error.response?.data?.message || "Invalid email or password";
@@ -172,12 +216,16 @@ function Login({ onNavigate, initialView }) {
                 const response = await forgotPassword(formData.email);
                 console.log("Forgot Password Response:", response.data);
 
-                setToastMessage("Reset link sent successfully!");
+                // Store the requested email to prevent URL manipulation on reset
+                localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
+
+                setToastMessage("Reset link sent successfully! Check your email.");
                 setToastType('success');
                 setShowToast(true);
                 setTimeout(() => {
                     setShowToast(false);
-                    setLoginView('reset');
+                    // Return to login instead of auto-showing the reset view
+                    setLoginView('login');
                 }, 2500);
             } catch (error) {
                 console.error("Forgot Password Error:", error);
@@ -200,6 +248,16 @@ function Login({ onNavigate, initialView }) {
                 return;
             }
 
+            // Check if this device/browser was the one that actually requested the reset
+            const allowedEmail = localStorage.getItem('allowed_reset_email');
+            if (!allowedEmail || allowedEmail !== formData.email.trim().toLowerCase()) {
+                setToastMessage("Unauthorized request. Please request a new reset link from this device.");
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 4000);
+                return;
+            }
+
             try {
                 // Call the backend reset-password API
                 const response = await resetPassword({
@@ -216,6 +274,7 @@ function Login({ onNavigate, initialView }) {
                     setShowToast(false);
                     setLoginView('login');
                     setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
+                    localStorage.removeItem('allowed_reset_email');
                 }, 2000);
             } catch (error) {
                 console.error("Reset Password Error:", error);
@@ -237,8 +296,8 @@ function Login({ onNavigate, initialView }) {
                 {/* LEFT COLUMN: Branding & Recent Placements */}
                 <div className="login-left">
                     <div className="login-logo-section">
-                        <GraduationCap className="logo-icon" size={28} />
-                        <span className="college-name">College Placement Portal</span>
+                        <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
+                        <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
                     </div>
 
                     <div className="brand-text-section">
@@ -420,6 +479,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Enter new password"
                                                 value={formData.password}
                                                 onChange={handleChange}
+                                                autoComplete="new-password"
                                                 required
                                             />
                                             <button
@@ -442,6 +502,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
+                                                autoComplete="new-password"
                                                 required
                                             />
                                             <button
@@ -504,7 +565,7 @@ function Login({ onNavigate, initialView }) {
                         {/* BOTTOM ACTION LINK (Login view only) */}
                         {loginView === 'login' && (
                             <div className="form-bottom-link-login">
-                                New to College Placement Portal?{' '}
+                                New to Campus_Hire?{' '}
                                 <span className="link-span-register" onClick={() => onNavigate('register')}>
                                     Create Student Account
                                 </span>
@@ -513,7 +574,7 @@ function Login({ onNavigate, initialView }) {
                     </div>
 
                     <div className="form-footer-copyright">
-                        © 2026  · College Placement Portal
+                        © 2026  · Campus_Hire
                     </div>
                 </div>
             </div>
