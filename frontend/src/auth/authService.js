@@ -380,3 +380,61 @@ export const getStudentPlacementDrives = () => {
         }
     });
 };
+
+export const getStudentNotifications = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/notification/student", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+
+
+export const markAllStudentNotificationsAsRead = () => {
+    const token = localStorage.getItem("token");
+    return api.put("/api/notification/student/read-all", {}, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getStudentUnreadCount = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/notification/student/unread-count", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminNotifications = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/notification/admin", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+
+
+export const markAllAdminNotificationsAsRead = () => {
+    const token = localStorage.getItem("token");
+    return api.put("/api/notification/admin/read-all", {}, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const getAdminUnreadCount = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/notification/admin/unread-count", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
