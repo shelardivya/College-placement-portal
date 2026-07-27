@@ -6,22 +6,30 @@ import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.exception.DuplicateResourceException;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class RegisterService {
 
     private final RegisterRepository registerRepository;
     private final RegisterJWT registerJWT;
+    private final NotificationHelper notificationHelper;
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    public RegisterService(RegisterRepository registerRepository, RegisterJWT registerJWT) {
+    public RegisterService(
+            RegisterRepository registerRepository,
+            RegisterJWT registerJWT,
+            NotificationHelper notificationHelper
+    ) {
         this.registerRepository = registerRepository;
         this.registerJWT = registerJWT;
+        this.notificationHelper = notificationHelper;
     }
 
     public String registerStudent(RegisterDto req) {
@@ -63,6 +71,26 @@ public class RegisterService {
         student.setPassword(encoder.encode(req.getPassword()));
         student.setRole(Role.STUDENT);
         registerRepository.save(student);
+        // Notify Admin
+
+        List<RegisterEntity> admins =
+                registerRepository.findAllByRole(Role.ADMIN);
+
+        for (RegisterEntity admin : admins) {
+
+            notificationHelper.createNotification(
+
+                    admin,
+
+                    "ADMIN",
+
+                    "New Student Registered",
+
+                    student.getFullName() + " has registered successfully."
+
+            );
+
+        }
 
         return registerJWT.generateToken(
                 student.getEmail(),

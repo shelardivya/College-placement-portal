@@ -13,61 +13,46 @@ public class NotificationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ==========================================
-    // Receiver (Student / Admin)
-    // ==========================================
+    // ADMIN / STUDENT
+    @Column(nullable = false)
+    private String receiverType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_id", nullable = false)
-    private RegisterEntity receiver;
-
-    @Column(name = "receiver_role", nullable = false)
-    private String receiverRole;
-
-    // ==========================================
-    // Notification Details
-    // ==========================================
+    @JoinColumn(name = "student_id")
+    private RegisterEntity student;
 
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String message;
 
-    @Column(name = "notification_type", nullable = false)
-    private String notificationType;
-
-    @Column(name = "reference_id")
-    private Long referenceId;
-
-    @Column(name = "is_read", nullable = false)
+    @Column(nullable = false)
     private Boolean isRead = false;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
-    // ==========================================
     // Getter Setter
-    // ==========================================
 
     public Long getId() {
         return id;
     }
 
-    public RegisterEntity getReceiver() {
-        return receiver;
+    public String getReceiverType() {
+        return receiverType;
     }
 
-    public void setReceiver(RegisterEntity receiver) {
-        this.receiver = receiver;
+    public void setReceiverType(String receiverType) {
+        this.receiverType = receiverType;
     }
 
-    public String getReceiverRole() {
-        return receiverRole;
+    public RegisterEntity getStudent() {
+        return student;
     }
 
-    public void setReceiverRole(String receiverRole) {
-        this.receiverRole = receiverRole;
+    public void setStudent(RegisterEntity student) {
+        this.student = student;
     }
 
     public String getTitle() {
@@ -86,31 +71,20 @@ public class NotificationEntity {
         this.message = message;
     }
 
-    public String getNotificationType() {
-        return notificationType;
-    }
-
-    public void setNotificationType(String notificationType) {
-        this.notificationType = notificationType;
-    }
-
-    public Long getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(Long referenceId) {
-        this.referenceId = referenceId;
-    }
-
     public Boolean getIsRead() {
         return isRead;
     }
 
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
+    public void setIsRead(Boolean read) {
+        isRead = read;
     }
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
 }

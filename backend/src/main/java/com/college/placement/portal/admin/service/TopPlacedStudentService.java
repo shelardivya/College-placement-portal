@@ -4,6 +4,10 @@ import com.college.placement.portal.admin.dto.AddTopPlacedStudentRequestDto;
 import com.college.placement.portal.admin.dto.TopPlacedStudentResponseDto;
 import com.college.placement.portal.admin.entity.TopPlacedStudentEntity;
 import com.college.placement.portal.admin.repository.TopPlacedStudentRepository;
+import com.college.placement.portal.auth.entity.RegisterEntity;
+import com.college.placement.portal.auth.entity.Role;
+import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,13 +17,18 @@ import java.util.List;
 public class TopPlacedStudentService {
 
     private final TopPlacedStudentRepository topPlacedStudentRepository;
+    private final RegisterRepository registerRepository;
+    private final NotificationHelper notificationHelper;
 
     public TopPlacedStudentService(
-            TopPlacedStudentRepository topPlacedStudentRepository
+            TopPlacedStudentRepository topPlacedStudentRepository,
+            RegisterRepository registerRepository,
+            NotificationHelper notificationHelper
     ) {
         this.topPlacedStudentRepository = topPlacedStudentRepository;
+        this.registerRepository = registerRepository;
+        this.notificationHelper = notificationHelper;
     }
-
     // ==========================================
     // Add Top Placed Student
     // ==========================================
@@ -52,6 +61,27 @@ public class TopPlacedStudentService {
         );
 
         topPlacedStudentRepository.save(student);
+        // ==========================================
+// Notify All Students
+// ==========================================
+
+        for (RegisterEntity studentUser :
+                registerRepository.findAllByRole(Role.STUDENT)) {
+
+            notificationHelper.createNotification(
+                    studentUser,
+                    "STUDENT",
+                    "New Top Placed Student",
+                    "Congratulations!\n"
+                            + student.getStudentName()
+                            + " got placed at "
+                            + student.getCompanyName()
+                            + ".\nPackage : "
+                            + student.getPackageLpa()
+                            + " LPA"
+            );
+
+        }
 
         return "Top Placed Student Added Successfully.";
 

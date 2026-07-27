@@ -17,11 +17,8 @@ public class StudentPlacementDriveResponseDto {
 
     private String venue;
 
-    @JsonFormat(pattern = "dd/MM/yyyy")
-    private LocalDate driveDate;
-
-    @JsonFormat(pattern = "HH:mm")
-    private LocalTime driveTime;
+    private String driveDate;
+    private String driveTime;
 
     private String status;
 
@@ -68,20 +65,19 @@ public class StudentPlacementDriveResponseDto {
     public void setVenue(String venue) {
         this.venue = venue;
     }
-
-    public LocalDate getDriveDate() {
+    public String getDriveDate() {
         return driveDate;
     }
 
-    public void setDriveDate(LocalDate driveDate) {
+    public void setDriveDate(String driveDate) {
         this.driveDate = driveDate;
     }
 
-    public LocalTime getDriveTime() {
+    public String getDriveTime() {
         return driveTime;
     }
 
-    public void setDriveTime(LocalTime driveTime) {
+    public void setDriveTime(String driveTime) {
         this.driveTime = driveTime;
     }
 

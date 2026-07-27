@@ -58,7 +58,7 @@ public class StudentPlacementDriveService {
         for (PlacementDriveEntity drive : drives) {
 
             // Only ACTIVE drives
-            if (!"ACTIVE".equalsIgnoreCase(drive.getStatus())) {
+            if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
                 continue;
             }
 
@@ -116,7 +116,7 @@ public class StudentPlacementDriveService {
                         .orElseThrow(() ->
                                 new IllegalArgumentException("Placement Drive Not Found."));
 
-        if (!"ACTIVE".equalsIgnoreCase(drive.getStatus())) {
+        if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
             throw new IllegalArgumentException("Placement Drive Not Available.");
         }
 
@@ -158,8 +158,17 @@ public class StudentPlacementDriveService {
         dto.setJobRole(drive.getJobRole());
         dto.setLocation(drive.getLocation());
         dto.setVenue(drive.getVenue());
-        dto.setDriveDate(drive.getDriveDate());
-        dto.setDriveTime(drive.getDriveTime());
+        dto.setDriveDate(
+                drive.getDriveDate().format(
+                        java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")
+                )
+        );
+
+        dto.setDriveTime(
+                drive.getDriveTime().format(
+                        java.time.format.DateTimeFormatter.ofPattern("hh:mm a")
+                )
+        );
         dto.setStatus(drive.getStatus());
 
         return dto;

@@ -1,5 +1,6 @@
 package com.college.placement.portal.notification.repository;
 
+import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.notification.entity.NotificationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -8,33 +9,39 @@ import java.util.List;
 public interface NotificationRepository
         extends JpaRepository<NotificationEntity, Long> {
 
-    // ==========================================
-    // All Notifications
-    // ==========================================
+    // ===========================
+    // Admin Notifications
+    // ===========================
 
-    List<NotificationEntity>
-    findByReceiverIdAndReceiverRoleOrderByCreatedAtDesc(
-            Long receiverId,
-            String receiverRole
+    List<NotificationEntity> findByReceiverTypeAndIsReadFalseOrderByCreatedAtDesc(
+            String receiverType
     );
 
-    // ==========================================
-    // Unread Notifications
-    // ==========================================
-
-    List<NotificationEntity>
-    findByReceiverIdAndReceiverRoleAndIsReadFalseOrderByCreatedAtDesc(
-            Long receiverId,
-            String receiverRole
+    long countByReceiverTypeAndIsReadFalse(
+            String receiverType
     );
 
-    // ==========================================
-    // Unread Count
-    // ==========================================
+    // ===========================
+    // Student Notifications
+    // ===========================
 
-    Long countByReceiverIdAndReceiverRoleAndIsReadFalse(
-            Long receiverId,
-            String receiverRole
+    List<NotificationEntity> findByStudentAndIsReadFalseOrderByCreatedAtDesc(
+            RegisterEntity student
+    );
+
+    long countByStudentAndIsReadFalse(
+            RegisterEntity student
+    );
+    // ==========================================
+// Mark All Read
+// ==========================================
+
+    List<NotificationEntity> findByReceiverTypeAndIsReadFalse(
+            String receiverType
+    );
+
+    List<NotificationEntity> findByStudentAndIsReadFalse(
+            RegisterEntity student
     );
 
 }

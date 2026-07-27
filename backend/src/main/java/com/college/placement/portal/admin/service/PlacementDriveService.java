@@ -4,20 +4,34 @@ import com.college.placement.portal.admin.dto.AddPlacementDriveRequestDto;
 import com.college.placement.portal.admin.dto.PlacementDriveResponseDto;
 import com.college.placement.portal.admin.entity.PlacementDriveEntity;
 import com.college.placement.portal.admin.repository.PlacementDriveRepository;
+import com.college.placement.portal.auth.entity.RegisterEntity;
+import com.college.placement.portal.auth.entity.Role;
+import com.college.placement.portal.auth.repository.RegisterRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class PlacementDriveService {
 
     private final PlacementDriveRepository placementDriveRepository;
+    private final RegisterRepository registerRepository;
+    private final NotificationHelper notificationHelper;
 
     public PlacementDriveService(
-            PlacementDriveRepository placementDriveRepository
+            PlacementDriveRepository placementDriveRepository,
+            RegisterRepository registerRepository,
+            NotificationHelper notificationHelper
     ) {
         this.placementDriveRepository = placementDriveRepository;
+        this.registerRepository = registerRepository;
+        this.notificationHelper = notificationHelper;
     }
 
     // ==========================================
@@ -43,12 +57,21 @@ public class PlacementDriveService {
                 request.getLocation()
         );
 
+        DateTimeFormatter dateFormatter =
+                DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.ENGLISH);
+
+        DateTimeFormatter timeFormatter =
+                DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+
         drive.setDriveDate(
-                request.getDriveDate()
+                LocalDate.parse(request.getDriveDate(), dateFormatter)
         );
 
         drive.setDriveTime(
-                request.getDriveTime()
+                LocalTime.parse(
+                        request.getDriveTime().trim().toUpperCase(),
+                        timeFormatter
+                )
         );
 
         drive.setStatus(
@@ -66,6 +89,64 @@ public class PlacementDriveService {
                 request.getSpecificStudentName()
         );
         placementDriveRepository.save(drive);
+        // ==========================================
+// Placement Drive Notification
+// ==========================================
+
+        if ("ALL".equalsIgnoreCase(drive.getTargetStudent())) {
+
+            List<RegisterEntity> students =
+                    registerRepository.findAllByRole(Role.STUDENT);
+
+            for (RegisterEntity student : students) {
+
+                notificationHelper.createNotification(
+                        student,
+                        "STUDENT",
+                        "New Placement Drive",
+                        drive.getCompanyName()
+                                + " Placement Drive has been scheduled.\n"
+                                + "Role : " + drive.getJobRole()
+                                + "\nDate : "
+                                + drive.getDriveDate().format(
+                                DateTimeFormatter.ofPattern(
+                                        "dd MMM yyyy",
+                                        Locale.ENGLISH
+                                )
+                        )
+                );
+
+            }
+
+        }
+        else if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+
+            RegisterEntity student =
+                    registerRepository.findByFullName(
+                            drive.getSpecificStudentName()
+                    ).orElseThrow(() ->
+                            new IllegalArgumentException("Student not found.")
+                    );
+
+            notificationHelper.createNotification(
+                    student,
+                    "STUDENT",
+                    "Placement Drive Invitation",
+                    "You have been invited for "
+                            + drive.getCompanyName()
+                            + " Placement Drive.\n"
+                            + "Role : "
+                            + drive.getJobRole()
+                            + "\nDate : "
+                            + drive.getDriveDate().format(
+                            DateTimeFormatter.ofPattern(
+                                    "dd MMM yyyy",
+                                    Locale.ENGLISH
+                            )
+                    )
+            );
+
+        }
 
         return "Placement Drive Added Successfully.";
 
@@ -105,11 +186,21 @@ public class PlacementDriveService {
             );
 
             dto.setDriveDate(
-                    drive.getDriveDate()
+                    drive.getDriveDate().format(
+                            DateTimeFormatter.ofPattern(
+                                    "dd MMM yyyy",
+                                    java.util.Locale.ENGLISH
+                            )
+                    )
             );
 
             dto.setDriveTime(
-                    drive.getDriveTime()
+                    drive.getDriveTime().format(
+                            DateTimeFormatter.ofPattern(
+                                    "hh:mm a",
+                                    java.util.Locale.ENGLISH
+                            )
+                    )
             );
 
             dto.setStatus(
@@ -144,8 +235,23 @@ public class PlacementDriveService {
         dto.setCompanyName(drive.getCompanyName());
         dto.setJobRole(drive.getJobRole());
         dto.setLocation(drive.getLocation());
-        dto.setDriveDate(drive.getDriveDate());
-        dto.setDriveTime(drive.getDriveTime());
+        dto.setDriveDate(
+                drive.getDriveDate().format(
+                        DateTimeFormatter.ofPattern(
+                                "dd MMM yyyy",
+                                java.util.Locale.ENGLISH
+                        )
+                )
+        );
+
+        dto.setDriveTime(
+                drive.getDriveTime().format(
+                        DateTimeFormatter.ofPattern(
+                                "hh:mm a",
+                                java.util.Locale.ENGLISH
+                        )
+                )
+        );
         dto.setStatus(drive.getStatus());
         dto.setTargetStudent(drive.getTargetStudent());
         dto.setSpecificStudentName(drive.getSpecificStudentName());
@@ -178,12 +284,24 @@ public class PlacementDriveService {
                 request.getLocation()
         );
 
+        DateTimeFormatter dateFormatter =
+                DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.ENGLISH);
+
+        DateTimeFormatter timeFormatter =
+                DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+
         drive.setDriveDate(
-                request.getDriveDate()
+                LocalDate.parse(
+                        request.getDriveDate().trim(),
+                        dateFormatter
+                )
         );
 
         drive.setDriveTime(
-                request.getDriveTime()
+                LocalTime.parse(
+                        request.getDriveTime().trim().toUpperCase(),
+                        timeFormatter
+                )
         );
 
         drive.setStatus(
