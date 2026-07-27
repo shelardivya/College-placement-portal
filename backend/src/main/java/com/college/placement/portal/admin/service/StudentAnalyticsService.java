@@ -5,7 +5,7 @@ import com.college.placement.portal.admin.dto.DepartmentAnalyticsDto;
 import com.college.placement.portal.admin.dto.StudentAnalyticsDto;
 import com.college.placement.portal.admin.dto.TopSkillDto;
 import com.college.placement.portal.admin.entity.AddJobEntity;
-import com.college.placement.portal.admin.entity.PlacementRecordEntity;
+import com.college.placement.portal.admin.entity.TopPlacedStudentEntity;
 import com.college.placement.portal.admin.repository.AddJobRepository;
 import com.college.placement.portal.admin.repository.PlacementRecordRepository;
 import com.college.placement.portal.admin.repository.TopPlacedStudentRepository;
@@ -184,14 +184,14 @@ public class StudentAnalyticsService {
 
         return dto;
     }
-    // ==========================================
+// ==========================================
 // Placement by CGPA
 // ==========================================
 
     public List<CgpaPlacementDto> getPlacementByCgpa() {
 
-        List<PlacementRecordEntity> placedStudents =
-                placementRecordRepository.findAllByStatusIgnoreCase("PLACED");
+        List<TopPlacedStudentEntity> placedStudents =
+                topPlacedStudentRepository.findAll();
 
         long below6 = 0;
         long between6And7 = 0;
@@ -199,9 +199,9 @@ public class StudentAnalyticsService {
         long between8And9 = 0;
         long between9And10 = 0;
 
-        for (PlacementRecordEntity placement : placedStudents) {
+        for (TopPlacedStudentEntity student : placedStudents) {
 
-            Double cgpa = placement.getStudent().getCgpa();
+            Double cgpa = student.getCgpa();
 
             if (cgpa == null) {
                 continue;
@@ -235,7 +235,6 @@ public class StudentAnalyticsService {
 
         return response;
     }
-
     // ==========================================
 // Top Skills In Demand
 // ==========================================
