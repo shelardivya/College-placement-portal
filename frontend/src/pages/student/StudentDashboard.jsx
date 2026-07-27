@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -431,8 +431,22 @@ export default function
 
 
     // 1. Triggered when the user clicks the "Apply" button on any job card
-    const handleApplyClick = (job) => {
-        setSelectedJob(job);
+    const handleApplyClick = async (job) => {
+        try {
+            const response = await getJobDetails(job.id);
+            if (response.data) {
+                let requirementsArray = response.data.jobRequirements || response.data.requirements || [];
+                if (typeof requirementsArray === 'string') {
+                    requirementsArray = requirementsArray.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                setSelectedJob({ ...job, ...response.data, requirements: requirementsArray });
+            } else {
+                setSelectedJob(job);
+            }
+        } catch (error) {
+            console.error("Failed to fetch full job details", error);
+            setSelectedJob(job);
+        }
     };
 
     const handleResumeFileChange = (e) => {

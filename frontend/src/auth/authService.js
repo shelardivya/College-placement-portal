@@ -291,6 +291,15 @@ export const getLatestJobs = () => {
     });
 };
 
+export const getJobDetails = (id) => {
+    const token = localStorage.getItem("token");
+    return api.get(`/student/jobs/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const applyForJob = (jobId, formData) => {
     const token = localStorage.getItem("token");
     return api.post(`/student/jobs/${jobId}/apply`, formData, {
