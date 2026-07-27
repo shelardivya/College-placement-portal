@@ -93,12 +93,9 @@ public class AdminQueryService {
 
         query.setAdminReply(request.getReply());
 
-        query.setStatus("RESOLVED");
-
-        query.setResolvedAt(LocalDateTime.now());
-
         studentQueryRepository.save(query);
-        // ==========================================
+
+// ==========================================
 // Notify Student
 // ==========================================
 
