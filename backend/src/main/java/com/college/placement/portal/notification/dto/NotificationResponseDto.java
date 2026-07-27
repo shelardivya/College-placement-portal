@@ -2,25 +2,19 @@ package com.college.placement.portal.notification.dto;
 
 import java.time.LocalDateTime;
 
-public class AdminNotificationResponseDto {
+public class NotificationResponseDto {
 
     private Long id;
+
+    private String studentName;
 
     private String title;
 
     private String message;
 
-    private String notificationType;
-
-    private Long referenceId;
-
     private Boolean isRead;
 
     private LocalDateTime createdAt;
-
-    // ==========================================
-    // Getter Setter
-    // ==========================================
 
     public Long getId() {
         return id;
@@ -28,6 +22,14 @@ public class AdminNotificationResponseDto {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getStudentName() {
+        return studentName;
+    }
+
+    public void setStudentName(String studentName) {
+        this.studentName = studentName;
     }
 
     public String getTitle() {
@@ -46,28 +48,12 @@ public class AdminNotificationResponseDto {
         this.message = message;
     }
 
-    public String getNotificationType() {
-        return notificationType;
-    }
-
-    public void setNotificationType(String notificationType) {
-        this.notificationType = notificationType;
-    }
-
-    public Long getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(Long referenceId) {
-        this.referenceId = referenceId;
-    }
-
     public Boolean getIsRead() {
         return isRead;
     }
 
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
+    public void setIsRead(Boolean read) {
+        isRead = read;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "register")
@@ -52,6 +53,11 @@ public class RegisterEntity {
 
     @Column(name = "github_url")
     private String githubUrl;
+
+    // ===== Created At =====
+
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // ===== AUTH DETAILS =====
 

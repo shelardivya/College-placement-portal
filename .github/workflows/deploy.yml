@@ -26,8 +26,9 @@ jobs:
 
       - name: Deploy Frontend Files
         run: |
-          sudo rm -rf /opt/frontend_app/*
-          sudo cp -r frontend/dist/* /opt/frontend_app/
+          sudo mkdir -p /opt/frontend_app/frontend/dist
+          sudo rm -rf /opt/frontend_app/frontend/dist/*
+          sudo cp -r frontend/dist/* /opt/frontend_app/frontend/dist/
           sudo chown -R frontend_user:frontend_user /opt/frontend_app/
 
       - name: Setup Java
@@ -43,8 +44,9 @@ jobs:
 
       - name: Deploy Backend Files & Restart Services
         run: |
-          sudo rm -f /opt/backend_app/*.jar
-          sudo cp backend/target/*.jar /opt/backend_app/
+          sudo mkdir -p /opt/backend_app/College-placement-portal/backend/target
+          sudo rm -f /opt/backend_app/College-placement-portal/backend/target/*.jar
+          sudo cp backend/target/*.jar /opt/backend_app/College-placement-portal/backend/target/
           sudo chown -R backend_user:backend_user /opt/backend_app/
           
           sudo systemctl restart backend.service
