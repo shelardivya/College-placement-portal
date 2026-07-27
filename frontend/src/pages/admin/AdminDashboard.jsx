@@ -104,11 +104,7 @@ function AdminDashboard({ onNavigate }) {
 
     // Notifications Sidebar State
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
-    const [notifications, setNotifications] = useState([
-        { id: 1, text: "Amit Kumar applied for Google!", date: "Today" },
-        { id: 2, text: "New student registration: John Doe", date: "Yesterday" },
-        { id: 3, text: "Placement posting 'UX Designer Intern' saved as draft.", date: "2 days ago" }
-    ]);
+    const [notifications, setNotifications] = useState([]);
 
     // Profile Settings Modal States
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -173,10 +169,10 @@ function AdminDashboard({ onNavigate }) {
                             name: app.studentName || 'Student',
                             company: app.jobRole || 'SDE',
                             degree: app.degree || 'B.Tech',
-                            branch: app.branch || 'Computer Science',
-                            cgpa: app.cgpa || 8.0,
-                            year: app.passingYear || '2026 Passout',
-                            match: app.matchScore || Math.floor(Math.random() * 20) + 80,
+                            branch: app.branch || 'N/A',
+                            cgpa: app.cgpa || 0.0,
+                            year: app.passingYear || 'N/A',
+                            match: app.matchScore !== undefined ? app.matchScore : 0,
                             date: app.appliedDate || dateString
                         };
                     });
@@ -1008,9 +1004,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Total Students</span>
-                                        <h3 className='stat-value'>0</h3>
-                                        <span className='stat-trend green-trend'>
-                                            0% <span className='trend-subtext'>from last month</span>
+                                        <h3 className='stat-value'>-</h3>
+                                        <span className='stat-trend'>
+                                            <span className='trend-subtext'>API pending</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1021,9 +1017,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Resume Received</span>
-                                        <h3 className='stat-value'>0</h3>
-                                        <span className='stat-trend green-trend'>
-                                            0% <span className='trend-subtext'>from last month</span>
+                                        <h3 className='stat-value'>-</h3>
+                                        <span className='stat-trend'>
+                                            <span className='trend-subtext'>API pending</span>
                                         </span>
                                     </div>
                                 </div>
