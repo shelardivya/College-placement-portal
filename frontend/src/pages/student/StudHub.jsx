@@ -78,7 +78,7 @@ export default function StudHub() {
                         title: q.subject,
                         message: q.description,
                         status: q.status ? q.status.toLowerCase() : 'pending',
-                        reply: q.adminReply || 'Your query has been submitted. Admin team will respond shortly.',
+                        reply: q.adminReply || '',
                         date: (() => {
                             try {
                                 if (!q.createdAt) return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -652,12 +652,14 @@ export default function StudHub() {
                                         </div>
 
 
-                                        <div className="admin-reply-box">
-                                            <span className="reply-header-label">ADMIN REPLY:</span>
-                                            <p className="reply-text-content">
-                                                {query.reply || query.adminReply || "Your query has been submitted. Admin team will respond shortly."}
-                                            </p>
-                                        </div>
+                                        { (query.reply || query.adminReply) && (
+                                            <div className="admin-reply-box">
+                                                <span className="reply-header-label">ADMIN REPLY:</span>
+                                                <p className="reply-text-content">
+                                                    {query.reply || query.adminReply}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             ) : (
