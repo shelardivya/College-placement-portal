@@ -375,7 +375,7 @@ function Login({ onNavigate, initialView }) {
                         {/* Header titles swap depending on view */}
                         {loginView === 'login' && (
                             <div className="form-header">
-                                <h2>Welcome Back</h2>
+                                <h2>Welcome Back🚀</h2>
                                 <p>Sign in to your Campus_Hire account</p>
                             </div>
                         )}
