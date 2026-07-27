@@ -447,3 +447,12 @@ export const getAdminUnreadCount = () => {
         }
     });
 };
+
+export const getAdminDashboardStats = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/api/admin/student-analytics/dashboard", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};

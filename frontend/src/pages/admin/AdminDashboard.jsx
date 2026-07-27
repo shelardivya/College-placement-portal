@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminDashboardStats } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -72,6 +72,9 @@ function AdminDashboard({ onNavigate }) {
 
     // Draft Lists State
     const [drafts, setDrafts] = useState([]);
+
+    // Dashboard Stats State
+    const [dashboardStats, setDashboardStats] = useState(null);
 
     //Applicants mock data
     const [applicants, setApplicants] =
@@ -209,13 +212,13 @@ function AdminDashboard({ onNavigate }) {
                         return {
                             id: app.id || Date.now() + Math.random(),
                             name: app.studentName || '',
-                            company: app.jobRole || '',
-                            degree: app.degree || '',
-                            branch: app.branch || '',
-                            cgpa: app.cgpa || '',
+                            company: app.companyName || app.jobRole || '',
+                            degree: app.course || app.degree || '',
+                            branch: app.department || app.branch || '',
+                            cgpa: app.cgpa !== undefined && app.cgpa !== null ? app.cgpa : '',
                             year: app.passingYear || '',
-                            match: app.matchScore !== undefined ? app.matchScore : '',
-                            date: app.appliedDate || ''
+                            match: app.matchPercentage !== undefined ? app.matchPercentage : (app.matchScore !== undefined ? app.matchScore : ''),
+                            date: app.appliedAt || app.appliedDate || ''
                         };
                     });
                     setApplicants(mapped);
@@ -243,10 +246,22 @@ function AdminDashboard({ onNavigate }) {
             }
         };
 
+        const fetchDashboardStats = async () => {
+            try {
+                const response = await getAdminDashboardStats();
+                if (response.data) {
+                    setDashboardStats(response.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch admin dashboard stats:", error);
+            }
+        };
+
         fetchAdminProfile();
         fetchRecentPosts();
         fetchApplicantsMatching();
         fetchDrafts();
+        fetchDashboardStats();
     }, []);
 
 
@@ -1046,9 +1061,11 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Total Students</span>
-                                        <h3 className='stat-value'>-</h3>
+                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalStudents : '-'}</h3>
                                         <span className='stat-trend'>
-                                            <span className='trend-subtext'>API pending</span>
+                                            <span className='trend-subtext'>
+                                                {dashboardStats ? (dashboardStats.studentGrowth >= 0 ? `+${dashboardStats.studentGrowth}% from last month` : `${dashboardStats.studentGrowth}% from last month`) : 'API pending'}
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
@@ -1059,9 +1076,11 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Resume Received</span>
-                                        <h3 className='stat-value'>-</h3>
+                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalResumeReceived : '-'}</h3>
                                         <span className='stat-trend'>
-                                            <span className='trend-subtext'>API pending</span>
+                                            <span className='trend-subtext'>
+                                                {dashboardStats ? (dashboardStats.resumeGrowth >= 0 ? `+${dashboardStats.resumeGrowth}% from last month` : `${dashboardStats.resumeGrowth}% from last month`) : 'API pending'}
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
