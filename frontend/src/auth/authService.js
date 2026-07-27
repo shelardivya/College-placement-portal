@@ -327,6 +327,15 @@ export const submitStudentQuery = (queryData) => {
     });
 };
 
+export const resolveStudentQuery = (id) => {
+    const token = localStorage.getItem("token");
+    return api.put(`/student/query/resolve/${id}`, {}, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const getTopSkillsAnalytics = () => {
     const token = localStorage.getItem("token");
     return api.get("/admin/student-analytics/top-skills", {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getStudentQueries, submitStudentQuery, getStudentPlacementStories, getStudentPlacementDrives } from '../../auth/authService';
+import { getStudentQueries, submitStudentQuery, resolveStudentQuery, getStudentPlacementStories, getStudentPlacementDrives } from '../../auth/authService';
 import {
     Award,
     MessageSquare,
@@ -244,19 +244,23 @@ export default function StudHub() {
         }
     };
 
-    const handleResolveQuery = (queryId) => {
-        setQueries(prev => {
-            const source = prev.length > 0 ? prev : initialStudentQueries;
-            const updated = source.map(q => {
-                if (q.id === queryId) {
-                    return { ...q, status: 'resolved' };
-                }
-                return q;
+    const handleResolveQuery = async (queryId) => {
+        try {
+            await resolveStudentQuery(queryId);
+            setQueries(prev => {
+                const updated = prev.map(q => {
+                    if (q.id === queryId) {
+                        return { ...q, status: 'resolved' };
+                    }
+                    return q;
+                });
+                return updated;
             });
-            localStorage.setItem("student_queries", JSON.stringify(updated));
-            return updated;
-        });
-        triggerToast("Query marked as resolved!", "success");
+            triggerToast("Query marked as resolved!", "success");
+        } catch (error) {
+            console.error("Failed to resolve query:", error);
+            triggerToast("Failed to resolve query.", "error");
+        }
     };
 
     return (
