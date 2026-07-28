@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Search,
     MoreVertical,
@@ -218,14 +218,27 @@ export default function QueriesStories() {
     const [targetSearchTerm, setTargetSearchTerm] = useState('');
     const [showTargetDropdown, setShowTargetDropdown] = useState(false);
     
-    const availableStudents = [
-        { email: "all", name: "All Students" },
-        { email: "student@portal.edu", name: "Default Student" },
-        { email: "priya@college.edu.in", name: "Priya Sharma" },
-        { email: "rahul@college.edu.in", name: "Rahul Patil" },
-        { email: "sneha@college.edu.in", name: "Sneha Jadhav" },
-        { email: "jayashri@gmail.com", name: "Jayashri Patil" }
-    ];
+    const [availableStudents, setAvailableStudents] = useState([]);
+
+    useEffect(() => {
+        const fetchStudents = async () => {
+            try {
+                const response = await getAllStudentsForDrive();
+                if (response.data && Array.isArray(response.data)) {
+                    // response.data has format [{id: 2, fullName: "Divya Shelar"}, ...]
+                    const formatted = response.data.map(s => ({
+                        email: s.id.toString(), // or an actual email if backend returns it
+                        name: s.fullName
+                    }));
+                    setAvailableStudents([{ email: "all", name: "All Students" }, ...formatted]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch specific students for drive:", error);
+                setAvailableStudents([{ email: "all", name: "All Students" }]); // fallback
+            }
+        };
+        fetchStudents();
+    }, []);
     const [driveForm, setDriveForm] = useState({
         company: '',
         role: '',
@@ -1229,7 +1242,7 @@ export default function QueriesStories() {
                                         className="form-input-control"
                                         value={driveForm.date}
                                         onChange={(e) => setDriveForm({ ...driveForm, date: e.target.value })}
-                                        placeholder="yyyy-mm-dd"
+                                        placeholder="e.g. 10 Dec 2026"
                                     />
                                 </div>
                                 <div className="qs-form-group">
@@ -1240,7 +1253,7 @@ export default function QueriesStories() {
                                         className="form-input-control"
                                         value={driveForm.time}
                                         onChange={(e) => setDriveForm({ ...driveForm, time: e.target.value })}
-                                        placeholder="HH:mm"
+                                        placeholder="e.g. 11:00 AM"
                                     />
                                 </div>
                                 <div className="qs-form-group">
@@ -1261,9 +1274,9 @@ export default function QueriesStories() {
                                         value={driveForm.status}
                                         onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
                                     >
-                                        <option value="open">Open</option>
-                                        <option value="upcoming">Upcoming</option>
-                                        <option value="closed">Closed</option>
+                                        <option value="OPEN">Open</option>
+                                        <option value="UPCOMING">Upcoming</option>
+                                        <option value="CLOSED">Closed</option>
                                     </select>
                                 </div>
                                 <div className="qs-form-group">
