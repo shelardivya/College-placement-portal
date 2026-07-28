@@ -33,12 +33,13 @@ export default function StudHub() {
 
     // Filter drives targeted to this student
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
+    const studentName = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
     const studentFilteredDrives = drives.filter(drive => {
         const target = (drive.targetStudent || "").toLowerCase().trim();
         if (target === "" || target === "all") {
             return true;
         }
-        return target === studentEmail;
+        return target.includes(studentEmail) || (studentName !== "" && target.includes(studentName));
     });
 
     const activeDrives = studentFilteredDrives.filter(d => d.status === 'open' || d.status === 'upcoming');

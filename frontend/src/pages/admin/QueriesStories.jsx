@@ -195,9 +195,9 @@ export default function QueriesStories() {
                         time: d.driveTime || d.time || "TBD",
                         status: d.status,
                         venue: d.venue || "",
-                        targetStudent: d.targetStudent || "All"
                     }));
-                    setDrives(mappedDrives);
+                    // Sort by ID descending so newest drives appear at the top
+                    setDrives(mappedDrives.sort((a, b) => b.id - a.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch placement drives:", error);
