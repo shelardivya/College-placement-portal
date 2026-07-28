@@ -230,11 +230,11 @@ export default function QueriesStories() {
                         email: s.id.toString(), // or an actual email if backend returns it
                         name: s.fullName
                     }));
-                    setAvailableStudents([{ email: "all", name: "All Students" }, ...formatted]);
+                    setAvailableStudents([{ email: "all", name: "ALL" }, ...formatted]);
                 }
             } catch (error) {
                 console.error("Failed to fetch specific students for drive:", error);
-                setAvailableStudents([{ email: "all", name: "All Students" }]); // fallback
+                setAvailableStudents([{ email: "all", name: "ALL" }]); // fallback
             }
         };
         fetchStudents();
@@ -246,8 +246,8 @@ export default function QueriesStories() {
         date: '',
         time: '',
         venue: 'Seminar Hall A',
-        status: 'open',
-        targetStudent: 'All Students (Selected for Everyone)',
+        status: 'OPEN',
+        targetStudent: 'ALL',
         customTarget: ''
     });
 
@@ -260,8 +260,8 @@ export default function QueriesStories() {
             date: '',
             time: '',
             venue: 'Seminar Hall A',
-            status: 'open',
-            targetStudent: 'All Students (Selected for Everyone)',
+            status: 'OPEN',
+            targetStudent: 'ALL',
             customTarget: ''
         });
         setIsDriveModalOpen(true);
@@ -276,8 +276,8 @@ export default function QueriesStories() {
             date: drive.date || '',
             time: drive.time || '',
             venue: drive.venue || 'Seminar Hall A',
-            status: drive.status || 'open',
-            targetStudent: drive.targetStudent || 'All Students (Selected for Everyone)',
+            status: drive.status || 'OPEN',
+            targetStudent: drive.targetStudent || 'ALL',
             customTarget: drive.customTarget || ''
         });
         setIsDriveModalOpen(true);
