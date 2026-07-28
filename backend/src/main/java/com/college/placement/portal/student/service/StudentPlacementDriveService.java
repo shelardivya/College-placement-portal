@@ -68,20 +68,27 @@ public class StudentPlacementDriveService {
             }
 
             // Target Student Logic
+// ==========================================
+// Target Student Logic
+// ==========================================
 
-            if ("ALL".equalsIgnoreCase(drive.getTargetStudent())) {
+            if (drive.getTargetStudent() != null
+                    && drive.getTargetStudent().contains("ALL")) {
 
                 response.add(convertToDto(drive));
 
-            } else if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+            }
+            else if (drive.getTargetStudent() != null
+                    && drive.getTargetStudent().contains(student.getFullName())) {
 
-                if (student.getFullName().equalsIgnoreCase(
-                        drive.getSpecificStudentName()
-                )) {
+                response.add(convertToDto(drive));
 
-                    response.add(convertToDto(drive));
+            }
+            else if (drive.getSpecificStudentName() != null
+                    && student.getFullName().equalsIgnoreCase(
+                    drive.getSpecificStudentName())) {
 
-                }
+                response.add(convertToDto(drive));
 
             }
 
@@ -124,17 +131,30 @@ public class StudentPlacementDriveService {
             throw new IllegalArgumentException("Placement Drive Expired.");
         }
 
-        if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+        if (drive.getTargetStudent() != null
+                && drive.getTargetStudent().contains("ALL")) {
 
-            if (!student.getFullName().equalsIgnoreCase(
-                    drive.getSpecificStudentName()
-            )) {
+            // Everyone can access
 
-                throw new IllegalArgumentException(
-                        "You are not eligible to view this placement drive."
-                );
+        }
+        else if (drive.getTargetStudent() != null
+                && drive.getTargetStudent().contains(student.getFullName())) {
 
-            }
+            // Selected student can access
+
+        }
+        else if (drive.getSpecificStudentName() != null
+                && student.getFullName().equalsIgnoreCase(
+                drive.getSpecificStudentName())) {
+
+            // Specific student can access
+
+        }
+        else {
+
+            throw new IllegalArgumentException(
+                    "You are not eligible to view this placement drive."
+            );
 
         }
 
