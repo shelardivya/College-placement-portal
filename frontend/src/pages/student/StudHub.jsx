@@ -183,6 +183,7 @@ export default function StudHub() {
                         id: d.id,
                         company: d.companyName,
                         role: d.jobRole,
+                        location: d.location,
                         date: d.driveDate,
                         time: d.driveTime || 'TBA',
                         venue: d.venue || 'TBA',
