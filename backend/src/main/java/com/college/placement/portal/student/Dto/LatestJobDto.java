@@ -10,6 +10,8 @@ public class LatestJobDto {
 
     private String companyName;
 
+    private Boolean isApplied;
+
     private String location;
 
     private String jobRoleOverview;
@@ -32,7 +34,13 @@ public class LatestJobDto {
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
     }
+    public Boolean getIsApplied() {
+        return isApplied;
+    }
 
+    public void setIsApplied(Boolean isApplied) {
+        this.isApplied = isApplied;
+    }
     public String getLocation() {
         return location;
     }
