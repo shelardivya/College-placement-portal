@@ -152,6 +152,15 @@ export const addPlacementDrive = (driveData) => {
     });
 };
 
+export const getAllStudentsForDrive = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/admin/placement-drive/specific-students", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const updatePlacementDrive = (id, driveData) => {
     const token = localStorage.getItem("token");
     return api.put(`/admin/placement-drive/update/${id}`, driveData, {
