@@ -308,16 +308,6 @@ export default function QueriesStories() {
         if (editingDrive) {
             // Update existing via API
             try {
-                const targetNames = typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []);
-                const targetIds = targetNames.map(name => {
-                    if (name.toUpperCase() === 'ALL') return 'ALL';
-                    const found = availableStudents.find(s => s.name === name);
-                    return found ? found.email : name;
-                });
-                
-                const customTargetName = (driveForm.customTarget || "").trim();
-                const customTargetId = customTargetName ? (availableStudents.find(s => s.name === customTargetName)?.email || customTargetName) : "";
-
                 const payload = {
                     companyName: driveForm.company.trim(),
                     jobRole: driveForm.role.trim(),
@@ -326,8 +316,8 @@ export default function QueriesStories() {
                     driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
                     driveTime: driveForm.time ? driveForm.time.trim() : "",
                     status: driveForm.status || "Open",
-                    targetStudent: targetIds,
-                    specificStudentName: customTargetId
+                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
+                    specificStudentName: (driveForm.customTarget || "").trim()
                 };
 
                 await updatePlacementDrive(editingDrive.id, payload);
@@ -360,16 +350,6 @@ export default function QueriesStories() {
         } else {
             // Add new via API
             try {
-                const targetNames = typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []);
-                const targetIds = targetNames.map(name => {
-                    if (name.toUpperCase() === 'ALL') return 'ALL';
-                    const found = availableStudents.find(s => s.name === name);
-                    return found ? found.email : name;
-                });
-                
-                const customTargetName = (driveForm.customTarget || "").trim();
-                const customTargetId = customTargetName ? (availableStudents.find(s => s.name === customTargetName)?.email || customTargetName) : "";
-
                 const payload = {
                     companyName: driveForm.company.trim(),
                     jobRole: driveForm.role.trim(),
@@ -378,8 +358,8 @@ export default function QueriesStories() {
                     driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
                     driveTime: driveForm.time ? driveForm.time.trim() : "",
                     status: driveForm.status || "Open",
-                    targetStudent: targetIds,
-                    specificStudentName: customTargetId
+                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
+                    specificStudentName: (driveForm.customTarget || "").trim()
                 };
 
                 const response = await addPlacementDrive(payload);
