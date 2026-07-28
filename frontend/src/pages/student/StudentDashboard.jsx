@@ -277,11 +277,31 @@ export default function
             try {
                 const response = await getStudentProfile();
                 if (response.data) {
+                    const freshData = {
+                        fullName: response.data.fullName || response.data.name || "",
+                        email: response.data.email || "",
+                        phone: response.data.mobile || response.data.phone || "",
+                        branch: response.data.department || response.data.branch || "",
+                        passingYear: response.data.currentYear || response.data.passingYear || "",
+                        cgpa: response.data.cgpa || "0.0",
+                        skills: response.data.skills || "",
+                        linkedinUrl: response.data.linkedinUrl || "",
+                        githubUrl: response.data.githubUrl || ""
+                    };
+
                     setProfile(prev => ({
                         ...prev,
-                        ...response.data
+                        ...freshData
                     }));
-                    console.log("Student profile fetched:", response.data);
+
+                    // Update localStorage so next time we refresh or login, it has the fresh data!
+                    const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
+                    localStorage.setItem("user", JSON.stringify({
+                        ...existingUser,
+                        ...freshData
+                    }));
+
+                    console.log("Student profile fetched and updated in localStorage:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching student profile:", error);
