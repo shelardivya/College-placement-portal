@@ -1048,9 +1048,11 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
                                     <div className='stat-details'>
                                         <span className='stat-label'>Active Posting</span>
-                                        <h3 className='stat-value'>{jobs.length}</h3>
-                                        <span className='stat-trend green-trend'>
-                                            0% <span className='trend-subtext'>from last month</span>
+                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalActivePosts : '-'}</h3>
+                                        <span className='stat-trend'>
+                                            <span className='trend-subtext'>
+                                                {dashboardStats ? (dashboardStats.activePostsGrowth >= 0 ? `+${dashboardStats.activePostsGrowth}% from last month` : `${dashboardStats.activePostsGrowth}% from last month`) : 'API pending'}
+                                            </span>
                                         </span>
                                     </div>
                                 </div>
