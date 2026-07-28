@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "placement_drive")
@@ -34,8 +35,13 @@ public class PlacementDriveEntity {
     @Column
     private String status;
 
-    @Column(name = "target_student")
-    private String targetStudent;
+    @ElementCollection
+    @CollectionTable(
+            name = "placement_drive_target_students",
+            joinColumns = @JoinColumn(name = "placement_drive_id")
+    )
+    @Column(name = "student_name")
+    private List<String> targetStudent;
 
     @Column(name = "specific_student_name")
     private String specificStudentName;
@@ -104,11 +110,11 @@ public class PlacementDriveEntity {
         this.status = status;
     }
 
-    public String getTargetStudent() {
+    public List<String> getTargetStudent() {
         return targetStudent;
     }
 
-    public void setTargetStudent(String targetStudent) {
+    public void setTargetStudent(List<String> targetStudent) {
         this.targetStudent = targetStudent;
     }
 
