@@ -124,7 +124,7 @@ export default function StudHub() {
                         return {
                             id: story.id,
                             name: story.studentName,
-                            avatar: story.photoUrl || avatarUrl,
+                            avatar: story.photoPath || avatarUrl,
                             company: story.companyName,
                             companyColor: '#eff6ff',
                             companyTextColor: '#2563eb',
