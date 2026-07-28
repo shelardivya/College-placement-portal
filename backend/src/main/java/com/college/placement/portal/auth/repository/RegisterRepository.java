@@ -61,4 +61,5 @@ public interface RegisterRepository extends JpaRepository<RegisterEntity, Long> 
        ORDER BY r.fullName ASC
        """)
     List<PlacementDriveSpecificStudentDto> getPlacementDriveSpecificStudents();
+
 }

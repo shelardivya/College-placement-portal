@@ -14,7 +14,9 @@ public class NotificationResponseDto {
 
     private Boolean isRead;
 
-    private LocalDateTime createdAt;
+    private String createdDate;
+
+    private String createdTime;
 
     public Long getId() {
         return id;
@@ -56,12 +58,20 @@ public class NotificationResponseDto {
         isRead = read;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    public String getCreatedDate() {
+        return createdDate;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setCreatedDate(String createdDate) {
+        this.createdDate = createdDate;
+    }
+
+    public String getCreatedTime() {
+        return createdTime;
+    }
+
+    public void setCreatedTime(String createdTime) {
+        this.createdTime = createdTime;
     }
 
 }
