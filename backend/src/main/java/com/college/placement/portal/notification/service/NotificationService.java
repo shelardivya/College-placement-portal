@@ -64,7 +64,17 @@ public class NotificationService {
             dto.setTitle(notification.getTitle());
             dto.setMessage(notification.getMessage());
             dto.setIsRead(notification.getIsRead());
-            dto.setCreatedAt(notification.getCreatedAt());
+            dto.setCreatedDate(
+                    notification.getCreatedAt().format(
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                    )
+            );
+
+            dto.setCreatedTime(
+                    notification.getCreatedAt().format(
+                            java.time.format.DateTimeFormatter.ofPattern("hh:mm a")
+                    )
+            );
 
             response.add(dto);
         }
@@ -97,7 +107,17 @@ public class NotificationService {
             dto.setTitle(notification.getTitle());
             dto.setMessage(notification.getMessage());
             dto.setIsRead(notification.getIsRead());
-            dto.setCreatedAt(notification.getCreatedAt());
+            dto.setCreatedDate(
+                    notification.getCreatedAt().format(
+                            java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
+                    )
+            );
+
+            dto.setCreatedTime(
+                    notification.getCreatedAt().format(
+                            java.time.format.DateTimeFormatter.ofPattern("hh:mm a")
+                    )
+            );
 
             response.add(dto);
         }
