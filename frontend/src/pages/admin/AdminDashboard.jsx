@@ -116,7 +116,24 @@ function AdminDashboard({ onNavigate }) {
             if (response.data) {
                 const data = Array.isArray(response.data) ? response.data : 
                              (response.data.content ? response.data.content : []);
-                const sorted = data.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
+                const parseDateStr = (dateStr, timeStr) => {
+                    if (!dateStr) return 0;
+                    const [day, month, year] = dateStr.split('/');
+                    if (!year) return new Date(dateStr).getTime() || 0;
+                    const d = new Date(`${year}-${month}-${day}T00:00:00`);
+                    if (timeStr) {
+                        const match = timeStr.match(/(\d+):(\d+)\s(AM|PM)/);
+                        if (match) {
+                            let [, h, m, ampm] = match;
+                            h = parseInt(h);
+                            if (ampm === 'PM' && h < 12) h += 12;
+                            if (ampm === 'AM' && h === 12) h = 0;
+                            d.setHours(h, parseInt(m));
+                        }
+                    }
+                    return d.getTime();
+                };
+                const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
                 setNotifications(sorted);
             }
             
@@ -1874,7 +1891,7 @@ function AdminDashboard({ onNavigate }) {
                                                 style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                             >
                                                 <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
-                                                <span className="notif-date">{notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date}</span>
+                                                <span className="notif-date">{notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date)}</span>
                                             </div>
                                         );
                                     })
