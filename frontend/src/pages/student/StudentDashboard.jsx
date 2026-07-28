@@ -189,7 +189,27 @@ export default function
                     return d.getTime();
                 };
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
-                setNotifications(sorted);
+                
+                const localizedData = sorted.map(notif => {
+                    if (notif.createdDate && notif.createdTime) {
+                        const [day, month, year] = notif.createdDate.split('/');
+                        const match = notif.createdTime.match(/(\d+):(\d+)\s(AM|PM)/);
+                        if (day && month && year && match) {
+                            let [, h, m, ampm] = match;
+                            h = parseInt(h);
+                            if (ampm === 'PM' && h < 12) h += 12;
+                            if (ampm === 'AM' && h === 12) h = 0;
+                            m = parseInt(m);
+                            
+                            const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
+                            
+                            notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                            notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+                        }
+                    }
+                    return notif;
+                });
+                setNotifications(localizedData);
             }
             
             const countResponse = await getStudentUnreadCount();
@@ -1556,7 +1576,7 @@ export default function
                                             style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                         >
                                             <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
-                                            <span className="notif-date">{notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date)}</span>
+                                            <span className="notif-date">{notif.displayDate ? `${notif.displayDate} at ${notif.displayTime}` : (notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date))}</span>
                                         </div>
                                     );
                                 })
