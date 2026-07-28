@@ -316,7 +316,7 @@ export default function QueriesStories() {
                     driveDate: driveForm.date || "2026-07-23", 
                     driveTime: driveForm.time || "",
                     status: driveForm.status || "Open",
-                    targetStudent: driveForm.targetStudent,
+                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
                     specificStudentName: driveForm.customTarget || ""
                 };
                 
@@ -358,7 +358,7 @@ export default function QueriesStories() {
                     driveDate: driveForm.date || "2026-07-23", // default fallback or parse correctly
                     driveTime: driveForm.time || "",
                     status: driveForm.status || "Open",
-                    targetStudent: driveForm.targetStudent,
+                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
                     specificStudentName: driveForm.customTarget || ""
                 };
 

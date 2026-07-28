@@ -35,11 +35,21 @@ export default function StudHub() {
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
     const studentName = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
     const studentFilteredDrives = drives.filter(drive => {
-        const target = (drive.targetStudent || "").toLowerCase().trim();
-        if (target === "" || target === "all") {
+        let targets = drive.targetStudent || [];
+        if (typeof targets === 'string') {
+            targets = targets.split(',').map(t => t.trim());
+        }
+        
+        const lowerTargets = targets.map(t => typeof t === 'string' ? t.toLowerCase().trim() : '');
+
+        if (lowerTargets.length === 0 || lowerTargets.includes("") || lowerTargets.includes("all")) {
             return true;
         }
-        return target.includes(studentEmail) || (studentName !== "" && target.includes(studentName));
+        
+        const matchEmail = studentEmail !== "" && lowerTargets.some(t => t.includes(studentEmail));
+        const matchName = studentName !== "" && lowerTargets.some(t => t.includes(studentName));
+
+        return matchEmail || matchName;
     });
 
     const activeDrives = studentFilteredDrives.filter(d => d.status === 'open' || d.status === 'upcoming');
@@ -566,7 +576,7 @@ export default function StudHub() {
                                                 <div className="detail-item-content">
                                                     <span className="detail-field-label">TARGET AUDIENCE</span>
                                                     <div className="detail-badge-box">
-                                                        {currentDrive.targetStudent === 'All' || !currentDrive.targetStudent ? 'All Students' : currentDrive.targetStudent}
+                                                        {(!currentDrive.targetStudent || (Array.isArray(currentDrive.targetStudent) ? currentDrive.targetStudent.includes('ALL') || currentDrive.targetStudent.includes('All') : currentDrive.targetStudent === 'All')) ? 'All Students' : (Array.isArray(currentDrive.targetStudent) ? currentDrive.targetStudent.join(', ') : currentDrive.targetStudent)}
                                                     </div>
                                                 </div>
                                             </div>
