@@ -46,8 +46,8 @@ export default function StudHub() {
             return true;
         }
         
-        const matchEmail = studentEmail !== "" && lowerTargets.some(t => t.includes(studentEmail));
-        const matchName = studentName !== "" && lowerTargets.some(t => t.includes(studentName));
+        const matchEmail = studentEmail !== "" && lowerTargets.some(t => studentEmail.includes(t));
+        const matchName = studentName !== "" && lowerTargets.some(t => studentName.includes(t));
 
         return matchEmail || matchName;
     });
@@ -179,20 +179,32 @@ export default function StudHub() {
             try {
                 const response = await getStudentPlacementDrives();
                 if (response.data && Array.isArray(response.data)) {
-                    const mappedDrives = response.data.map(d => ({
-                        id: d.id,
-                        company: d.companyName,
-                        role: d.jobRole,
-                        location: d.location,
-                        date: d.driveDate,
-                        time: d.driveTime || 'TBA',
-                        venue: d.venue || 'TBA',
-                        eligibility: d.eligibilityCriteria || 'Not Specified',
-                        status: (d.status || 'Upcoming').toLowerCase(),
-                        logoLetter: d.companyName ? d.companyName.charAt(0).toUpperCase() : 'C',
-                        logoColor: '#2563eb',
-                        targetStudent: d.targetStudent || 'all'
-                    }));
+                    const mappedDrives = response.data.map(d => {
+                        let targets = [];
+                        if (Array.isArray(d.targetStudent)) {
+                            targets = [...d.targetStudent];
+                        } else if (typeof d.targetStudent === 'string') {
+                            targets = d.targetStudent.split(',').map(t => t.trim()).filter(Boolean);
+                        }
+                        if (d.specificStudentName && d.specificStudentName.trim() !== '') {
+                            targets.push(d.specificStudentName.trim());
+                        }
+
+                        return {
+                            id: d.id,
+                            company: d.companyName,
+                            role: d.jobRole,
+                            location: d.location,
+                            date: d.driveDate,
+                            time: d.driveTime || 'TBA',
+                            venue: d.venue || 'TBA',
+                            eligibility: d.eligibilityCriteria || 'Not Specified',
+                            status: (d.status || 'Upcoming').toLowerCase(),
+                            logoLetter: d.companyName ? d.companyName.charAt(0).toUpperCase() : 'C',
+                            logoColor: '#2563eb',
+                            targetStudent: targets.length > 0 ? targets : 'all'
+                        };
+                    });
                     setDrives(mappedDrives.sort((a, b) => b.id - a.id));
                 }
             } catch (error) {
