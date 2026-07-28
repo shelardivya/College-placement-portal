@@ -54,7 +54,7 @@ export default function QueriesStories() {
                     const mappedQueries = response.data.map(q => {
                         const nameParts = (q.studentName || q.name || 'Student').trim().split(' ');
                         const avatar = nameParts.length > 1 && nameParts[1] ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
-                        
+
                         return {
                             ...q,
                             id: q.id,
@@ -118,10 +118,10 @@ export default function QueriesStories() {
     const handleSendReply = async (e) => {
         e.preventDefault();
         if (!replyingQuery || !replyText.trim()) return;
-        
+
         try {
             await replyToQuery(replyingQuery.id, replyText);
-            
+
             setQueries(prevQueries => prevQueries.map(q => {
                 if (q.id === replyingQuery.id) {
                     return {
@@ -132,7 +132,7 @@ export default function QueriesStories() {
                 }
                 return q;
             }));
-            
+
             triggerToast("Reply sent to student query successfully!", "success");
             setReplyingQuery(null);
             setReplyText('');
@@ -217,7 +217,7 @@ export default function QueriesStories() {
 
     const [targetSearchTerm, setTargetSearchTerm] = useState('');
     const [showTargetDropdown, setShowTargetDropdown] = useState(false);
-    
+
     const [availableStudents, setAvailableStudents] = useState([]);
 
     useEffect(() => {
@@ -308,20 +308,30 @@ export default function QueriesStories() {
         if (editingDrive) {
             // Update existing via API
             try {
+                const targetNames = typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []);
+                const targetIds = targetNames.map(name => {
+                    if (name.toUpperCase() === 'ALL') return 'ALL';
+                    const found = availableStudents.find(s => s.name === name);
+                    return found ? found.email : name;
+                });
+                
+                const customTargetName = (driveForm.customTarget || "").trim();
+                const customTargetId = customTargetName ? (availableStudents.find(s => s.name === customTargetName)?.email || customTargetName) : "";
+
                 const payload = {
-                    companyName: driveForm.company,
-                    jobRole: driveForm.role,
-                    location: driveForm.location,
-                    venue: driveForm.venue || "",
-                    driveDate: driveForm.date || "2026-07-23", 
-                    driveTime: driveForm.time || "",
+                    companyName: driveForm.company.trim(),
+                    jobRole: driveForm.role.trim(),
+                    location: driveForm.location.trim(),
+                    venue: driveForm.venue ? driveForm.venue.trim() : "",
+                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
+                    driveTime: driveForm.time ? driveForm.time.trim() : "",
                     status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: driveForm.customTarget || ""
+                    targetStudent: targetIds,
+                    specificStudentName: customTargetId
                 };
-                
+
                 await updatePlacementDrive(editingDrive.id, payload);
-                
+
                 const updatedDrives = drives.map(d => {
                     if (d.id === editingDrive.id) {
                         return {
@@ -350,16 +360,26 @@ export default function QueriesStories() {
         } else {
             // Add new via API
             try {
+                const targetNames = typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []);
+                const targetIds = targetNames.map(name => {
+                    if (name.toUpperCase() === 'ALL') return 'ALL';
+                    const found = availableStudents.find(s => s.name === name);
+                    return found ? found.email : name;
+                });
+                
+                const customTargetName = (driveForm.customTarget || "").trim();
+                const customTargetId = customTargetName ? (availableStudents.find(s => s.name === customTargetName)?.email || customTargetName) : "";
+
                 const payload = {
-                    companyName: driveForm.company,
-                    jobRole: driveForm.role,
-                    location: driveForm.location,
-                    venue: driveForm.venue || "",
-                    driveDate: driveForm.date || "2026-07-23", // default fallback or parse correctly
-                    driveTime: driveForm.time || "",
+                    companyName: driveForm.company.trim(),
+                    jobRole: driveForm.role.trim(),
+                    location: driveForm.location.trim(),
+                    venue: driveForm.venue ? driveForm.venue.trim() : "",
+                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
+                    driveTime: driveForm.time ? driveForm.time.trim() : "",
                     status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: driveForm.customTarget || ""
+                    targetStudent: targetIds,
+                    specificStudentName: customTargetId
                 };
 
                 const response = await addPlacementDrive(payload);
@@ -543,21 +563,21 @@ export default function QueriesStories() {
                 jobRole: storyForm.jobRole,
                 storyText: storyForm.storyText || `Secured placement at ${storyForm.companyName}.`
             };
-            
+
             // Note: In a real scenario, you'd pass the actual File object from the file input to publishPlacementStory.
             // Since the UI only stores a data URL in storyForm.photo right now, we can convert it to a Blob, or just pass null if not strictly enforced.
             // For simplicity, passing null as the file since the UI just has a preview string.
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:') 
-                ? await (await fetch(storyForm.photo)).blob() 
+            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
+                ? await (await fetch(storyForm.photo)).blob()
                 : null;
-            
+
             let photoFile = null;
             if (photoBlob) {
                 photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
             }
 
             const response = await publishPlacementStory(payload, photoFile);
-            
+
             // The backend returns a string message or a PlacementStoryResponseDto.
             // We can fetch all stories again, or just optimistically add it.
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.studentName)}&background=2563eb&color=fff`;
@@ -589,7 +609,7 @@ export default function QueriesStories() {
             });
         } catch (error) {
             console.error("Failed to publish placement story:", error);
-            
+
             // Handle Nginx 413 or HTML responses
             let errorMsg = "Failed to publish story.";
             if (error.response?.status === 413) {
@@ -599,7 +619,7 @@ export default function QueriesStories() {
             } else {
                 errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
             }
-            
+
             triggerToast(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg), "error");
         }
     };
@@ -620,7 +640,7 @@ export default function QueriesStories() {
     const handleUpdateStory = async (e) => {
         e.preventDefault();
         if (!editingStory) return;
-        
+
         try {
             const packageValue = parseFloat(storyForm.package) || 0;
             const payload = {
@@ -630,18 +650,18 @@ export default function QueriesStories() {
                 jobRole: storyForm.jobRole,
                 storyText: storyForm.storyText
             };
-            
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:') 
-                ? await (await fetch(storyForm.photo)).blob() 
+
+            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
+                ? await (await fetch(storyForm.photo)).blob()
                 : null;
-            
+
             let photoFile = null;
             if (photoBlob) {
                 photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
             }
 
             await updatePlacementStory(editingStory.id, payload, photoFile);
-            
+
             const updatedStories = stories.map(s => {
                 if (s.id === editingStory.id) {
                     return {
@@ -656,7 +676,7 @@ export default function QueriesStories() {
                 }
                 return s;
             });
-            
+
             setStories(updatedStories);
             triggerToast("Placement story updated successfully!", "success");
             setIsStoryModalOpen(false);
@@ -1323,7 +1343,7 @@ export default function QueriesStories() {
                                                         >
                                                             <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
                                                         </div>
-                                                ))}
+                                                    ))}
                                                 {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
                                                     <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
                                                 )}
