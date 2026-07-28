@@ -277,7 +277,7 @@ export default function QueriesStories() {
             time: drive.time || '',
             venue: drive.venue || 'Seminar Hall A',
             status: drive.status || 'OPEN',
-            targetStudent: drive.targetStudent || 'ALL',
+            targetStudent: Array.isArray(drive.targetStudent) ? drive.targetStudent.join(', ') : (drive.targetStudent || 'ALL'),
             customTarget: drive.customTarget || ''
         });
         setIsDriveModalOpen(true);
