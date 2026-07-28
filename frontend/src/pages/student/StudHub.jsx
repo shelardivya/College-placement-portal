@@ -133,10 +133,24 @@ export default function StudHub() {
                             storyText: story.successStory,
                             date: (() => {
                                 try {
-                                    if (!story.createdAt) return new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-                                    if (Array.isArray(story.createdAt)) return new Date(story.createdAt[0], story.createdAt[1] - 1, story.createdAt[2]).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-                                    const parsed = new Date(story.createdAt);
-                                    return isNaN(parsed) ? story.createdAt.split('T')[0] : parsed.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                                    if (!story.createdAt) return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+                                    if (Array.isArray(story.createdAt)) {
+                                        if (story.createdAt.length >= 5) {
+                                            const utcDate = new Date(Date.UTC(story.createdAt[0], story.createdAt[1] - 1, story.createdAt[2], story.createdAt[3], story.createdAt[4]));
+                                            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+                                        }
+                                        return new Date(story.createdAt[0], story.createdAt[1] - 1, story.createdAt[2]).toLocaleDateString();
+                                    }
+                                    const dateStr = story.createdAt;
+                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+                                    if (ddMmYyyyMatch) {
+                                        const [_, day, month, year, hour, minute] = ddMmYyyyMatch;
+                                        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+                                        return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+                                    }
+                                    const parsed = new Date(dateStr);
+                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+                                    return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                 } catch (e) {
                                     return "Recently";
                                 }
