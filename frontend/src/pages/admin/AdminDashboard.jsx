@@ -1147,9 +1147,17 @@ function AdminDashboard({ onNavigate }) {
                                                     <div key={index} className='posting-card-item'>
 
                                                         <div className='posting-card-logo-wrap'>
-                                                            <div className='posting-logo-fallback'>
-                                                                <Briefcase size={18} />
-                                                            </div>
+                                                            {post.companyName ? (
+                                                                <img 
+                                                                    src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`} 
+                                                                    alt={post.companyName} 
+                                                                    style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
+                                                                />
+                                                            ) : (
+                                                                <div className='posting-logo-fallback'>
+                                                                    <Briefcase size={18} />
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <div className='posting-card-body'>
