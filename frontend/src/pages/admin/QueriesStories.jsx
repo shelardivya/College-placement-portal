@@ -1224,21 +1224,23 @@ export default function QueriesStories() {
                                 <div className="qs-form-group">
                                     <label className="form-label">Date *</label>
                                     <input
-                                        type="date"
+                                        type="text"
                                         required
                                         className="form-input-control"
                                         value={driveForm.date}
                                         onChange={(e) => setDriveForm({ ...driveForm, date: e.target.value })}
+                                        placeholder="yyyy-mm-dd"
                                     />
                                 </div>
                                 <div className="qs-form-group">
                                     <label className="form-label">Time *</label>
                                     <input
-                                        type="time"
+                                        type="text"
                                         required
                                         className="form-input-control"
                                         value={driveForm.time}
                                         onChange={(e) => setDriveForm({ ...driveForm, time: e.target.value })}
+                                        placeholder="HH:mm"
                                     />
                                 </div>
                                 <div className="qs-form-group">
