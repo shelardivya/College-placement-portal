@@ -10,6 +10,8 @@ public class JobDetailsDto {
 
     private String companyName;
 
+    private Boolean isApplied;
+
     private String location;
 
     private String jobRequirements;
@@ -46,6 +48,13 @@ public class JobDetailsDto {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+    public Boolean getIsApplied() {
+        return isApplied;
+    }
+
+    public void setIsApplied(Boolean isApplied) {
+        this.isApplied = isApplied;
     }
 
     public String getLocation() {

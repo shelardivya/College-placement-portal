@@ -61,7 +61,15 @@ public class JobApplyService {
                 );
 
         List<LatestJobDto> response = new ArrayList<>();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
+        String email = authentication.getName();
+
+        RegisterEntity student =
+                registerRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Student not found."));
         for (AddJobEntity job : jobs) {
 
             LatestJobDto dto = new LatestJobDto();
@@ -71,7 +79,9 @@ public class JobApplyService {
             dto.setLocation(job.getLocation());
             dto.setJobRoleOverview(job.getJobRoleOverview());
             dto.setDeadline(job.getDeadline());
-
+            dto.setIsApplied(
+                    jobApplyRepository.existsByStudentAndJob(student, job)
+            );
             response.add(dto);
         }
 
