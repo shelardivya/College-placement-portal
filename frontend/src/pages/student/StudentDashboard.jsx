@@ -86,12 +86,23 @@ export default function
 
     // Filter drives targeted to this student
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
+    const studentNameFilter = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
     const studentFilteredDrives = drives.filter(drive => {
-        const target = (drive.targetStudent || "").toLowerCase().trim();
-        if (target === "" || target === "all") {
+        let targets = drive.targetStudent || [];
+        if (typeof targets === 'string') {
+            targets = targets.split(',').map(t => t.trim());
+        }
+        
+        const lowerTargets = targets.map(t => typeof t === 'string' ? t.toLowerCase().trim() : '');
+
+        if (lowerTargets.length === 0 || lowerTargets.includes("") || lowerTargets.includes("all")) {
             return true;
         }
-        return target === studentEmail;
+        
+        const matchEmail = studentEmail !== "" && lowerTargets.some(t => t.includes(studentEmail));
+        const matchName = studentNameFilter !== "" && lowerTargets.some(t => t.includes(studentNameFilter));
+
+        return matchEmail || matchName;
     });
 
     // Find the next upcoming/open event sorted by date
