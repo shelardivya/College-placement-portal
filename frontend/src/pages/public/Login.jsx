@@ -42,11 +42,17 @@ function Login({ onNavigate, initialView }) {
         const params = new URLSearchParams(window.location.search);
         const initialEmail = params.get('email') || '';
         let initialPass = '';
-        if (initialEmail) {
+        if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
             const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+            
+            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+            const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+
             if (matched && matched.password) {
                 initialPass = matched.password;
+            } else if (matchedAdmin && matchedAdmin.password) {
+                initialPass = matchedAdmin.password;
             }
         }
         return {
