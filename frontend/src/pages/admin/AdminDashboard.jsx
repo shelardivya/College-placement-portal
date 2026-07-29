@@ -1,4 +1,4 @@
-import { delay, motion } from 'framer-motion';
+import { delay, motion, AnimatePresence } from 'framer-motion';
 
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
@@ -1021,9 +1021,19 @@ function AdminDashboard({ onNavigate }) {
                             setIsNotificationSidebarOpen(true);
                             setIsProfileOpen(false);
                         }} style={{ cursor: 'pointer' }}>
-                            <Bell className='bell-icon' size={22} />
+                            <motion.div style={{ display: 'flex' }} whileHover={{ rotate: [0, -15, 15, -15, 15, 0] }} transition={{ duration: 0.5 }}>
+                                <Bell className='bell-icon' size={22} />
+                            </motion.div>
                             {unreadCount > 0 && (
-                                <span className='notification-badge'>{unreadCount}</span>
+                                <motion.span
+                                    className='notification-badge'
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                    style={{ width: '16px', height: '16px', borderRadius: '50%', right: '-2px', top: '-2px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    {unreadCount}
+                                </motion.span>
                             )}
                         </div>
 
@@ -1087,8 +1097,17 @@ function AdminDashboard({ onNavigate }) {
 
 
                 <main className='dashboard-main'>
-                    {activeTab === 'dashboard' && (
-                        <>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
+                        >
+                            {activeTab === 'dashboard' && (
+                                <>
 
 
                             <section className='greeting-section'>
@@ -1106,6 +1125,7 @@ function AdminDashboard({ onNavigate }) {
                                 <motion.div className='stat-card'
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -5, scale: 1.02 }}
                                     transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper blue-icon'>
                                         <FileText size={20} />
@@ -1124,6 +1144,7 @@ function AdminDashboard({ onNavigate }) {
                                 <motion.div className='stat-card'
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -5, scale: 1.02 }}
                                     transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper green-icon'>
                                         <Users size={20} />
@@ -1142,6 +1163,7 @@ function AdminDashboard({ onNavigate }) {
                                 <motion.div className='stat-card'
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
+                                    whileHover={{ y: -5, scale: 1.02 }}
                                     transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper purple-icon'>
                                         <Briefcase size={20} />
@@ -1220,7 +1242,10 @@ function AdminDashboard({ onNavigate }) {
                                         <div className='postings-list'>
                                             {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
                                                 paginatedRecentPosts.map((post, index) => (
-                                                    <div key={index} className='posting-card-item'>
+                                                    <motion.div key={index} className='posting-card-item'
+                                                        initial={{ opacity: 0, y: -20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
 
                                                         <div className='posting-card-logo-wrap'>
                                                             {post.companyName ? (
@@ -1271,7 +1296,7 @@ function AdminDashboard({ onNavigate }) {
                                                                 <span className='badge-active'>{post.status || 'Active'}</span>
                                                             )}
                                                         </div>
-                                                    </div>
+                                                    </motion.div>
                                                 ))
                                             ) : (
                                                 <div className='no-postings'>No recent postings found.</div>
@@ -1413,7 +1438,10 @@ function AdminDashboard({ onNavigate }) {
 
                                         <div className='applicants-list'>
                                             {paginatedApplicants.map((app, index) => (
-                                                <div key={`${app.id}-${index}`} className='applicant-item'>
+                                                <motion.div key={`${app.id}-${index}`} className='applicant-item'
+                                                    initial={{ opacity: 0, y: -20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
 
                                                     <div className='applicant-top'>
                                                         {getCompanyLogo(app.company)}
@@ -1443,7 +1471,7 @@ function AdminDashboard({ onNavigate }) {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
+                                                </motion.div>
                                             ))}
                                         </div>
 
@@ -1480,6 +1508,8 @@ function AdminDashboard({ onNavigate }) {
                     {activeTab === 'queries' && (
                         <QueriesStories />
                     )}
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
 
                 {isSidebarOpen && (
@@ -1944,17 +1974,20 @@ function AdminDashboard({ onNavigate }) {
                                 {notifications.length === 0 ? (
                                     <p className="no-notifications">No new notifications</p>
                                 ) : (
-                                    notifications.map((notif) => {
+                                    notifications.map((notif, index) => {
                                         const isRead = notif.read || notif.status === 'read';
                                         return (
-                                            <div
+                                            <motion.div
                                                 key={notif.id}
                                                 className="notification-item"
-                                                style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
+                                                initial={{ opacity: 0, y: -30 }}
+                                                animate={{ opacity: isRead ? 0.6 : 1, y: 0 }}
+                                                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}
+                                                style={{ borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                             >
                                                 <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
                                                 <span className="notif-date">{notif.displayDate ? `${notif.displayDate} at ${notif.displayTime}` : (notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date))}</span>
-                                            </div>
+                                            </motion.div>
                                         );
                                     })
                                 )}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from 'framer-motion';
 import LandingPage from './pages/public/LandingPage';
 import Registration from './pages/public/Registration';
 import Login from "./pages/public/Login";
@@ -35,40 +36,45 @@ function App() {
 
 
   return (
-    <>
-      {currentPage === 'landing' && (
-        <LandingPage onNavigate={navigateTo} />
-      )}
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentPage}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -15 }}
+        transition={{ duration: 0.3 }}
+        style={{ minHeight: '100vh', width: '100%' }}
+      >
+        {currentPage === 'landing' && (
+          <LandingPage onNavigate={navigateTo} />
+        )}
 
-      {currentPage === 'register' && (
-        <Registration onNavigate={navigateTo} />
-      )}
+        {currentPage === 'register' && (
+          <Registration onNavigate={navigateTo} />
+        )}
 
-       {currentPage === 'login' && (
-        <Login 
-          onNavigate={navigateTo} 
-          initialView={
-            window.location.pathname.startsWith('/reset-password') || 
-            window.location.search.includes('token=') || 
-            window.location.search.includes('email=') 
-              ? 'reset' 
-              : 'login'
-          } 
-        />
-      )}
+        {currentPage === 'login' && (
+          <Login 
+            onNavigate={navigateTo} 
+            initialView={
+              window.location.pathname.startsWith('/reset-password') || 
+              window.location.search.includes('token=') || 
+              window.location.search.includes('email=') 
+                ? 'reset' 
+                : 'login'
+            } 
+          />
+        )}
 
-      {currentPage === 'admin' && (
-        <AdminDashboard onNavigate={navigateTo} />
-      )}
+        {currentPage === 'admin' && (
+          <AdminDashboard onNavigate={navigateTo} />
+        )}
 
-      {currentPage === 'student' && (
-        <StudentDashboard onNavigate={navigateTo} />
-      )
-
-      }
-
-
-    </>
+        {currentPage === 'student' && (
+          <StudentDashboard onNavigate={navigateTo} />
+        )}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

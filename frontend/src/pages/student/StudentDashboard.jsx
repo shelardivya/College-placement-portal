@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import React, { useState, useEffect } from "react";
 import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
@@ -796,9 +796,19 @@ export default function
                             setIsNotificationSidebarOpen(true);
                             setIsProfileDropdownOpen(false);
                         }}>
-                            <Bell className="bell-icon" />
+                            <motion.div style={{ display: 'flex' }} whileHover={{ rotate: [0, -15, 15, -15, 15, 0] }} transition={{ duration: 0.5 }}>
+                                <Bell className="bell-icon" />
+                            </motion.div>
                             {unreadCount > 0 && (
-                                <span className="bell-badge">{unreadCount}</span>
+                                <motion.span
+                                    className="bell-badge"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                    style={{ width: '16px', height: '16px', borderRadius: '50%', right: '-2px', top: '-2px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                >
+                                    {unreadCount}
+                                </motion.span>
                             )}
                         </div>
                     </div>
@@ -845,8 +855,18 @@ export default function
             </header>
 
 
-            {activeTab === 'dashboard' && (
-                <section className="welcome-section">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    style={{ width: '100%', display: 'flex', flexDirection: 'column' }}
+                >
+                    {activeTab === 'dashboard' && (
+                        <>
+                            <section className="welcome-section">
                     <div className="welcome-content">
                         <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
                         <p>Here's whats's happening with your placement portal today.</p>
@@ -855,15 +875,14 @@ export default function
                         <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
                 </section>
-            )}
 
 
-            {activeTab === 'dashboard' && (
                 <section className="metrics-grid">
                     {metrics.map((metric, index) => (
                         <motion.div className="metric-card" key={metric.id}
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
+                            whileHover={{ y: -5, scale: 1.02 }}
                             transition={{ duration: 0.4, delay: index * 0.15 }}>
                             <div className="metric-header">
                                 <div className={`metric-icon-wrapper ${metric.colorClass}`}>
@@ -889,12 +908,10 @@ export default function
                     ))}
 
                 </section>
-            )}
 
 
 
 
-            {activeTab === 'dashboard' && (
                 <main className="dashboard-main-content">
 
 
@@ -907,10 +924,13 @@ export default function
                             {jobs && jobs.length > 0 ? (
                                 jobs
                                     .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                                    .map((job) => {
+                                    .map((job, index) => {
                                         const isApplied = job.isApplied || appliedJobs.includes(job.id);
                                         return (
-                                            <div className="job-card" key={job.id}>
+                                            <motion.div className="job-card" key={job.id}
+                                                initial={{ opacity: 0, y: -20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
                                                 <div className="job-card-header">
                                                     <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
                                                         <img
@@ -955,7 +975,7 @@ export default function
                                                         <strong className="meta-deadline">{job.deadline}</strong>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         );
                                     })
                             ) : (
@@ -1018,7 +1038,10 @@ export default function
                                 return filtered
                                     .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
                                     .map((item, index) => (
-                                        <div className="match-card" key={index}>
+                                        <motion.div className="match-card" key={index}
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.1 }}>
 
                                             <div className="match-card-header">
                                                 <div className="match-logo-details">
@@ -1062,7 +1085,7 @@ export default function
                                                 </div>
                                             </div>
 
-                                        </div>
+                                        </motion.div>
                                     ));
                             })()}
                         </div>
@@ -1099,10 +1122,13 @@ export default function
                     </section>
 
                 </main>
-            )}
+                        </>
+                    )}
 
 
-            {activeTab === 'studhub' && <StudHub />}
+                    {activeTab === 'studhub' && <StudHub />}
+                </motion.div>
+            </AnimatePresence>
 
 
             {selectedJob && (() => {
@@ -1603,17 +1629,20 @@ export default function
                             {notifications.length === 0 ? (
                                 <p className="no-notifications">No new notifications</p>
                             ) : (
-                                notifications.map((notif) => {
+                                notifications.map((notif, index) => {
                                     const isRead = notif.read || notif.status === 'read';
                                     return (
-                                        <div
+                                        <motion.div
                                             key={notif.id}
                                             className="notification-item"
-                                            style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
+                                            initial={{ opacity: 0, y: -30 }}
+                                            animate={{ opacity: isRead ? 0.6 : 1, y: 0 }}
+                                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}
+                                            style={{ borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                         >
                                             <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
                                             <span className="notif-date">{notif.displayDate ? `${notif.displayDate} at ${notif.displayTime}` : (notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date))}</span>
-                                        </div>
+                                        </motion.div>
                                     );
                                 })
                             )}

@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 import React, { useState, useEffect, useRef } from "react";
 import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
@@ -688,7 +690,10 @@ export default function QueriesStories() {
             <div className="qs-row">
 
 
-                <div className="qs-panel queries-card">
+                <motion.div className="qs-panel queries-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0 }}>
                     <div className="qs-panel-header">
                         <div>
                             <h3 className="panel-title">Student Queries</h3>
@@ -811,10 +816,13 @@ export default function QueriesStories() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
 
-                <div className="qs-panel publish-story-card">
+                <motion.div className="qs-panel publish-story-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.1 }}>
                     <div className="qs-panel-header">
                         <div>
                             <h3 className="panel-title">Create Placement Story</h3>
@@ -929,7 +937,7 @@ export default function QueriesStories() {
                             <button type="submit" className="btn-primary-purple">Publish Story</button>
                         </div>
                     </form>
-                </div>
+                </motion.div>
 
             </div>
 
@@ -937,7 +945,10 @@ export default function QueriesStories() {
             <div className="qs-row qs-row-bottom" style={{ marginTop: '24px' }}>
 
 
-                <div className="qs-panel placement-drives-card">
+                <motion.div className="qs-panel placement-drives-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}>
                     <div className="qs-panel-header">
                         <div>
                             <h3 className="panel-title">Manage Placement Drives</h3>
@@ -1079,10 +1090,13 @@ export default function QueriesStories() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </motion.div>
 
 
-                <div className="qs-panel placement-stories-card">
+                <motion.div className="qs-panel placement-stories-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.3 }}>
                     <div className="qs-panel-header">
                         <div>
                             <h3 className="panel-title">Published Placement Stories</h3>
@@ -1182,498 +1196,514 @@ export default function QueriesStories() {
                             Next &rarr;
                         </button>
                     </div>
-                </div>
+                </motion.div>
 
             </div>
 
 
-            {isDriveModalOpen && (
-                <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
-                    <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="qs-modal-header">
-                            <div>
-                                <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
-                                <p className="modal-subtitle">Configure schedule, venue, and target students for this placement drive.</p>
-                            </div>
-                            <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSaveDrive} className="qs-modal-form">
-                            <div className="qs-form-grid">
-                                <div className="qs-form-group">
-                                    <label className="form-label">Company Name *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.company}
-                                        onChange={(e) => setDriveForm({ ...driveForm, company: e.target.value })}
-                                        placeholder="e.g. TCS"
-                                    />
+            {
+                isDriveModalOpen && (
+                    <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
+                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="qs-modal-header">
+                                <div>
+                                    <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
+                                    <p className="modal-subtitle">Configure schedule, venue, and target students for this placement drive.</p>
                                 </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Job Role *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.role}
-                                        onChange={(e) => setDriveForm({ ...driveForm, role: e.target.value })}
-                                        placeholder="e.g. System Engineer"
-                                    />
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Location *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.location}
-                                        onChange={(e) => setDriveForm({ ...driveForm, location: e.target.value })}
-                                        placeholder="e.g. Pune"
-                                    />
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Date *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.date}
-                                        onChange={(e) => setDriveForm({ ...driveForm, date: e.target.value })}
-                                        placeholder="e.g. 10 Dec 2026"
-                                    />
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Time *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.time}
-                                        onChange={(e) => setDriveForm({ ...driveForm, time: e.target.value })}
-                                        placeholder="e.g. 11:00 AM"
-                                    />
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Venue *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={driveForm.venue}
-                                        onChange={(e) => setDriveForm({ ...driveForm, venue: e.target.value })}
-                                        placeholder="Seminar Hall A"
-                                    />
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Status *</label>
-                                    <select
-                                        className="form-input-control"
-                                        value={driveForm.status}
-                                        onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
-                                    >
-                                        <option value="OPEN">Open</option>
-                                        <option value="UPCOMING">Upcoming</option>
-                                        <option value="CLOSED">Closed</option>
-                                    </select>
-                                </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Target Student *</label>
-                                    <div className="multi-select-container" style={{ position: 'relative' }}>
-                                        <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
-                                            {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
-                                                <span key={idx} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    {target}
-                                                    <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
-                                                        setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
-                                                    }}>&times;</span>
-                                                </span>
-                                            ))}
-                                            <input
-                                                type="text"
-                                                value={targetSearchTerm}
-                                                onChange={(e) => { setTargetSearchTerm(e.target.value); setShowTargetDropdown(true); }}
-                                                onFocus={() => setShowTargetDropdown(true)}
-                                                onBlur={() => setTimeout(() => setShowTargetDropdown(false), 200)}
-                                                style={{ border: 'none', outline: 'none', flex: 1, minWidth: '100px', background: 'transparent' }}
-                                                placeholder={driveForm.targetStudent ? "" : "Search student..."}
-                                            />
-                                        </div>
-                                        {showTargetDropdown && (
-                                            <div className="multi-select-dropdown" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', marginTop: '4px', zIndex: 10, maxHeight: '150px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                                                {availableStudents
-                                                    .filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase()))
-                                                    .map((student, idx) => (
-                                                        <div
-                                                            key={idx}
-                                                            style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
-                                                            onMouseDown={(e) => e.preventDefault()}
-                                                            onClick={() => {
-                                                                const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t);
-                                                                if (!currentTargets.includes(student.name)) {
-                                                                    setDriveForm({ ...driveForm, targetStudent: [...currentTargets, student.name].join(', ') });
-                                                                }
-                                                                setTargetSearchTerm('');
-                                                                setShowTargetDropdown(false);
-                                                            }}
-                                                        >
-                                                            <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
-                                                        </div>
-                                                    ))}
-                                                {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
-                                                    <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="qs-form-group full-width">
-                                    <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
-                                    <input
-                                        type="text"
-                                        className="form-input-control"
-                                        value={driveForm.customTarget || ''}
-                                        onChange={(e) => setDriveForm({ ...driveForm, customTarget: e.target.value })}
-                                        placeholder="e.g. Sneha Jadhav (BCA)"
-                                    />
-                                </div>
-                            </div>
-                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                                <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
-                                    <Plus size={16} /> {editingDrive ? "Update Drive" : "Add Drive"}
+                                <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                    <X size={18} />
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-
-            {deletingDrive && (
-                <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
-                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="delete-modal-icon-bg">
-                            <Trash2 size={22} />
-                        </div>
-                        <h4 className="delete-modal-title">Delete Placement Drive</h4>
-                        <p className="delete-modal-desc">
-                            Are you sure you want to delete the drive for <strong>{deletingDrive.company}</strong>? This action cannot be undone.
-                        </p>
-                        <div className="delete-modal-actions">
-                            <button type="button" className="btn-delete-cancel" onClick={() => setDeletingDrive(null)}>
-                                Cancel
-                            </button>
-                            <button type="button" className="btn-delete-confirm" onClick={confirmDeleteDrive}>
-                                Yes, Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-            {viewingQuery && (
-                <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
-                    <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="qs-modal-header">
-                            <div>
-                                <h4 className="modal-title">Student Query Details</h4>
-                                <p className="modal-subtitle">Submitted by {viewingQuery.name}</p>
-                            </div>
-                            <button className="qs-close-btn" onClick={() => setViewingQuery(null)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="query-modal-body">
-                            <div className="modal-user-profile-row">
-                                <div className="query-user-profile">
-                                    <div
-                                        className="query-avatar-circle"
-                                        style={{
-                                            backgroundColor:
-                                                viewingQuery.colorClass === 'blue' ? '#dbeafe' :
-                                                    viewingQuery.colorClass === 'purple' ? '#e9d5ff' :
-                                                        viewingQuery.colorClass === 'green' ? '#a7f3d0' :
-                                                            viewingQuery.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                            color:
-                                                viewingQuery.colorClass === 'blue' ? '#1e40af' :
-                                                    viewingQuery.colorClass === 'purple' ? '#581c87' :
-                                                        viewingQuery.colorClass === 'green' ? '#047857' :
-                                                            viewingQuery.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
-                                        }}
-                                    >
-                                        {viewingQuery.avatar}
-                                    </div>
-                                    <div className="query-user-info">
-                                        <span className="query-username">{viewingQuery.name}</span>
-                                        <span className="query-userdept">{viewingQuery.course}</span>
-                                    </div>
-                                </div>
-                                <span className={`query-status-tag status-${viewingQuery.status}`}>
-                                    {viewingQuery.status}
-                                </span>
-                            </div>
-
-                            <div className="modal-field-section">
-                                <span className="modal-field-label">SUBJECT</span>
-                                <h4 className="modal-subject-title">{viewingQuery.title}</h4>
-                            </div>
-
-                            <div className="modal-field-section">
-                                <span className="modal-field-label">QUERY DESCRIPTION</span>
-                                <div className="modal-description-box">
-                                    {viewingQuery.message}
-                                </div>
-                            </div>
-
-                            <div className="modal-date-row">
-                                <Calendar size={13} style={{ marginRight: '6px' }} />
-                                <span>Submitted on {viewingQuery.date}</span>
-                            </div>
-
-                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                <button className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-            {replyingQuery && (
-                <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
-                    <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="qs-modal-header">
-                            <div>
-                                <h4 className="modal-title">Reply to Query</h4>
-                                <p className="modal-subtitle">Replying to {replyingQuery.name}</p>
-                            </div>
-                            <button className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSendReply} className="query-modal-body">
-                            <div className="modal-field-section">
-                                <span className="modal-field-label">STUDENT'S QUERY</span>
-                                <div className="modal-description-box">
-                                    <h5 className="reply-preview-title">{replyingQuery.title}</h5>
-                                    <p className="reply-preview-text">{replyingQuery.message}</p>
-                                </div>
-                            </div>
-
-                            <div className="modal-field-section">
-                                <label className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
-                                    Admin Response Message *
-                                </label>
-                                <textarea
-                                    className="form-textarea-control"
-                                    rows={4}
-                                    placeholder="Type your official response to the student here..."
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
-                                    required
-                                    style={{ marginTop: '6px', width: '100%', boxSizing: 'border-box' }}
-                                ></textarea>
-                            </div>
-
-                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-                                <button type="button" className="qs-cancel-btn" onClick={() => setReplyingQuery(null)}>
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
-                                    Send Reply
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {isStoryModalOpen && (
-                <div className="qs-modal-overlay" onClick={() => setIsStoryModalOpen(false)}>
-                    <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="qs-modal-header">
-                            <div>
-                                <h4 className="modal-title">Edit Placement Story</h4>
-                                <p className="modal-subtitle">Update details or fix typos in the published story.</p>
-                            </div>
-                            <button className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleUpdateStory} className="qs-modal-form">
-                            <div className="qs-form-grid">
-                                <div className="qs-form-group full-width">
-                                    <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()} style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <form onSubmit={handleSaveDrive} className="qs-modal-form">
+                                <div className="qs-form-grid">
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Company Name *</label>
                                         <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            accept="image/*"
-                                            style={{ display: 'none' }}
-                                            onChange={handlePhotoChange}
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.company}
+                                            onChange={(e) => setDriveForm({ ...driveForm, company: e.target.value })}
+                                            placeholder="e.g. TCS"
                                         />
-                                        {storyForm.photo ? (
-                                            <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                                                <img
-                                                    src={storyForm.photo}
-                                                    alt="Preview"
-                                                    style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Job Role *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.role}
+                                            onChange={(e) => setDriveForm({ ...driveForm, role: e.target.value })}
+                                            placeholder="e.g. System Engineer"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Location *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.location}
+                                            onChange={(e) => setDriveForm({ ...driveForm, location: e.target.value })}
+                                            placeholder="e.g. Pune"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Date *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.date}
+                                            onChange={(e) => setDriveForm({ ...driveForm, date: e.target.value })}
+                                            placeholder="e.g. 10 Dec 2026"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Time *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.time}
+                                            onChange={(e) => setDriveForm({ ...driveForm, time: e.target.value })}
+                                            placeholder="e.g. 11:00 AM"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Venue *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={driveForm.venue}
+                                            onChange={(e) => setDriveForm({ ...driveForm, venue: e.target.value })}
+                                            placeholder="Seminar Hall A"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Status *</label>
+                                        <select
+                                            className="form-input-control"
+                                            value={driveForm.status}
+                                            onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
+                                        >
+                                            <option value="OPEN">Open</option>
+                                            <option value="UPCOMING">Upcoming</option>
+                                            <option value="CLOSED">Closed</option>
+                                        </select>
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Target Student *</label>
+                                        <div className="multi-select-container" style={{ position: 'relative' }}>
+                                            <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
+                                                {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
+                                                    <span key={idx} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        {target}
+                                                        <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
+                                                            setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
+                                                        }}>&times;</span>
+                                                    </span>
+                                                ))}
+                                                <input
+                                                    type="text"
+                                                    value={targetSearchTerm}
+                                                    onChange={(e) => { setTargetSearchTerm(e.target.value); setShowTargetDropdown(true); }}
+                                                    onFocus={() => setShowTargetDropdown(true)}
+                                                    onBlur={() => setTimeout(() => setShowTargetDropdown(false), 200)}
+                                                    style={{ border: 'none', outline: 'none', flex: 1, minWidth: '100px', background: 'transparent' }}
+                                                    placeholder={driveForm.targetStudent ? "" : "Search student..."}
                                                 />
-                                                <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
-                                                <button
-                                                    type="button"
-                                                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setStoryForm(prev => ({ ...prev, photo: '' }));
-                                                    }}
-                                                >
-                                                    Remove
-                                                </button>
                                             </div>
-                                        ) : (
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <Upload size={20} className="upload-cloud-icon" />
-                                                <span className="upload-label">Upload New Photo</span>
-                                            </div>
-                                        )}
+                                            {showTargetDropdown && (
+                                                <div className="multi-select-dropdown" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: '4px', marginTop: '4px', zIndex: 10, maxHeight: '150px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                                                    {availableStudents
+                                                        .filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase()))
+                                                        .map((student, idx) => (
+                                                            <div
+                                                                key={idx}
+                                                                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
+                                                                onMouseDown={(e) => e.preventDefault()}
+                                                                onClick={() => {
+                                                                    const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t);
+                                                                    if (!currentTargets.includes(student.name)) {
+                                                                        setDriveForm({ ...driveForm, targetStudent: [...currentTargets, student.name].join(', ') });
+                                                                    }
+                                                                    setTargetSearchTerm('');
+                                                                    setShowTargetDropdown(false);
+                                                                }}
+                                                            >
+                                                                <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
+                                                            </div>
+                                                        ))}
+                                                    {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
+                                                        <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="qs-form-group full-width">
+                                        <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
+                                        <input
+                                            type="text"
+                                            className="form-input-control"
+                                            value={driveForm.customTarget || ''}
+                                            onChange={(e) => setDriveForm({ ...driveForm, customTarget: e.target.value })}
+                                            placeholder="e.g. Sneha Jadhav (BCA)"
+                                        />
                                     </div>
                                 </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Student Name *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={storyForm.studentName}
-                                        onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
-                                        placeholder="e.g. John Doe"
-                                    />
+                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                    <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                        <Plus size={16} /> {editingDrive ? "Update Drive" : "Add Drive"}
+                                    </button>
                                 </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Company Name *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={storyForm.companyName}
-                                        onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
-                                        placeholder="e.g. Google"
-                                    />
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+
+            {
+                deletingDrive && (
+                    <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
+                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="delete-modal-icon-bg">
+                                <Trash2 size={22} />
+                            </div>
+                            <h4 className="delete-modal-title">Delete Placement Drive</h4>
+                            <p className="delete-modal-desc">
+                                Are you sure you want to delete the drive for <strong>{deletingDrive.company}</strong>? This action cannot be undone.
+                            </p>
+                            <div className="delete-modal-actions">
+                                <button type="button" className="btn-delete-cancel" onClick={() => setDeletingDrive(null)}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn-delete-confirm" onClick={confirmDeleteDrive}>
+                                    Yes, Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+
+            {
+                viewingQuery && (
+                    <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
+                        <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="qs-modal-header">
+                                <div>
+                                    <h4 className="modal-title">Student Query Details</h4>
+                                    <p className="modal-subtitle">Submitted by {viewingQuery.name}</p>
                                 </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Job Role *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={storyForm.jobRole}
-                                        onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
-                                        placeholder="e.g. Software Engineer"
-                                    />
+                                <button className="qs-close-btn" onClick={() => setViewingQuery(null)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <div className="query-modal-body">
+                                <div className="modal-user-profile-row">
+                                    <div className="query-user-profile">
+                                        <div
+                                            className="query-avatar-circle"
+                                            style={{
+                                                backgroundColor:
+                                                    viewingQuery.colorClass === 'blue' ? '#dbeafe' :
+                                                        viewingQuery.colorClass === 'purple' ? '#e9d5ff' :
+                                                            viewingQuery.colorClass === 'green' ? '#a7f3d0' :
+                                                                viewingQuery.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
+                                                color:
+                                                    viewingQuery.colorClass === 'blue' ? '#1e40af' :
+                                                        viewingQuery.colorClass === 'purple' ? '#581c87' :
+                                                            viewingQuery.colorClass === 'green' ? '#047857' :
+                                                                viewingQuery.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                            }}
+                                        >
+                                            {viewingQuery.avatar}
+                                        </div>
+                                        <div className="query-user-info">
+                                            <span className="query-username">{viewingQuery.name}</span>
+                                            <span className="query-userdept">{viewingQuery.course}</span>
+                                        </div>
+                                    </div>
+                                    <span className={`query-status-tag status-${viewingQuery.status}`}>
+                                        {viewingQuery.status}
+                                    </span>
                                 </div>
-                                <div className="qs-form-group">
-                                    <label className="form-label">Package (LPA) *</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        className="form-input-control"
-                                        value={storyForm.package}
-                                        onChange={(e) => setStoryForm({ ...storyForm, package: e.target.value })}
-                                        placeholder="e.g. 12"
-                                    />
+
+                                <div className="modal-field-section">
+                                    <span className="modal-field-label">SUBJECT</span>
+                                    <h4 className="modal-subject-title">{viewingQuery.title}</h4>
                                 </div>
-                                <div className="qs-form-group full-width">
-                                    <label className="form-label">Success Story *</label>
+
+                                <div className="modal-field-section">
+                                    <span className="modal-field-label">QUERY DESCRIPTION</span>
+                                    <div className="modal-description-box">
+                                        {viewingQuery.message}
+                                    </div>
+                                </div>
+
+                                <div className="modal-date-row">
+                                    <Calendar size={13} style={{ marginRight: '6px' }} />
+                                    <span>Submitted on {viewingQuery.date}</span>
+                                </div>
+
+                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                                    <button className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
+                                        Close
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+
+            {
+                replyingQuery && (
+                    <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
+                        <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="qs-modal-header">
+                                <div>
+                                    <h4 className="modal-title">Reply to Query</h4>
+                                    <p className="modal-subtitle">Replying to {replyingQuery.name}</p>
+                                </div>
+                                <button className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSendReply} className="query-modal-body">
+                                <div className="modal-field-section">
+                                    <span className="modal-field-label">STUDENT'S QUERY</span>
+                                    <div className="modal-description-box">
+                                        <h5 className="reply-preview-title">{replyingQuery.title}</h5>
+                                        <p className="reply-preview-text">{replyingQuery.message}</p>
+                                    </div>
+                                </div>
+
+                                <div className="modal-field-section">
+                                    <label className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
+                                        Admin Response Message *
+                                    </label>
                                     <textarea
-                                        required
                                         className="form-textarea-control"
                                         rows={4}
-                                        value={storyForm.storyText}
-                                        onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
+                                        placeholder="Type your official response to the student here..."
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        required
+                                        style={{ marginTop: '6px', width: '100%', boxSizing: 'border-box' }}
                                     ></textarea>
                                 </div>
+
+                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                                    <button type="button" className="qs-cancel-btn" onClick={() => setReplyingQuery(null)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                        Send Reply
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+            {
+                isStoryModalOpen && (
+                    <div className="qs-modal-overlay" onClick={() => setIsStoryModalOpen(false)}>
+                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="qs-modal-header">
+                                <div>
+                                    <h4 className="modal-title">Edit Placement Story</h4>
+                                    <p className="modal-subtitle">Update details or fix typos in the published story.</p>
+                                </div>
+                                <button className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                    <X size={18} />
+                                </button>
                             </div>
-                            <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                                <button type="button" className="qs-cancel-btn" onClick={() => setIsStoryModalOpen(false)}>
+                            <form onSubmit={handleUpdateStory} className="qs-modal-form">
+                                <div className="qs-form-grid">
+                                    <div className="qs-form-group full-width">
+                                        <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()} style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <input
+                                                type="file"
+                                                ref={fileInputRef}
+                                                accept="image/*"
+                                                style={{ display: 'none' }}
+                                                onChange={handlePhotoChange}
+                                            />
+                                            {storyForm.photo ? (
+                                                <div className="photo-preview-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
+                                                    <img
+                                                        src={storyForm.photo}
+                                                        alt="Preview"
+                                                        style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+                                                    />
+                                                    <span className="upload-label" style={{ marginTop: '4px', color: '#10b981', fontSize: '0.7rem' }}>Photo Attached</span>
+                                                    <button
+                                                        type="button"
+                                                        style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.65rem', cursor: 'pointer', marginTop: '2px', textDecoration: 'underline' }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setStoryForm(prev => ({ ...prev, photo: '' }));
+                                                        }}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                    <Upload size={20} className="upload-cloud-icon" />
+                                                    <span className="upload-label">Upload New Photo</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Student Name *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={storyForm.studentName}
+                                            onChange={(e) => setStoryForm({ ...storyForm, studentName: e.target.value })}
+                                            placeholder="e.g. John Doe"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Company Name *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={storyForm.companyName}
+                                            onChange={(e) => setStoryForm({ ...storyForm, companyName: e.target.value })}
+                                            placeholder="e.g. Google"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Job Role *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={storyForm.jobRole}
+                                            onChange={(e) => setStoryForm({ ...storyForm, jobRole: e.target.value })}
+                                            placeholder="e.g. Software Engineer"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group">
+                                        <label className="form-label">Package (LPA) *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            className="form-input-control"
+                                            value={storyForm.package}
+                                            onChange={(e) => setStoryForm({ ...storyForm, package: e.target.value })}
+                                            placeholder="e.g. 12"
+                                        />
+                                    </div>
+                                    <div className="qs-form-group full-width">
+                                        <label className="form-label">Success Story *</label>
+                                        <textarea
+                                            required
+                                            className="form-textarea-control"
+                                            rows={4}
+                                            value={storyForm.storyText}
+                                            onChange={(e) => setStoryForm({ ...storyForm, storyText: e.target.value })}
+                                        ></textarea>
+                                    </div>
+                                </div>
+                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                    <button type="button" className="qs-cancel-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
+                                        <Edit2 size={16} style={{ marginRight: '6px' }} /> Update Story
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )
+            }
+
+            {
+                deletingStory && (
+                    <div className="qs-modal-overlay" onClick={() => setDeletingStory(null)}>
+                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="delete-modal-icon-bg">
+                                <Trash2 size={22} />
+                            </div>
+                            <h4 className="delete-modal-title">Delete Placement Story</h4>
+                            <p className="delete-modal-desc">
+                                Are you sure you want to delete the story for <strong>{deletingStory.name}</strong>? This action cannot be undone.
+                            </p>
+                            <div className="delete-modal-actions">
+                                <button type="button" className="btn-delete-cancel" onClick={() => setDeletingStory(null)}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary-purple" style={{ backgroundColor: '#2563eb' }}>
-                                    <Edit2 size={16} style={{ marginRight: '6px' }} /> Update Story
+                                <button type="button" className="btn-delete-confirm" onClick={confirmDeleteStory}>
+                                    Yes, Delete
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {deletingStory && (
-                <div className="qs-modal-overlay" onClick={() => setDeletingStory(null)}>
-                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="delete-modal-icon-bg">
-                            <Trash2 size={22} />
-                        </div>
-                        <h4 className="delete-modal-title">Delete Placement Story</h4>
-                        <p className="delete-modal-desc">
-                            Are you sure you want to delete the story for <strong>{deletingStory.name}</strong>? This action cannot be undone.
-                        </p>
-                        <div className="delete-modal-actions">
-                            <button type="button" className="btn-delete-cancel" onClick={() => setDeletingStory(null)}>
-                                Cancel
-                            </button>
-                            <button type="button" className="btn-delete-confirm" onClick={confirmDeleteStory}>
-                                Yes, Delete
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
-            {confirmingPublish && (
-                <div className="qs-modal-overlay" onClick={() => setConfirmingPublish(false)}>
-                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
-                            <CheckCircle2 size={22} />
-                        </div>
-                        <h4 className="delete-modal-title">Confirm Publish</h4>
-                        <p className="delete-modal-desc">
-                            Are you sure you want to publish the success story for <strong>{storyForm.studentName || "this student"}</strong>?
-                        </p>
-                        <div className="delete-modal-actions">
-                            <button type="button" className="btn-delete-cancel" onClick={() => setConfirmingPublish(false)}>
-                                Cancel
-                            </button>
-                            <button type="button" className="btn-primary-purple" onClick={(e) => { setConfirmingPublish(false); handlePublishStory(e); }}>
-                                Yes, Publish
-                            </button>
+                )
+            }
+            {
+                confirmingPublish && (
+                    <div className="qs-modal-overlay" onClick={() => setConfirmingPublish(false)}>
+                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                            <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
+                                <CheckCircle2 size={22} />
+                            </div>
+                            <h4 className="delete-modal-title">Confirm Publish</h4>
+                            <p className="delete-modal-desc">
+                                Are you sure you want to publish the success story for <strong>{storyForm.studentName || "this student"}</strong>?
+                            </p>
+                            <div className="delete-modal-actions">
+                                <button type="button" className="btn-delete-cancel" onClick={() => setConfirmingPublish(false)}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn-primary-purple" onClick={(e) => { setConfirmingPublish(false); handlePublishStory(e); }}>
+                                    Yes, Publish
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
 
-            {showToast && (
-                <div className={`toast-notification ${toastType}`}>
-                    <div className="toast-content">
-                        {toastType === 'success' ? (
-                            <CheckCircle2 className="toast-icon" size={18} />
-                        ) : (
-                            <XCircle className="toast-icon" size={18} />
-                        )}
-                        <span>{toastMessage}</span>
+            {
+                showToast && (
+                    <div className={`toast-notification ${toastType}`}>
+                        <div className="toast-content">
+                            {toastType === 'success' ? (
+                                <CheckCircle2 className="toast-icon" size={18} />
+                            ) : (
+                                <XCircle className="toast-icon" size={18} />
+                            )}
+                            <span>{toastMessage}</span>
+                        </div>
+                        <div className="toast-progress-bar"></div>
                     </div>
-                    <div className="toast-progress-bar"></div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
