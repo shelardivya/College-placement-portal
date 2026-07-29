@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { easeOut, motion } from 'framer-motion';
 
 import './LandingPage.css'
 
@@ -80,7 +80,11 @@ function LandingPage({ onNavigate }) {
                             </button>
                         </div>
                     </motion.div>
-                    <div className='hero-right'>
+
+                    <motion.div className='hero-right'
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8, delay: 0.3, ease: easeOut }}>
                         <div className='dashboard-card'>
                             <div className='card-header'>
                                 <div className='header-left'>
@@ -183,7 +187,7 @@ function LandingPage({ onNavigate }) {
 
 
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
                 <div className="wave-container">
                     <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
