@@ -817,6 +817,26 @@ function AdminDashboard({ onNavigate }) {
                 confirmPassword: passwordData.confirmPassword
             });
 
+            // UPDATE LOCAL STORAGE PASSWORD FOR AUTOFILL
+            const adminUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
+            const adminEmail = adminUser.email || 'saurabh@gmail.com'; // fallback
+            
+            if (adminEmail) {
+                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+                let adminFound = false;
+                const updatedAdmins = adminProfiles.map(p => {
+                    if (p.email && p.email.trim().toLowerCase() === adminEmail.trim().toLowerCase()) {
+                        adminFound = true;
+                        return { ...p, password: passwordData.newPassword };
+                    }
+                    return p;
+                });
+                if (!adminFound) {
+                     updatedAdmins.push({ email: adminEmail, password: passwordData.newPassword });
+                }
+                localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+            }
+
             setValidationError(false);
             setToastType('success');
             setToastMessage("Admin password changed successfully!");
