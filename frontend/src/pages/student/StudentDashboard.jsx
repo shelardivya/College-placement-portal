@@ -418,6 +418,19 @@ export default function
                 confirmPassword: passwordForm.confirmPassword
             });
 
+            // UPDATE LOCAL STORAGE PASSWORD FOR AUTOFILL
+            const userEmail = loggedInUser.email;
+            if (userEmail) {
+                const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+                const updatedProfiles = profiles.map(p => {
+                    if (p.email && p.email.trim().toLowerCase() === userEmail.trim().toLowerCase()) {
+                        return { ...p, password: passwordForm.newPassword };
+                    }
+                    return p;
+                });
+                localStorage.setItem('registered_profiles', JSON.stringify(updatedProfiles));
+            }
+
             setToastMessage("Password updated successfully!");
             setToastType("success");
             setShowToast(true);

@@ -66,8 +66,14 @@ function Login({ onNavigate, initialView }) {
             if (trimmed !== '') {
                 const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
                 const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+                
+                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+                const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+
                 if (matchedProfile && matchedProfile.password) {
                     autoPass = matchedProfile.password;
+                } else if (matchedAdmin && matchedAdmin.password) {
+                    autoPass = matchedAdmin.password;
                 }
             }
             setFormData(prev => ({
@@ -146,6 +152,21 @@ function Login({ onNavigate, initialView }) {
                                 email: payload.email || formData.email,
                                 role: 'System Administrator'
                             }));
+
+                            // Populate admin_profiles for autofill next time
+                            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+                            const adminEmail = (payload.email || formData.email).trim();
+                            let found = false;
+                            const updated = adminProfiles.map(p => {
+                                 if(p.email && p.email.trim().toLowerCase() === adminEmail.toLowerCase()) {
+                                     found = true;
+                                     return { ...p, password: formData.password };
+                                 }
+                                 return p;
+                            });
+                            if (!found) updated.push({ email: adminEmail, password: formData.password });
+                            localStorage.setItem('admin_profiles', JSON.stringify(updated));
+
                         } else {
                             // Student: read from registered_profiles as before
                             const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
@@ -266,6 +287,32 @@ function Login({ onNavigate, initialView }) {
                     confirmPassword: formData.confirmPassword
                 });
                 console.log("Reset Password Response:", response.data);
+
+                // Sync the reset password to local storage for autofill
+                const resetEmail = formData.email.trim().toLowerCase();
+                
+                const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+                const updatedProfiles = profiles.map(p => {
+                    if (p.email && p.email.trim().toLowerCase() === resetEmail) {
+                        return { ...p, password: formData.password };
+                    }
+                    return p;
+                });
+                localStorage.setItem('registered_profiles', JSON.stringify(updatedProfiles));
+
+                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+                let adminFound = false;
+                const updatedAdmins = adminProfiles.map(p => {
+                    if (p.email && p.email.trim().toLowerCase() === resetEmail) {
+                        adminFound = true;
+                        return { ...p, password: formData.password };
+                    }
+                    return p;
+                });
+                if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
+                    updatedAdmins.push({ email: formData.email.trim(), password: formData.password });
+                }
+                localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
 
                 setToastMessage('Password reset successfully!');
                 setToastType('success');
@@ -479,7 +526,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Enter new password"
                                                 value={formData.password}
                                                 onChange={handleChange}
-                                                autoComplete="new-password"
+                                                autoComplete="off"
                                                 required
                                             />
                                             <button
@@ -502,7 +549,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
-                                                autoComplete="new-password"
+                                                autoComplete="off"
                                                 required
                                             />
                                             <button
