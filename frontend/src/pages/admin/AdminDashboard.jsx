@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { delay, motion } from 'framer-motion';
 
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
@@ -431,9 +431,9 @@ function AdminDashboard({ onNavigate }) {
             try {
                 const response = await getDrafts();
                 // Map API response to UI state format safely
-                const draftsData = Array.isArray(response.data) ? response.data : 
-                                  (response.data && Array.isArray(response.data.content) ? response.data.content : []);
-                
+                const draftsData = Array.isArray(response.data) ? response.data :
+                    (response.data && Array.isArray(response.data.content) ? response.data.content : []);
+
                 const formattedDrafts = draftsData.map(d => ({
                     id: d.id,
                     title: d.jobRoleOverview,
@@ -1163,7 +1163,10 @@ function AdminDashboard({ onNavigate }) {
 
 
                                 <div className='lower-left-column'>
-                                    <div className='card-box posting-management-card'>
+                                    <motion.div className='card-box posting-management-card'
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.2 }}>
                                         <div className='card-box-header'>
                                             <h4>Placement Posting Management</h4>
                                             <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
@@ -1204,9 +1207,12 @@ function AdminDashboard({ onNavigate }) {
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    </motion.div>
 
-                                    <div className='card-box recent-postings-card'>
+                                    <motion.div className='card-box recent-postings-card'
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.3 }}>
                                         <div className='card-box-header'>
                                             <h4>Recent Postings</h4>
                                         </div>
@@ -1292,13 +1298,16 @@ function AdminDashboard({ onNavigate }) {
                                             </button>
                                         </div>
 
-                                    </div>
+                                    </motion.div>
 
                                 </div>
 
 
                                 <div className='lower-right-column'>
-                                    <div className='card-box applicants-card'>
+                                    <motion.div className='card-box applicants-card'
+                                        initial={{ opacity: 0, x: 20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        transition={{ duration: 0.4, delay: 0.4 }}>
                                         <div className='card-box-header search-filter-header'>
                                             <h4>Applicants Matching Your Requirements</h4>
                                             <div className="search-filter-row">
@@ -1458,7 +1467,7 @@ function AdminDashboard({ onNavigate }) {
                                             </button>
                                         </div>
 
-                                    </div>
+                                    </motion.div>
                                 </div>
                             </div>
                         </>
