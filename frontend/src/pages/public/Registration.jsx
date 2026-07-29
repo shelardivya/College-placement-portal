@@ -251,7 +251,6 @@ function Registration({ onNavigate }) {
 
         try {
             const response = await registerStudent(requestBody);
-            console.log("API Response:", response.data);
 
             // 1. Save the backend token and student details to localStorage
             if (response.data && response.data.token) {
@@ -296,12 +295,6 @@ function Registration({ onNavigate }) {
 
 
         } catch (error) {
-
-            console.error("Registration Error:", error);
-            if (error.response &&
-                error.response.data) {
-                console.log("Backend Validation Errors:", error.response.data)
-            }
 
             setToastMessage("Registration failed");
             setToastType("error");

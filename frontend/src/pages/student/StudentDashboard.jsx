@@ -1,3 +1,5 @@
+import { motion } from 'framer-motion';
+
 import React, { useState, useEffect } from "react";
 import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
 import {
@@ -92,13 +94,13 @@ export default function
         if (typeof targets === 'string') {
             targets = targets.split(',').map(t => t.trim());
         }
-        
+
         const lowerTargets = targets.map(t => typeof t === 'string' ? t.toLowerCase().trim() : '');
 
         if (lowerTargets.length === 0 || lowerTargets.includes("") || lowerTargets.includes("all")) {
             return true;
         }
-        
+
         const matchEmail = studentEmail !== "" && lowerTargets.some(t => t.includes(studentEmail));
         const matchName = studentNameFilter !== "" && lowerTargets.some(t => t.includes(studentNameFilter));
 
@@ -167,8 +169,8 @@ export default function
         try {
             const response = await getStudentNotifications();
             if (response.data) {
-                const data = Array.isArray(response.data) ? response.data : 
-                             (response.data.content ? response.data.content : []);
+                const data = Array.isArray(response.data) ? response.data :
+                    (response.data.content ? response.data.content : []);
                 // Sort by date descending (assuming it's not already sorted, optional but good UX)
                 const parseDateStr = (dateStr, timeStr) => {
                     if (!dateStr) return 0;
@@ -189,7 +191,7 @@ export default function
                     return d.getTime();
                 };
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
-                
+
                 const localizedData = sorted.map(notif => {
                     if (notif.createdDate && notif.createdTime) {
                         const [day, month, year] = notif.createdDate.split('/');
@@ -200,9 +202,9 @@ export default function
                             if (ampm === 'PM' && h < 12) h += 12;
                             if (ampm === 'AM' && h === 12) h = 0;
                             m = parseInt(m);
-                            
+
                             const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
-                            
+
                             notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                             notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                         }
@@ -211,7 +213,7 @@ export default function
                 });
                 setNotifications(localizedData);
             }
-            
+
             const countResponse = await getStudentUnreadCount();
             if (countResponse.data !== undefined) {
                 // If it returns an object like { count: 5 } or just a number
@@ -301,7 +303,6 @@ export default function
                         ...freshData
                     }));
 
-                    console.log("Student profile fetched and updated in localStorage:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching student profile:", error);
@@ -313,7 +314,6 @@ export default function
                 const response = await getStudentDashboardStats();
                 if (response.data) {
                     setDashboardStats(response.data);
-                    console.log("Dashboard stats fetched:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching dashboard stats:", error);
@@ -678,10 +678,10 @@ export default function
                 if (jobList.length > 0) {
                     const mappedJobs = jobList.map(job => {
                         const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
-                        
+
                         const reqString = job.jobRequirements || job.requirements || job.skillsRequired || "";
-                        const requirementsArray = reqString 
-                            ? reqString.split(/[,\n]/).map(req => req.trim()).filter(Boolean) 
+                        const requirementsArray = reqString
+                            ? reqString.split(/[,\n]/).map(req => req.trim()).filter(Boolean)
                             : ["No specific requirements listed"];
 
                         return {
@@ -743,12 +743,12 @@ export default function
 
     const getJobEligibility = (job) => {
         if (!job) return {};
-        
+
         let degree = job.degree || job.Degree || job.degreeRequired || "Not specified";
         let branch = job.branch || job.Branch || job.branchRequired || "Not specified";
         let minCgpa = (job.minCgpa !== undefined && job.minCgpa !== null) ? String(job.minCgpa) :
-                      (job.MinCgpa !== undefined && job.MinCgpa !== null) ? String(job.MinCgpa) :
-                      (job.cgpa !== undefined && job.cgpa !== null) ? String(job.cgpa) : "Not specified";
+            (job.MinCgpa !== undefined && job.MinCgpa !== null) ? String(job.MinCgpa) :
+                (job.cgpa !== undefined && job.cgpa !== null) ? String(job.cgpa) : "Not specified";
         let passingYear = job.passingYear || job.PassingYear || job.year || "Not specified";
         let experience = job.experience || job.Experience || job.experienceRequired || "Not specified";
         let roleOverview = job.additionalInfo || job.additionalinfo || job.jobRoleOverview || "This is a full-time role.";
@@ -860,8 +860,11 @@ export default function
 
             {activeTab === 'dashboard' && (
                 <section className="metrics-grid">
-                    {metrics.map((metric) => (
-                        <div className="metric-card" key={metric.id}>
+                    {metrics.map((metric, index) => (
+                        <motion.div className="metric-card" key={metric.id}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.4, delay: index * 0.15 }}>
                             <div className="metric-header">
                                 <div className={`metric-icon-wrapper ${metric.colorClass}`}>
                                     {metric.icon}
@@ -882,7 +885,7 @@ export default function
 
                             </div>
 
-                        </div>
+                        </motion.div>
                     ))}
 
                 </section>
@@ -1584,7 +1587,7 @@ export default function
                             </div>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 {unreadCount > 0 && (
-                                    <button 
+                                    <button
                                         onClick={handleMarkAllRead}
                                         style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
                                     >
@@ -1603,9 +1606,9 @@ export default function
                                 notifications.map((notif) => {
                                     const isRead = notif.read || notif.status === 'read';
                                     return (
-                                        <div 
-                                            key={notif.id} 
-                                            className="notification-item" 
+                                        <div
+                                            key={notif.id}
+                                            className="notification-item"
                                             style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                         >
                                             <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
