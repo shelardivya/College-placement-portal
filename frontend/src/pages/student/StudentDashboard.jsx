@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
 import {
     GraduationCap,
@@ -10,30 +10,17 @@ import {
     Clock,
     XCircle,
     MapPin,
-    Building,
     Briefcase,
     Calendar,
-    ChevronLeft,
-    ChevronRight,
     X,
     Lock,
     LogOut,
-    Mail,
-    Phone,
-    BookOpen,
-    Award,
-    Globe,
-    GitBranch,
     Eye,
     EyeOff,
     ExternalLink,
-    Code,
-    Link,
     FileText,
     Search,
     Upload,
-    MessageSquare,
-    Plus
 } from "lucide-react";
 import "./StudentDashboard.css";
 import StudHub from "./StudHub";
@@ -41,11 +28,6 @@ import StudHub from "./StudHub";
 // Default fallback mock data for Placement Drives
 const initialDrives = [];
 
-// Default fallback mock data for Placement Stories
-const initialStories = [];
-
-// Default fallback mock data for Student Queries & Responses
-const initialStudentQueries = [];
 
 export default function
     StudentDashboard({ onNavigate }) {
@@ -60,31 +42,15 @@ export default function
     };
 
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'studhub'
-    const [showDriveDetails, setShowDriveDetails] = useState(false);
+
 
     // Sync states from localStorage (with mock fallbacks)
-    const [drives, setDrives] = useState(() => {
+    const [drives] = useState(() => {
         const stored = localStorage.getItem("placement_drives");
         return stored ? JSON.parse(stored) : initialDrives;
     });
 
-    const isEventTomorrow = (dateStr) => {
-        if (!dateStr) return false;
-        try {
-            const today = new Date();
-            const tomorrow = new Date(today);
-            tomorrow.setDate(today.getDate() + 1);
 
-            const eventDate = new Date(dateStr);
-            if (isNaN(eventDate.getTime())) return false;
-
-            return eventDate.getDate() === tomorrow.getDate() &&
-                eventDate.getMonth() === tomorrow.getMonth() &&
-                eventDate.getFullYear() === tomorrow.getFullYear();
-        } catch (e) {
-            return false;
-        }
-    };
 
     // Filter drives targeted to this student
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
@@ -113,12 +79,12 @@ export default function
         try {
             const d = new Date(dateStr);
             return isNaN(d.getTime()) ? new Date("9999-12-31") : d;
-        } catch (e) {
+        } catch {
             return new Date("9999-12-31");
         }
     };
     activeDrives.sort((a, b) => getParsedDate(a.date) - getParsedDate(b.date));
-    const nextEvent = activeDrives[0];
+
 
 
 
@@ -149,6 +115,8 @@ export default function
     // Resume upload states
     const [resumeFile, setResumeFile] = useState(null);
     const [resumeFileName, setResumeFileName] = useState("");
+
+
 
 
 
@@ -226,7 +194,10 @@ export default function
     };
 
     useEffect(() => {
-        fetchNotifications();
+        const load = async () => {
+            await fetchNotifications();
+        };
+        load();
     }, []);
 
     const handleMarkAllRead = async () => {
@@ -244,15 +215,7 @@ export default function
 
 
 
-    const getSkillColorClass = (skill) => {
-        const s = skill.toLowerCase().trim();
-        if (s.includes("react")) return "pill-react";
-        if (s.includes("javascript") || s.includes("js")) return "pill-js";
-        if (s.includes("node")) return "pill-node";
-        if (s.includes("python")) return "pill-python";
-        if (s.includes("css")) return "pill-css";
-        return "pill-default";
-    };
+
 
     // Gather profile information from localStorage, with clean default fallbacks
     const getInitialProfile = () => {
@@ -449,59 +412,8 @@ export default function
         }
     };
 
-    // Handles raising a student query
-    const handleRaiseQuery = (e) => {
-        e.preventDefault();
-        if (!querySubject.trim() || !queryMessage.trim()) {
-            setToastMessage("Please fill in both subject and description.");
-            setToastType('error');
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
-            return;
-        }
 
-        const branchText = profile.branch || loggedInUser.branch || "B.Tech CSE";
-        const newQuery = {
-            id: Date.now(),
-            name: studentName,
-            course: branchText,
-            avatar: getInitials(studentName),
-            colorClass: ['blue', 'purple', 'green', 'orange'][Math.floor(Math.random() * 4)],
-            title: querySubject.trim(),
-            message: queryMessage.trim(),
-            date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
-            status: 'pending'
-        };
 
-        const updatedQueries = [newQuery, ...queries];
-        setQueries(updatedQueries);
-        localStorage.setItem("student_queries", JSON.stringify(updatedQueries));
-
-        // Reset form inputs
-        setQuerySubject("");
-        setQueryMessage("");
-
-        // Trigger success notification
-        setToastMessage("Query raised successfully! Admin will respond soon.");
-        setToastType('success');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
-
-    // Handles applying to a campus drive event
-    const handleApplyDrive = (drive) => {
-        setToastMessage(`Successfully applied for ${drive.role} at ${drive.company}!`);
-        setToastType('success');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
-
-    const handleViewEventDetails = (drive) => {
-        setToastMessage(`Successfully registered for the ${drive.company} drive at ${drive.venue || 'Seminar Hall A'}.`);
-        setToastType('success');
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
 
     // Handles logout flow
     const handleLogout = () => {
@@ -867,261 +779,261 @@ export default function
                     {activeTab === 'dashboard' && (
                         <>
                             <section className="welcome-section">
-                    <div className="welcome-content">
-                        <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
-                        <p>Here's whats's happening with your placement portal today.</p>
-                    </div>
-                    <div className="welcome-date-badge">
-                        <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    </div>
-                </section>
-
-
-                <section className="metrics-grid">
-                    {metrics.map((metric, index) => (
-                        <motion.div className="metric-card" key={metric.id}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ y: -5, scale: 1.02 }}
-                            transition={{ duration: 0.4, delay: index * 0.15 }}>
-                            <div className="metric-header">
-                                <div className={`metric-icon-wrapper ${metric.colorClass}`}>
-                                    {metric.icon}
+                                <div className="welcome-content">
+                                    <h2>Welcome, {studentName} <span className="waving-hand">👋</span></h2>
+                                    <p>Here's whats's happening with your placement portal today.</p>
                                 </div>
-
-                                <div className="metric-info">
-                                    <span className="metric-title"> {metric.title}</span>
-                                    <span className="metric-value">{metric.value}</span>
+                                <div className="welcome-date-badge">
+                                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                 </div>
-                            </div>
+                            </section>
 
 
-                            <div className="metric-progress-container">
-                                <div className={`metric-progress-bar ${metric.colorClass}`}
+                            <section className="metrics-grid">
+                                {metrics.map((metric, index) => (
+                                    <motion.div className="metric-card" key={metric.id}
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        whileHover={{ y: -5, scale: 1.02 }}
+                                        transition={{ duration: 0.4, delay: index * 0.15 }}>
+                                        <div className="metric-header">
+                                            <div className={`metric-icon-wrapper ${metric.colorClass}`}>
+                                                {metric.icon}
+                                            </div>
 
-                                    style={{ width: `${metric.progess || metric.progress}%` }}>
-                                </div>
-
-                            </div>
-
-                        </motion.div>
-                    ))}
-
-                </section>
-
-
-
-
-                <main className="dashboard-main-content">
-
-
-                    <section className="dashboard-column jobs-column">
-                        <div className="column-card-header">
-                            <h3>Latest Job Opportunities</h3>
-                        </div>
-
-                        <div className="job-list">
-                            {jobs && jobs.length > 0 ? (
-                                jobs
-                                    .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                                    .map((job, index) => {
-                                        const isApplied = job.isApplied || appliedJobs.includes(job.id);
-                                        return (
-                                            <motion.div className="job-card" key={job.id}
-                                                initial={{ opacity: 0, y: -20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
-                                                <div className="job-card-header">
-                                                    <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
-                                                        <img
-                                                            src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                            alt={job.company}
-                                                            className="company-logo-img"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                            }}
-                                                        />
-                                                        <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
-                                                            {job.logoLetter || job.company.charAt(0)}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="company-name">{job.company}</h4>
-                                                    <button
-                                                        className={`btn-apply ${isApplied ? 'applied' : ''}`}
-                                                        disabled={isApplied}
-                                                        onClick={() => handleApplyClick(job)}
-                                                    >
-                                                        {isApplied ? "Applied" : "Apply"}
-                                                    </button>
-                                                </div>
-                                                <div className="job-details-meta">
-                                                    <div className="meta-item">
-                                                        <MapPin size={14} className="meta-icon" />
-                                                        <span className="meta-label">Location</span>
-                                                        <span className="meta-sep">:</span>
-                                                        <strong>{job.location}</strong>
-                                                    </div>
-                                                    <div className="meta-item">
-                                                        <Briefcase size={14} className="meta-icon" />
-                                                        <span className="meta-label">Job Role</span>
-                                                        <span className="meta-sep">:</span>
-                                                        <strong>{job.role}</strong>
-                                                    </div>
-                                                    <div className="meta-item">
-                                                        <Calendar size={14} className="meta-icon" />
-                                                        <span className="meta-label">Deadline</span>
-                                                        <span className="meta-sep">:</span>
-                                                        <strong className="meta-deadline">{job.deadline}</strong>
-                                                    </div>
-                                                </div>
-                                            </motion.div>
-                                        );
-                                    })
-                            ) : (
-                                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                                    <p>No new job opportunities are currently available for your profile.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {jobs && jobs.length > JOBS_PER_PAGE && (
-                            <div className="sd-pagination">
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={jobsPage === 1}
-                                    onClick={() => setJobsPage(p => p - 1)}
-                                >
-                                    ← Prev
-                                </button>
-                                <span className="sd-page-info">
-                                    {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                                </span>
-                                <button
-                                    className="sd-page-btn"
-                                    disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                                    onClick={() => setJobsPage(p => p + 1)}
-                                >
-                                    Next →
-                                </button>
-                            </div>
-                        )}
-                    </section>
-
-
-                    <section className="dashboard-column match-column">
-                        <div className="column-card-header">
-                            <h3>Resume Match Status</h3>
-                            <div className="search-bar-wrapper">
-                                <Search className="search-icon" size={16} />
-                                <input
-                                    type="text"
-                                    className="search-input"
-                                    placeholder="Search company..."
-                                    value={matchSearchQuery}
-                                    onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
-                                />
-                            </div>
-                        </div>
-
-
-                        <div className="match-list">
-                            {(() => {
-                                const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                                if (filtered.length === 0) {
-                                    return (
-                                        <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                                            <p>No resume matches found.</p>
+                                            <div className="metric-info">
+                                                <span className="metric-title"> {metric.title}</span>
+                                                <span className="metric-value">{metric.value}</span>
+                                            </div>
                                         </div>
-                                    );
-                                }
-                                return filtered
-                                    .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
-                                    .map((item, index) => (
-                                        <motion.div className="match-card" key={index}
-                                            initial={{ opacity: 0, y: 15 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ duration: 0.3, delay: index * 0.1 }}>
 
-                                            <div className="match-card-header">
-                                                <div className="match-logo-details">
-                                                    <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
-                                                        <img
-                                                            src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                            alt={item.company}
-                                                            className="company-logo-img"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                            }}
-                                                        />
-                                                        <span style={{ color: item.logoColor, display: 'none' }}>
-                                                            {item.logoLetter || item.company.charAt(0)}
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="match-company-name">{item.company}</h4>
-                                                </div>
 
-                                                <div className="match-score-container">
-                                                    <span className="match-score-text">{item.score}% Match</span>
-                                                    <div className="score-progress-track">
-                                                        <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
-                                                    </div>
-                                                </div>
+                                        <div className="metric-progress-container">
+                                            <div className={`metric-progress-bar ${metric.colorClass}`}
+
+                                                style={{ width: `${metric.progess || metric.progress}%` }}>
                                             </div>
 
-                                            <div className="match-card-details">
-                                                <div className="match-detail-item">
-                                                    <span className="match-detail-label">Location :</span>
-                                                    <strong>{item.location}</strong>
-                                                </div>
-                                                <div className="match-detail-item">
-                                                    <span className="match-detail-label">Job Role :</span>
-                                                    <strong>{item.role}</strong>
-                                                </div>
-                                                <div className="match-detail-item">
-                                                    <span className="match-detail-label">Deadline :</span>
-                                                    <strong>{item.deadline}</strong>
-                                                </div>
+                                        </div>
+
+                                    </motion.div>
+                                ))}
+
+                            </section>
+
+
+
+
+                            <main className="dashboard-main-content">
+
+
+                                <section className="dashboard-column jobs-column">
+                                    <div className="column-card-header">
+                                        <h3>Latest Job Opportunities</h3>
+                                    </div>
+
+                                    <div className="job-list">
+                                        {jobs && jobs.length > 0 ? (
+                                            jobs
+                                                .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
+                                                .map((job, index) => {
+                                                    const isApplied = job.isApplied || appliedJobs.includes(job.id);
+                                                    return (
+                                                        <motion.div className="job-card" key={job.id}
+                                                            initial={{ opacity: 0, y: -20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+                                                            <div className="job-card-header">
+                                                                <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
+                                                                    <img
+                                                                        src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                                        alt={job.company}
+                                                                        className="company-logo-img"
+                                                                        onError={(e) => {
+                                                                            e.target.style.display = 'none';
+                                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                                        }}
+                                                                    />
+                                                                    <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
+                                                                        {job.logoLetter || job.company.charAt(0)}
+                                                                    </span>
+                                                                </div>
+                                                                <h4 className="company-name">{job.company}</h4>
+                                                                <button
+                                                                    className={`btn-apply ${isApplied ? 'applied' : ''}`}
+                                                                    disabled={isApplied}
+                                                                    onClick={() => handleApplyClick(job)}
+                                                                >
+                                                                    {isApplied ? "Applied" : "Apply"}
+                                                                </button>
+                                                            </div>
+                                                            <div className="job-details-meta">
+                                                                <div className="meta-item">
+                                                                    <MapPin size={14} className="meta-icon" />
+                                                                    <span className="meta-label">Location</span>
+                                                                    <span className="meta-sep">:</span>
+                                                                    <strong>{job.location}</strong>
+                                                                </div>
+                                                                <div className="meta-item">
+                                                                    <Briefcase size={14} className="meta-icon" />
+                                                                    <span className="meta-label">Job Role</span>
+                                                                    <span className="meta-sep">:</span>
+                                                                    <strong>{job.role}</strong>
+                                                                </div>
+                                                                <div className="meta-item">
+                                                                    <Calendar size={14} className="meta-icon" />
+                                                                    <span className="meta-label">Deadline</span>
+                                                                    <span className="meta-sep">:</span>
+                                                                    <strong className="meta-deadline">{job.deadline}</strong>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    );
+                                                })
+                                        ) : (
+                                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                                <p>No new job opportunities are currently available for your profile.</p>
                                             </div>
+                                        )}
+                                    </div>
 
-                                        </motion.div>
-                                    ));
-                            })()}
-                        </div>
+                                    {jobs && jobs.length > JOBS_PER_PAGE && (
+                                        <div className="sd-pagination">
+                                            <button
+                                                className="sd-page-btn"
+                                                disabled={jobsPage === 1}
+                                                onClick={() => setJobsPage(p => p - 1)}
+                                            >
+                                                ← Prev
+                                            </button>
+                                            <span className="sd-page-info">
+                                                {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                            </span>
+                                            <button
+                                                className="sd-page-btn"
+                                                disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                                                onClick={() => setJobsPage(p => p + 1)}
+                                            >
+                                                Next →
+                                            </button>
+                                        </div>
+                                    )}
+                                </section>
+
+
+                                <section className="dashboard-column match-column">
+                                    <div className="column-card-header">
+                                        <h3>Resume Match Status</h3>
+                                        <div className="search-bar-wrapper">
+                                            <Search className="search-icon" size={16} />
+                                            <input
+                                                type="text"
+                                                className="search-input"
+                                                placeholder="Search company..."
+                                                value={matchSearchQuery}
+                                                onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
+                                            />
+                                        </div>
+                                    </div>
+
+
+                                    <div className="match-list">
+                                        {(() => {
+                                            const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                                            if (filtered.length === 0) {
+                                                return (
+                                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                                        <p>No resume matches found.</p>
+                                                    </div>
+                                                );
+                                            }
+                                            return filtered
+                                                .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
+                                                .map((item, index) => (
+                                                    <motion.div className="match-card" key={index}
+                                                        initial={{ opacity: 0, y: 15 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.3, delay: index * 0.1 }}>
+
+                                                        <div className="match-card-header">
+                                                            <div className="match-logo-details">
+                                                                <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
+                                                                    <img
+                                                                        src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
+                                                                        alt={item.company}
+                                                                        className="company-logo-img"
+                                                                        onError={(e) => {
+                                                                            e.target.style.display = 'none';
+                                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
+                                                                        }}
+                                                                    />
+                                                                    <span style={{ color: item.logoColor, display: 'none' }}>
+                                                                        {item.logoLetter || item.company.charAt(0)}
+                                                                    </span>
+                                                                </div>
+                                                                <h4 className="match-company-name">{item.company}</h4>
+                                                            </div>
+
+                                                            <div className="match-score-container">
+                                                                <span className="match-score-text">{item.score}% Match</span>
+                                                                <div className="score-progress-track">
+                                                                    <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="match-card-details">
+                                                            <div className="match-detail-item">
+                                                                <span className="match-detail-label">Location :</span>
+                                                                <strong>{item.location}</strong>
+                                                            </div>
+                                                            <div className="match-detail-item">
+                                                                <span className="match-detail-label">Job Role :</span>
+                                                                <strong>{item.role}</strong>
+                                                            </div>
+                                                            <div className="match-detail-item">
+                                                                <span className="match-detail-label">Deadline :</span>
+                                                                <strong>{item.deadline}</strong>
+                                                            </div>
+                                                        </div>
+
+                                                    </motion.div>
+                                                ));
+                                        })()}
+                                    </div>
 
 
 
 
-                        {(() => {
-                            const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                            const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
+                                    {(() => {
+                                        const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                                        const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
 
-                            return (
-                                <div className="sd-pagination">
-                                    <button
-                                        className="sd-page-btn"
-                                        disabled={matchPage === 1}
-                                        onClick={() => setMatchPage(p => p - 1)}
-                                    >
-                                        ← Prev
-                                    </button>
-                                    <span className="sd-page-info">
-                                        {matchPage} / {totalPages}
-                                    </span>
-                                    <button
-                                        className="sd-page-btn"
-                                        disabled={matchPage >= totalPages}
-                                        onClick={() => setMatchPage(p => p + 1)}
-                                    >
-                                        Next →
-                                    </button>
-                                </div>
-                            );
-                        })()}
-                    </section>
+                                        return (
+                                            <div className="sd-pagination">
+                                                <button
+                                                    className="sd-page-btn"
+                                                    disabled={matchPage === 1}
+                                                    onClick={() => setMatchPage(p => p - 1)}
+                                                >
+                                                    ← Prev
+                                                </button>
+                                                <span className="sd-page-info">
+                                                    {matchPage} / {totalPages}
+                                                </span>
+                                                <button
+                                                    className="sd-page-btn"
+                                                    disabled={matchPage >= totalPages}
+                                                    onClick={() => setMatchPage(p => p + 1)}
+                                                >
+                                                    Next →
+                                                </button>
+                                            </div>
+                                        );
+                                    })()}
+                                </section>
 
-                </main>
+                            </main>
                         </>
                     )}
 

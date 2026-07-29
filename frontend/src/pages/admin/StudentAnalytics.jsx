@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
@@ -92,6 +92,24 @@ export default function StudentAnalytics() {
     const [cgpaData, setCgpaData] = useState([]);
     const [maxStudents, setMaxStudents] = useState(40);
     const [skillsData, setSkillsData] = useState([]);
+    const [studentsList, setStudentsList] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState('success');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [formData, setFormData] = useState({
+        name: '',
+        branch: 'CS',
+        passingYear: '2026',
+        cgpa: '',
+        lpa: '',
+        skill: '',
+        company: ''
+    });
+
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -206,23 +224,7 @@ export default function StudentAnalytics() {
 
     const segments = getDonutSegments(departmentData);
 
-    const [studentsList, setStudentsList] = useState([]);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [showToast, setShowToast] = useState(false);
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastType, setToastType] = useState('success');
 
-    const [formData, setFormData] = useState({
-        name: '',
-        branch: 'CS',
-        passingYear: '2026',
-        cgpa: '',
-        lpa: '',
-        skill: '',
-        company: ''
-    });
 
     const handleAddStudent = async (e) => {
         e.preventDefault();
@@ -296,12 +298,13 @@ export default function StudentAnalytics() {
         (student.passingYear && student.passingYear.toString().includes(searchQuery))
     );
 
-    const [currentPage, setCurrentPage] = useState(1);
+
     const itemsPerPage = 5;
 
     // Reset to page 1 whenever search query changes
     useEffect(() => {
-        setCurrentPage(1);
+        const timer = setTimeout(() => setCurrentPage(1), 0);
+        return () => clearTimeout(timer);
     }, [searchQuery]);
 
     const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);

@@ -1,6 +1,6 @@
-import { delay, motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
@@ -15,7 +15,6 @@ import {
     Search,
     ChevronDown,
     X,
-    Factory,
     User,
     Lock,
     LogOut,
@@ -23,7 +22,6 @@ import {
     Eye,
     EyeOff,
     Edit3,
-    BarChart
 } from 'lucide-react';
 
 function AdminDashboard({ onNavigate }) {
@@ -168,9 +166,11 @@ function AdminDashboard({ onNavigate }) {
             console.error("Error fetching admin notifications or unread count:", error);
         }
     };
-
     useEffect(() => {
-        fetchNotifications();
+        const load = async () => {
+            await fetchNotifications();
+        };
+        load();
     }, []);
 
     const handleMarkAllRead = async () => {
@@ -245,10 +245,15 @@ function AdminDashboard({ onNavigate }) {
                 const response = await getAdminApplicantsMatching();
                 if (response.data && Array.isArray(response.data)) {
                     const mapped = response.data.map(app => {
-                        const dateObj = new Date();
-                        const dateString = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
                         return {
                             id: app.id || Date.now() + Math.random(),
+
+
+
+
+
+                            
                             name: app.studentName || '',
                             company: app.companyName || app.jobRole || '',
                             degree: app.course || app.degree || '',
@@ -421,8 +426,11 @@ function AdminDashboard({ onNavigate }) {
             result.sort((a, b) => b.match - a.match);
         }
 
-        setApplicantsCurrentPage(1); // Reset page to 1 when search or filter changes
-        setFilteredApplicants(result);
+        const timer = setTimeout(() => {
+            setApplicantsCurrentPage(1);
+            setFilteredApplicants(result);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
 
     // Fetch drafts on component mount
@@ -886,7 +894,7 @@ function AdminDashboard({ onNavigate }) {
             const date = new Date(dateStr);
             if (isNaN(date.getTime())) return dateStr;
             return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch (e) {
+        } catch {
             return dateStr;
         }
     };
@@ -1110,404 +1118,404 @@ function AdminDashboard({ onNavigate }) {
                                 <>
 
 
-                            <section className='greeting-section'>
-                                <div className='greeting-content'>
-                                    <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
-                                    <p>Here's what's happening with your placement portal today.</p>
-                                </div>
-                                <div className='greeting-date-badge'>
-                                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                </div>
-                            </section>
-
-
-                            <section className='stats-grid'>
-                                <motion.div className='stat-card'
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -5, scale: 1.02 }}
-                                    transition={{ duration: 0.3 }}>
-                                    <div className='stat-icon-wrapper blue-icon'>
-                                        <FileText size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Active Posting</span>
-                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalActivePosts : '-'}</h3>
-                                        <span className='stat-trend'>
-                                            <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.activePostsGrowth >= 0 ? `+${dashboardStats.activePostsGrowth}% from last month` : `${dashboardStats.activePostsGrowth}% from last month`) : 'Loading...'}
-                                            </span>
-                                        </span>
-                                    </div>
-                                </motion.div>
-
-                                <motion.div className='stat-card'
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -5, scale: 1.02 }}
-                                    transition={{ duration: 0.3 }}>
-                                    <div className='stat-icon-wrapper green-icon'>
-                                        <Users size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Total Students</span>
-                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalStudents : '-'}</h3>
-                                        <span className='stat-trend'>
-                                            <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.studentGrowth >= 0 ? `+${dashboardStats.studentGrowth}% from last month` : `${dashboardStats.studentGrowth}% from last month`) : 'Loading...'}
-                                            </span>
-                                        </span>
-                                    </div>
-                                </motion.div>
-
-                                <motion.div className='stat-card'
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    whileHover={{ y: -5, scale: 1.02 }}
-                                    transition={{ duration: 0.3 }}>
-                                    <div className='stat-icon-wrapper purple-icon'>
-                                        <Briefcase size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Resume Received</span>
-                                        <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalResumeReceived : '-'}</h3>
-                                        <span className='stat-trend'>
-                                            <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.resumeGrowth >= 0 ? `+${dashboardStats.resumeGrowth}% from last month` : `${dashboardStats.resumeGrowth}% from last month`) : 'Loading...'}
-                                            </span>
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            </section>
-
-
-                            <div className='dashboard-grid-lower'>
-
-
-                                <div className='lower-left-column'>
-                                    <motion.div className='card-box posting-management-card'
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.4, delay: 0.2 }}>
-                                        <div className='card-box-header'>
-                                            <h4>Placement Posting Management</h4>
-                                            <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
-                                                < Plus size={16} />
-                                                Create New Job Posting
-                                            </button>
+                                    <section className='greeting-section'>
+                                        <div className='greeting-content'>
+                                            <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
+                                            <p>Here's what's happening with your placement portal today.</p>
                                         </div>
+                                        <div className='greeting-date-badge'>
+                                            <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        </div>
+                                    </section>
 
-                                        <div className='drafts-list'>
-                                            <div className='drafts-section-header'>
-                                                <h5>Saved Drafts ({drafts.length})</h5>
+
+                                    <section className='stats-grid'>
+                                        <motion.div className='stat-card'
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            whileHover={{ y: -5, scale: 1.02 }}
+                                            transition={{ duration: 0.3 }}>
+                                            <div className='stat-icon-wrapper blue-icon'>
+                                                <FileText size={20} />
                                             </div>
+                                            <div className='stat-details'>
+                                                <span className='stat-label'>Active Posting</span>
+                                                <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalActivePosts : '-'}</h3>
+                                                <span className='stat-trend'>
+                                                    <span className='trend-subtext'>
+                                                        {dashboardStats ? (dashboardStats.activePostsGrowth >= 0 ? `+${dashboardStats.activePostsGrowth}% from last month` : `${dashboardStats.activePostsGrowth}% from last month`) : 'Loading...'}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </motion.div>
 
-                                            {drafts.map(draft => (
-                                                <div key={draft.id} className='draft-item'>
-                                                    <div className='draft-info'>
-                                                        <span className='badge-draft'>Draft</span>
-                                                        <div>
-                                                            <h6>{draft.title}</h6>
-                                                            <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
-                                                        </div>
-                                                    </div>
+                                        <motion.div className='stat-card'
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            whileHover={{ y: -5, scale: 1.02 }}
+                                            transition={{ duration: 0.3 }}>
+                                            <div className='stat-icon-wrapper green-icon'>
+                                                <Users size={20} />
+                                            </div>
+                                            <div className='stat-details'>
+                                                <span className='stat-label'>Total Students</span>
+                                                <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalStudents : '-'}</h3>
+                                                <span className='stat-trend'>
+                                                    <span className='trend-subtext'>
+                                                        {dashboardStats ? (dashboardStats.studentGrowth >= 0 ? `+${dashboardStats.studentGrowth}% from last month` : `${dashboardStats.studentGrowth}% from last month`) : 'Loading...'}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </motion.div>
 
-                                                    <div className='draft-actions'>
-                                                        <button
-                                                            className='btn-resume-draft'
-                                                            onClick={() => handleEditDraft(draft.id)}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className='btn-publish-draft'
-                                                            onClick={() => handlePublishDraft(draft.id)}
-                                                        >
-                                                            Publish
-                                                        </button>
-                                                    </div>
+                                        <motion.div className='stat-card'
+                                            initial={{ opacity: 0, y: 15 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            whileHover={{ y: -5, scale: 1.02 }}
+                                            transition={{ duration: 0.3 }}>
+                                            <div className='stat-icon-wrapper purple-icon'>
+                                                <Briefcase size={20} />
+                                            </div>
+                                            <div className='stat-details'>
+                                                <span className='stat-label'>Resume Received</span>
+                                                <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalResumeReceived : '-'}</h3>
+                                                <span className='stat-trend'>
+                                                    <span className='trend-subtext'>
+                                                        {dashboardStats ? (dashboardStats.resumeGrowth >= 0 ? `+${dashboardStats.resumeGrowth}% from last month` : `${dashboardStats.resumeGrowth}% from last month`) : 'Loading...'}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </motion.div>
+                                    </section>
+
+
+                                    <div className='dashboard-grid-lower'>
+
+
+                                        <div className='lower-left-column'>
+                                            <motion.div className='card-box posting-management-card'
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.4, delay: 0.2 }}>
+                                                <div className='card-box-header'>
+                                                    <h4>Placement Posting Management</h4>
+                                                    <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
+                                                        < Plus size={16} />
+                                                        Create New Job Posting
+                                                    </button>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    </motion.div>
 
-                                    <motion.div className='card-box recent-postings-card'
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.4, delay: 0.3 }}>
-                                        <div className='card-box-header'>
-                                            <h4>Recent Postings</h4>
-                                        </div>
+                                                <div className='drafts-list'>
+                                                    <div className='drafts-section-header'>
+                                                        <h5>Saved Drafts ({drafts.length})</h5>
+                                                    </div>
 
-                                        <div className='postings-list'>
-                                            {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
-                                                paginatedRecentPosts.map((post, index) => (
-                                                    <motion.div key={index} className='posting-card-item'
-                                                        initial={{ opacity: 0, y: -20 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
-
-                                                        <div className='posting-card-logo-wrap'>
-                                                            {post.companyName ? (
-                                                                <img
-                                                                    src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`}
-                                                                    alt={post.companyName}
-                                                                    style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
-                                                                />
-                                                            ) : (
-                                                                <div className='posting-logo-fallback'>
-                                                                    <Briefcase size={18} />
+                                                    {drafts.map(draft => (
+                                                        <div key={draft.id} className='draft-item'>
+                                                            <div className='draft-info'>
+                                                                <span className='badge-draft'>Draft</span>
+                                                                <div>
+                                                                    <h6>{draft.title}</h6>
+                                                                    <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
                                                                 </div>
-                                                            )}
-                                                        </div>
+                                                            </div>
 
-                                                        <div className='posting-card-body'>
-                                                            <h5 className='posting-card-title'>{post.companyName}</h5>
-                                                            <div className='posting-info-rows'>
-                                                                {post.location && (
-                                                                    <div className='posting-info-row'>
-                                                                        <span className='posting-info-icon'>📍</span>
-                                                                        <span className='posting-info-label'>Location</span>
-                                                                        <span className='posting-info-sep'>:</span>
-                                                                        <span className='posting-info-value'>{post.location}</span>
-                                                                    </div>
-                                                                )}
-                                                                <div className='posting-info-row'>
-                                                                    <span className='posting-info-icon'>👤</span>
-                                                                    <span className='posting-info-label'>Job Role</span>
-                                                                    <span className='posting-info-sep'>:</span>
-                                                                    <span className='posting-info-value'>{post.jobRole}</span>
-                                                                </div>
-                                                                {post.deadline && (
-                                                                    <div className='posting-info-row'>
-                                                                        <span className='posting-info-icon'>📅</span>
-                                                                        <span className='posting-info-label'>Deadline</span>
-                                                                        <span className='posting-info-sep'>:</span>
-                                                                        <span className='posting-info-value posting-info-deadline'>{formatDeadline(post.deadline)}</span>
-                                                                    </div>
-                                                                )}
+                                                            <div className='draft-actions'>
+                                                                <button
+                                                                    className='btn-resume-draft'
+                                                                    onClick={() => handleEditDraft(draft.id)}
+                                                                >
+                                                                    Edit
+                                                                </button>
+                                                                <button
+                                                                    className='btn-publish-draft'
+                                                                    onClick={() => handlePublishDraft(draft.id)}
+                                                                >
+                                                                    Publish
+                                                                </button>
                                                             </div>
                                                         </div>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
 
-                                                        <div className='posting-card-status'>
-                                                            {post.status && post.status.toLowerCase() === 'expired' ? (
-                                                                <span className='badge-expired'>Expired</span>
-                                                            ) : (
-                                                                <span className='badge-active'>{post.status || 'Active'}</span>
-                                                            )}
-                                                        </div>
-                                                    </motion.div>
-                                                ))
-                                            ) : (
-                                                <div className='no-postings'>No recent postings found.</div>
-                                            )}
-                                        </div>
-
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === 1}
-                                                onClick={() => setJobsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {jobsCurrentPage} of {totalJobsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
-                                                onClick={() => setJobsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-
-                                    </motion.div>
-
-                                </div>
-
-
-                                <div className='lower-right-column'>
-                                    <motion.div className='card-box applicants-card'
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ duration: 0.4, delay: 0.4 }}>
-                                        <div className='card-box-header search-filter-header'>
-                                            <h4>Applicants Matching Your Requirements</h4>
-                                            <div className="search-filter-row">
-                                                <div className="search-box-wrapper">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search by name..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                    <button className="search-btn">
-                                                        <Search size={16} />
-                                                    </button>
+                                            <motion.div className='card-box recent-postings-card'
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.4, delay: 0.3 }}>
+                                                <div className='card-box-header'>
+                                                    <h4>Recent Postings</h4>
                                                 </div>
 
-                                                <div className="custom-dropdown-container">
-                                                    <span className="filter-label">Filter by</span>
-                                                    <button
-                                                        className="dropdown-btn"
-                                                        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                                                    >
-                                                        {filterBy} <ChevronDown size={14} />
-                                                    </button>
-                                                    {isFilterDropdownOpen && (
-                                                        <div className="dropdown-menu">
-                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Date')}>By Date</div>
-                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Company Name')}>By Company Name</div>
-                                                        </div>
+                                                <div className='postings-list'>
+                                                    {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
+                                                        paginatedRecentPosts.map((post, index) => (
+                                                            <motion.div key={index} className='posting-card-item'
+                                                                initial={{ opacity: 0, y: -20 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+
+                                                                <div className='posting-card-logo-wrap'>
+                                                                    {post.companyName ? (
+                                                                        <img
+                                                                            src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`}
+                                                                            alt={post.companyName}
+                                                                            style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className='posting-logo-fallback'>
+                                                                            <Briefcase size={18} />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className='posting-card-body'>
+                                                                    <h5 className='posting-card-title'>{post.companyName}</h5>
+                                                                    <div className='posting-info-rows'>
+                                                                        {post.location && (
+                                                                            <div className='posting-info-row'>
+                                                                                <span className='posting-info-icon'>📍</span>
+                                                                                <span className='posting-info-label'>Location</span>
+                                                                                <span className='posting-info-sep'>:</span>
+                                                                                <span className='posting-info-value'>{post.location}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className='posting-info-row'>
+                                                                            <span className='posting-info-icon'>👤</span>
+                                                                            <span className='posting-info-label'>Job Role</span>
+                                                                            <span className='posting-info-sep'>:</span>
+                                                                            <span className='posting-info-value'>{post.jobRole}</span>
+                                                                        </div>
+                                                                        {post.deadline && (
+                                                                            <div className='posting-info-row'>
+                                                                                <span className='posting-info-icon'>📅</span>
+                                                                                <span className='posting-info-label'>Deadline</span>
+                                                                                <span className='posting-info-sep'>:</span>
+                                                                                <span className='posting-info-value posting-info-deadline'>{formatDeadline(post.deadline)}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className='posting-card-status'>
+                                                                    {post.status && post.status.toLowerCase() === 'expired' ? (
+                                                                        <span className='badge-expired'>Expired</span>
+                                                                    ) : (
+                                                                        <span className='badge-active'>{post.status || 'Active'}</span>
+                                                                    )}
+                                                                </div>
+                                                            </motion.div>
+                                                        ))
+                                                    ) : (
+                                                        <div className='no-postings'>No recent postings found.</div>
                                                     )}
                                                 </div>
 
+                                                <div className='pagination-controls'>
+                                                    <button
+                                                        className='btn-pagination'
+                                                        disabled={jobsCurrentPage === 1}
+                                                        onClick={() => setJobsCurrentPage(prev => prev - 1)}
+                                                    >
+                                                        Previous
+                                                    </button>
+                                                    <span className='pagination-info'>
+                                                        Page {jobsCurrentPage} of {totalJobsPages || 1}
+                                                    </span>
+                                                    <button
+                                                        className='btn-pagination'
+                                                        disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
+                                                        onClick={() => setJobsCurrentPage(prev => prev + 1)}
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </div>
 
-                                                {filterBy === 'By Date' && (
-                                                    <div className="custom-date-picker-container" ref={datePickerRef}>
-                                                        <button
-                                                            className="date-picker-trigger"
-                                                            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                                                        >
-                                                            {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
-                                                            <Calendar size={14} style={{ marginLeft: '8px' }} />
-                                                        </button>
+                                            </motion.div>
 
-                                                        {isDatePickerOpen && (
-                                                            <div className="custom-calendar-popup">
-                                                                <div className="calendar-header">
-                                                                    <button onClick={handlePrevMonth}>&lt;</button>
-                                                                    <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
-                                                                    <button onClick={handleNextMonth}>&gt;</button>
-                                                                </div>
-                                                                <div className="calendar-weekdays">
-                                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                                                        <span key={d}>{d}</span>
-                                                                    ))}
-                                                                </div>
-                                                                <div className="calendar-days">
+                                        </div>
 
-                                                                    {Array.from({ length: firstDayIndex }).map((_, i) => (
-                                                                        <span key={`empty-${i}`} className="empty-day"></span>
-                                                                    ))}
 
-                                                                    {Array.from({ length: totalDays }).map((_, i) => {
-                                                                        const day = i + 1;
-                                                                        const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                                        const isSelected = filterDate === dateStr;
-                                                                        return (
-                                                                            <button
-                                                                                key={day}
-                                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
-                                                                                onClick={() => {
-                                                                                    setFilterDate(dateStr);
-                                                                                    setIsDatePickerOpen(false);
-                                                                                }}
-                                                                            >
-                                                                                {day}
-                                                                            </button>
-                                                                        );
-                                                                    })}
+                                        <div className='lower-right-column'>
+                                            <motion.div className='card-box applicants-card'
+                                                initial={{ opacity: 0, x: 20 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.4, delay: 0.4 }}>
+                                                <div className='card-box-header search-filter-header'>
+                                                    <h4>Applicants Matching Your Requirements</h4>
+                                                    <div className="search-filter-row">
+                                                        <div className="search-box-wrapper">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search by name..."
+                                                                value={searchTerm}
+                                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                            />
+                                                            <button className="search-btn">
+                                                                <Search size={16} />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="custom-dropdown-container">
+                                                            <span className="filter-label">Filter by</span>
+                                                            <button
+                                                                className="dropdown-btn"
+                                                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                                                            >
+                                                                {filterBy} <ChevronDown size={14} />
+                                                            </button>
+                                                            {isFilterDropdownOpen && (
+                                                                <div className="dropdown-menu">
+                                                                    <div className="dropdown-item" onClick={() => handleFilterByChange('By Date')}>By Date</div>
+                                                                    <div className="dropdown-item" onClick={() => handleFilterByChange('By Company Name')}>By Company Name</div>
                                                                 </div>
-                                                                <div className="calendar-footer">
-                                                                    <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                                                    <button className="calendar-today-btn" onClick={() => {
-                                                                        const today = new Date();
-                                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                                        setFilterDate(todayStr);
-                                                                        setIsDatePickerOpen(false);
-                                                                    }}>Today</button>
-                                                                </div>
+                                                            )}
+                                                        </div>
+
+
+                                                        {filterBy === 'By Date' && (
+                                                            <div className="custom-date-picker-container" ref={datePickerRef}>
+                                                                <button
+                                                                    className="date-picker-trigger"
+                                                                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                                                                >
+                                                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
+                                                                    <Calendar size={14} style={{ marginLeft: '8px' }} />
+                                                                </button>
+
+                                                                {isDatePickerOpen && (
+                                                                    <div className="custom-calendar-popup">
+                                                                        <div className="calendar-header">
+                                                                            <button onClick={handlePrevMonth}>&lt;</button>
+                                                                            <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
+                                                                            <button onClick={handleNextMonth}>&gt;</button>
+                                                                        </div>
+                                                                        <div className="calendar-weekdays">
+                                                                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                                                <span key={d}>{d}</span>
+                                                                            ))}
+                                                                        </div>
+                                                                        <div className="calendar-days">
+
+                                                                            {Array.from({ length: firstDayIndex }).map((_, i) => (
+                                                                                <span key={`empty-${i}`} className="empty-day"></span>
+                                                                            ))}
+
+                                                                            {Array.from({ length: totalDays }).map((_, i) => {
+                                                                                const day = i + 1;
+                                                                                const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                                                const isSelected = filterDate === dateStr;
+                                                                                return (
+                                                                                    <button
+                                                                                        key={day}
+                                                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                                                        onClick={() => {
+                                                                                            setFilterDate(dateStr);
+                                                                                            setIsDatePickerOpen(false);
+                                                                                        }}
+                                                                                    >
+                                                                                        {day}
+                                                                                    </button>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                        <div className="calendar-footer">
+                                                                            <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
+                                                                            <button className="calendar-today-btn" onClick={() => {
+                                                                                const today = new Date();
+                                                                                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                                                setFilterDate(todayStr);
+                                                                                setIsDatePickerOpen(false);
+                                                                            }}>Today</button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
+                                                        {filterBy === 'By Company Name' && (
+                                                            <input
+                                                                type="text"
+                                                                className="filter-company-input"
+                                                                placeholder="Enter company name..."
+                                                                value={filterCompany}
+                                                                onChange={(e) => setFilterCompany(e.target.value)}
+                                                            />
+                                                        )}
                                                     </div>
-                                                )}
-                                                {filterBy === 'By Company Name' && (
-                                                    <input
-                                                        type="text"
-                                                        className="filter-company-input"
-                                                        placeholder="Enter company name..."
-                                                        value={filterCompany}
-                                                        onChange={(e) => setFilterCompany(e.target.value)}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
+                                                </div>
 
-                                        <div className='applicants-list'>
-                                            {paginatedApplicants.map((app, index) => (
-                                                <motion.div key={`${app.id}-${index}`} className='applicant-item'
-                                                    initial={{ opacity: 0, y: -20 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+                                                <div className='applicants-list'>
+                                                    {paginatedApplicants.map((app, index) => (
+                                                        <motion.div key={`${app.id}-${index}`} className='applicant-item'
+                                                            initial={{ opacity: 0, y: -20 }}
+                                                            animate={{ opacity: 1, y: 0 }}
+                                                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
 
-                                                    <div className='applicant-top'>
-                                                        {getCompanyLogo(app.company)}
+                                                            <div className='applicant-top'>
+                                                                {getCompanyLogo(app.company)}
 
-                                                        <div className='applicant-details'>
-                                                            <h5>{app.company}</h5>
+                                                                <div className='applicant-details'>
+                                                                    <h5>{app.company}</h5>
 
-                                                            <span className='applicant-name'>👤{app.name}</span>
-                                                            <span className='applicant-education'>{app.degree} - {app.branch}</span>
-                                                            <div className='applicant-tags'>
-                                                                <span className='tag-cgpa'>{app.cgpa}CGPA</span>
-                                                                <span className='tag-passout'>{app.year}</span>
-                                                                <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className='match-status'>
-                                                            <span className='match-percent'>
-                                                                {app.match}% Match
-                                                            </span>
-
-                                                            <div className='progress-bar-bg'>
-                                                                <div className='progress-bar-fill'
-                                                                    style={{ width: `${app.match}%` }}>
+                                                                    <span className='applicant-name'>👤{app.name}</span>
+                                                                    <span className='applicant-education'>{app.degree} - {app.branch}</span>
+                                                                    <div className='applicant-tags'>
+                                                                        <span className='tag-cgpa'>{app.cgpa}CGPA</span>
+                                                                        <span className='tag-passout'>{app.year}</span>
+                                                                        <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
+                                                                    </div>
                                                                 </div>
 
+                                                                <div className='match-status'>
+                                                                    <span className='match-percent'>
+                                                                        {app.match}% Match
+                                                                    </span>
+
+                                                                    <div className='progress-bar-bg'>
+                                                                        <div className='progress-bar-fill'
+                                                                            style={{ width: `${app.match}%` }}>
+                                                                        </div>
+
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+
+                                                <div className='pagination-controls'>
+                                                    <button
+                                                        className='btn-pagination'
+                                                        disabled={applicantsCurrentPage === 1}
+                                                        onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
+                                                    >
+                                                        Previous
+                                                    </button>
+                                                    <span className='pagination-info'>
+                                                        Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
+                                                    </span>
+                                                    <button
+                                                        className='btn-pagination'
+                                                        disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
+                                                        onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
+                                                    >
+                                                        Next
+                                                    </button>
+                                                </div>
+
+                                            </motion.div>
                                         </div>
+                                    </div>
+                                </>
+                            )}
 
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === 1}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
+                            {activeTab === 'analytics' && (
+                                <StudentAnalytics />
+                            )}
 
-                                    </motion.div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {activeTab === 'analytics' && (
-                        <StudentAnalytics />
-                    )}
-
-                    {activeTab === 'queries' && (
-                        <QueriesStories />
-                    )}
+                            {activeTab === 'queries' && (
+                                <QueriesStories />
+                            )}
                         </motion.div>
                     </AnimatePresence>
                 </main>
@@ -2005,5 +2013,3 @@ function AdminDashboard({ onNavigate }) {
 export default AdminDashboard;
 
 
-
-//admin profile push
