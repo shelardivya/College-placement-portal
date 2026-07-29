@@ -1,3 +1,5 @@
+import { motion, easeOut } from 'framer-motion';
+
 import React, { useState } from 'react';
 import './Login.css';
 import logoGrad from "../../assets/logo_grad.png";
@@ -45,7 +47,7 @@ function Login({ onNavigate, initialView }) {
         if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
             const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
-            
+
             const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
             const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
 
@@ -72,7 +74,7 @@ function Login({ onNavigate, initialView }) {
             if (trimmed !== '') {
                 const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
                 const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
-                
+
                 const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
                 const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
 
@@ -164,11 +166,11 @@ function Login({ onNavigate, initialView }) {
                             const adminEmail = (payload.email || formData.email).trim();
                             let found = false;
                             const updated = adminProfiles.map(p => {
-                                 if(p.email && p.email.trim().toLowerCase() === adminEmail.toLowerCase()) {
-                                     found = true;
-                                     return { ...p, password: formData.password };
-                                 }
-                                 return p;
+                                if (p.email && p.email.trim().toLowerCase() === adminEmail.toLowerCase()) {
+                                    found = true;
+                                    return { ...p, password: formData.password };
+                                }
+                                return p;
                             });
                             if (!found) updated.push({ email: adminEmail, password: formData.password });
                             localStorage.setItem('admin_profiles', JSON.stringify(updated));
@@ -296,7 +298,7 @@ function Login({ onNavigate, initialView }) {
 
                 // Sync the reset password to local storage for autofill
                 const resetEmail = formData.email.trim().toLowerCase();
-                
+
                 const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
                 const updatedProfiles = profiles.map(p => {
                     if (p.email && p.email.trim().toLowerCase() === resetEmail) {
@@ -347,7 +349,10 @@ function Login({ onNavigate, initialView }) {
             {/* MAIN PORTAL CONTAINER CARD */}
             <div className="login-container">
                 {/* LEFT COLUMN: Branding & Recent Placements */}
-                <div className="login-left">
+                <motion.div className="login-left"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: easeOut }}>
                     <div className="login-logo-section">
                         <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
                         <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
@@ -414,10 +419,13 @@ function Login({ onNavigate, initialView }) {
                         <p>"The portal made the entire placement process transparent and stress-free. I always knew exactly where I stood."</p>
                         <span className="author">— Sneha Kulkarni, ENTC - Placed at Infosys</span>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* RIGHT COLUMN: Interactive Login/Forgot/Reset Forms */}
-                <div className="login-right">
+                <motion.div className="login-right"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}>
                     {/* Back to Home Action Button */}
                     <button className="btn-back-home" onClick={() => onNavigate('landing')}>
                         <ArrowLeft size={16} />
@@ -629,24 +637,26 @@ function Login({ onNavigate, initialView }) {
                     <div className="form-footer-copyright">
                         © 2026  · Campus_Hire
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* TOAST NOTIFICATION COMPONENT */}
-            {showToast && (
-                <div className={`toast-notification ${toastType}`}>
-                    <div className="toast-content">
-                        {toastType === 'success' ? (
-                            <CheckCircle2 className="toast-icon" size={18} />
-                        ) : (
-                            <XCircle className="toast-icon" size={18} />
-                        )}
-                        <span>{toastMessage}</span>
+            {
+                showToast && (
+                    <div className={`toast-notification ${toastType}`}>
+                        <div className="toast-content">
+                            {toastType === 'success' ? (
+                                <CheckCircle2 className="toast-icon" size={18} />
+                            ) : (
+                                <XCircle className="toast-icon" size={18} />
+                            )}
+                            <span>{toastMessage}</span>
+                        </div>
+                        <div className="toast-progress-bar"></div>
                     </div>
-                    <div className="toast-progress-bar"></div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 

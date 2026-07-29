@@ -1,4 +1,7 @@
+import { easeOut, motion } from 'framer-motion';
+
 import { registerStudent } from "../../auth/authService";
+
 import React, { useState, useEffect, useRef } from "react";
 import './Registration.css';
 import logoGrad from "../../assets/logo_grad.png";
@@ -255,7 +258,7 @@ function Registration({ onNavigate }) {
                 localStorage.setItem("token", response.data.token);
             }
             // Save student details to local registry
-            const newProfile = { 
+            const newProfile = {
                 fullName: formData.fullname,
                 email: formData.email,
                 password: formData.password,
@@ -353,7 +356,10 @@ function Registration({ onNavigate }) {
 
             <div className="register-container">
                 {/* LEFT SIDE PANEL: Branding, Mockup, Stats, Testimonial */}
-                <div className="register-left">
+                <motion.div className="register-left"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: easeOut }}>
                     {/* Application Header Logo */}
                     <div className="register-logo-section">
                         <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
@@ -460,10 +466,13 @@ function Registration({ onNavigate }) {
                         <p>"College Placement Portal helped me land my offer at Infosys within 2 weeks of registering."</p>
                         <span className="author">- John Doe, BCA Final Year, Batch 2026</span>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* RIGHT SIDE PANEL: Sign Up Form Area */}
-                <div className="register-right">
+                <motion.div className="register-right"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}>
                     {/* Back to Home Button */}
                     <button className="btn-back-home" onClick={() => onNavigate('landing')}>
                         <ArrowLeft size={16} />
@@ -757,7 +766,7 @@ function Registration({ onNavigate }) {
                     <div className="form-footer-copyright">
                         © 2026 Campus_Hire
                     </div>
-                </div>
+                </motion.div>
             </div>
             {/* TOAST NOTIFICATION COMPONENT */}
             {showToast && (

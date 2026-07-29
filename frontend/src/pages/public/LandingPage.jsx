@@ -1,3 +1,6 @@
+import { useEffect, useRef } from 'react';
+import gsap from 'gsap';
+
 import { easeOut, motion } from 'framer-motion';
 
 import './LandingPage.css'
