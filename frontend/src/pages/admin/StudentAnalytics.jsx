@@ -1,4 +1,7 @@
+import { motion } from 'framer-motion';
+
 import React, { useState, useEffect } from 'react';
+
 import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
     Users,
@@ -145,7 +148,7 @@ export default function StudentAnalytics() {
                 const res = await getTopSkillsAnalytics();
                 if (res.data && Array.isArray(res.data)) {
                     const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
-                    
+
                     // Assuming 'count' is the percentage or we can just use count as a rough percentage for the UI bar width
                     const mapped = res.data.map((s, index) => ({
                         skill: s.skill,
@@ -326,7 +329,10 @@ export default function StudentAnalytics() {
 
             {/* stat cards section */}
             <section className="stats-grid">
-                <div className="stat-card theme-blue">
+                <motion.div className="stat-card theme-blue"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Placed Students</span>
                         <h3 className="stat-value">{analyticsStats.placedStudents}</h3>
@@ -335,9 +341,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-blue">
                         <Users size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-green">
+                <motion.div className="stat-card theme-green"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Placement Rate</span>
                         <h3 className="stat-value">{analyticsStats.placementRate}%</h3>
@@ -346,9 +355,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-green">
                         <TrendingUp size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-orange">
+                <motion.div className="stat-card theme-orange"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Highest Package</span>
                         <h3 className="stat-value">{analyticsStats.highestPackage.toLocaleString()}</h3>
@@ -357,9 +369,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-orange">
                         <Trophy size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-purple">
+                <motion.div className="stat-card theme-purple"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Average Package</span>
                         <h3 className="stat-value">{analyticsStats.averagePackage.toLocaleString()}</h3>
@@ -368,12 +383,15 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-purple">
                         <Wallet size={22} />
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* department wise distribution section */}
             <section className="charts-row">
-                <div className="chart-card">
+                <motion.div className="chart-card"
+                    initial={{ opacity: 0, }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}>
                     <div className="chart-card-header">
                         <h3 className="chart-title">Department Wise Distribution</h3>
                     </div>
@@ -418,10 +436,13 @@ export default function StudentAnalytics() {
                         </div>
 
                     </div>
-                </div>
+                </motion.div>
 
                 {/*Placement by cgpa bar chart card*/}
-                <div className='chart-card'>
+                <motion.div className='chart-card'
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }} >
                     <div className='chart-card-header'>
                         <h3 className='chart-title'>
                             Placement by CGPA
@@ -506,10 +527,13 @@ export default function StudentAnalytics() {
 
                     </div>
 
-                </div>
+                </motion.div>
 
                 {/* top skills in demand card */}
-                <div className="chart-card">
+                <motion.div className="chart-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}>
                     <div className="chart-card-header">
                         <h3 className="chart-title">Top Skills in Demand</h3>
                     </div>
@@ -545,7 +569,7 @@ export default function StudentAnalytics() {
                         <p className="skills-x-title">Demand Percentage</p>
 
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* Top Placed Students Section */}
@@ -671,24 +695,24 @@ export default function StudentAnalytics() {
                 <div className="table-card-footer">
                     {totalPages > 1 && (
                         <div className="table-pagination">
-                            <button 
-                                className="pagination-btn arrow-btn" 
+                            <button
+                                className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
                             >
                                 &larr;
                             </button>
                             {[...Array(totalPages)].map((_, i) => (
-                                <button 
-                                    key={i + 1} 
+                                <button
+                                    key={i + 1}
                                     className={`pagination-btn num-btn ${currentPage === i + 1 ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(i + 1)}
                                 >
                                     {i + 1}
                                 </button>
                             ))}
-                            <button 
-                                className="pagination-btn arrow-btn" 
+                            <button
+                                className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
                             >
