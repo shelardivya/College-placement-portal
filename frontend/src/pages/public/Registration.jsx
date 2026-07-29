@@ -2,9 +2,8 @@ import { easeOut, motion } from 'framer-motion';
 
 import { registerStudent } from "../../auth/authService";
 
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import './Registration.css';
-import logoGrad from "../../assets/logo_grad.png";
 import {
     GraduationCap,
     ArrowLeft,
@@ -294,7 +293,7 @@ function Registration({ onNavigate }) {
 
 
 
-        } catch (error) {
+        } catch {
 
             setToastMessage("Registration failed");
             setToastType("error");

@@ -1,18 +1,15 @@
 import { motion } from 'framer-motion';
 
-import React, { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, getAllTopPlacedStudents, addTopPlacedStudent, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
+import { useState, useEffect, useRef } from "react";
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Search,
-    MoreVertical,
     Calendar,
     Upload,
     Plus,
     Edit2,
     Trash2,
     Clock,
-    ChevronLeft,
-    ChevronRight,
     X,
     CheckCircle2,
     XCircle
@@ -41,7 +38,7 @@ export default function QueriesStories() {
             try {
                 const parsed = JSON.parse(stored);
                 return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
-            } catch (e) {
+            } catch {
                 return initialQueries;
             }
         }
@@ -81,14 +78,14 @@ export default function QueriesStories() {
                                     const dateStr = q.createdAt;
                                     const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
                                     if (ddMmYyyyMatch) {
-                                        const [_, day, month, year, hour, minute] = ddMmYyyyMatch;
+                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                         const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                         return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                     }
                                     const parsed = new Date(dateStr);
                                     if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                     return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch (e) {
+                                } catch {
                                     return "Recently";
                                 }
                             })()
@@ -149,9 +146,9 @@ export default function QueriesStories() {
     const pendingCount = queries.filter(q => q.status === 'pending').length;
     const resolvedCount = queries.filter(q => q.status === 'resolved').length;
 
-    // Reset pagination to page 1 on search or filter change
     useEffect(() => {
-        setCurrentPage(1);
+        const timer = setTimeout(() => setCurrentPage(1), 0);
+        return () => clearTimeout(timer);
     }, [querySearch, queryFilter]);
 
     // Filter student queries based on search keyword and selected status pill
@@ -433,14 +430,15 @@ export default function QueriesStories() {
                                     const dateStr = s.createdAt;
                                     const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
                                     if (ddMmYyyyMatch) {
-                                        const [_, day, month, year, hour, minute] = ddMmYyyyMatch;
+                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                         const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                         return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                     }
                                     const parsed = new Date(dateStr);
                                     if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                     return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch (e) {
+                                } catch {
+
                                     return "Recently";
                                 }
                             })()
@@ -470,12 +468,14 @@ export default function QueriesStories() {
 
     // Reset stories page to 1 when filter changes
     useEffect(() => {
-        setStoryPage(1);
+        const timer = setTimeout(() => setStoryPage(1), 0);
+        return () => clearTimeout(timer);
     }, [storyYearFilter]);
 
     // Reset drives page to 1 when search query changes
     useEffect(() => {
-        setDrivePage(1);
+        const timer = setTimeout(() => setDrivePage(1), 0);
+        return () => clearTimeout(timer);
     }, [driveSearch]);
 
     // Filter drives list based on company name or role search
@@ -558,7 +558,7 @@ export default function QueriesStories() {
                 photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
             }
 
-            const response = await publishPlacementStory(payload, photoFile);
+            await publishPlacementStory(payload, photoFile);
 
             // The backend returns a string message or a PlacementStoryResponseDto.
             // We can fetch all stories again, or just optimistically add it.

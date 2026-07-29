@@ -1,8 +1,8 @@
-import React from "react";
+
 import './ResetLinkModal.css';
 import { MailOpen, Check, ArrowRight } from "lucide-react";
 
-function ResetLinkModal({ isOpen, onClose, onSimulateClick, email }) {
+function ResetLinkModal({ isOpen, onClose, onSimulateClick }) {
     //If the modal is not open , render absolutely nothing
     if (!isOpen) return null;
 

@@ -1,8 +1,7 @@
 import { motion, easeOut } from 'framer-motion';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './Login.css';
-import logoGrad from "../../assets/logo_grad.png";
 import { loginAdmin, loginStudent, forgotPassword, resetPassword } from '../../auth/authService';
 import {
     GraduationCap,
@@ -16,8 +15,6 @@ import {
     Award,
     Building2,
     TrendingUp,
-    FileText,
-    Briefcase,
     CheckCircle2,
     XCircle
 } from 'lucide-react';
@@ -289,7 +286,7 @@ function Login({ onNavigate, initialView }) {
 
             try {
                 // Call the backend reset-password API
-                const response = await resetPassword({
+                await resetPassword({
                     email: formData.email,
                     newPassword: formData.password,
                     confirmPassword: formData.confirmPassword

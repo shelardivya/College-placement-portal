@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getStudentQueries, submitStudentQuery, resolveStudentQuery, getStudentPlacementStories, getStudentPlacementDrives } from '../../auth/authService';
 import {
     Award,
@@ -11,8 +11,7 @@ import {
     Briefcase,
     CheckCircle2,
     XCircle,
-    User,
-    FileText
+    User
 } from "lucide-react";
 import "./StudHub.css";
 
@@ -53,14 +52,7 @@ export default function StudHub() {
     });
 
     const activeDrives = studentFilteredDrives.filter(d => d.status === 'open' || d.status === 'upcoming');
-    const getParsedDate = (dateStr) => {
-        try {
-            const d = new Date(dateStr);
-            return isNaN(d.getTime()) ? new Date("9999-12-31") : d;
-        } catch (e) {
-            return new Date("9999-12-31");
-        }
-    };
+
     const [stories, setStories] = useState(initialStories);
     const [storiesPage, setStoriesPage] = useState(1);
     const STORIES_PER_PAGE = 2;
@@ -103,14 +95,14 @@ export default function StudHub() {
                                 const dateStr = q.createdAt;
                                 const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
                                 if (ddMmYyyyMatch) {
-                                    const [_, day, month, year, hour, minute] = ddMmYyyyMatch;
+                                    const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                     const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                     return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                 }
                                 const parsed = new Date(dateStr);
                                 if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                 return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                            } catch (e) {
+                            } catch {
                                 return "Recently";
                             }
                         })()
@@ -155,14 +147,14 @@ export default function StudHub() {
                                     const dateStr = story.createdAt;
                                     const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
                                     if (ddMmYyyyMatch) {
-                                        const [_, day, month, year, hour, minute] = ddMmYyyyMatch;
+                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                         const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                         return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                     }
                                     const parsed = new Date(dateStr);
                                     if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                     return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch (e) {
+                                } catch {
                                     return "Recently";
                                 }
                             })()

@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import gsap from 'gsap';
+
 
 import { easeOut, motion } from 'framer-motion';
 
@@ -9,7 +8,6 @@ import { useState } from 'react';
 
 import {
     GraduationCap,
-    Moon,
     ArrowRight,
     ChevronRight,
     Users,
@@ -22,14 +20,8 @@ import {
     Bell,
     BarChart3,
     ShieldCheck,
-    Settings,
-    Clock,
-    Layout,
     UserPlus,
-    LogIn,
-    Mail,
-    Phone,
-    MapPin
+    LogIn
 } from 'lucide-react'
 
 
