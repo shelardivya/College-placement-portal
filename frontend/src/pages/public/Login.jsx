@@ -294,7 +294,6 @@ function Login({ onNavigate, initialView }) {
                     newPassword: formData.password,
                     confirmPassword: formData.confirmPassword
                 });
-                console.log("Reset Password Response:", response.data);
 
                 // Sync the reset password to local storage for autofill
                 const resetEmail = formData.email.trim().toLowerCase();

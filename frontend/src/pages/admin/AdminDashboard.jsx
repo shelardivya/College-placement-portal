@@ -1,8 +1,10 @@
+import { motion } from 'framer-motion';
+
 import React, { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminDashboardStats } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -114,8 +116,8 @@ function AdminDashboard({ onNavigate }) {
         try {
             const response = await getAdminNotifications();
             if (response.data) {
-                const data = Array.isArray(response.data) ? response.data : 
-                             (response.data.content ? response.data.content : []);
+                const data = Array.isArray(response.data) ? response.data :
+                    (response.data.content ? response.data.content : []);
                 const parseDateStr = (dateStr, timeStr) => {
                     if (!dateStr) return 0;
                     const [day, month, year] = dateStr.split('/');
@@ -134,7 +136,7 @@ function AdminDashboard({ onNavigate }) {
                     return d.getTime();
                 };
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
-                
+
                 const localizedData = sorted.map(notif => {
                     if (notif.createdDate && notif.createdTime) {
                         const [day, month, year] = notif.createdDate.split('/');
@@ -145,9 +147,9 @@ function AdminDashboard({ onNavigate }) {
                             if (ampm === 'PM' && h < 12) h += 12;
                             if (ampm === 'AM' && h === 12) h = 0;
                             m = parseInt(m);
-                            
+
                             const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
-                            
+
                             notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                             notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
                         }
@@ -156,7 +158,7 @@ function AdminDashboard({ onNavigate }) {
                 });
                 setNotifications(localizedData);
             }
-            
+
             const countResponse = await getAdminUnreadCount();
             if (countResponse.data !== undefined) {
                 const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
@@ -221,7 +223,6 @@ function AdminDashboard({ onNavigate }) {
                         phone: response.data.mobile || response.data.phone || '',
                         role: response.data.role || 'System Administrator'
                     });
-                    console.log("Admin profile fetched:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
@@ -285,7 +286,7 @@ function AdminDashboard({ onNavigate }) {
 
         const fetchDashboardStats = async () => {
             try {
-                const response = await getAdminDashboardStats();
+                const response = await getAdminStudentAnalyticsDashboard();
                 if (response.data) {
                     setDashboardStats(response.data);
                 }
@@ -429,8 +430,11 @@ function AdminDashboard({ onNavigate }) {
         const fetchDrafts = async () => {
             try {
                 const response = await getDrafts();
-                // Map API response to UI state format
-                const formattedDrafts = response.data.map(d => ({
+                // Map API response to UI state format safely
+                const draftsData = Array.isArray(response.data) ? response.data : 
+                                  (response.data && Array.isArray(response.data.content) ? response.data.content : []);
+                
+                const formattedDrafts = draftsData.map(d => ({
                     id: d.id,
                     title: d.jobRoleOverview,
                     company: d.companyName,
@@ -781,7 +785,7 @@ function AdminDashboard({ onNavigate }) {
                 phone: adminProfile.phone
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
-            
+
 
 
             setToastType('success');
@@ -820,7 +824,7 @@ function AdminDashboard({ onNavigate }) {
             // UPDATE LOCAL STORAGE PASSWORD FOR AUTOFILL
             const adminUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
             const adminEmail = adminUser.email || 'saurabh@gmail.com'; // fallback
-            
+
             if (adminEmail) {
                 const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
                 let adminFound = false;
@@ -832,7 +836,7 @@ function AdminDashboard({ onNavigate }) {
                     return p;
                 });
                 if (!adminFound) {
-                     updatedAdmins.push({ email: adminEmail, password: passwordData.newPassword });
+                    updatedAdmins.push({ email: adminEmail, password: passwordData.newPassword });
                 }
                 localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
             }
@@ -1099,7 +1103,10 @@ function AdminDashboard({ onNavigate }) {
 
 
                             <section className='stats-grid'>
-                                <div className='stat-card'>
+                                <motion.div className='stat-card'
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper blue-icon'>
                                         <FileText size={20} />
                                     </div>
@@ -1108,13 +1115,16 @@ function AdminDashboard({ onNavigate }) {
                                         <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalActivePosts : '-'}</h3>
                                         <span className='stat-trend'>
                                             <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.activePostsGrowth >= 0 ? `+${dashboardStats.activePostsGrowth}% from last month` : `${dashboardStats.activePostsGrowth}% from last month`) : 'API pending'}
+                                                {dashboardStats ? (dashboardStats.activePostsGrowth >= 0 ? `+${dashboardStats.activePostsGrowth}% from last month` : `${dashboardStats.activePostsGrowth}% from last month`) : 'Loading...'}
                                             </span>
                                         </span>
                                     </div>
-                                </div>
+                                </motion.div>
 
-                                <div className='stat-card'>
+                                <motion.div className='stat-card'
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper green-icon'>
                                         <Users size={20} />
                                     </div>
@@ -1123,13 +1133,16 @@ function AdminDashboard({ onNavigate }) {
                                         <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalStudents : '-'}</h3>
                                         <span className='stat-trend'>
                                             <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.studentGrowth >= 0 ? `+${dashboardStats.studentGrowth}% from last month` : `${dashboardStats.studentGrowth}% from last month`) : 'API pending'}
+                                                {dashboardStats ? (dashboardStats.studentGrowth >= 0 ? `+${dashboardStats.studentGrowth}% from last month` : `${dashboardStats.studentGrowth}% from last month`) : 'Loading...'}
                                             </span>
                                         </span>
                                     </div>
-                                </div>
+                                </motion.div>
 
-                                <div className='stat-card'>
+                                <motion.div className='stat-card'
+                                    initial={{ opacity: 0, y: 15 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}>
                                     <div className='stat-icon-wrapper purple-icon'>
                                         <Briefcase size={20} />
                                     </div>
@@ -1138,11 +1151,11 @@ function AdminDashboard({ onNavigate }) {
                                         <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalResumeReceived : '-'}</h3>
                                         <span className='stat-trend'>
                                             <span className='trend-subtext'>
-                                                {dashboardStats ? (dashboardStats.resumeGrowth >= 0 ? `+${dashboardStats.resumeGrowth}% from last month` : `${dashboardStats.resumeGrowth}% from last month`) : 'API pending'}
+                                                {dashboardStats ? (dashboardStats.resumeGrowth >= 0 ? `+${dashboardStats.resumeGrowth}% from last month` : `${dashboardStats.resumeGrowth}% from last month`) : 'Loading...'}
                                             </span>
                                         </span>
                                     </div>
-                                </div>
+                                </motion.div>
                             </section>
 
 
@@ -1205,9 +1218,9 @@ function AdminDashboard({ onNavigate }) {
 
                                                         <div className='posting-card-logo-wrap'>
                                                             {post.companyName ? (
-                                                                <img 
-                                                                    src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`} 
-                                                                    alt={post.companyName} 
+                                                                <img
+                                                                    src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`}
+                                                                    alt={post.companyName}
                                                                     style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
                                                                 />
                                                             ) : (
@@ -1390,8 +1403,8 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
 
                                         <div className='applicants-list'>
-                                            {paginatedApplicants.map((app) => (
-                                                <div key={app.id} className='applicant-item'>
+                                            {paginatedApplicants.map((app, index) => (
+                                                <div key={`${app.id}-${index}`} className='applicant-item'>
 
                                                     <div className='applicant-top'>
                                                         {getCompanyLogo(app.company)}
@@ -1906,7 +1919,7 @@ function AdminDashboard({ onNavigate }) {
                                 </div>
                                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                     {unreadCount > 0 && (
-                                        <button 
+                                        <button
                                             onClick={handleMarkAllRead}
                                             style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
                                         >
@@ -1925,9 +1938,9 @@ function AdminDashboard({ onNavigate }) {
                                     notifications.map((notif) => {
                                         const isRead = notif.read || notif.status === 'read';
                                         return (
-                                            <div 
-                                                key={notif.id} 
-                                                className="notification-item" 
+                                            <div
+                                                key={notif.id}
+                                                className="notification-item"
                                                 style={{ opacity: isRead ? 0.6 : 1, borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                             >
                                                 <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
