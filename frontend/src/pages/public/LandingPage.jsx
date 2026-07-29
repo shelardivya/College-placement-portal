@@ -1,4 +1,7 @@
+import { motion } from 'framer-motion';
+
 import './LandingPage.css'
+
 import { useState } from 'react';
 
 import {
@@ -59,7 +62,12 @@ function LandingPage({ onNavigate }) {
             </header>
             <main className='hero-section'>
                 <div className='hero-container'>
-                    <div className='hero-left'>
+                    <motion.div
+                        className='hero-left'
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
                         <div className='hero-badge'>Campus Recruitment Platform</div>
                         <h1>College <span className='text-highlight'>Placement</span> Portal</h1>
                         <h2>Connecting Students with Placement Opportunities</h2>
@@ -71,7 +79,7 @@ function LandingPage({ onNavigate }) {
                             <button className='btn-login' onClick={() => onNavigate('login')}>Login <ChevronRight size={18} />
                             </button>
                         </div>
-                    </div>
+                    </motion.div>
                     <div className='hero-right'>
                         <div className='dashboard-card'>
                             <div className='card-header'>
