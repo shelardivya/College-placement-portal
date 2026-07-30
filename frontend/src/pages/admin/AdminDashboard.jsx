@@ -78,7 +78,7 @@ function formatDeadline(dateStr) {
     if (!dateStr) return '';
     try {
         const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return dateStr;
+        if (Number.isNaN(date.getTime())) return dateStr;
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     } catch {
         return dateStr;
@@ -1208,12 +1208,14 @@ function AdminDashboard({ onNavigate }) {
 
                                                             <div className='draft-actions'>
                                                                 <button
+                                                                    type="button"
                                                                     className='btn-resume-draft'
                                                                     onClick={() => handleEditDraft(draft.id)}
                                                                 >
                                                                     Edit
                                                                 </button>
                                                                 <button
+                                                                    type="button"
                                                                     className='btn-publish-draft'
                                                                     onClick={() => handlePublishDraft(draft.id)}
                                                                 >
@@ -1299,6 +1301,7 @@ function AdminDashboard({ onNavigate }) {
 
                                                 <div className='pagination-controls'>
                                                     <button
+                                                        type="button"
                                                         className='btn-pagination'
                                                         disabled={jobsCurrentPage === 1}
                                                         onClick={() => setJobsCurrentPage(prev => prev - 1)}
@@ -1309,6 +1312,7 @@ function AdminDashboard({ onNavigate }) {
                                                         Page {jobsCurrentPage} of {totalJobsPages || 1}
                                                     </span>
                                                     <button
+                                                        type="button"
                                                         className='btn-pagination'
                                                         disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
                                                         onClick={() => setJobsCurrentPage(prev => prev + 1)}
@@ -1372,9 +1376,9 @@ function AdminDashboard({ onNavigate }) {
                                                                 {isDatePickerOpen && (
                                                                     <div className="custom-calendar-popup">
                                                                         <div className="calendar-header">
-                                                                            <button onClick={handlePrevMonth}>&lt;</button>
+                                                                            <button type="button" onClick={handlePrevMonth}>&lt;</button>
                                                                             <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
-                                                                            <button onClick={handleNextMonth}>&gt;</button>
+                                                                            <button type="button" onClick={handleNextMonth}>&gt;</button>
                                                                         </div>
                                                                         <div className="calendar-weekdays">
                                                                             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
@@ -1383,17 +1387,18 @@ function AdminDashboard({ onNavigate }) {
                                                                         </div>
                                                                         <div className="calendar-days">
 
-                                                                            {Array.from({ length: firstDayIndex }).map((_, i) => (
-                                                                                <span key={`empty-${i}`} className="empty-day"></span>
+                                                                            {new Array(firstDayIndex).fill(0).map((_, i) => (
+                                                                                <span key={`blank-slot-${calDate.getFullYear()}-${calDate.getMonth()}-${i}`} className="empty-day"></span>
                                                                             ))}
 
-                                                                            {Array.from({ length: totalDays }).map((_, i) => {
+                                                                            {new Array(totalDays).fill(0).map((_, i) => {
                                                                                 const day = i + 1;
                                                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                                                 const isSelected = filterDate === dateStr;
                                                                                 return (
                                                                                     <button
-                                                                                        key={day}
+                                                                                        key={dateStr}
+                                                                                        type="button"
                                                                                         className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                                         onClick={() => {
                                                                                             setFilterDate(dateStr);
@@ -1528,9 +1533,10 @@ function AdminDashboard({ onNavigate }) {
 
                             <form className='modal-form' onSubmit={handlePostJob}>
                                 <div className='form-group'>
-                                    <label>Company Name</label>
+                                    <label htmlFor="job-company-name">Company Name</label>
 
                                     <input type="text"
+                                        id="job-company-name"
                                         name='companyName'
                                         placeholder='Enter Company Name'
                                         value={newJob.companyName}
@@ -1541,9 +1547,10 @@ function AdminDashboard({ onNavigate }) {
                                 </div>
 
                                 <div className='form-group'>
-                                    <label>Location</label>
+                                    <label htmlFor="job-location">Location</label>
 
                                     <input type="text"
+                                        id="job-location"
                                         name='location'
                                         placeholder='e.g. Bangalore, India (or Remote)'
                                         value={newJob.location}
@@ -1552,9 +1559,11 @@ function AdminDashboard({ onNavigate }) {
                                 </div>
 
                                 <div className='form-group'>
-                                    <label>Job Requirements</label>
+                                    <label htmlFor="job-requirements">Job Requirements</label>
 
-                                    <textarea name='jobRequirements'
+                                    <textarea
+                                        id="job-requirements"
+                                        name='jobRequirements'
                                         placeholder='Enter job requirements'
                                         value={newJob.jobRequirements}
                                         onChange={handleInputChange}
@@ -1563,9 +1572,11 @@ function AdminDashboard({ onNavigate }) {
                                 </div>
 
                                 <div className='form-group'>
-                                    <label>Job Role Overview</label>
+                                    <label htmlFor="job-role-overview">Job Role Overview</label>
 
-                                    <textarea name="jobRoleOverview"
+                                    <textarea
+                                        id="job-role-overview"
+                                        name="jobRoleOverview"
                                         placeholder='Enter job role overview'
                                         value={newJob.jobRoleOverview}
                                         onChange={handleInputChange}
@@ -1580,9 +1591,9 @@ function AdminDashboard({ onNavigate }) {
                                 <div className='form-row'>
                                     <div className='form-group half-width'>
 
-                                        <label>Degree</label>
+                                        <label htmlFor="job-degree">Degree</label>
 
-                                        <select name="degree" value={newJob.degree}
+                                        <select id="job-degree" name="degree" value={newJob.degree}
                                             onChange={handleInputChange}>
 
                                             <option value="">Select degree</option>
@@ -1594,9 +1605,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
 
                                     <div className='form-group half-width'>
-                                        <label htmlFor="">Branch</label>
+                                        <label htmlFor="job-branch">Branch</label>
 
-                                        <select name="branch" value={newJob.branch}
+                                        <select id="job-branch" name="branch" value={newJob.branch}
                                             onChange={handleInputChange}>
 
                                             <option value="">Select branch</option>
@@ -1608,10 +1619,11 @@ function AdminDashboard({ onNavigate }) {
 
                                 <div className='form-row'>
                                     <div className='form-group half-width'>
-                                        <label htmlFor="">Min CGPA</label>
+                                        <label htmlFor="job-min-cgpa">Min CGPA</label>
 
                                         <input
                                             type="text"
+                                            id="job-min-cgpa"
                                             name="minCgpa"
                                             placeholder="Enter minimum CGPA"
                                             value={newJob.minCgpa}
@@ -1620,9 +1632,9 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
 
                                     <div className='form-group half-width'>
-                                        <label htmlFor="">Passing Year</label>
+                                        <label htmlFor="job-passing-year">Passing Year</label>
 
-                                        <select name="passingYear" value={newJob.passingYear}
+                                        <select id="job-passing-year" name="passingYear" value={newJob.passingYear}
                                             onChange={handleInputChange}>
 
                                             <option value="">Select Passing Year</option>
@@ -1635,9 +1647,9 @@ function AdminDashboard({ onNavigate }) {
 
                                 <div className='form-row'>
                                     <div className='form-group half-width'>
-                                        <label htmlFor="">Experience</label>
+                                        <label htmlFor="job-experience">Experience</label>
 
-                                        <select name="experience" value={newJob.experience}
+                                        <select id="job-experience" name="experience" value={newJob.experience}
                                             onChange={handleInputChange}>
 
                                             <option value="">Select experience</option>
@@ -1648,10 +1660,11 @@ function AdminDashboard({ onNavigate }) {
                                     </div>
 
                                     <div className='form-group half-width'>
-                                        <label htmlFor="">Deadline</label>
+                                        <label htmlFor="job-deadline-btn">Deadline</label>
                                         <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
                                             <button
                                                 type="button"
+                                                id="job-deadline-btn"
                                                 className="date-picker-trigger"
                                                 onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
                                                 style={{ width: '100%', justifyContent: 'space-between' }}
@@ -1674,18 +1687,18 @@ function AdminDashboard({ onNavigate }) {
                                                     </div>
                                                     <div className="calendar-days">
 
-                                                        {Array.from({ length: modalFirstDayIndex }).map((_, i) => (
-                                                            <span key={`empty-${i}`} className="empty-day"></span>
+                                                        {new Array(modalFirstDayIndex).fill(0).map((_, i) => (
+                                                            <span key={`modal-blank-slot-${modalCalDate.getFullYear()}-${modalCalDate.getMonth()}-${i}`} className="empty-day"></span>
                                                         ))}
 
-                                                        {Array.from({ length: modalTotalDays }).map((_, i) => {
+                                                        {new Array(modalTotalDays).fill(0).map((_, i) => {
                                                             const day = i + 1;
                                                             const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                             const isSelected = newJob.deadline === dateStr;
                                                             return (
                                                                 <button
                                                                     type="button"
-                                                                    key={day}
+                                                                    key={dateStr}
                                                                     className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
                                                                     onClick={() => {
                                                                         setNewJob(prev => ({ ...prev, deadline: dateStr }));
