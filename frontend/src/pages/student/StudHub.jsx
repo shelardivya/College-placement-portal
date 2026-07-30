@@ -60,7 +60,12 @@ export default function StudHub() {
     const paginatedStories = stories.slice((storiesPage - 1) * STORIES_PER_PAGE, storiesPage * STORIES_PER_PAGE);
 
     // Drives list & pagination
-    const drivesList = activeDrives.length > 0 ? activeDrives : (studentFilteredDrives.length > 0 ? studentFilteredDrives : initialDrives);
+    let drivesList = initialDrives;
+    if (activeDrives.length > 0) {
+        drivesList = activeDrives;
+    } else if (studentFilteredDrives.length > 0) {
+        drivesList = studentFilteredDrives;
+    }
     const [drivesPage, setDrivesPage] = useState(1);
     const totalDrivePages = drivesList.length;
     const currentDrive = drivesList.length > 0 ? drivesList[Math.min(drivesPage - 1, drivesList.length - 1)] : null;
@@ -93,14 +98,14 @@ export default function StudHub() {
                                     return new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2]).toLocaleDateString();
                                 }
                                 const dateStr = q.createdAt;
-                                const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+                                const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
                                 if (ddMmYyyyMatch) {
                                     const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                     const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                     return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                 }
                                 const parsed = new Date(dateStr);
-                                if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+                                if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                 return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                             } catch {
                                 return "Recently";
@@ -108,7 +113,8 @@ export default function StudHub() {
                         })()
                     }));
                     // Sort so newest is first
-                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
+                    mappedQueries.sort((a, b) => b.id - a.id);
+                    setQueries(mappedQueries);
                 }
             } catch (error) {
                 console.error("Failed to fetch student queries:", error);
@@ -145,14 +151,14 @@ export default function StudHub() {
                                         return new Date(story.createdAt[0], story.createdAt[1] - 1, story.createdAt[2]).toLocaleDateString();
                                     }
                                     const dateStr = story.createdAt;
-                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+                                    const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
                                     if (ddMmYyyyMatch) {
                                         const [, day, month, year, hour, minute] = ddMmYyyyMatch;
                                         const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
                                         return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                     }
                                     const parsed = new Date(dateStr);
-                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+                                    if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                     return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                 } catch {
                                     return "Recently";
@@ -160,7 +166,8 @@ export default function StudHub() {
                             })()
                         };
                     });
-                    setStories(mappedStories.sort((a, b) => b.id - a.id));
+                    mappedStories.sort((a, b) => b.id - a.id);
+                    setStories(mappedStories);
                 }
             } catch (error) {
                 console.error("Failed to fetch placement stories:", error);
@@ -197,7 +204,8 @@ export default function StudHub() {
                             targetStudent: targets.length > 0 ? targets : 'all'
                         };
                     });
-                    setDrives(mappedDrives.sort((a, b) => b.id - a.id));
+                    mappedDrives.sort((a, b) => b.id - a.id);
+                    setDrives(mappedDrives);
                 }
             } catch (error) {
                 console.error("Failed to fetch placement drives:", error);
@@ -306,6 +314,23 @@ export default function StudHub() {
             triggerToast("Failed to resolve query.", "error");
         }
     };
+
+    let formattedTime = 'TBA';
+    let formattedTarget = 'All Students';
+
+    if (currentDrive) {
+        if (currentDrive.time) {
+            formattedTime = currentDrive.time.includes("Onwards") ? currentDrive.time : `${currentDrive.time} Onwards`;
+        }
+        
+        if (currentDrive.targetStudent) {
+            if (Array.isArray(currentDrive.targetStudent)) {
+                formattedTarget = (currentDrive.targetStudent.includes('ALL') || currentDrive.targetStudent.includes('All')) ? 'All Students' : currentDrive.targetStudent.join(', ');
+            } else {
+                formattedTarget = currentDrive.targetStudent === 'All' ? 'All Students' : currentDrive.targetStudent;
+            }
+        }
+    }
 
     return (
         <div className="studhub-container">
@@ -421,8 +446,9 @@ export default function StudHub() {
 
                         <form onSubmit={handleRaiseQuery} className="sh-query-form">
                             <div className="sh-form-group">
-                                <label className="sh-form-label">Query Subject <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label htmlFor="query-subject" className="sh-form-label">Query Subject <span style={{ color: '#ef4444' }}>*</span></label>
                                 <input
+                                    id="query-subject"
                                     type="text"
                                     className="sh-form-input"
                                     placeholder="e.g. TCS Drive Eligibility, Resume Upload Issue"
@@ -432,8 +458,9 @@ export default function StudHub() {
                                 />
                             </div>
                             <div className="sh-form-group">
-                                <label className="sh-form-label">Description <span style={{ color: '#ef4444' }}>*</span></label>
+                                <label htmlFor="query-description" className="sh-form-label">Description <span style={{ color: '#ef4444' }}>*</span></label>
                                 <textarea
+                                    id="query-description"
                                     className="sh-form-textarea"
                                     placeholder="Describe your query in detail..."
                                     rows={4}
@@ -511,7 +538,7 @@ export default function StudHub() {
                                         <div className="detail-item-content">
                                             <span className="detail-field-label">TIME</span>
                                             <div className="detail-badge-box">
-                                                {currentDrive.time ? (currentDrive.time.includes("Onwards") ? currentDrive.time : `${currentDrive.time} Onwards`) : 'TBA'}
+                                                {formattedTime}
                                             </div>
                                         </div>
                                     </div>
@@ -581,7 +608,7 @@ export default function StudHub() {
                                                 <div className="detail-item-content">
                                                     <span className="detail-field-label">TARGET AUDIENCE</span>
                                                     <div className="detail-badge-box">
-                                                        {(!currentDrive.targetStudent || (Array.isArray(currentDrive.targetStudent) ? currentDrive.targetStudent.includes('ALL') || currentDrive.targetStudent.includes('All') : currentDrive.targetStudent === 'All')) ? 'All Students' : (Array.isArray(currentDrive.targetStudent) ? currentDrive.targetStudent.join(', ') : currentDrive.targetStudent)}
+                                                        {formattedTarget}
                                                     </div>
                                                 </div>
                                             </div>

@@ -50,7 +50,6 @@
     border-radius: 99px;
     font-size: 0.8rem;
     font-weight: 600;
-    color: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -233,7 +232,7 @@
 .sh-package-tag {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #059669;
+    color: #047857;
     background: #ecfdf5;
     padding: 2px 10px;
     border-radius: 10px;
@@ -338,7 +337,7 @@
     height: 44px;
     border-radius: 12px;
     background-color: #f3e8ff;
-    color: #8b5cf6;
+    color: #7c3aed;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -379,7 +378,7 @@
     border-radius: 10px;
     background-color: #ffffff;
     border: 1px solid #f1f5f9;
-    color: #8b5cf6;
+    color: #7c3aed;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -426,7 +425,7 @@
 
 .drive-status-pill.badge-open {
     background-color: #dcfce7;
-    color: #16a34a;
+    color: #15803d;
 }
 
 .drive-status-pill.badge-upcoming {
@@ -436,7 +435,7 @@
 
 .drive-status-pill.badge-closed {
     background-color: #f1f5f9;
-    color: #64748b;
+    color: #475569;
 }
 
 .detail-about-box {

@@ -83,7 +83,7 @@ export default function QueriesStories() {
                                         return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                     }
                                     const parsed = new Date(dateStr);
-                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+                                    if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
                                     return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
                                 } catch {
                                     return "Recently";
@@ -91,7 +91,7 @@ export default function QueriesStories() {
                             })()
                         };
                     });
-                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
+                    setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch queries:", error);
@@ -196,7 +196,7 @@ export default function QueriesStories() {
                         venue: d.venue || "",
                     }));
                     // Sort by ID descending so newest drives appear at the top
-                    setDrives(mappedDrives.sort((a, b) => b.id - a.id));
+                    setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch placement drives:", error);

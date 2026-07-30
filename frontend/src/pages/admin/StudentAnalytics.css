@@ -88,7 +88,7 @@
 /* premium modern badge */
 .banner-badge {
     background-color: rgba(37, 99, 235, 0.08);
-    color: #2563eb;
+    color: #1e40af;
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -243,39 +243,39 @@
 
 /* Theme Color Classes */
 .analytics-page-wrapper .theme-blue .stat-label {
-    color: #2563eb;
+    color: #1e40af;
 }
 
 .analytics-page-wrapper .bg-light-blue {
     background-color: #eff6ff;
-    color: #2563eb;
+    color: #1e40af;
 }
 
 .analytics-page-wrapper .theme-green .stat-label {
-    color: #10b981;
+    color: #047857;
 }
 
 .analytics-page-wrapper .bg-light-green {
     background-color: #ecfdf5;
-    color: #10b981;
+    color: #047857;
 }
 
 .analytics-page-wrapper .theme-orange .stat-label {
-    color: #f59e0b;
+    color: #b45309;
 }
 
 .analytics-page-wrapper .bg-light-orange {
     background-color: #fffbeb;
-    color: #f59e0b;
+    color: #b45309;
 }
 
 .analytics-page-wrapper .theme-purple .stat-label {
-    color: #8b5cf6;
+    color: #6d28d9;
 }
 
 .analytics-page-wrapper .bg-light-purple {
     background-color: #f5f3ff;
-    color: #8b5cf6;
+    color: #6d28d9;
 }
 
 /* charts row - 3 equal columns */
@@ -583,7 +583,7 @@
 
 .table-title-badge {
     background-color: rgba(37, 99, 235, 0.08);
-    color: #2563eb;
+    color: #1e40af;
     font-size: 0.68rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -743,22 +743,22 @@
 
 .rank-1 {
     background-color: #fef9c3;
-    color: #ca8a04;
+    color: #854d0e;
 }
 
 .rank-2 {
     background-color: #eff6ff;
-    color: #2563eb;
+    color: #1e40af;
 }
 
 .rank-3 {
     background-color: #ffedd5;
-    color: #ea580c;
+    color: #c2410c;
 }
 
 .rank-4 {
     background-color: #fee2e2;
-    color: #dc2626;
+    color: #b91c1c;
 }
 
 /* Student Profile Column */
@@ -1159,7 +1159,7 @@
     height: 28px;
     border-radius: 50%;
     background-color: #dcfce7;
-    color: #16a34a;
+    color: #15803d;
     display: flex;
     align-items: center;
     justify-content: center;
