@@ -34,7 +34,7 @@
 
 /* Conditionally stretch layouts on Student Analytics tab */
 .dashboard-content-layout.wide-layout {
-    max-width: 100% !important;
+    max-width: 100%;
     padding-left: 40px;
     padding-right: 40px;
 }
