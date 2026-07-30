@@ -80,8 +80,8 @@ function Registration({ onNavigate }) {
     const formatDOBDate = (dateString) => {
         if (!dateString) return '';
         const d = new Date(dateString);
-        if (isNaN(d.getTime())) return dateString;
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+        if (Number.isNaN(d.getTime())) return dateString;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('/', '-');
     };
 
     // Validate a single field and return its error message
@@ -100,14 +100,14 @@ function Registration({ onNavigate }) {
             case 'email':
                 if (!value) {
                     errorMsg = 'Email address is required';
-                } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value)) {
+                } else if (!/^[a-zA-Z\d._%+-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/.test(value)) {
                     errorMsg = 'Please enter a valid email address';
                 }
                 break;
             case 'mobile':
                 if (!value) {
                     errorMsg = 'Mobile number is required';
-                } else if (!/^[0-9]{10}$/.test(value)) {
+                } else if (!/^\d{10}$/.test(value)) {
                     errorMsg = 'Mobile number must be exactly 10 digits';
                 }
                 break;
@@ -148,8 +148,8 @@ function Registration({ onNavigate }) {
                 if (!value) {
                     errorMsg = 'CGPA is required';
                 } else {
-                    const num = parseFloat(value);
-                    if (isNaN(num) || num < 0 || num > 10) {
+                    const num = Number.parseFloat(value);
+                    if (Number.isNaN(num) || num < 0 || num > 10) {
                         errorMsg = 'CGPA must be a number between 0.00 and 10.00';
                     }
                 }
@@ -159,7 +159,7 @@ function Registration({ onNavigate }) {
                     errorMsg = 'Password is required';
                 } else if (value.length < 8) {
                     errorMsg = 'Password must be at least 8 characters long';
-                } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/.test(value)) {
+                } else if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value) || !/[!@#$%^&*]/.test(value)) {
                     errorMsg = 'Must include uppercase, lowercase, number, and special character';
                 }
                 break;
@@ -252,7 +252,7 @@ function Registration({ onNavigate }) {
             const response = await registerStudent(requestBody);
 
             // 1. Save the backend token and student details to localStorage
-            if (response.data && response.data.token) {
+            if (response.data?.token) {
                 localStorage.setItem("token", response.data.token);
             }
             // Save student details to local registry
@@ -480,10 +480,11 @@ function Registration({ onNavigate }) {
                         <form onSubmit={handleSubmit} className="form-grid">
                             {/* Full Name */}
                             <div className="input-group">
-                                <label>Full Name</label>
+                                <label htmlFor="fullnameInput">Full Name</label>
                                 <div className={`input-wrapper ${errors.fullname ? 'has-error' : ''}`}>
                                     <User size={16} />
                                     <input
+                                        id="fullnameInput"
                                         type="text"
                                         name="fullname"
                                         placeholder="Priya Sharma"
@@ -497,10 +498,11 @@ function Registration({ onNavigate }) {
 
                             {/* Email Address */}
                             <div className="input-group">
-                                <label>Email Address</label>
+                                <label htmlFor="emailInput">Email Address</label>
                                 <div className={`input-wrapper ${errors.email ? 'has-error' : ''}`}>
                                     <Mail size={16} />
                                     <input
+                                        id="emailInput"
                                         type="email"
                                         name="email"
                                         placeholder="priya@college.edu.in"
@@ -514,10 +516,11 @@ function Registration({ onNavigate }) {
 
                             {/* Mobile Number */}
                             <div className="input-group">
-                                <label>Mobile Number</label>
+                                <label htmlFor="mobileInput">Mobile Number</label>
                                 <div className={`input-wrapper ${errors.mobile ? 'has-error' : ''}`}>
                                     <Phone size={16} />
                                     <input
+                                        id="mobileInput"
                                         type="tel"
                                         name="mobile"
                                         placeholder="8765443789"
@@ -531,10 +534,11 @@ function Registration({ onNavigate }) {
 
                             {/* Date of Birth */}
                             <div className="input-group">
-                                <label>Date of Birth (DOB)</label>
+                                <label htmlFor="dobPickerBtn">Date of Birth (DOB)</label>
                                 <div className={`input-wrapper ${errors.dob ? 'has-error' : ''}`} ref={dobDatePickerRef} style={{ position: 'relative', overflow: 'visible', border: 'none', padding: 0 }}>
                                     <div className="custom-date-picker-container" style={{ width: '100%' }}>
                                         <button
+                                            id="dobPickerBtn"
                                             type="button"
                                             className="date-picker-trigger"
                                             onClick={() => setIsDobPickerOpen(!isDobPickerOpen)}
@@ -553,7 +557,7 @@ function Registration({ onNavigate }) {
                                                     <span>
                                                         <select
                                                             value={dobCalDate.getMonth()}
-                                                            onChange={(e) => setDobCalDate(new Date(dobCalDate.getFullYear(), parseInt(e.target.value), 1))}
+                                                            onChange={(e) => setDobCalDate(new Date(dobCalDate.getFullYear(), Number.parseInt(e.target.value), 1))}
                                                             className="calendar-select"
                                                             style={{ border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '0.8125rem', outline: 'none', cursor: 'pointer' }}
                                                         >
@@ -566,7 +570,7 @@ function Registration({ onNavigate }) {
                                                         </select>
                                                         <select
                                                             value={dobCalDate.getFullYear()}
-                                                            onChange={(e) => setDobCalDate(new Date(parseInt(e.target.value), dobCalDate.getMonth(), 1))}
+                                                            onChange={(e) => setDobCalDate(new Date(Number.parseInt(e.target.value), dobCalDate.getMonth(), 1))}
                                                             className="calendar-select"
                                                             style={{ border: 'none', background: 'transparent', fontWeight: 'bold', fontSize: '0.8125rem', outline: 'none', cursor: 'pointer', marginLeft: '4px' }}
                                                         >
@@ -584,8 +588,8 @@ function Registration({ onNavigate }) {
                                                 </div>
                                                 <div className="calendar-days">
                                                     {/* Render empty cells for padding */}
-                                                    {Array.from({ length: dobFirstDayIndex }).map((_, i) => (
-                                                        <span key={`empty-${i}`} className="empty-day"></span>
+                                                    {Array.from({ length: dobFirstDayIndex }, (_, i) => `empty-${dobCalDate.getFullYear()}-${dobCalDate.getMonth()}-${i}`).map((slotKey) => (
+                                                        <span key={slotKey} className="empty-day"></span>
                                                     ))}
                                                     {/* Render month days */}
                                                     {Array.from({ length: dobTotalDays }).map((_, i) => {
@@ -629,10 +633,11 @@ function Registration({ onNavigate }) {
 
                             {/* Department Selector */}
                             <div className="input-group full-width">
-                                <label>Department</label>
+                                <label htmlFor="departmentSelect">Department</label>
                                 <div className={`input-wrapper ${errors.department ? 'has-error' : ''}`}>
                                     <BookOpen size={16} />
                                     <select
+                                        id="departmentSelect"
                                         name="department"
                                         value={formData.department}
                                         onChange={handleChange}
@@ -648,10 +653,11 @@ function Registration({ onNavigate }) {
 
                             {/* Course Selector */}
                             <div className="input-group">
-                                <label>Course</label>
+                                <label htmlFor="courseSelect">Course</label>
                                 <div className={`input-wrapper ${errors.course ? 'has-error' : ''}`}>
                                     <CourseIcon size={16} />
                                     <select
+                                        id="courseSelect"
                                         name="course"
                                         value={formData.course}
                                         onChange={handleChange}
@@ -669,10 +675,11 @@ function Registration({ onNavigate }) {
 
                             {/* Year Selector */}
                             <div className="input-group">
-                                <label>Current Year</label>
+                                <label htmlFor="yearSelect">Current Year</label>
                                 <div className={`input-wrapper ${errors.year ? 'has-error' : ''}`}>
                                     <Calendar size={16} />
                                     <select
+                                        id="yearSelect"
                                         name="year"
                                         value={formData.year}
                                         onChange={handleChange}
@@ -690,10 +697,11 @@ function Registration({ onNavigate }) {
 
                             {/* CGPA */}
                             <div className="input-group full-width">
-                                <label>CGPA</label>
+                                <label htmlFor="cgpaInput">CGPA</label>
                                 <div className={`input-wrapper ${errors.cgpa ? 'has-error' : ''}`}>
                                     <Award size={16} />
                                     <input
+                                        id="cgpaInput"
                                         type="number"
                                         step="0.01"
                                         min="0"
@@ -710,10 +718,11 @@ function Registration({ onNavigate }) {
 
                             {/* Password */}
                             <div className="input-group">
-                                <label>Password</label>
+                                <label htmlFor="passwordInput">Password</label>
                                 <div className={`input-wrapper ${errors.password ? 'has-error' : ''}`}>
                                     <Lock size={16} />
                                     <input
+                                        id="passwordInput"
                                         type="password"
                                         name="password"
                                         placeholder="Min. 8 characters"
@@ -727,10 +736,11 @@ function Registration({ onNavigate }) {
 
                             {/* Confirm Password */}
                             <div className="input-group">
-                                <label>Confirm Password</label>
+                                <label htmlFor="confirmPasswordInput">Confirm Password</label>
                                 <div className={`input-wrapper ${errors.confirmPassword ? 'has-error' : ''}`}>
                                     <Lock size={16} />
                                     <input
+                                        id="confirmPasswordInput"
                                         type="password"
                                         name="confirmPassword"
                                         placeholder="Re-enter password"
@@ -751,7 +761,7 @@ function Registration({ onNavigate }) {
 
                         <div className="form-bottom-link">
                             Already have an account?{''}
-                            <span className="link-span" onClick={() => onNavigate('login')}> Sign In</span>
+                            <button type="button" className="link-span" onClick={() => onNavigate('login')}> Sign In</button>
                         </div>
                     </div>
 

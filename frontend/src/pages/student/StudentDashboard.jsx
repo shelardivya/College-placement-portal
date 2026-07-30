@@ -78,7 +78,7 @@ export default function
     const getParsedDate = (dateStr) => {
         try {
             const d = new Date(dateStr);
-            return isNaN(d.getTime()) ? new Date("9999-12-31") : d;
+            return Number.isNaN(d.getTime()) ? new Date("9999-12-31") : d;
         } catch {
             return new Date("9999-12-31");
         }
@@ -138,7 +138,7 @@ export default function
             const response = await getStudentNotifications();
             if (response.data) {
                 const data = Array.isArray(response.data) ? response.data :
-                    (response.data.content ? response.data.content : []);
+                    (response.data.content || []);
                 // Sort by date descending (assuming it's not already sorted, optional but good UX)
                 const parseDateStr = (dateStr, timeStr) => {
                     if (!dateStr) return 0;
@@ -147,13 +147,13 @@ export default function
                     if (!year) return new Date(dateStr).getTime() || 0;
                     const d = new Date(`${year}-${month}-${day}T00:00:00`);
                     if (timeStr) {
-                        const match = timeStr.match(/(\d+):(\d+)\s(AM|PM)/);
+                        const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/);
                         if (match) {
                             let [, h, m, ampm] = match;
-                            h = parseInt(h);
+                            h = Number.parseInt(h);
                             if (ampm === 'PM' && h < 12) h += 12;
                             if (ampm === 'AM' && h === 12) h = 0;
-                            d.setHours(h, parseInt(m));
+                            d.setHours(h, Number.parseInt(m));
                         }
                     }
                     return d.getTime();
@@ -163,13 +163,13 @@ export default function
                 const localizedData = sorted.map(notif => {
                     if (notif.createdDate && notif.createdTime) {
                         const [day, month, year] = notif.createdDate.split('/');
-                        const match = notif.createdTime.match(/(\d+):(\d+)\s(AM|PM)/);
+                        const match = notif.createdTime.match(/(\d{1,2}):(\d{2})\s(AM|PM)/);
                         if (day && month && year && match) {
                             let [, h, m, ampm] = match;
-                            h = parseInt(h);
+                            h = Number.parseInt(h);
                             if (ampm === 'PM' && h < 12) h += 12;
                             if (ampm === 'AM' && h === 12) h = 0;
-                            m = parseInt(m);
+                            m = Number.parseInt(m);
 
                             const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
 
@@ -319,7 +319,7 @@ export default function
                 course: "", // Frontend doesn't currently collect this
                 department: tempProfile.branch || "",
                 currentYear: tempProfile.passingYear || "",
-                cgpa: parseFloat(tempProfile.cgpa) || 0.0,
+                cgpa: Number.parseFloat(tempProfile.cgpa) || 0.0,
                 skills: tempProfile.skills || "",
                 linkedinUrl: tempProfile.linkedinUrl || "",
                 githubUrl: tempProfile.githubUrl || "",
@@ -493,7 +493,7 @@ export default function
 
             } catch (error) {
                 console.error("Failed to apply for job:", error);
-                if (error.response && error.response.status === 409) {
+                if (error.response?.status === 409) {
                     setToastMessage(error.response.data?.message || "You have already applied for this job.");
                     setToastType('error');
                     setAppliedJobs(prev => [...new Set([...prev, selectedJob.id])]);
@@ -547,8 +547,8 @@ export default function
             value: dashboardStats ? String(dashboardStats.selected || 0) : "0",
             icon: <CheckCircle2 className="metric-icon-green" />,
             colorClass: "green",
-            progress: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0,
-            progess: dashboardStats ? (dashboardStats.selected ? 100 : 0) : 0
+            progress: dashboardStats?.selected ? 100 : 0,
+            progess: dashboardStats?.selected ? 100 : 0
         },
         {
             id: "pending",
@@ -556,8 +556,8 @@ export default function
             value: dashboardStats ? String(dashboardStats.pending || 0) : "0",
             icon: <Clock className="metric-icon-orange" />,
             colorClass: "orange",
-            progress: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0,
-            progess: dashboardStats ? (dashboardStats.pending ? 100 : 0) : 0
+            progress: dashboardStats?.pending ? 100 : 0,
+            progess: dashboardStats?.pending ? 100 : 0
         },
         {
             id: "rejected",
@@ -565,8 +565,8 @@ export default function
             value: dashboardStats ? String(dashboardStats.rejected || 0) : "0",
             icon: <XCircle className="metric-icon-red" />,
             colorClass: "red",
-            progress: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0,
-            progess: dashboardStats ? (dashboardStats.rejected ? 100 : 0) : 0
+            progress: dashboardStats?.rejected ? 100 : 0,
+            progess: dashboardStats?.rejected ? 100 : 0
         }
     ];
 
@@ -608,7 +608,7 @@ export default function
                             additionalinfo: job.jobRoleOverview || job.jobRole || job.title,
                             degree: job.degree || job.Degree || job.degreeRequired,
                             branch: job.branch || job.Branch || job.branchRequired,
-                            minCgpa: job.minCgpa !== undefined ? job.minCgpa : (job.MinCgpa !== undefined ? job.MinCgpa : job.cgpa),
+                            minCgpa: job.minCgpa ?? job.MinCgpa ?? job.cgpa,
                             passingYear: job.passingYear || job.PassingYear || job.year,
                             experience: job.experience || job.Experience || job.experienceRequired,
                             isApplied: job.applied || job.isApplied || job.hasApplied || false
@@ -658,9 +658,7 @@ export default function
 
         let degree = job.degree || job.Degree || job.degreeRequired || "Not specified";
         let branch = job.branch || job.Branch || job.branchRequired || "Not specified";
-        let minCgpa = (job.minCgpa !== undefined && job.minCgpa !== null) ? String(job.minCgpa) :
-            (job.MinCgpa !== undefined && job.MinCgpa !== null) ? String(job.MinCgpa) :
-                (job.cgpa !== undefined && job.cgpa !== null) ? String(job.cgpa) : "Not specified";
+        let minCgpa = String(job.minCgpa ?? job.MinCgpa ?? job.cgpa ?? "Not specified");
         let passingYear = job.passingYear || job.PassingYear || job.year || "Not specified";
         let experience = job.experience || job.Experience || job.experienceRequired || "Not specified";
         let roleOverview = job.additionalInfo || job.additionalinfo || job.jobRoleOverview || "This is a full-time role.";
@@ -683,14 +681,14 @@ export default function
                 </div>
 
                 <div className="student-nav-tabs">
-                    <button
+                    <button type="button"
                         className={`student-nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
                         onClick={() => setActiveTab('dashboard')}
                     >
                         <span>Dashboard</span>
                         {activeTab === 'dashboard' && <span className="tab-underline" />}
                     </button>
-                    <button
+                    <button type="button"
                         className={`student-nav-tab ${activeTab === 'studhub' ? 'active' : ''}`}
                         onClick={() => setActiveTab('studhub')}
                     >
@@ -704,7 +702,13 @@ export default function
 
 
                     <div className="notification-bell-container">
-                        <div className="notification-bell" onClick={() => {
+                        <div className="notification-bell" role="button" tabIndex={0} onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setIsNotificationSidebarOpen(true);
+                                setIsProfileDropdownOpen(false);
+                            }
+                        }} onClick={() => {
                             setIsNotificationSidebarOpen(true);
                             setIsProfileDropdownOpen(false);
                         }}>
@@ -727,7 +731,13 @@ export default function
 
 
                     <div className="profile-container">
-                        <div className="profile-avatar" onClick={() => {
+                        <div className="profile-avatar" role="button" tabIndex={0} onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setIsProfileDropdownOpen(!isProfileDropdownOpen);
+                                setIsNotificationSidebarOpen(false);
+                            }
+                        }} onClick={() => {
                             setIsProfileDropdownOpen(!isProfileDropdownOpen);
                             setIsNotificationSidebarOpen(false);
                         }}>
@@ -950,7 +960,7 @@ export default function
                                             return filtered
                                                 .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
                                                 .map((item, index) => (
-                                                    <motion.div className="match-card" key={index}
+                                                    <motion.div className="match-card" key={item.id || item.company}
                                                         initial={{ opacity: 0, y: 15 }}
                                                         animate={{ opacity: 1, y: 0 }}
                                                         transition={{ duration: 0.3, delay: index * 0.1 }}>
@@ -1046,8 +1056,8 @@ export default function
             {selectedJob && (() => {
                 const eligibility = getJobEligibility(selectedJob);
                 return (
-                    <div className="modal-overlay" onClick={handleCancleApply}>
-                        <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-overlay" role="presentation" onClick={handleCancleApply} onKeyDown={(e) => { if (e.key === 'Escape') handleCancleApply(); }}>
+                        <div className="student-apply-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
 
                             <div className="modal-header">
                                 <h4>Job Details & Eligibility</h4>
@@ -1059,8 +1069,9 @@ export default function
 
                             <div className="modal-form">
                                 <div className="form-group">
-                                    <label>Company Name</label>
+                                    <label htmlFor="modal-company">Company Name</label>
                                     <input
+                                        id="modal-company"
                                         type="text"
                                         value={selectedJob.company}
                                         disabled
@@ -1069,8 +1080,9 @@ export default function
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Location</label>
+                                    <label htmlFor="modal-location">Location</label>
                                     <input
+                                        id="modal-location"
                                         type="text"
                                         value={selectedJob.location || "Remote"}
                                         disabled
@@ -1091,8 +1103,9 @@ export default function
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Job Role Overview</label>
+                                    <label htmlFor="modal-role">Job Role Overview</label>
                                     <textarea
+                                        id="modal-role"
                                         value={selectedJob.role || "Not specified"}
                                         disabled
                                         rows={3}
@@ -1104,8 +1117,9 @@ export default function
 
                                 <div className="form-row">
                                     <div className="form-group half-width">
-                                        <label>Degree</label>
+                                        <label htmlFor="modal-degree">Degree</label>
                                         <input
+                                            id="modal-degree"
                                             type="text"
                                             value={eligibility.degree}
                                             disabled
@@ -1114,8 +1128,9 @@ export default function
                                     </div>
 
                                     <div className="form-group half-width">
-                                        <label>Branch</label>
+                                        <label htmlFor="modal-branch">Branch</label>
                                         <input
+                                            id="modal-branch"
                                             type="text"
                                             value={eligibility.branch}
                                             disabled
@@ -1126,8 +1141,9 @@ export default function
 
                                 <div className="form-row">
                                     <div className="form-group half-width">
-                                        <label>Min CGPA</label>
+                                        <label htmlFor="modal-minCgpa">Min CGPA</label>
                                         <input
+                                            id="modal-minCgpa"
                                             type="text"
                                             value={eligibility.minCgpa}
                                             disabled
@@ -1136,8 +1152,9 @@ export default function
                                     </div>
 
                                     <div className="form-group half-width">
-                                        <label>Passing Year</label>
+                                        <label htmlFor="modal-passingYear">Passing Year</label>
                                         <input
+                                            id="modal-passingYear"
                                             type="text"
                                             value={eligibility.passingYear}
                                             disabled
@@ -1148,8 +1165,9 @@ export default function
 
                                 <div className="form-row">
                                     <div className="form-group half-width">
-                                        <label>Experience</label>
+                                        <label htmlFor="modal-experience">Experience</label>
                                         <input
+                                            id="modal-experience"
                                             type="text"
                                             value={eligibility.experience}
                                             disabled
@@ -1158,8 +1176,9 @@ export default function
                                     </div>
 
                                     <div className="form-group half-width">
-                                        <label>Deadline</label>
+                                        <label htmlFor="modal-deadline">Deadline</label>
                                         <input
+                                            id="modal-deadline"
                                             type="text"
                                             value={selectedJob.deadline}
                                             disabled
@@ -1218,11 +1237,16 @@ export default function
 
 
             {isProfileModalOpen && (
-                <div className="modal-overlay" onClick={() => {
+                <div className="modal-overlay" role="presentation" onClick={() => {
                     setIsProfileModalOpen(false);
                     setIsEditingProfile(false);
+                }} onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                        setIsProfileModalOpen(false);
+                        setIsEditingProfile(false);
+                    }
                 }}>
-                    <div className="student-apply-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="student-apply-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
 
                         <div className="modal-header">
                             <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
@@ -1411,14 +1435,22 @@ export default function
 
 
             {isChangePasswordOpen && (
-                <div className="modal-overlay" onClick={() => {
+                <div className="modal-overlay" role="presentation" onClick={() => {
                     setIsChangePasswordOpen(false);
                     setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
                     setShowCurrentPassword(false);
                     setShowNewPassword(false);
                     setShowConfirmPassword(false);
+                }} onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                        setIsChangePasswordOpen(false);
+                        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+                        setShowCurrentPassword(false);
+                        setShowNewPassword(false);
+                        setShowConfirmPassword(false);
+                    }
                 }}>
-                    <div className="change-password-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="change-password-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h4>Change Password</h4>
                             <button className="btn-close-modal" onClick={() => {
@@ -1434,9 +1466,10 @@ export default function
                         <form onSubmit={handlePasswordSubmit}>
                             <div className="modal-body">
                                 <div className="form-group-custom">
-                                    <label>Current Password</label>
+                                    <label htmlFor="currentPassword">Current Password</label>
                                     <div className="password-input-wrapper">
                                         <input
+                                            id="currentPassword"
                                             type={showCurrentPassword ? "text" : "password"}
                                             required
                                             placeholder="Enter current password"
@@ -1453,9 +1486,10 @@ export default function
                                     </div>
                                 </div>
                                 <div className="form-group-custom">
-                                    <label>New Password</label>
+                                    <label htmlFor="newPassword">New Password</label>
                                     <div className="password-input-wrapper">
                                         <input
+                                            id="newPassword"
                                             type={showNewPassword ? "text" : "password"}
                                             required
                                             placeholder="Enter new password (min. 8 characters)"
@@ -1472,9 +1506,10 @@ export default function
                                     </div>
                                 </div>
                                 <div className="form-group-custom">
-                                    <label>Confirm New Password</label>
+                                    <label htmlFor="confirmPassword">Confirm New Password</label>
                                     <div className="password-input-wrapper">
                                         <input
+                                            id="confirmPassword"
                                             type={showConfirmPassword ? "text" : "password"}
                                             required
                                             placeholder="Confirm your new password"
@@ -1516,8 +1551,8 @@ export default function
 
 
             {isNotificationSidebarOpen && (
-                <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
-                    <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
+                <div className="sd-notification-sidebar-overlay" role="presentation" onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setIsNotificationSidebarOpen(false); }}>
+                    <div className="sd-notification-sidebar" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                         <div className="sidebar-header">
                             <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />

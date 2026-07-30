@@ -56,7 +56,7 @@
 .notification-bell {
     position: relative;
     cursor: pointer;
-    color: #64748b;
+    color: #334155;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -73,7 +73,7 @@
 }
 
 .bell-icon {
-    color: #64748b;
+    color: #334155;
     width: 22px;
     height: 22px;
 }
@@ -82,7 +82,7 @@
     position: absolute;
     top: -4px;
     right: -4px;
-    background-color: #ef4444;
+    background-color: #b91c1c;
     color: #ffffff;
     font-size: 0.7rem;
     font-weight: 700;
@@ -113,7 +113,8 @@
 
 /*Welcome Banner Styling*/
 .welcome-section {
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 50%, #60a5fa 100%);
+    background-color: #1e3a8a;
+    background-image: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 50%, #60a5fa 100%);
     border-radius: var(--radius-lg);
     padding: 32px 40px;
     margin: 16px 40px 28px 40px;
@@ -144,7 +145,7 @@
     font-weight: 800;
     margin: 0 0 6px 0;
     letter-spacing: -0.03em;
-    color: white !important;
+    color: white    ;
 }
 
 .welcome-content p {
@@ -164,15 +165,15 @@
 }
 
 .welcome-date-badge span {
-    background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1.5px solid rgba(255, 255, 255, 0.3);
     padding: 6px 14px;
     border-radius: 99px;
     font-size: 0.8rem;
-    font-weight: 600;
-    color: #ffffff;
+    font-weight: 700;
+    color: #0f172a;
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -532,7 +533,7 @@
 .btn-apply.applied {
     background-color: #f1f5f9;
     border-color: #cbd5e1;
-    color: #94a3b8;
+    color: #475569;
     cursor: not-allowed;
 }
 
@@ -579,7 +580,7 @@
     gap: 10px;
 }
 
-.logo-mini-badge {
+.match-card .logo-mini-badge {
     width: 28px;
     height: 28px;
     border-radius: 6px;
@@ -758,7 +759,7 @@
     gap: 12px;
 }
 
-.logo-mini-badge {
+.match-table .logo-mini-badge {
     width: 28px;
     height: 28px;
     border-radius: 6px;
@@ -784,7 +785,7 @@
     color: #10b981;
 }
 
-.score-progress-track {
+.match-table .score-progress-track {
     height: 4px;
     background-color: #f1f5f9;
     border-radius: 2px;
@@ -792,7 +793,7 @@
     width: 100%;
 }
 
-.score-progress-bar {
+.match-table .score-progress-bar {
     height: 100%;
     background-color: #10b981;
     border-radius: 2px;
@@ -1108,12 +1109,12 @@
 }
 
 .dropdown-item.logout-btn {
-    color: #ef4444;
+    color: #b91c1c;
 }
 
 .dropdown-item.logout-btn:hover {
     background-color: #fef2f2;
-    color: #dc2626;
+    color: #b91c1c;
 }
 
 /* Profile Modal Custom Styles */
@@ -1279,32 +1280,37 @@
 }
 
 .badge-student {
-    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
-    color: #2563eb;
+    background-color: #eff6ff;
+    background-image: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+    color: #1e3a8a;
     border: 1px solid rgba(37, 99, 235, 0.15);
 }
 
 .badge-status {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
-    color: #16a34a;
+    background-color: #f0fdf4;
+    background-image: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    color: #14532d;
     border: 1px solid rgba(34, 197, 94, 0.15);
 }
 
 .badge-cgpa {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
-    color: #d97706;
+    background-color: #fffbeb;
+    background-image: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    color: #78350f;
     border: 1px solid rgba(245, 158, 11, 0.15);
 }
 
 .badge-role {
-    background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
-    color: #0891b2;
+    background-color: #ecfeff;
+    background-image: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(6, 182, 212, 0.05) 100%);
+    color: #164e63;
     border: 1px solid rgba(6, 182, 212, 0.15);
 }
 
 .badge-progress {
-    background: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.05) 100%);
-    color: #e11d48;
+    background-color: #fff1f2;
+    background-image: linear-gradient(135deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.05) 100%);
+    color: #881337;
     border: 1px solid rgba(244, 63, 94, 0.15);
 }
 
@@ -1526,38 +1532,44 @@
 }
 
 .pill-react {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
-    color: #0284c7;
+    background-color: #e0f2fe;
+    background-image: linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+    color: #0c4a6e;
     border-color: rgba(56, 189, 248, 0.25);
 }
 
 .pill-js {
-    background: linear-gradient(135deg, rgba(250, 204, 21, 0.12) 0%, rgba(234, 179, 8, 0.12) 100%);
-    color: #b45309;
+    background-color: #fef3c7;
+    background-image: linear-gradient(135deg, rgba(250, 204, 21, 0.12) 0%, rgba(234, 179, 8, 0.12) 100%);
+    color: #78350f;
     border-color: rgba(250, 204, 21, 0.25);
 }
 
 .pill-node {
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.12) 0%, rgba(34, 197, 94, 0.12) 100%);
-    color: #15803d;
+    background-color: #dcfce7;
+    background-image: linear-gradient(135deg, rgba(74, 222, 128, 0.12) 0%, rgba(34, 197, 94, 0.12) 100%);
+    color: #14532d;
     border-color: rgba(74, 222, 128, 0.25);
 }
 
 .pill-python {
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.12) 0%, rgba(147, 51, 234, 0.12) 100%);
-    color: #7e22ce;
+    background-color: #f3e8ff;
+    background-image: linear-gradient(135deg, rgba(192, 132, 252, 0.12) 0%, rgba(147, 51, 234, 0.12) 100%);
+    color: #3b0764;
     border-color: rgba(192, 132, 252, 0.25);
 }
 
 .pill-css {
-    background: linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%);
-    color: #0891b2;
+    background-color: #cffafe;
+    background-image: linear-gradient(135deg, rgba(34, 211, 238, 0.12) 0%, rgba(6, 182, 212, 0.12) 100%);
+    color: #164e63;
     border-color: rgba(34, 211, 238, 0.25);
 }
 
 .pill-default {
-    background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(100, 116, 139, 0.12) 100%);
-    color: #475569;
+    background-color: #f1f5f9;
+    background-image: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(100, 116, 139, 0.12) 100%);
+    color: #0f172a;
     border-color: rgba(148, 163, 184, 0.25);
 }
 
@@ -1731,7 +1743,7 @@
 
 .password-input-wrapper input {
     width: 100%;
-    padding-right: 44px !important;
+    padding-right: 44px;
     box-sizing: border-box;
 }
 
@@ -1800,14 +1812,14 @@
 .sd-page-btn:disabled {
     background-color: #f8fafc;
     border-color: #f1f5f9;
-    color: #cbd5e1;
+    color: #64748b;
     cursor: not-allowed;
 }
 
 .sd-page-info {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #64748b;
+    color: #334155;
     min-width: 60px;
     text-align: center;
 }
@@ -1907,16 +1919,6 @@
     color: #0f172a;
 }
 
-.student-apply-modal .form-group input.read-only-input,
-.student-apply-modal .form-group textarea.read-only-textarea {
-    background-color: #f8fafc;
-    border-color: #e2e8f0;
-    color: #334155;
-    cursor: default;
-    resize: none;
-    font-weight: 500;
-}
-
 .student-apply-modal .form-section-title {
     font-size: 0.875rem;
     font-weight: 700;
@@ -1989,67 +1991,6 @@
     border-color: #1d4ed8;
 }
 
-/* Custom premium Toast notification for student dashboard */
-.sd-toast-notification {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background-color: #ecfdf5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-    border-left: 4px solid #10b981;
-    padding: 14px 20px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 1200;
-    animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.sd-toast-notification.error {
-    background-color: #fef2f2;
-    color: #991b1b;
-    border-color: #fca5a5;
-    border-left-color: #ef4444;
-    box-shadow: 0 10px 30px rgba(239, 68, 68, 0.12), 0 4px 12px rgba(0, 0, 0, 0.04);
-}
-
-.sd-toast-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.sd-toast-notification.success .sd-toast-icon {
-    color: #10b981;
-}
-
-.sd-toast-notification.error .sd-toast-icon {
-    color: #ef4444;
-}
-
-.sd-toast-text {
-    font-size: 0.875rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-}
-
-/* Animations */
-@keyframes toastSlideIn {
-    from {
-        transform: translateY(20px) scale(0.95);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
-}
-
 /* Premium refines for read-only fields inside student Apply Modal */
 .student-apply-modal .form-group input.read-only-input,
 .student-apply-modal .form-group textarea.read-only-textarea {
@@ -2062,6 +2003,7 @@
     cursor: not-allowed;
     user-select: none;
     transition: none;
+    resize: none;
 }
 
 .student-apply-modal .form-group input.read-only-input:focus,
@@ -2143,22 +2085,22 @@
 }
 
 .search-bar-wrapper .search-input {
-    border: none !important;
-    background: transparent !important;
+    border: none;
+    background: transparent;
     font-size: 0.85rem;
     color: #1e293b;
     width: 100%;
-    outline: none !important;
+    outline: none;
     font-weight: 500;
     padding: 0;
     margin: 0;
-    box-shadow: none !important;
+    box-shadow: none;
 }
 
 .search-bar-wrapper .search-input:focus {
-    outline: none !important;
-    box-shadow: none !important;
-    border: none !important;
+    outline: none ;
+    box-shadow: none ;
+    border: none;
 }
 
 .search-bar-wrapper .search-input::placeholder {
@@ -2265,7 +2207,7 @@
 .student-apply-modal .file-remove-btn {
     background-color: #fef2f2;
     border: 1px solid #fecaca;
-    color: #ef4444;
+    color: #b91c1c;
     padding: 6px 12px;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -2275,13 +2217,13 @@
 }
 
 .student-apply-modal .file-remove-btn:hover {
-    background-color: #ef4444;
+    background-color: #dc2626;
     color: #ffffff;
-    border-color: #ef4444;
+    border-color: #dc2626;
 }
 
 .student-apply-modal .required-star {
-    color: #ef4444;
+    color: #b91c1c;
     font-weight: 700;
     margin-left: 2px;
 }
@@ -2349,7 +2291,7 @@
 }
 
 .profile-modal .social-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
+    grid-template-columns: repeat(2, 1fr);
 }
 
 /* Link display styles inside the modal */
@@ -2520,7 +2462,7 @@
 }
 
 .sd-notification-sidebar .btn-close-sidebar:hover {
-    color: #ef4444;
+    color: #b91c1c;
     background-color: #fef2f2;
 }
 
@@ -2871,7 +2813,7 @@
 .sh-package-tag {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #059669;
+    color: #065f46;
     background: #ecfdf5;
     padding: 2px 10px;
     border-radius: 10px;
@@ -3056,7 +2998,7 @@
 
 .sh-drive-status.closed {
     background: #fee2e2;
-    color: #dc2626;
+    color: #b91c1c;
 }
 
 .sh-drive-meta {
@@ -3122,50 +3064,8 @@
     transition: all 0.3s ease;
 }
 
-.event-panel-title {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: #1e293b;
-    margin-bottom: 24px;
-    border-bottom: 2px dashed #e2e8f0;
-    padding-bottom: 12px;
-    letter-spacing: -0.01em;
-}
-
-.next-event-card {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.event-card-header-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.event-icon-box {
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    border-radius: 14px;
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 8px -2px rgba(124, 58, 237, 0.15);
-}
-
 .event-purple-icon {
     color: #7c3aed;
-}
-
-.event-company-title {
-    font-size: 1.45rem;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
-    letter-spacing: -0.02em;
 }
 
 .event-details-list {
@@ -3191,21 +3091,6 @@
 .event-detail-item:last-child {
     border-bottom: none;
     padding-bottom: 0;
-}
-
-.event-detail-icon-wrapper {
-    background: #ffffff;
-    color: #7c3aed;
-    border-radius: 8px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
 }
 
 .event-detail-item:hover .event-detail-icon-wrapper {
@@ -3298,7 +3183,7 @@
     height: 44px;
     border-radius: 12px;
     background-color: #f3e8ff;
-    color: #8b5cf6;
+    color: #6d28d9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3339,7 +3224,7 @@
     border-radius: 10px;
     background-color: #ffffff;
     border: 1px solid #f1f5f9;
-    color: #8b5cf6;
+    color: #6d28d9;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -3386,17 +3271,17 @@
 
 .drive-status-pill.badge-open {
     background-color: #dcfce7;
-    color: #16a34a;
+    color: #15803d;
 }
 
 .drive-status-pill.badge-upcoming {
     background-color: #eff6ff;
-    color: #2563eb;
+    color: #1d4ed8;
 }
 
 .drive-status-pill.badge-closed {
     background-color: #f1f5f9;
-    color: #64748b;
+    color: #334155;
 }
 
 .detail-about-box {
