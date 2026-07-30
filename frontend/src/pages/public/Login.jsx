@@ -43,14 +43,14 @@ function Login({ onNavigate, initialView }) {
         let initialPass = '';
         if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-            const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+            const matched = registeredProfiles.find(p => p.email?.trim().toLowerCase() === initialEmail.trim().toLowerCase());
 
             const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-            const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
+            const matchedAdmin = adminProfiles.find(p => p.email?.trim().toLowerCase() === initialEmail.trim().toLowerCase());
 
-            if (matched && matched.password) {
+            if (matched?.password) {
                 initialPass = matched.password;
-            } else if (matchedAdmin && matchedAdmin.password) {
+            } else if (matchedAdmin?.password) {
                 initialPass = matchedAdmin.password;
             }
         }
@@ -70,14 +70,14 @@ function Login({ onNavigate, initialView }) {
             let autoPass = '';
             if (trimmed !== '') {
                 const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-                const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+                const matchedProfile = registeredProfiles.find(p => p.email?.trim().toLowerCase() === trimmed);
 
                 const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-                const matchedAdmin = adminProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
+                const matchedAdmin = adminProfiles.find(p => p.email?.trim().toLowerCase() === trimmed);
 
-                if (matchedProfile && matchedProfile.password) {
+                if (matchedProfile?.password) {
                     autoPass = matchedProfile.password;
-                } else if (matchedAdmin && matchedAdmin.password) {
+                } else if (matchedAdmin?.password) {
                     autoPass = matchedAdmin.password;
                 }
             }
@@ -139,7 +139,7 @@ function Login({ onNavigate, initialView }) {
 
 
                 // Save token to localStorage
-                if (response.data && response.data.token) {
+                if (response.data?.token) {
                     const token = response.data.token;
                     localStorage.setItem("token", token);
                     localStorage.setItem("role", isAdmin ? "admin" : "student");
@@ -147,7 +147,7 @@ function Login({ onNavigate, initialView }) {
                     try {
                         const payload = JSON.parse(atob(token.split('.')[1]));
                         const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
+                        const cleanPrefix = nameFromEmail.replace(/\d/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
                         if (isAdmin) {
@@ -163,7 +163,7 @@ function Login({ onNavigate, initialView }) {
                             const adminEmail = (payload.email || formData.email).trim();
                             let found = false;
                             const updated = adminProfiles.map(p => {
-                                if (p.email && p.email.trim().toLowerCase() === adminEmail.toLowerCase()) {
+                                if (p.email?.trim().toLowerCase() === adminEmail.toLowerCase()) {
                                     found = true;
                                     return { ...p, password: formData.password };
                                 }
@@ -188,7 +188,7 @@ function Login({ onNavigate, initialView }) {
                         }
                     } catch {
                         const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
+                        const cleanPrefix = nameFromEmail.replace(/\d/g, '');
                         const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
 
                         if (isAdmin) {
@@ -297,7 +297,7 @@ function Login({ onNavigate, initialView }) {
 
                 const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
                 const updatedProfiles = profiles.map(p => {
-                    if (p.email && p.email.trim().toLowerCase() === resetEmail) {
+                    if (p.email?.trim().toLowerCase() === resetEmail) {
                         return { ...p, password: formData.password };
                     }
                     return p;
@@ -307,7 +307,7 @@ function Login({ onNavigate, initialView }) {
                 const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
                 let adminFound = false;
                 const updatedAdmins = adminProfiles.map(p => {
-                    if (p.email && p.email.trim().toLowerCase() === resetEmail) {
+                    if (p.email?.trim().toLowerCase() === resetEmail) {
                         adminFound = true;
                         return { ...p, password: formData.password };
                     }
@@ -453,10 +453,11 @@ function Login({ onNavigate, initialView }) {
                             {/* EMAIL INPUT (Login & Forgot views) */}
                             {loginView !== 'reset' && (
                                 <div className="input-group full-width">
-                                    <label>Email Address</label>
+                                    <label htmlFor="email">Email Address</label>
                                     <div className="input-wrapper">
                                         <Mail size={16} />
                                         <input
+                                            id="email"
                                             type="email"
                                             name="email"
                                             placeholder="priya@college.edu.in"
@@ -472,14 +473,19 @@ function Login({ onNavigate, initialView }) {
                             {loginView === 'login' && (
                                 <div className="input-group full-width">
                                     <div className="label-row">
-                                        <label>Password</label>
-                                        <span className="link-span-forgot" onClick={() => setLoginView('forgot')}>
+                                        <label htmlFor="password">Password</label>
+                                        <button
+                                            type="button"
+                                            className="link-span-forgot"
+                                            onClick={() => setLoginView('forgot')}
+                                        >
                                             Forgot password?
-                                        </span>
+                                        </button>
                                     </div>
                                     <div className="input-wrapper">
                                         <Lock size={16} />
                                         <input
+                                            id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             placeholder="Enter your password"
@@ -501,10 +507,11 @@ function Login({ onNavigate, initialView }) {
                             {/* CONFIRM PASSWORD INPUT (Login view) */}
                             {loginView === 'login' && (
                                 <div className="input-group full-width">
-                                    <label>Confirm Password</label>
+                                    <label htmlFor="confirmPassword">Confirm Password</label>
                                     <div className="input-wrapper">
                                         <Lock size={16} />
                                         <input
+                                            id="confirmPassword"
                                             type={showConfirmPassword ? "text" : "password"}
                                             name="confirmPassword"
                                             placeholder="Confirm your password"
@@ -527,10 +534,11 @@ function Login({ onNavigate, initialView }) {
                             {loginView === 'reset' && (
                                 <>
                                     <div className="input-group full-width">
-                                        <label>New Password</label>
+                                        <label htmlFor="resetPassword">New Password</label>
                                         <div className="input-wrapper">
                                             <Lock size={16} />
                                             <input
+                                                id="resetPassword"
                                                 type={showPassword ? "text" : "password"}
                                                 name="password"
                                                 placeholder="Enter new password"
@@ -550,10 +558,11 @@ function Login({ onNavigate, initialView }) {
                                     </div>
 
                                     <div className="input-group full-width">
-                                        <label>Confirm Password</label>
+                                        <label htmlFor="resetConfirmPassword">Confirm Password</label>
                                         <div className="input-wrapper">
                                             <Lock size={16} />
                                             <input
+                                                id="resetConfirmPassword"
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 name="confirmPassword"
                                                 placeholder="Confirm your password"
@@ -623,9 +632,13 @@ function Login({ onNavigate, initialView }) {
                         {loginView === 'login' && (
                             <div className="form-bottom-link-login">
                                 New to Campus_Hire?{' '}
-                                <span className="link-span-register" onClick={() => onNavigate('register')}>
+                                <button
+                                    type="button"
+                                    className="link-span-register"
+                                    onClick={() => onNavigate('register')}
+                                >
                                     Create Student Account
-                                </span>
+                                </button>
                             </div>
                         )}
                     </div>

@@ -143,9 +143,9 @@ function LandingPage({ onNavigate }) {
                                     <div className='chart-tooltip-dot' style={{ left: activePoint.left, top: activePoint.top }}></div>
                                     <div className='chart-tooltip-line' style={{ left: activePoint.left }}></div>
                                     <div className="hover-zones">
-                                        {chartData.map((point, index) => (
+                                        {chartData.map((point) => (
                                             <div
-                                                key={index}
+                                                key={point.month}
                                                 className="hover-zone"
                                                 onMouseEnter={() => setActivePoint(point)}
                                             />
