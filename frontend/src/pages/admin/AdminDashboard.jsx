@@ -39,7 +39,7 @@ function parseDateStr(dateStr, timeStr) {
             h = Number.parseInt(h);
             if (ampm === 'PM' && h < 12) h += 12;
             if (ampm === 'AM' && h === 12) h = 0;
-            d.setHours(h, parseInt(m));
+            d.setHours(h, Number.parseInt(m));
         }
     }
     return d.getTime();
@@ -52,10 +52,10 @@ function localizeNotification(notif) {
     const match = notif.createdTime.match(/(\d+):(\d+)\s([AP]M)/);
     if (!day || !month || !year || !match) return notif;
     let [, h, m, ampm] = match;
-    h = parseInt(h);
+    h = Number.parseInt(h);
     if (ampm === 'PM' && h < 12) h += 12;
     if (ampm === 'AM' && h === 12) h = 0;
-    m = parseInt(m);
+    m = Number.parseInt(m);
     const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
     notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -131,6 +131,38 @@ function getCompanyLogo(company) {
             </div>
         </div>
     );
+}
+
+/** Pure helper: filters and sorts the applicants list based on current search/filter state. */
+function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, filterCompany) {
+    let result = [...applicants];
+
+    if (searchTerm.trim() !== '') {
+        const lower = searchTerm.toLowerCase();
+        result = result.filter(app =>
+            app.name.toLowerCase().includes(lower) ||
+            app.company.toLowerCase().includes(lower)
+        );
+    }
+
+    const filterByLower = filterBy.toLowerCase();
+    if (filterByLower === 'by company name') {
+        if (filterCompany.trim() !== '') {
+            result = result.filter(app =>
+                app.company.toLowerCase().includes(filterCompany.toLowerCase())
+            );
+        }
+        result.sort((a, b) => a.company.localeCompare(b.company));
+    } else if (filterByLower === 'by date') {
+        if (filterDate) {
+            result = result.filter(app => app.date === filterDate);
+        }
+        result.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else {
+        result.sort((a, b) => b.match - a.match);
+    }
+
+    return result;
 }
 
 // -----------------------------------------------------------------------------------------
@@ -467,36 +499,9 @@ function AdminDashboard({ onNavigate }) {
         setIsFilterDropdownOpen(false);
     };
 
-    // 6. Side Effect: Recalcuuate applicant matches whenever Search or Filter changes
+    // 6. Side Effect: Recalculate applicant matches whenever Search or Filter changes
     useEffect(() => {
-        let result = [...applicants];
-
-        // Search term (by name or company)
-        if (searchTerm.trim() !== '') {
-            result = result.filter(app =>
-                app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.company.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // Dropdown specific filters
-        if (filterBy.toLowerCase() === 'by company name') {
-            if (filterCompany.trim() !== '') {
-                result = result.filter(app =>
-                    app.company.toLowerCase().includes(filterCompany.toLowerCase())
-                );
-            }
-            result.sort((a, b) => a.company.localeCompare(b.company));
-        } else if (filterBy.toLowerCase() === 'by date') {
-            if (filterDate) {
-                result = result.filter(app => app.date === filterDate);
-            }
-            result.sort((a, b) => new Date(b.date) - new Date(a.date));
-        } else {
-            // Default: Sort by Match percentage
-            result.sort((a, b) => b.match - a.match);
-        }
-
+        const result = filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, filterCompany);
         const timer = setTimeout(() => {
             setApplicantsCurrentPage(1);
             setFilteredApplicants(result);
@@ -510,8 +515,9 @@ function AdminDashboard({ onNavigate }) {
             try {
                 const response = await getDrafts();
                 // Map API response to UI state format safely
-                const draftsData = Array.isArray(response.data) ? response.data :
-                    (response.data && Array.isArray(response.data.content) ? response.data.content : []);
+                const rawData = response.data;
+                const isContentArray = rawData && Array.isArray(rawData.content);
+                const draftsData = Array.isArray(rawData) ? rawData : (isContentArray ? rawData.content : []);
 
                 const formattedDrafts = draftsData.map(d => ({
                     id: d.id,
