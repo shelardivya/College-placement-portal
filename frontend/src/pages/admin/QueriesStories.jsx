@@ -185,7 +185,7 @@ function filterStudentQueries(queries, querySearch, queryFilter) {
     });
 }
 
-/** Pure helper: filters placement drives by company or role keyword. */
+/*Pure helper: filters placement drives by company or role keyword. */
 function filterPlacementDrives(drives, driveSearch) {
     const searchLower = (driveSearch || "").toLowerCase();
     if (!searchLower) return drives;
@@ -195,14 +195,11 @@ function filterPlacementDrives(drives, driveSearch) {
     );
 }
 
-/** Pure helper: filters placement stories by year string. */
+/* Pure helper: filters placement stories by year string. */
 function filterPlacementStories(stories, storyYearFilter) {
     if (storyYearFilter === 'all') return stories;
-    return stories.filter(s => s.date && s.date.includes(storyYearFilter));
+    return stories.filter(s => s.date?.includes(storyYearFilter));
 }
-
-// -----------------------------------------------------------------------------------------
-
 
 
 
