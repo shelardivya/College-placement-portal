@@ -235,7 +235,7 @@ export default function StudentAnalytics() {
                 studentName: formData.name,
                 companyName: formData.company,
                 packageLpa: Number.parseFloat(formData.lpa) || 12,
-                cgpa: parseFloat(formData.cgpa) || 9.0,
+                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
                 skills: formData.skill || 'Full Stack'
             };
 
@@ -585,6 +585,7 @@ export default function StudentAnalytics() {
                     <div className="table-header-actions">
                         {!isSearchOpen ? (
                             <button
+                                type="button"
                                 className="table-search-toggle-btn"
                                 onClick={() => setIsSearchOpen(true)}
                                 title="Search"
@@ -603,6 +604,7 @@ export default function StudentAnalytics() {
                                     autoFocus
                                 />
                                 <button
+                                    type="button"
                                     className="search-clear-btn"
                                     onClick={() => {
                                         setSearchQuery('');
@@ -614,6 +616,7 @@ export default function StudentAnalytics() {
                             </div>
                         )}
                         <button
+                            type="button"
                             className="add-student-btn"
                             onClick={() => setIsModalOpen(true)}
                         >
@@ -658,7 +661,7 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <span className="cgpa-text">
-                                            {!isNaN(student.cgpa) && Number.isInteger(Number(student.cgpa))
+                                            {!Number.isNaN(Number(student.cgpa)) && Number.isInteger(Number(student.cgpa))
                                                 ? Number(student.cgpa).toFixed(1)
                                                 : student.cgpa}
                                         </span>
@@ -699,15 +702,17 @@ export default function StudentAnalytics() {
                     {totalPages > 1 && (
                         <div className="table-pagination">
                             <button
+                                type="button"
                                 className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
                             >
                                 &larr;
                             </button>
-                            {[...Array(totalPages)].map((_, i) => (
+                            {new Array(totalPages).fill(0).map((_, i) => (
                                 <button
                                     key={i + 1}
+                                    type="button"
                                     className={`pagination-btn num-btn ${currentPage === i + 1 ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(i + 1)}
                                 >
@@ -715,6 +720,7 @@ export default function StudentAnalytics() {
                                 </button>
                             ))}
                             <button
+                                type="button"
                                 className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
@@ -735,7 +741,7 @@ export default function StudentAnalytics() {
                                 <h3 className="modal-title">Add Top Placed Student</h3>
                                 <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
                             </div>
-                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                            <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
                                 <X size={20} />
                             </button>
                         </div>
@@ -880,7 +886,7 @@ export default function StudentAnalytics() {
                         {toastType === 'error' ? <X size={16} /> : <Check size={16} />}
                     </div>
                     <span className="toast-text">{toastMessage}</span>
-                    <button className="toast-close-btn" onClick={() => setShowToast(false)}>
+                    <button type="button" className="toast-close-btn" onClick={() => setShowToast(false)}>
                         <X size={14} />
                     </button>
                 </div>

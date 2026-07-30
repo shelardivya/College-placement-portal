@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import './QueriesStories.css';
 
-
+    
 
 /*
   Converts a backend `createdAt` field (which can be an ISO string, a DD/MM/YYYY HH:MM string,
@@ -50,6 +50,30 @@ function parseCreatedAt(createdAt) {
     } catch {
         return 'Recently';
     }
+}
+
+const AVATAR_BG_MAP = {
+    blue: '#dbeafe',
+    purple: '#e9d5ff',
+    green: '#a7f3d0',
+    orange: '#fed7aa',
+};
+
+const AVATAR_TEXT_MAP = {
+    blue: '#1e40af',
+    purple: '#581c87',
+    green: '#047857',
+    orange: '#c2410c',
+};
+
+/** Returns background color for query avatar circle. */
+function getAvatarBgColor(colorClass) {
+    return AVATAR_BG_MAP[colorClass] || '#e0e7ff';
+}
+
+/** Returns text color for query avatar circle. */
+function getAvatarTextColor(colorClass) {
+    return AVATAR_TEXT_MAP[colorClass] || '#4f46e5';
 }
 
 // -----------------------------------------------------------------------------------------
@@ -732,13 +756,13 @@ export default function QueriesStories() {
 
 
                     <div className="pills-wrapper">
-                        <button className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
+                        <button type="button" className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
                             All ({totalQueriesCount})
                         </button>
-                        <button className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
+                        <button type="button" className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
                             Pending ({pendingCount})
                         </button>
-                        <button className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
+                        <button type="button" className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
                             Resolved ({resolvedCount})
                         </button>
                     </div>
@@ -752,16 +776,8 @@ export default function QueriesStories() {
                                         <div
                                             className="query-avatar-circle"
                                             style={{
-                                                backgroundColor:
-                                                    query.colorClass === 'blue' ? '#dbeafe' :
-                                                        query.colorClass === 'purple' ? '#e9d5ff' :
-                                                            query.colorClass === 'green' ? '#a7f3d0' :
-                                                                query.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                                color:
-                                                    query.colorClass === 'blue' ? '#1e40af' :
-                                                        query.colorClass === 'purple' ? '#581c87' :
-                                                            query.colorClass === 'green' ? '#047857' :
-                                                                query.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                                backgroundColor: getAvatarBgColor(query.colorClass),
+                                                color: getAvatarTextColor(query.colorClass)
                                             }}
                                         >
                                             {query.avatar}
@@ -783,8 +799,8 @@ export default function QueriesStories() {
                                             {query.status}
                                         </span>
                                         <div className="action-links-group">
-                                            <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
-                                            <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
+                                            <button type="button" className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
+                                            <button type="button" className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
                                         </div>
                                     </div>
                                 </div>
@@ -798,6 +814,7 @@ export default function QueriesStories() {
                     <div className="table-card-footer">
                         <div className="pagination-wrapper">
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
@@ -805,9 +822,10 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                            {new Array(totalPages).fill(0).map((_, i) => i + 1).map(pageNum => (
                                 <button
                                     key={pageNum}
+                                    type="button"
                                     className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(pageNum)}
                                 >
@@ -816,6 +834,7 @@ export default function QueriesStories() {
                             ))}
 
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages || totalPages === 0}
@@ -841,7 +860,14 @@ export default function QueriesStories() {
                     <form onSubmit={(e) => { e.preventDefault(); setConfirmingPublish(true); }} className="publish-form-body">
 
                         <div className="form-upper-row">
-                            <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
+                            <div
+                                role="button"
+                                tabIndex={0}
+                                aria-label="Upload photo"
+                                className="upload-photo-zone"
+                                onClick={() => fileInputRef.current?.click()}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+                            >
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -878,9 +904,10 @@ export default function QueriesStories() {
                             </div>
                             <div className="inputs-block">
                                 <div className="form-group-field">
-                                    <label className="field-label">Student Name</label>
+                                    <label htmlFor="story-student-name" className="field-label">Student Name</label>
                                     <input
                                         type="text"
+                                        id="story-student-name"
                                         placeholder="Enter student name"
                                         className="form-input-control"
                                         value={storyForm.studentName}
@@ -889,9 +916,10 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="form-group-field">
-                                    <label className="field-label">Company Name</label>
+                                    <label htmlFor="story-company-name" className="field-label">Company Name</label>
                                     <input
                                         type="text"
+                                        id="story-company-name"
                                         placeholder="Enter company name"
                                         className="form-input-control"
                                         value={storyForm.companyName}
@@ -905,9 +933,10 @@ export default function QueriesStories() {
 
                         <div className="form-grid-row">
                             <div className="form-group-field">
-                                <label className="field-label">Job Role</label>
+                                <label htmlFor="story-job-role" className="field-label">Job Role</label>
                                 <input
                                     type="text"
+                                    id="story-job-role"
                                     placeholder="Enter job role"
                                     className="form-input-control"
                                     value={storyForm.jobRole}
@@ -916,9 +945,10 @@ export default function QueriesStories() {
                                 />
                             </div>
                             <div className="form-group-field">
-                                <label className="field-label">Package</label>
+                                <label htmlFor="story-package" className="field-label">Package</label>
                                 <input
                                     type="text"
+                                    id="story-package"
                                     placeholder="Enter package (e.g. 6 LPA)"
                                     className="form-input-control"
                                     value={storyForm.package}
@@ -929,8 +959,9 @@ export default function QueriesStories() {
 
 
                         <div className="form-group-field full-width">
-                            <label className="field-label">Success Story</label>
+                            <label htmlFor="story-text" className="field-label">Success Story</label>
                             <textarea
+                                id="story-text"
                                 placeholder="Write the student's success story..."
                                 className="form-textarea-control"
                                 rows={4}
@@ -973,7 +1004,7 @@ export default function QueriesStories() {
                                     onChange={(e) => setDriveSearch(e.target.value)}
                                 />
                             </div>
-                            <button className="btn-add-drive" onClick={handleOpenAddDrive}>
+                            <button type="button" className="btn-add-drive" onClick={handleOpenAddDrive}>
                                 <Plus size={15} style={{ marginRight: '6px' }} />
                                 Add New Drive
                             </button>
@@ -1050,10 +1081,10 @@ export default function QueriesStories() {
                                             </td>
                                             <td>
                                                 <div className="actions-button-row">
-                                                    <button className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
+                                                    <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
                                                         <Edit2 size={15} />
                                                     </button>
-                                                    <button className="action-icon-btn delete" onClick={() => setDeletingDrive(drive)}>
+                                                    <button type="button" className="action-icon-btn delete" onClick={() => setDeletingDrive(drive)}>
                                                         <Trash2 size={15} />
                                                     </button>
                                                 </div>
@@ -1072,6 +1103,7 @@ export default function QueriesStories() {
                     <div className="table-card-footer" style={{ paddingTop: '12px', marginBottom: 'auto' }}>
                         <div className="pagination-wrapper">
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setDrivePage(prev => Math.max(prev - 1, 1))}
                                 disabled={drivePage === 1}
@@ -1079,9 +1111,10 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {Array.from({ length: totalDrivePages }, (_, i) => i + 1).map(pageNum => (
+                            {new Array(totalDrivePages).fill(0).map((_, i) => i + 1).map(pageNum => (
                                 <button
                                     key={pageNum}
+                                    type="button"
                                     className={`pagination-btn ${drivePage === pageNum ? 'active' : ''}`}
                                     onClick={() => setDrivePage(pageNum)}
                                 >
@@ -1090,6 +1123,7 @@ export default function QueriesStories() {
                             ))}
 
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setDrivePage(prev => Math.min(prev + 1, totalDrivePages))}
                                 disabled={drivePage === totalDrivePages || totalDrivePages === 0}
@@ -1159,10 +1193,10 @@ export default function QueriesStories() {
                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
                                         <span className="story-package-badge">{story.packageAmt}</span>
                                         <div className="actions-button-row" style={{ display: 'flex', gap: '6px' }}>
-                                            <button className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
+                                            <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button className="action-icon-btn delete" onClick={() => setDeletingStory(story)}>
+                                            <button type="button" className="action-icon-btn delete" onClick={() => setDeletingStory(story)}>
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
@@ -1185,6 +1219,7 @@ export default function QueriesStories() {
 
                     <div className="stories-pagination-footer">
                         <button
+                            type="button"
                             className="stories-nav-btn"
                             onClick={() => setStoryPage(prev => Math.max(prev - 1, 1))}
                             disabled={storyPage === 1}
@@ -1197,6 +1232,7 @@ export default function QueriesStories() {
                         </span>
 
                         <button
+                            type="button"
                             className="stories-nav-btn"
                             onClick={() => setStoryPage(prev => Math.min(prev + 1, totalStoryPages))}
                             disabled={storyPage === totalStoryPages || totalStoryPages === 0}
@@ -1218,16 +1254,17 @@ export default function QueriesStories() {
                                     <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
                                     <p className="modal-subtitle">Configure schedule, venue, and target students for this placement drive.</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
                                     <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleSaveDrive} className="qs-modal-form">
                                 <div className="qs-form-grid">
                                     <div className="qs-form-group">
-                                        <label className="form-label">Company Name *</label>
+                                        <label htmlFor="drive-company-name" className="form-label">Company Name *</label>
                                         <input
                                             type="text"
+                                            id="drive-company-name"
                                             required
                                             className="form-input-control"
                                             value={driveForm.company}
@@ -1236,9 +1273,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Job Role *</label>
+                                        <label htmlFor="drive-job-role" className="form-label">Job Role *</label>
                                         <input
                                             type="text"
+                                            id="drive-job-role"
                                             required
                                             className="form-input-control"
                                             value={driveForm.role}
@@ -1247,9 +1285,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Location *</label>
+                                        <label htmlFor="drive-location" className="form-label">Location *</label>
                                         <input
                                             type="text"
+                                            id="drive-location"
                                             required
                                             className="form-input-control"
                                             value={driveForm.location}
@@ -1258,9 +1297,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Date *</label>
+                                        <label htmlFor="drive-date" className="form-label">Date *</label>
                                         <input
                                             type="text"
+                                            id="drive-date"
                                             required
                                             className="form-input-control"
                                             value={driveForm.date}
@@ -1269,9 +1309,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Time *</label>
+                                        <label htmlFor="drive-time" className="form-label">Time *</label>
                                         <input
                                             type="text"
+                                            id="drive-time"
                                             required
                                             className="form-input-control"
                                             value={driveForm.time}
@@ -1280,9 +1321,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Venue *</label>
+                                        <label htmlFor="drive-venue" className="form-label">Venue *</label>
                                         <input
                                             type="text"
+                                            id="drive-venue"
                                             required
                                             className="form-input-control"
                                             value={driveForm.venue}
@@ -1291,8 +1333,9 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Status *</label>
+                                        <label htmlFor="drive-status" className="form-label">Status *</label>
                                         <select
+                                            id="drive-status"
                                             className="form-input-control"
                                             value={driveForm.status}
                                             onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
@@ -1303,7 +1346,7 @@ export default function QueriesStories() {
                                         </select>
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Target Student *</label>
+                                        <label htmlFor="drive-target-student" className="form-label">Target Student *</label>
                                         <div className="multi-select-container" style={{ position: 'relative' }}>
                                             <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
                                                 {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
@@ -1318,6 +1361,7 @@ export default function QueriesStories() {
                                                 ))}
                                                 <input
                                                     type="text"
+                                                    id="drive-target-student"
                                                     value={targetSearchTerm}
                                                     onChange={(e) => { setTargetSearchTerm(e.target.value); setShowTargetDropdown(true); }}
                                                     onFocus={() => setShowTargetDropdown(true)}
@@ -1355,9 +1399,10 @@ export default function QueriesStories() {
                                         </div>
                                     </div>
                                     <div className="qs-form-group full-width">
-                                        <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
+                                        <label htmlFor="drive-custom-target" className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
                                         <input
                                             type="text"
+                                            id="drive-custom-target"
                                             className="form-input-control"
                                             value={driveForm.customTarget || ''}
                                             onChange={(e) => setDriveForm({ ...driveForm, customTarget: e.target.value })}
@@ -1414,7 +1459,7 @@ export default function QueriesStories() {
                                     <h4 className="modal-title">Student Query Details</h4>
                                     <p className="modal-subtitle">Submitted by {viewingQuery.name}</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setViewingQuery(null)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setViewingQuery(null)}>
                                     <X size={18} />
                                 </button>
                             </div>
@@ -1425,16 +1470,8 @@ export default function QueriesStories() {
                                         <div
                                             className="query-avatar-circle"
                                             style={{
-                                                backgroundColor:
-                                                    viewingQuery.colorClass === 'blue' ? '#dbeafe' :
-                                                        viewingQuery.colorClass === 'purple' ? '#e9d5ff' :
-                                                            viewingQuery.colorClass === 'green' ? '#a7f3d0' :
-                                                                viewingQuery.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                                color:
-                                                    viewingQuery.colorClass === 'blue' ? '#1e40af' :
-                                                        viewingQuery.colorClass === 'purple' ? '#581c87' :
-                                                            viewingQuery.colorClass === 'green' ? '#047857' :
-                                                                viewingQuery.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                                backgroundColor: getAvatarBgColor(viewingQuery.colorClass),
+                                                color: getAvatarTextColor(viewingQuery.colorClass)
                                             }}
                                         >
                                             {viewingQuery.avatar}
@@ -1467,7 +1504,7 @@ export default function QueriesStories() {
                                 </div>
 
                                 <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                    <button className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
+                                    <button type="button" className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
                                         Close
                                     </button>
                                 </div>
@@ -1487,7 +1524,7 @@ export default function QueriesStories() {
                                     <h4 className="modal-title">Reply to Query</h4>
                                     <p className="modal-subtitle">Replying to {replyingQuery.name}</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
                                     <X size={18} />
                                 </button>
                             </div>
@@ -1502,10 +1539,11 @@ export default function QueriesStories() {
                                 </div>
 
                                 <div className="modal-field-section">
-                                    <label className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
+                                    <label htmlFor="query-reply-text" className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
                                         Admin Response Message *
                                     </label>
                                     <textarea
+                                        id="query-reply-text"
                                         className="form-textarea-control"
                                         rows={4}
                                         placeholder="Type your official response to the student here..."
@@ -1538,14 +1576,22 @@ export default function QueriesStories() {
                                     <h4 className="modal-title">Edit Placement Story</h4>
                                     <p className="modal-subtitle">Update details or fix typos in the published story.</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
                                     <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleUpdateStory} className="qs-modal-form">
                                 <div className="qs-form-grid">
                                     <div className="qs-form-group full-width">
-                                        <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()} style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <div
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label="Upload new photo"
+                                            className="upload-photo-zone"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+                                            style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                        >
                                             <input
                                                 type="file"
                                                 ref={fileInputRef}
@@ -1581,9 +1627,10 @@ export default function QueriesStories() {
                                         </div>
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Student Name *</label>
+                                        <label htmlFor="edit-story-student-name" className="form-label">Student Name *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-student-name"
                                             required
                                             className="form-input-control"
                                             value={storyForm.studentName}
@@ -1592,9 +1639,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Company Name *</label>
+                                        <label htmlFor="edit-story-company-name" className="form-label">Company Name *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-company-name"
                                             required
                                             className="form-input-control"
                                             value={storyForm.companyName}
@@ -1603,9 +1651,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Job Role *</label>
+                                        <label htmlFor="edit-story-job-role" className="form-label">Job Role *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-job-role"
                                             required
                                             className="form-input-control"
                                             value={storyForm.jobRole}
@@ -1614,9 +1663,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Package (LPA) *</label>
+                                        <label htmlFor="edit-story-package" className="form-label">Package (LPA) *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-package"
                                             required
                                             className="form-input-control"
                                             value={storyForm.package}
@@ -1625,8 +1675,9 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group full-width">
-                                        <label className="form-label">Success Story *</label>
+                                        <label htmlFor="edit-story-text" className="form-label">Success Story *</label>
                                         <textarea
+                                            id="edit-story-text"
                                             required
                                             className="form-textarea-control"
                                             rows={4}
