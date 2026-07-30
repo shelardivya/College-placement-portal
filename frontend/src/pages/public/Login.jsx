@@ -96,246 +96,163 @@ function Login({ onNavigate, initialView }) {
     };
 
 
+
+    const saveAdminProfile = (email, password, payload = {}) => {
+        localStorage.setItem("admin_user", JSON.stringify({
+            fullName: payload.fullName || payload.name || payload.adminName || "Admin",
+            email: payload.email || email,
+            role: 'System Administrator'
+        }));
+        const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+        const adminEmail = (payload.email || email).trim();
+        let found = false;
+        const updated = adminProfiles.map(p => {
+            if (p.email?.trim().toLowerCase() === adminEmail.toLowerCase()) {
+                found = true;
+                return { ...p, password };
+            }
+            return p;
+        });
+        if (!found) updated.push({ email: adminEmail, password });
+        localStorage.setItem('admin_profiles', JSON.stringify(updated));
+    };
+
+    const saveStudentProfile = (email, payload = {}) => {
+        const nameFromEmail = email.split('@')[0];
+        const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
+        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === email.trim().toLowerCase());
+        
+        if (matchedProfile) {
+            localStorage.setItem("user", JSON.stringify(matchedProfile));
+        } else {
+            localStorage.setItem("user", JSON.stringify({
+                fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
+                email: payload.email || email
+            }));
+        }
+    };
+
+    const showToastMessage = (msg, type, timeout, callback) => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+            if (callback) callback();
+        }, timeout);
+    };
+
+    const handleLoginSubmit = async () => {
+        if (formData.password !== formData.confirmPassword) {
+            showToastMessage("Password and Confirm Password do not match!", 'error', 3000);
+            return;
+        }
+        try {
+            const emailLower = formData.email.trim().toLowerCase();
+            const isAdmin = emailLower === 'saurabh@gmail.com' || emailLower.startsWith('admin') || emailLower.includes('@admin.') || emailLower.includes('.admin');
+            
+            const apiCall = isAdmin ? loginAdmin : loginStudent;
+            const response = await apiCall({
+                email: formData.email.trim(),
+                password: formData.password,
+                confirmPassword: formData.confirmPassword,
+                ...(isAdmin && { rememberMe: formData.rememberMe })
+            });
+
+            if (response.data?.token) {
+                const token = response.data.token;
+                localStorage.setItem("token", token);
+                localStorage.setItem("role", isAdmin ? "admin" : "student");
+                
+                let payload = {};
+                try {
+                    payload = JSON.parse(atob(token.split('.')[1]));
+                } catch {
+                    // ignore parse error
+                }
+
+                if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);
+                else saveStudentProfile(formData.email, payload);
+
+                showToastMessage("Login successful!", 'success', 1500, () => {
+                    onNavigate(isAdmin ? 'admin' : 'student');
+                });
+            } else {
+                throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
+            }
+        } catch (error) {
+            console.error("Login Error:", error);
+            showToastMessage(error.response?.data?.message || "Invalid email or password", 'error', 3000);
+        }
+    };
+
+    const handleForgotSubmit = async () => {
+        try {
+            const response = await forgotPassword(formData.email);
+            console.log("Forgot Password Response:", response.data);
+            localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
+            showToastMessage("Reset link sent successfully! Check your email.", 'success', 2500, () => setLoginView('login'));
+        } catch (error) {
+            console.error("Forgot Password Error:", error);
+            showToastMessage(error.response?.data?.message || "Failed to send reset link", 'error', 3000);
+        }
+    };
+
+    const handleResetSubmit = async () => {
+        if (formData.password !== formData.confirmPassword) {
+            showToastMessage("Passwords do not match!", 'error', 3000);
+            return;
+        }
+        const allowedEmail = localStorage.getItem('allowed_reset_email');
+        if (!allowedEmail || allowedEmail !== formData.email.trim().toLowerCase()) {
+            showToastMessage("Unauthorized request. Please request a new reset link from this device.", 'error', 4000);
+            return;
+        }
+        try {
+            await resetPassword({
+                email: formData.email,
+                newPassword: formData.password,
+                confirmPassword: formData.confirmPassword
+            });
+
+            const resetEmail = formData.email.trim().toLowerCase();
+            const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
+            localStorage.setItem('registered_profiles', JSON.stringify(profiles.map(p => 
+                p.email?.trim().toLowerCase() === resetEmail ? { ...p, password: formData.password } : p
+            )));
+
+            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+            let adminFound = false;
+            const updatedAdmins = adminProfiles.map(p => {
+                if (p.email?.trim().toLowerCase() === resetEmail) {
+                    adminFound = true;
+                    return { ...p, password: formData.password };
+                }
+                return p;
+            });
+            if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
+                updatedAdmins.push({ email: formData.email.trim(), password: formData.password });
+            }
+            localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+
+            showToastMessage('Password reset successfully!', 'success', 2000, () => {
+                setLoginView('login');
+                setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
+                localStorage.removeItem('allowed_reset_email');
+            });
+        } catch (error) {
+            console.error("Reset Password Error:", error);
+            showToastMessage(error.response?.data?.message || "Failed to reset password", 'error', 3000);
+        }
+    };
+
     //Handles Form submissions
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (loginView === 'login') {
-            if (formData.password !== formData.confirmPassword) {
-                setToastMessage("Password and Confirm Password do not match!");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-                return;
-            }
-
-            try {
-
-                // Determine role from email in a robust way
-                const emailLower = formData.email.trim().toLowerCase();
-                const isAdmin = emailLower === 'saurabh@gmail.com' ||
-                    emailLower.startsWith('admin') ||
-                    emailLower.includes('@admin.') ||
-                    emailLower.includes('.admin');
-
-                // Call the correct API endpoint with the fields each expects
-                let response;
-                if (isAdmin) {
-                    // Admin login API requires: email, password, confirmPassword, rememberMe
-                    response = await loginAdmin({
-                        email: formData.email.trim(),
-                        password: formData.password,
-                        confirmPassword: formData.confirmPassword,
-                        rememberMe: formData.rememberMe
-                    });
-                } else {
-                    // Student login API requires: email, password, confirmPassword
-                    response = await loginStudent({
-                        email: formData.email.trim(),
-                        password: formData.password,
-                        confirmPassword: formData.confirmPassword
-                    });
-                }
-
-
-                // Save token to localStorage
-                if (response.data?.token) {
-                    const token = response.data.token;
-                    localStorage.setItem("token", token);
-                    localStorage.setItem("role", isAdmin ? "admin" : "student");
-
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/\d/g, '');
-                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-
-                        if (isAdmin) {
-                            // Admin: store ONLY in "admin_user" — never read from registered_profiles
-                            localStorage.setItem("admin_user", JSON.stringify({
-                                fullName: payload.fullName || payload.name || payload.adminName || "Admin",
-                                email: payload.email || formData.email,
-                                role: 'System Administrator'
-                            }));
-
-                            // Populate admin_profiles for autofill next time
-                            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-                            const adminEmail = (payload.email || formData.email).trim();
-                            let found = false;
-                            const updated = adminProfiles.map(p => {
-                                if (p.email?.trim().toLowerCase() === adminEmail.toLowerCase()) {
-                                    found = true;
-                                    return { ...p, password: formData.password };
-                                }
-                                return p;
-                            });
-                            if (!found) updated.push({ email: adminEmail, password: formData.password });
-                            localStorage.setItem('admin_profiles', JSON.stringify(updated));
-
-                        } else {
-                            // Student: read from registered_profiles as before
-                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                            if (matchedProfile) {
-                                localStorage.setItem("user", JSON.stringify(matchedProfile));
-                            } else {
-                                localStorage.setItem("user", JSON.stringify({
-                                    fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
-                                    email: payload.email || formData.email
-                                }));
-                            }
-                        }
-                    } catch {
-                        const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/\d/g, '');
-                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-
-                        if (isAdmin) {
-                            localStorage.setItem("admin_user", JSON.stringify({
-                                fullName: "Admin",
-                                email: formData.email,
-                                role: 'System Administrator'
-                            }));
-                        } else {
-                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                            if (matchedProfile) {
-                                localStorage.setItem("user", JSON.stringify(matchedProfile));
-                            } else {
-                                localStorage.setItem("user", JSON.stringify({
-                                    fullName: fallbackName,
-                                    email: formData.email
-                                }));
-                            }
-                        }
-                    }
-
-                    setToastMessage("Login successful!");
-                    setToastType('success');
-                    setShowToast(true);
-
-                    setTimeout(() => {
-                        setShowToast(false);
-                        onNavigate(isAdmin ? 'admin' : 'student');
-                    }, 1500);
-
-                } else {
-                    // Backend returned 200 OK but no token (e.g. user not registered)
-                    throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
-                }
-            } catch (error) {
-                console.error("Login Error:", error);
-                const errorMsg = error.response?.data?.message || "Invalid email or password";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
-
-
-        else if (loginView === 'forgot') {
-            try {
-                // Call the backend forgot-password API
-                const response = await forgotPassword(formData.email);
-                console.log("Forgot Password Response:", response.data);
-
-                // Store the requested email to prevent URL manipulation on reset
-                localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
-
-                setToastMessage("Reset link sent successfully! Check your email.");
-                setToastType('success');
-                setShowToast(true);
-                setTimeout(() => {
-                    setShowToast(false);
-                    // Return to login instead of auto-showing the reset view
-                    setLoginView('login');
-                }, 2500);
-            } catch (error) {
-                console.error("Forgot Password Error:", error);
-                const errorMsg = error.response?.data?.message || "Failed to send reset link";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
-
-        else if (loginView === 'reset') {
-            if (formData.password
-                !== formData.confirmPassword) {
-                setToastMessage("Passwords do not match!");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-
-                return;
-            }
-
-            // Check if this device/browser was the one that actually requested the reset
-            const allowedEmail = localStorage.getItem('allowed_reset_email');
-            if (!allowedEmail || allowedEmail !== formData.email.trim().toLowerCase()) {
-                setToastMessage("Unauthorized request. Please request a new reset link from this device.");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 4000);
-                return;
-            }
-
-            try {
-                // Call the backend reset-password API
-                await resetPassword({
-                    email: formData.email,
-                    newPassword: formData.password,
-                    confirmPassword: formData.confirmPassword
-                });
-
-                // Sync the reset password to local storage for autofill
-                const resetEmail = formData.email.trim().toLowerCase();
-
-                const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-                const updatedProfiles = profiles.map(p => {
-                    if (p.email?.trim().toLowerCase() === resetEmail) {
-                        return { ...p, password: formData.password };
-                    }
-                    return p;
-                });
-                localStorage.setItem('registered_profiles', JSON.stringify(updatedProfiles));
-
-                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-                let adminFound = false;
-                const updatedAdmins = adminProfiles.map(p => {
-                    if (p.email?.trim().toLowerCase() === resetEmail) {
-                        adminFound = true;
-                        return { ...p, password: formData.password };
-                    }
-                    return p;
-                });
-                if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
-                    updatedAdmins.push({ email: formData.email.trim(), password: formData.password });
-                }
-                localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
-
-                setToastMessage('Password reset successfully!');
-                setToastType('success');
-                setShowToast(true);
-                setTimeout(() => {
-                    setShowToast(false);
-                    setLoginView('login');
-                    setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
-                    localStorage.removeItem('allowed_reset_email');
-                }, 2000);
-            } catch (error) {
-                console.error("Reset Password Error:", error);
-                const errorMsg = error.response?.data?.message || "Failed to reset password";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
+        if (loginView === 'login') return handleLoginSubmit();
+        if (loginView === 'forgot') return handleForgotSubmit();
+        if (loginView === 'reset') return handleResetSubmit();
     };
 
     return (
