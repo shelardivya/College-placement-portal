@@ -120,7 +120,7 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
 
                         <div className="modal-header">
                             <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
-                            <button className="close-btn" onClick={() => {
+                            <button type="button" className="close-btn" onClick={() => {
                                 setIsProfileModalOpen(false);
                                 setIsEditingProfile(false);
                             }}>
