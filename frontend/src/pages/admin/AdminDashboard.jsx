@@ -24,6 +24,117 @@ import {
     Edit3,
 } from 'lucide-react';
 
+
+
+/** Parses a DD/MM/YYYY date string + 12-hour time string into a timestamp for sorting. */
+function parseDateStr(dateStr, timeStr) {
+    if (!dateStr) return 0;
+    const [day, month, year] = dateStr.split('/');
+    if (!year) return new Date(dateStr).getTime() || 0;
+    const d = new Date(`${year}-${month}-${day}T00:00:00`);
+    if (timeStr) {
+        const match = timeStr.match(/(\d+):(\d+)\s([AP]M)/);
+        if (match) {
+            let [, h, m, ampm] = match;
+            h = Number.parseInt(h);
+            if (ampm === 'PM' && h < 12) h += 12;
+            if (ampm === 'AM' && h === 12) h = 0;
+            d.setHours(h, parseInt(m));
+        }
+    }
+    return d.getTime();
+}
+
+/*Converts a backend notification's raw date/time fields into localised display strings. */
+function localizeNotification(notif) {
+    if (!notif.createdDate || !notif.createdTime) return notif;
+    const [day, month, year] = notif.createdDate.split('/');
+    const match = notif.createdTime.match(/(\d+):(\d+)\s([AP]M)/);
+    if (!day || !month || !year || !match) return notif;
+    let [, h, m, ampm] = match;
+    h = parseInt(h);
+    if (ampm === 'PM' && h < 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    m = parseInt(m);
+    const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
+    notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return notif;
+}
+
+/*Converts a YYYY-MM-DD deadline from the date-picker into the DD-MM-YYY */
+function formatApiDeadline(deadline) {
+    if (!deadline) return '10-07-2026';
+    const parts = deadline.split('-');
+    if (parts.length === 3) {
+        const [year, month, day] = parts;
+        return `${day}-${month}-${year}`;
+    }
+    return deadline;
+}
+
+/** Formats a YYYY-MM-DD or ISO deadline string into a human-readable DD Mmm YYYY format. */
+function formatDeadline(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+/** Updates the admin_profiles list in localStorage so that the password autofill stays in sync. */
+function updateAdminPasswordInStorage(adminEmail, newPassword) {
+    const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+    let adminFound = false;
+    const updatedAdmins = adminProfiles.map(p => {
+        if (p.email && p.email.trim().toLowerCase() === adminEmail.trim().toLowerCase()) {
+            adminFound = true;
+            return { ...p, password: newPassword };
+        }
+        return p;
+    });
+    if (!adminFound) {
+        updatedAdmins.push({ email: adminEmail, password: newPassword });
+    }
+    localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+}
+
+/** Returns a favicon-based company logo element with a fallback initial letter. */
+function getCompanyLogo(company) {
+    const domainMap = {
+        'google': 'google.com', 'microsoft': 'microsoft.com', 'amazon': 'amazon.com',
+        'infosys': 'infosys.com', 'tcs': 'tcs.com', 'wipro': 'wipro.com',
+        'cognizant': 'cognizant.com', 'ibm': 'ibm.com', 'accenture': 'accenture.com',
+        'capgemini': 'capgemini.com', 'deloitte': 'deloitte.com', 'oracle': 'oracle.com',
+        'sap': 'sap.com', 'meta': 'meta.com', 'apple': 'apple.com', 'uber': 'uber.com',
+        'flipkart': 'flipkart.com', 'zoho': 'zoho.com', 'freshworks': 'freshworks.com',
+    };
+    const lower = company.toLowerCase().trim();
+    const domain = domainMap[lower] || `${lower.replace(/\s+/g, '')}.com`;
+    const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    return (
+        <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
+            <img
+                src={logoUrl}
+                alt={company}
+                style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafc', padding: '2px', display: 'block' }}
+                onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                }}
+            />
+            <div className="company-logo default-logo" style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '28px', height: '28px' }}>
+                {company.charAt(0).toUpperCase()}
+            </div>
+        </div>
+    );
+}
+
+// -----------------------------------------------------------------------------------------
+
 function AdminDashboard({ onNavigate }) {
     //1. Sidebar form visibility
     const [isSidebarOpen, setIsSidebarOpen] =
@@ -114,46 +225,11 @@ function AdminDashboard({ onNavigate }) {
         try {
             const response = await getAdminNotifications();
             if (response.data) {
-                const data = Array.isArray(response.data) ? response.data :
-                    (response.data.content ? response.data.content : []);
-                const parseDateStr = (dateStr, timeStr) => {
-                    if (!dateStr) return 0;
-                    const [day, month, year] = dateStr.split('/');
-                    if (!year) return new Date(dateStr).getTime() || 0;
-                    const d = new Date(`${year}-${month}-${day}T00:00:00`);
-                    if (timeStr) {
-                        const match = timeStr.match(/(\d+):(\d+)\s(AM|PM)/);
-                        if (match) {
-                            let [, h, m, ampm] = match;
-                            h = Number.parseInt(h);
-                            if (ampm === 'PM' && h < 12) h += 12;
-                            if (ampm === 'AM' && h === 12) h = 0;
-                            d.setHours(h, parseInt(m));
-                        }
-                    }
-                    return d.getTime();
-                };
+                const fallback = response.data.content ? response.data.content : [];
+                const data = Array.isArray(response.data) ? response.data : fallback;
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 
-                const localizedData = sorted.map(notif => {
-                    if (notif.createdDate && notif.createdTime) {
-                        const [day, month, year] = notif.createdDate.split('/');
-                        const match = notif.createdTime.match(/(\d+):(\d+)\s(AM|PM)/);
-                        if (day && month && year && match) {
-                            let [, h, m, ampm] = match;
-                            h = parseInt(h);
-                            if (ampm === 'PM' && h < 12) h += 12;
-                            if (ampm === 'AM' && h === 12) h = 0;
-                            m = parseInt(m);
-
-                            const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
-
-                            notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                            notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-                        }
-                    }
-                    return notif;
-                });
+                const localizedData = sorted.map(notif => localizeNotification(notif));
                 setNotifications(localizedData);
             }
 
@@ -245,22 +321,17 @@ function AdminDashboard({ onNavigate }) {
                 const response = await getAdminApplicantsMatching();
                 if (response.data && Array.isArray(response.data)) {
                     const mapped = response.data.map(app => {
+                        const matchValue = app.matchPercentage !== undefined ? app.matchPercentage : (app.matchScore !== undefined ? app.matchScore : '');
 
                         return {
-                            id: app.id || Date.now() + Math.random(),
-
-
-
-
-
-                            
+                            id: app.id || crypto.randomUUID(),
                             name: app.studentName || '',
                             company: app.companyName || app.jobRole || '',
                             degree: app.course || app.degree || '',
                             branch: app.department || app.branch || '',
                             cgpa: app.cgpa !== undefined && app.cgpa !== null ? app.cgpa : '',
                             year: app.passingYear || '',
-                            match: app.matchPercentage !== undefined ? app.matchPercentage : (app.matchScore !== undefined ? app.matchScore : ''),
+                            match: matchValue,
                             date: app.appliedAt || app.appliedDate || ''
                         };
                     });
@@ -492,18 +563,7 @@ function AdminDashboard({ onNavigate }) {
         try {
             setValidationError(false);
 
-            let apiDeadline = "";
-            if (newJob.deadline) {
-                const parts = newJob.deadline.split("-");
-                if (parts.length === 3) {
-                    const [year, month, day] = parts;
-                    apiDeadline = `${day}-${month}-${year}`;
-                } else {
-                    apiDeadline = newJob.deadline;
-                }
-            } else {
-                apiDeadline = "10-07-2026";
-            }
+            const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
                 companyName: newJob.companyName,
@@ -594,18 +654,7 @@ function AdminDashboard({ onNavigate }) {
         try {
             setValidationError(false);
 
-            let apiDeadline = "";
-            if (newJob.deadline) {
-                const parts = newJob.deadline.split("-");
-                if (parts.length === 3) {
-                    const [year, month, day] = parts;
-                    apiDeadline = `${day}-${month}-${year}`;
-                } else {
-                    apiDeadline = newJob.deadline;
-                }
-            } else {
-                apiDeadline = "10-07-2026";
-            }
+            const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
                 companyName: newJob.companyName,
@@ -834,19 +883,7 @@ function AdminDashboard({ onNavigate }) {
             const adminEmail = adminUser.email || 'saurabh@gmail.com'; // fallback
 
             if (adminEmail) {
-                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-                let adminFound = false;
-                const updatedAdmins = adminProfiles.map(p => {
-                    if (p.email && p.email.trim().toLowerCase() === adminEmail.trim().toLowerCase()) {
-                        adminFound = true;
-                        return { ...p, password: passwordData.newPassword };
-                    }
-                    return p;
-                });
-                if (!adminFound) {
-                    updatedAdmins.push({ email: adminEmail, password: passwordData.newPassword });
-                }
-                localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+                updateAdminPasswordInStorage(adminEmail, passwordData.newPassword);
             }
 
             setValidationError(false);
@@ -887,74 +924,7 @@ function AdminDashboard({ onNavigate }) {
         setValidationError(false);
     };
 
-    // Helper to format date strings to readable DD Mmm YYYY
-    const formatDeadline = (dateStr) => {
-        if (!dateStr) return '';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return dateStr;
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch {
-            return dateStr;
-        }
-    };
-
-    // 9. Helper: Returns a real company logo from Clearbit API, falls back to initial letter
-    const getCompanyLogo = (company) => {
-        const domainMap = {
-            'google': 'google.com',
-            'microsoft': 'microsoft.com',
-            'amazon': 'amazon.com',
-            'infosys': 'infosys.com',
-            'tcs': 'tcs.com',
-            'wipro': 'wipro.com',
-            'cognizant': 'cognizant.com',
-            'ibm': 'ibm.com',
-            'accenture': 'accenture.com',
-            'capgemini': 'capgemini.com',
-            'deloitte': 'deloitte.com',
-            'oracle': 'oracle.com',
-            'sap': 'sap.com',
-            'meta': 'meta.com',
-            'apple': 'apple.com',
-            'uber': 'uber.com',
-            'flipkart': 'flipkart.com',
-            'zoho': 'zoho.com',
-            'freshworks': 'freshworks.com',
-        };
-        const lower = company.toLowerCase().trim();
-        const domain = domainMap[lower] || `${lower.replace(/\s+/g, '')}.com`;
-        const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-
-        return (
-            <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
-                <img
-                    src={logoUrl}
-                    alt={company}
-                    style={{
-                        width: '28px',
-                        height: '28px',
-                        objectFit: 'contain',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
-                        padding: '2px',
-                        display: 'block'
-                    }}
-                    onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                    }}
-                />
-                <div
-                    className="company-logo default-logo"
-                    style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '28px', height: '28px' }}
-                >
-                    {company.charAt(0).toUpperCase()}
-                </div>
-            </div>
-        );
-    };
+    // (getCompanyLogo is defined at module level)
 
     // Jobs Pagination Calculations
     const totalJobsPages = Math.ceil(recentPosts.length / JOBS_PER_PAGE);
@@ -1025,10 +995,17 @@ function AdminDashboard({ onNavigate }) {
                     <div className='header-right'>
                         <span className='role-badge'>Admin</span>
 
-                        <div className='notification-wrapper' onClick={() => {
-                            setIsNotificationSidebarOpen(true);
-                            setIsProfileOpen(false);
-                        }} style={{ cursor: 'pointer' }}>
+                        <div
+                            className='notification-wrapper'
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                                setIsNotificationSidebarOpen(true);
+                                setIsProfileOpen(false);
+                            }}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setIsNotificationSidebarOpen(true); setIsProfileOpen(false); } }}
+                            style={{ cursor: 'pointer' }}
+                        >
                             <motion.div style={{ display: 'flex' }} whileHover={{ rotate: [0, -15, 15, -15, 15, 0] }} transition={{ duration: 0.5 }}>
                                 <Bell className='bell-icon' size={22} />
                             </motion.div>
@@ -1048,14 +1025,17 @@ function AdminDashboard({ onNavigate }) {
                         <div className='user-profile-container'>
                             <div
                                 className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsProfileOpen(!isProfileOpen); }}
                             >
                                 {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
                             </div>
 
                             {isProfileOpen && (
                                 <>
-                                    <div className='profile-dropdown-backdrop' onClick={() => setIsProfileOpen(false)} />
+                                    <div className='profile-dropdown-backdrop' role="button" tabIndex={0} aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setIsProfileOpen(false); }} />
                                     <div className='profile-dropdown-menu'>
                                         <div className='profile-header'>
                                             <span className='profile-avatar-large'>
@@ -1070,19 +1050,19 @@ function AdminDashboard({ onNavigate }) {
                                         <div className='profile-divider' />
 
                                         <div className='profile-options-list'>
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                            <button type="button" className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
                                                 <User size={16} />
                                                 <span>View Profile</span>
                                             </button>
 
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                            <button type="button" className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
                                                 <Lock size={16} />
                                                 <span>Change Password</span>
                                             </button>
 
                                             <div className='profile-divider' />
 
-                                            <button className='profile-option-btn logout-btn' onClick={() => {
+                                            <button type="button" className='profile-option-btn logout-btn' onClick={() => {
                                                 setIsProfileOpen(false);
                                                 localStorage.removeItem("token");
                                                 localStorage.removeItem("user");
@@ -1803,8 +1783,9 @@ function AdminDashboard({ onNavigate }) {
                                 isEditingProfile ? (
                                     <form className='modal-form' onSubmit={handleUpdateProfile}>
                                         <div className='form-group'>
-                                            <label>Full Name</label>
+                                            <label htmlFor="admin-profile-name">Full Name</label>
                                             <input
+                                                id="admin-profile-name"
                                                 type="text"
                                                 name="name"
                                                 value={adminProfile.name}
@@ -1813,8 +1794,9 @@ function AdminDashboard({ onNavigate }) {
                                             />
                                         </div>
                                         <div className='form-group'>
-                                            <label>Email Address</label>
+                                            <label htmlFor="admin-profile-email">Email Address</label>
                                             <input
+                                                id="admin-profile-email"
                                                 type="email"
                                                 name="email"
                                                 value={adminProfile.email}
@@ -1823,8 +1805,9 @@ function AdminDashboard({ onNavigate }) {
                                             />
                                         </div>
                                         <div className='form-group'>
-                                            <label>Phone Number</label>
+                                            <label htmlFor="admin-profile-phone">Phone Number</label>
                                             <input
+                                                id="admin-profile-phone"
                                                 type="text"
                                                 name="phone"
                                                 value={adminProfile.phone}
@@ -1832,8 +1815,9 @@ function AdminDashboard({ onNavigate }) {
                                             />
                                         </div>
                                         <div className='form-group'>
-                                            <label>Role</label>
+                                            <label htmlFor="admin-profile-role">Role</label>
                                             <input
+                                                id="admin-profile-role"
                                                 type="text"
                                                 value={adminProfile.role}
                                                 disabled
@@ -1879,9 +1863,10 @@ function AdminDashboard({ onNavigate }) {
                             ) : (
                                 <form className='modal-form' onSubmit={handleUpdatePassword}>
                                     <div className='form-group'>
-                                        <label>Current Password</label>
+                                        <label htmlFor="admin-current-password">Current Password</label>
                                         <div className="password-input-wrapper">
                                             <input
+                                                id="admin-current-password"
                                                 type={showAdminCurrentPassword ? "text" : "password"}
                                                 name="currentPassword"
                                                 placeholder="Enter current password"
@@ -1899,9 +1884,10 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
                                     </div>
                                     <div className='form-group'>
-                                        <label>New Password</label>
+                                        <label htmlFor="admin-new-password">New Password</label>
                                         <div className="password-input-wrapper">
                                             <input
+                                                id="admin-new-password"
                                                 type={showAdminNewPassword ? "text" : "password"}
                                                 name="newPassword"
                                                 placeholder="Enter new password"
@@ -1920,9 +1906,10 @@ function AdminDashboard({ onNavigate }) {
                                         </div>
                                     </div>
                                     <div className='form-group'>
-                                        <label>Confirm New Password</label>
+                                        <label htmlFor="admin-confirm-password">Confirm New Password</label>
                                         <div className="password-input-wrapper">
                                             <input
+                                                id="admin-confirm-password"
                                                 type={showAdminConfirmPassword ? "text" : "password"}
                                                 name="confirmPassword"
                                                 placeholder="Confirm new password"
@@ -1957,7 +1944,7 @@ function AdminDashboard({ onNavigate }) {
 
 
                 {isNotificationSidebarOpen && (
-                    <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
+                    <div className="sd-notification-sidebar-overlay" role="button" tabIndex={0} aria-label="Close notifications" onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setIsNotificationSidebarOpen(false); }}>
                         <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
                             <div className="sidebar-header">
                                 <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1967,13 +1954,14 @@ function AdminDashboard({ onNavigate }) {
                                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                     {unreadCount > 0 && (
                                         <button
+                                            type="button"
                                             onClick={handleMarkAllRead}
                                             style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
                                         >
                                             Mark all as read
                                         </button>
                                     )}
-                                    <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                    <button type="button" className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
                                         <X size={18} />
                                     </button>
                                 </div>

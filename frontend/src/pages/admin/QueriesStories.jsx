@@ -16,6 +16,45 @@ import {
 } from 'lucide-react';
 import './QueriesStories.css';
 
+
+
+/*
+  Converts a backend `createdAt` field (which can be an ISO string, a DD/MM/YYYY HH:MM string,
+  or a Java LocalDateTime array) into a human-readable en-GB date/time string.
+ */
+function parseCreatedAt(createdAt) {
+    try {
+        const gbOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+        if (!createdAt) {
+            return new Date().toLocaleString('en-GB', gbOptions).replace(',', '');
+        }
+        if (Array.isArray(createdAt)) {
+            if (createdAt.length >= 5) {
+                const utcDate = new Date(Date.UTC(createdAt[0], createdAt[1] - 1, createdAt[2], createdAt[3], createdAt[4]));
+                return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+            }
+            return new Date(createdAt[0], createdAt[1] - 1, createdAt[2]).toLocaleDateString();
+        }
+        const dateStr = createdAt;
+        const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+        if (ddMmYyyyMatch) {
+            const [, day, month, year, hour, minute] = ddMmYyyyMatch;
+            const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+        }
+        const parsed = new Date(dateStr);
+        if (Number.isNaN(parsed.getTime())) {
+            return typeof dateStr === 'string' ? dateStr.split('T')[0] : 'Recently';
+        }
+        return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+    } catch {
+        return 'Recently';
+    }
+}
+
+// -----------------------------------------------------------------------------------------
+
+
 export default function QueriesStories() {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState("");
@@ -417,31 +456,7 @@ export default function QueriesStories() {
                             role: s.jobRole || 'Placed Student',
                             packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
                             storyText: s.successStory || `Secured placement at ${s.companyName}.`,
-                            date: (() => {
-                                try {
-                                    if (!s.createdAt) return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    if (Array.isArray(s.createdAt)) {
-                                        if (s.createdAt.length >= 5) {
-                                            const utcDate = new Date(Date.UTC(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2], s.createdAt[3], s.createdAt[4]));
-                                            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                        }
-                                        return new Date(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2]).toLocaleDateString();
-                                    }
-                                    const dateStr = s.createdAt;
-                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
-                                    if (ddMmYyyyMatch) {
-                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-                                        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-                                        return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    }
-                                    const parsed = new Date(dateStr);
-                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-                                    return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch {
-
-                                    return "Recently";
-                                }
-                            })()
+                            date: parseCreatedAt(s.createdAt)
                         };
                     });
                     setStories(mappedStories.sort((a, b) => b.id - a.id));
