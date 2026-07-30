@@ -12,7 +12,7 @@ import {
     Clock,
     X,
     CheckCircle2,
-    XCircle
+    XCircle 
 } from 'lucide-react';
 import './QueriesStories.css';
 
@@ -496,7 +496,7 @@ export default function QueriesStories() {
                 const response = await getAllPlacementStories();
                 if (response.data && Array.isArray(response.data)) {
                     const mappedStories = response.data.map(mapApiStoryToUi);
-                    setStories(mappedStories.sort((a, b) => b.id - a.id));
+                    setStories(mappedStories.toSorted((a, b) => b.id - a.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch placement stories:", error);
@@ -560,7 +560,7 @@ export default function QueriesStories() {
     });
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files && e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
                 triggerToast("Photo size exceeds 5MB limit", "error");
@@ -583,7 +583,7 @@ export default function QueriesStories() {
         }
 
         try {
-            const packageValue = parseFloat(storyForm.package) || 0;
+            const packageValue = Number.parseFloat(storyForm.package) || 0;
             const payload = {
                 studentName: storyForm.studentName,
                 companyName: storyForm.companyName,
@@ -640,7 +640,7 @@ export default function QueriesStories() {
         if (!editingStory) return;
 
         try {
-            const packageValue = parseFloat(storyForm.package) || 0;
+            const packageValue = Number.parseFloat(storyForm.package) || 0;
             const payload = {
                 studentName: storyForm.studentName,
                 companyName: storyForm.companyName,
