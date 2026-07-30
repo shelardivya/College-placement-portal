@@ -84,96 +84,61 @@ function Registration({ onNavigate }) {
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replaceAll('/', '-');
     };
 
+    // Strategy map for field validation to reduce cognitive complexity
+    const validationRules = {
+        fullname: (value) => {
+            if (!value.trim()) return 'Full name is required';
+            if (value.trim().length < 3) return 'Name must be at least 3 characters';
+            if (!/^[a-zA-Z\s]+$/.test(value)) return 'Name can only contain letters and spaces';
+            return '';
+        },
+        email: (value) => {
+            if (!value) return 'Email address is required';
+            if (!/^[a-zA-Z\d._%+-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/.test(value)) return 'Please enter a valid email address';
+            return '';
+        },
+        mobile: (value) => {
+            if (!value) return 'Mobile number is required';
+            if (!/^\d{10}$/.test(value)) return 'Mobile number must be exactly 10 digits';
+            return '';
+        },
+        dob: (value) => {
+            if (!value) return 'Date of Birth is required';
+            const dobDate = new Date(value);
+            const today = new Date();
+            let age = today.getFullYear() - dobDate.getFullYear();
+            const m = today.getMonth() - dobDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
+            if (dobDate > today) return 'Date of Birth cannot be in the future';
+            if (age < 15) return 'You must be at least 15 years old to register';
+            return '';
+        },
+        department: (value) => !value ? 'Please select your department' : '',
+        course: (value) => !value ? 'Please select your course' : '',
+        year: (value) => !value ? 'Please select your current year' : '',
+        cgpa: (value) => {
+            if (!value) return 'CGPA is required';
+            const num = Number.parseFloat(value);
+            if (Number.isNaN(num) || num < 0 || num > 10) return 'CGPA must be a number between 0.00 and 10.00';
+            return '';
+        },
+        password: (value) => {
+            if (!value) return 'Password is required';
+            if (value.length < 8) return 'Password must be at least 8 characters long';
+            if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value) || !/[!@#$%^&*]/.test(value)) return 'Must include uppercase, lowercase, number, and special character';
+            return '';
+        },
+        confirmPassword: (value) => {
+            if (!value) return 'Please confirm your password';
+            if (value !== formData.password) return 'Passwords do not match';
+            return '';
+        }
+    };
+
     // Validate a single field and return its error message
     const validateField = (name, value) => {
-        let errorMsg = '';
-        switch (name) {
-            case 'fullname':
-                if (!value.trim()) {
-                    errorMsg = 'Full name is required';
-                } else if (value.trim().length < 3) {
-                    errorMsg = 'Name must be at least 3 characters';
-                } else if (!/^[a-zA-Z\s]+$/.test(value)) {
-                    errorMsg = 'Name can only contain letters and spaces';
-                }
-                break;
-            case 'email':
-                if (!value) {
-                    errorMsg = 'Email address is required';
-                } else if (!/^[a-zA-Z\d._%+-]+@[a-zA-Z\d.-]+\.[a-zA-Z]{2,}$/.test(value)) {
-                    errorMsg = 'Please enter a valid email address';
-                }
-                break;
-            case 'mobile':
-                if (!value) {
-                    errorMsg = 'Mobile number is required';
-                } else if (!/^\d{10}$/.test(value)) {
-                    errorMsg = 'Mobile number must be exactly 10 digits';
-                }
-                break;
-            case 'dob':
-                if (!value) {
-                    errorMsg = 'Date of Birth is required';
-                } else {
-                    const dobDate = new Date(value);
-                    const today = new Date();
-                    let age = today.getFullYear() - dobDate.getFullYear();
-                    const m = today.getMonth() - dobDate.getMonth();
-                    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
-                        age--;
-                    }
-                    if (dobDate > today) {
-                        errorMsg = 'Date of Birth cannot be in the future';
-                    } else if (age < 15) {
-                        errorMsg = 'You must be at least 15 years old to register';
-                    }
-                }
-                break;
-            case 'department':
-                if (!value) {
-                    errorMsg = 'Please select your department';
-                }
-                break;
-            case 'course':
-                if (!value) {
-                    errorMsg = 'Please select your course';
-                }
-                break;
-            case 'year':
-                if (!value) {
-                    errorMsg = 'Please select your current year';
-                }
-                break;
-            case 'cgpa':
-                if (!value) {
-                    errorMsg = 'CGPA is required';
-                } else {
-                    const num = Number.parseFloat(value);
-                    if (Number.isNaN(num) || num < 0 || num > 10) {
-                        errorMsg = 'CGPA must be a number between 0.00 and 10.00';
-                    }
-                }
-                break;
-            case 'password':
-                if (!value) {
-                    errorMsg = 'Password is required';
-                } else if (value.length < 8) {
-                    errorMsg = 'Password must be at least 8 characters long';
-                } else if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value) || !/[!@#$%^&*]/.test(value)) {
-                    errorMsg = 'Must include uppercase, lowercase, number, and special character';
-                }
-                break;
-            case 'confirmPassword':
-                if (!value) {
-                    errorMsg = 'Please confirm your password';
-                } else if (value !== formData.password) {
-                    errorMsg = 'Passwords do not match';
-                }
-                break;
-            default:
-                break;
-        }
-        return errorMsg;
+        const validator = validationRules[name];
+        return validator ? validator(value) : '';
     };
 
     // Event handler for form input changes
