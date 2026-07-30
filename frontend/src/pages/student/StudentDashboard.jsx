@@ -727,12 +727,13 @@ export default function
                     if (!year) return new Date(dateStr).getTime() || 0;
                     const d = new Date(`${year}-${month}-${day}T00:00:00`);
                     if (timeStr) {
-                        const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/);
+                        const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
                         if (match) {
                             let [, h, m, ampm] = match;
                             h = Number.parseInt(h);
-                            if (ampm === 'PM' && h < 12) h += 12;
-                            if (ampm === 'AM' && h === 12) h = 0;
+                            const upperAmPm = ampm.toUpperCase();
+                            if (upperAmPm === 'PM' && h < 12) h += 12;
+                            if (upperAmPm === 'AM' && h === 12) h = 0;
                             d.setHours(h, Number.parseInt(m));
                         }
                     }
@@ -743,12 +744,13 @@ export default function
                 const localizedData = sorted.map(notif => {
                     if (notif.createdDate && notif.createdTime) {
                         const [day, month, year] = notif.createdDate.split('/');
-                        const match = notif.createdTime.match(/(\d{1,2}):(\d{2})\s(AM|PM)/);
+                        const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(notif.createdTime);
                         if (day && month && year && match) {
                             let [, h, m, ampm] = match;
                             h = Number.parseInt(h);
-                            if (ampm === 'PM' && h < 12) h += 12;
-                            if (ampm === 'AM' && h === 12) h = 0;
+                            const upperAmPm = ampm.toUpperCase();
+                            if (upperAmPm === 'PM' && h < 12) h += 12;
+                            if (upperAmPm === 'AM' && h === 12) h = 0;
                             m = Number.parseInt(m);
 
                             const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
