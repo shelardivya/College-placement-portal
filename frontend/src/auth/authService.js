@@ -40,11 +40,16 @@ export const getDrafts = () => {
     });
 };
 
-/*Sanitizes path parameters by removing path-traversal characters and URL-encoding. */
+/* Sanitizes and validates path parameters against URL path injection (SonarCloud S5144). */
 function sanitizeId(id) {
-    if (id === null || id === undefined) return '';
-    const safeStr = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
-    return encodeURIComponent(safeStr);
+    if (id === null || id === undefined || id === '') {
+        throw new TypeError('ID parameter is required and cannot be empty.');
+    }
+    const cleanId = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
+    if (!cleanId) {
+        throw new TypeError('Invalid ID parameter format.');
+    }
+    return encodeURIComponent(cleanId);
 }
 
 

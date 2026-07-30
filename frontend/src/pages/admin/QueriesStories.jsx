@@ -38,8 +38,13 @@ function parseCreatedAt(createdAt) {
         const dateStr = createdAt;
         const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
-            const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-            const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            const [, rawDay, rawMonth, rawYear, rawHour, rawMinute] = ddMmYyyyMatch;
+            const numYear = Number.parseInt(rawYear, 10);
+            const numMonth = Number.parseInt(rawMonth, 10);
+            const numDay = Number.parseInt(rawDay, 10);
+            const numHour = Number.parseInt(rawHour, 10);
+            const numMinute = Number.parseInt(rawMinute, 10);
+            const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHour, numMinute));
             return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
         }
         const parsed = new Date(dateStr);
@@ -860,13 +865,11 @@ export default function QueriesStories() {
                     <form onSubmit={(e) => { e.preventDefault(); setConfirmingPublish(true); }} className="publish-form-body">
 
                         <div className="form-upper-row">
-                            <div
-                                role="button"
-                                tabIndex={0}
+                            <button
+                                type="button"
                                 aria-label="Upload photo"
                                 className="upload-photo-zone"
                                 onClick={() => fileInputRef.current?.click()}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
                             >
                                 <input
                                     type="file"
@@ -901,7 +904,7 @@ export default function QueriesStories() {
                                         <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
                                     </>
                                 )}
-                            </div>
+                            </button>
                             <div className="inputs-block">
                                 <div className="form-group-field">
                                     <label htmlFor="story-student-name" className="field-label">Student Name</label>
@@ -1582,15 +1585,13 @@ export default function QueriesStories() {
                             </div>
                             <form onSubmit={handleUpdateStory} className="qs-modal-form">
                                 <div className="qs-form-grid">
-                                    <div className="qs-form-group full-width">
-                                        <div
-                                            role="button"
-                                            tabIndex={0}
+                                     <div className="qs-form-group full-width">
+                                        <button
+                                            type="button"
                                             aria-label="Upload new photo"
                                             className="upload-photo-zone"
                                             onClick={() => fileInputRef.current?.click()}
-                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
-                                            style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                            style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', background: 'transparent' }}
                                         >
                                             <input
                                                 type="file"
@@ -1624,7 +1625,7 @@ export default function QueriesStories() {
                                                     <span className="upload-label">Upload New Photo</span>
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                     </div>
                                     <div className="qs-form-group">
                                         <label htmlFor="edit-story-student-name" className="form-label">Student Name *</label>
