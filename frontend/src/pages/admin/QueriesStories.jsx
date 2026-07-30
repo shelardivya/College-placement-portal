@@ -36,7 +36,7 @@ function parseCreatedAt(createdAt) {
             return new Date(createdAt[0], createdAt[1] - 1, createdAt[2]).toLocaleDateString();
         }
         const dateStr = createdAt;
-        const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
             const [, day, month, year, hour, minute] = ddMmYyyyMatch;
             const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
@@ -54,6 +54,157 @@ function parseCreatedAt(createdAt) {
 
 // -----------------------------------------------------------------------------------------
 
+/** Builds a 2-letter avatar string from a student's full name. */
+function buildQueryAvatar(studentName) {
+    const nameParts = (studentName || 'Student').trim().split(' ');
+    const avatar = nameParts.length > 1 && nameParts[1]
+        ? nameParts[0][0] + nameParts[1][0]
+        : nameParts[0][0];
+    return avatar.toUpperCase();
+}
+
+/** Builds the API payload object for creating or updating a placement drive. */
+function buildDrivePayload(driveForm) {
+    const targetStudent = typeof driveForm.targetStudent === 'string'
+        ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean)
+        : (driveForm.targetStudent || []);
+    return {
+        companyName: driveForm.company.trim(),
+        jobRole: driveForm.role.trim(),
+        location: driveForm.location.trim(),
+        venue: driveForm.venue ? driveForm.venue.trim() : "",
+        driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
+        driveTime: driveForm.time ? driveForm.time.trim() : "",
+        status: driveForm.status || "Open",
+        targetStudent,
+        specificStudentName: (driveForm.customTarget || "").trim()
+    };
+}
+
+/** Loads initial student queries state from localStorage. */
+function loadInitialStudentQueries() {
+    const stored = localStorage.getItem("student_queries");
+    if (stored) {
+        try {
+            const parsed = JSON.parse(stored);
+            return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
+        } catch {
+            return [];
+        }
+    }
+    return [];
+}
+
+/** Maps backend drive object to UI drive object. */
+function mapApiDriveToUi(d) {
+    return {
+        ...d,
+        id: d.id,
+        company: d.companyName || d.company || "Unknown Company",
+        role: d.jobRole || d.role || "Unknown Role",
+        location: d.location || "Unknown Location",
+        date: d.driveDate || d.date || "TBD",
+        time: d.driveTime || d.time || "TBD",
+        status: d.status,
+        venue: d.venue || "",
+    };
+}
+
+/** Maps backend story object to UI story object. */
+function mapApiStoryToUi(s) {
+    const avatarUrl = s.photoPath || 'https://via.placeholder.com/150';
+    return {
+        id: s.id,
+        name: s.studentName,
+        avatar: avatarUrl,
+        company: s.companyName,
+        companyColor: '#eff6ff',
+        companyTextColor: '#2563eb',
+        role: s.jobRole || 'Placed Student',
+        packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
+        storyText: s.successStory || `Secured placement at ${s.companyName}.`,
+        date: parseCreatedAt(s.createdAt)
+    };
+}
+
+/** Converts data URL photo string into a File object for API upload. */
+async function preparePhotoFile(photoDataUrl) {
+    if (!photoDataUrl?.startsWith('data:')) return null;
+    try {
+        const photoBlob = await (await fetch(photoDataUrl)).blob();
+        return photoBlob ? new File([photoBlob], "photo.png", { type: photoBlob.type }) : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Extracts user-friendly error message from story API publish/update failures. */
+function parseStoryError(error) {
+    let errorMsg = "Failed to publish story.";
+    if (error.response?.status === 413) {
+        errorMsg = "Photo is large size";
+    } else if (typeof error.response?.data === 'string' && error.response.data.includes('<html')) {
+        errorMsg = `Server Error (${error.response?.status || 'Unknown'}). Please try again.`;
+    } else {
+        errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
+    }
+    return typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
+}
+
+const INITIAL_STORY_FORM = {
+    studentName: '',
+    companyName: '',
+    jobRole: '',
+    package: '',
+    storyText: '',
+    photo: ''
+};
+
+const INITIAL_DRIVE_FORM = {
+    company: '',
+    role: '',
+    location: '',
+    date: '',
+    time: '',
+    venue: 'Seminar Hall A',
+    status: 'OPEN',
+    targetStudent: 'ALL',
+    customTarget: ''
+};
+
+/** Pure helper: filters student queries based on search query and status filter. */
+function filterStudentQueries(queries, querySearch, queryFilter) {
+    const searchLower = (querySearch || "").toLowerCase();
+    return queries.filter(q => {
+        const matchesSearch = !searchLower ||
+            (q.name || "").toLowerCase().includes(searchLower) ||
+            (q.title || "").toLowerCase().includes(searchLower) ||
+            (q.message || "").toLowerCase().includes(searchLower);
+        const matchesStatus = queryFilter === 'all' || q.status === queryFilter;
+        return matchesSearch && matchesStatus;
+    });
+}
+
+/** Pure helper: filters placement drives by company or role keyword. */
+function filterPlacementDrives(drives, driveSearch) {
+    const searchLower = (driveSearch || "").toLowerCase();
+    if (!searchLower) return drives;
+    return drives.filter(d =>
+        (d.company || "").toLowerCase().includes(searchLower) ||
+        (d.role || "").toLowerCase().includes(searchLower)
+    );
+}
+
+/** Pure helper: filters placement stories by year string. */
+function filterPlacementStories(stories, storyYearFilter) {
+    if (storyYearFilter === 'all') return stories;
+    return stories.filter(s => s.date && s.date.includes(storyYearFilter));
+}
+
+// -----------------------------------------------------------------------------------------
+
+
+
 
 export default function QueriesStories() {
     // Toast notification state
@@ -67,22 +218,10 @@ export default function QueriesStories() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
     };
-    // 1. Initial Mock data for Student Queries
-    const initialQueries = [];
+
 
     // React States for student queries and pagination
-    const [queries, setQueries] = useState(() => {
-        const stored = localStorage.getItem("student_queries");
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
-            } catch {
-                return initialQueries;
-            }
-        }
-        return initialQueries;
-    });
+    const [queries, setQueries] = useState(loadInitialStudentQueries);
 
     useEffect(() => {
         const fetchQueries = async () => {
@@ -90,44 +229,18 @@ export default function QueriesStories() {
                 const response = await getAllQueries();
                 if (response.data && Array.isArray(response.data)) {
                     const mappedQueries = response.data.map(q => {
-                        const nameParts = (q.studentName || q.name || 'Student').trim().split(' ');
-                        const avatar = nameParts.length > 1 && nameParts[1] ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
-
                         return {
                             ...q,
                             id: q.id,
                             name: q.studentName,
                             course: q.department,
-                            avatar: avatar.toUpperCase(),
+                            avatar: buildQueryAvatar(q.studentName || q.name),
                             colorClass: 'blue',
                             title: q.subject,
                             message: q.description,
                             status: (q.status || 'pending').toLowerCase(),
                             reply: q.adminReply,
-                            date: (() => {
-                                try {
-                                    if (!q.createdAt) return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    if (Array.isArray(q.createdAt)) {
-                                        if (q.createdAt.length >= 5) {
-                                            const utcDate = new Date(Date.UTC(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2], q.createdAt[3], q.createdAt[4]));
-                                            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                        }
-                                        return new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2]).toLocaleDateString();
-                                    }
-                                    const dateStr = q.createdAt;
-                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
-                                    if (ddMmYyyyMatch) {
-                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-                                        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-                                        return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    }
-                                    const parsed = new Date(dateStr);
-                                    if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-                                    return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch {
-                                    return "Recently";
-                                }
-                            })()
+                            date: parseCreatedAt(q.createdAt)
                         };
                     });
                     setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
@@ -191,13 +304,7 @@ export default function QueriesStories() {
     }, [querySearch, queryFilter]);
 
     // Filter student queries based on search keyword and selected status pill
-    const filteredQueries = queries.filter(q => {
-        const matchesSearch = (q.name || "").toLowerCase().includes(querySearch.toLowerCase()) ||
-            (q.title || "").toLowerCase().includes(querySearch.toLowerCase()) ||
-            (q.message || "").toLowerCase().includes(querySearch.toLowerCase());
-        const matchesStatus = queryFilter === 'all' || q.status === queryFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredQueries = filterStudentQueries(queries, querySearch, queryFilter);
 
     // Pagination calculations
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -222,19 +329,7 @@ export default function QueriesStories() {
             try {
                 const response = await getAllPlacementDrives();
                 if (response.data && Array.isArray(response.data)) {
-                    // Map backend schema to frontend schema
-                    const mappedDrives = response.data.map(d => ({
-                        ...d,
-                        id: d.id,
-                        company: d.companyName || d.company || "Unknown Company",
-                        role: d.jobRole || d.role || "Unknown Role",
-                        location: d.location || "Unknown Location",
-                        date: d.driveDate || d.date || "TBD",
-                        time: d.driveTime || d.time || "TBD",
-                        status: d.status,
-                        venue: d.venue || "",
-                    }));
-                    // Sort by ID descending so newest drives appear at the top
+                    const mappedDrives = response.data.map(mapApiDriveToUi);
                     setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
                 }
             } catch (error) {
@@ -277,31 +372,11 @@ export default function QueriesStories() {
         };
         fetchStudents();
     }, []);
-    const [driveForm, setDriveForm] = useState({
-        company: '',
-        role: '',
-        location: '',
-        date: '',
-        time: '',
-        venue: 'Seminar Hall A',
-        status: 'OPEN',
-        targetStudent: 'ALL',
-        customTarget: ''
-    });
+    const [driveForm, setDriveForm] = useState(INITIAL_DRIVE_FORM);
 
     const handleOpenAddDrive = () => {
         setEditingDrive(null);
-        setDriveForm({
-            company: '',
-            role: '',
-            location: '',
-            date: '',
-            time: '',
-            venue: 'Seminar Hall A',
-            status: 'OPEN',
-            targetStudent: 'ALL',
-            customTarget: ''
-        });
+        setDriveForm(INITIAL_DRIVE_FORM);
         setIsDriveModalOpen(true);
     };
 
@@ -346,17 +421,7 @@ export default function QueriesStories() {
         if (editingDrive) {
             // Update existing via API
             try {
-                const payload = {
-                    companyName: driveForm.company.trim(),
-                    jobRole: driveForm.role.trim(),
-                    location: driveForm.location.trim(),
-                    venue: driveForm.venue ? driveForm.venue.trim() : "",
-                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
-                    driveTime: driveForm.time ? driveForm.time.trim() : "",
-                    status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: (driveForm.customTarget || "").trim()
-                };
+                const payload = buildDrivePayload(driveForm);
 
                 await updatePlacementDrive(editingDrive.id, payload);
 
@@ -388,17 +453,7 @@ export default function QueriesStories() {
         } else {
             // Add new via API
             try {
-                const payload = {
-                    companyName: driveForm.company.trim(),
-                    jobRole: driveForm.role.trim(),
-                    location: driveForm.location.trim(),
-                    venue: driveForm.venue ? driveForm.venue.trim() : "",
-                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
-                    driveTime: driveForm.time ? driveForm.time.trim() : "",
-                    status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: (driveForm.customTarget || "").trim()
-                };
+                const payload = buildDrivePayload(driveForm);
 
                 const response = await addPlacementDrive(payload);
 
@@ -443,22 +498,7 @@ export default function QueriesStories() {
             try {
                 const response = await getAllPlacementStories();
                 if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(s => {
-                        const avatarUrl = s.photoPath || 'https://via.placeholder.com/150';
-
-                        return {
-                            id: s.id,
-                            name: s.studentName,
-                            avatar: avatarUrl,
-                            company: s.companyName,
-                            companyColor: '#eff6ff',
-                            companyTextColor: '#2563eb',
-                            role: s.jobRole || 'Placed Student',
-                            packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
-                            storyText: s.successStory || `Secured placement at ${s.companyName}.`,
-                            date: parseCreatedAt(s.createdAt)
-                        };
-                    });
+                    const mappedStories = response.data.map(mapApiStoryToUi);
                     setStories(mappedStories.sort((a, b) => b.id - a.id));
                 }
             } catch (error) {
@@ -494,15 +534,9 @@ export default function QueriesStories() {
     }, [driveSearch]);
 
     // Filter drives list based on company name or role search
-    const filteredDrives = drives.filter(d =>
-        (d.company || "").toLowerCase().includes(driveSearch.toLowerCase()) ||
-        (d.role || "").toLowerCase().includes(driveSearch.toLowerCase())
-    );
+    const filteredDrives = filterPlacementDrives(drives, driveSearch);
 
-    const filteredStories = stories.filter(s => {
-        if (storyYearFilter === 'all') return true;
-        return s.date && s.date.includes(storyYearFilter);
-    });
+    const filteredStories = filterPlacementStories(stories, storyYearFilter);
 
     // Drives pagination calculations
     const indexOfLastDrive = drivePage * drivesPerPage;
@@ -564,19 +598,9 @@ export default function QueriesStories() {
             // Note: In a real scenario, you'd pass the actual File object from the file input to publishPlacementStory.
             // Since the UI only stores a data URL in storyForm.photo right now, we can convert it to a Blob, or just pass null if not strictly enforced.
             // For simplicity, passing null as the file since the UI just has a preview string.
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
-                ? await (await fetch(storyForm.photo)).blob()
-                : null;
-
-            let photoFile = null;
-            if (photoBlob) {
-                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
-            }
-
+            const photoFile = await preparePhotoFile(storyForm.photo);
             await publishPlacementStory(payload, photoFile);
 
-            // The backend returns a string message or a PlacementStoryResponseDto.
-            // We can fetch all stories again, or just optimistically add it.
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.studentName)}&background=2563eb&color=fff`;
 
             const newStory = {
@@ -594,30 +618,10 @@ export default function QueriesStories() {
 
             setStories([newStory, ...stories]);
             triggerToast("Placement story published successfully!", "success");
-
-            // Reset form inputs after publishing
-            setStoryForm({
-                studentName: '',
-                companyName: '',
-                jobRole: '',
-                package: '',
-                storyText: '',
-                photo: ''
-            });
+            setStoryForm(INITIAL_STORY_FORM);
         } catch (error) {
             console.error("Failed to publish placement story:", error);
-
-            // Handle Nginx 413 or HTML responses
-            let errorMsg = "Failed to publish story.";
-            if (error.response?.status === 413) {
-                errorMsg = "Photo is large size";
-            } else if (typeof error.response?.data === 'string' && error.response.data.includes('<html')) {
-                errorMsg = `Server Error (${error.response?.status || 'Unknown'}). Please try again.`;
-            } else {
-                errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
-            }
-
-            triggerToast(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg), "error");
+            triggerToast(parseStoryError(error), "error");
         }
     };
 
@@ -648,15 +652,7 @@ export default function QueriesStories() {
                 storyText: storyForm.storyText
             };
 
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
-                ? await (await fetch(storyForm.photo)).blob()
-                : null;
-
-            let photoFile = null;
-            if (photoBlob) {
-                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
-            }
-
+            const photoFile = await preparePhotoFile(storyForm.photo);
             await updatePlacementStory(editingStory.id, payload, photoFile);
 
             const updatedStories = stories.map(s => {
