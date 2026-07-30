@@ -639,7 +639,7 @@ export default function
                             role: m.jobRole || m.role || 'Job Role',
                             location: m.location || 'Location',
                             deadline: m.deadline || 'Upcoming',
-                            score: m.matchPercentage !== undefined ? m.matchPercentage : (m.matchScore !== undefined ? m.matchScore : 0),
+                            score: m.matchPercentage ?? m.matchScore ?? 0,
                             logoLetter: firstLetter,
                             logoColor: '#ea4335' // Default
                         };
@@ -702,13 +702,7 @@ export default function
 
 
                     <div className="notification-bell-container">
-                        <div className="notification-bell" role="button" tabIndex={0} onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setIsNotificationSidebarOpen(true);
-                                setIsProfileDropdownOpen(false);
-                            }
-                        }} onClick={() => {
+                        <button type="button" className="notification-bell" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }} onClick={() => {
                             setIsNotificationSidebarOpen(true);
                             setIsProfileDropdownOpen(false);
                         }}>
@@ -726,23 +720,17 @@ export default function
                                     {unreadCount}
                                 </motion.span>
                             )}
-                        </div>
+                        </button>
                     </div>
 
 
                     <div className="profile-container">
-                        <div className="profile-avatar" role="button" tabIndex={0} onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                setIsProfileDropdownOpen(!isProfileDropdownOpen);
-                                setIsNotificationSidebarOpen(false);
-                            }
-                        }} onClick={() => {
+                        <button type="button" className="profile-avatar" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex' }} onClick={() => {
                             setIsProfileDropdownOpen(!isProfileDropdownOpen);
                             setIsNotificationSidebarOpen(false);
                         }}>
                             <span className="avatar-placeholder">{getInitials(studentName)}</span>
-                        </div>
+                        </button>
 
                         {isProfileDropdownOpen && (
                             <div className="profile-dropdown">
@@ -1056,8 +1044,9 @@ export default function
             {selectedJob && (() => {
                 const eligibility = getJobEligibility(selectedJob);
                 return (
-                    <div className="modal-overlay" role="presentation" onClick={handleCancleApply} onKeyDown={(e) => { if (e.key === 'Escape') handleCancleApply(); }}>
-                        <div className="student-apply-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div className="modal-overlay">
+                        <button type="button" aria-label="Close modal" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent', border: 'none', cursor: 'default' }} onClick={handleCancleApply} onKeyDown={(e) => { if (e.key === 'Escape') handleCancleApply(); }} />
+                        <div className="student-apply-modal" style={{ position: 'relative', zIndex: 1 }}>
 
                             <div className="modal-header">
                                 <h4>Job Details & Eligibility</h4>
@@ -1091,10 +1080,10 @@ export default function
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Job Requirements</label>
+                                    <div className="pseudo-label" style={{ fontWeight: 500, marginBottom: '0.5rem', color: '#1e293b', fontSize: '0.875rem' }}>Job Requirements</div>
                                     <div className="read-only-requirements-list">
-                                        {(selectedJob.requirements || []).map((req, idx) => (
-                                            <div className="requirement-bullet-item" key={idx}>
+                                        {(selectedJob.requirements || []).map((req) => (
+                                            <div className="requirement-bullet-item" key={req}>
                                                 <span className="requirement-bullet-dot"></span>
                                                 <span className="requirement-text">{req}</span>
                                             </div>
@@ -1190,7 +1179,7 @@ export default function
                                 <div className="form-section-title">Upload Documents</div>
 
                                 <div className="form-group full-width-resume">
-                                    <label>Upload Resume (PDF only) <span className="required-star">*</span></label>
+                                    <label htmlFor="modal-resume-file">Upload Resume (PDF only) <span className="required-star">*</span></label>
                                     <div className="resume-upload-zone">
                                         <input
                                             type="file"
@@ -1237,16 +1226,9 @@ export default function
 
 
             {isProfileModalOpen && (
-                <div className="modal-overlay" role="presentation" onClick={() => {
-                    setIsProfileModalOpen(false);
-                    setIsEditingProfile(false);
-                }} onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                        setIsProfileModalOpen(false);
-                        setIsEditingProfile(false);
-                    }
-                }}>
-                    <div className="student-apply-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <div className="modal-overlay">
+                    <button type="button" aria-label="Close modal" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent', border: 'none', cursor: 'default' }} onClick={() => { setIsProfileModalOpen(false); setIsEditingProfile(false); }} onKeyDown={(e) => { if (e.key === 'Escape') { setIsProfileModalOpen(false); setIsEditingProfile(false); } }} />
+                    <div className="student-apply-modal" style={{ position: 'relative', zIndex: 1 }}>
 
                         <div className="modal-header">
                             <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
@@ -1262,8 +1244,9 @@ export default function
                         <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
                             <div className="form-row">
                                 <div className="form-group half-width">
-                                    <label>Full Name</label>
+                                    <label htmlFor="profile-fullName">Full Name</label>
                                     <input
+                                        id="profile-fullName"
                                         type="text"
                                         value={isEditingProfile ? tempProfile.fullName : profile.fullName}
                                         disabled={!isEditingProfile}
@@ -1273,8 +1256,9 @@ export default function
                                 </div>
 
                                 <div className="form-group half-width">
-                                    <label>Email Address</label>
+                                    <label htmlFor="profile-email">Email Address</label>
                                     <input
+                                        id="profile-email"
                                         type="email"
                                         value={isEditingProfile ? tempProfile.email : profile.email}
                                         disabled={!isEditingProfile}
@@ -1286,8 +1270,9 @@ export default function
 
                             <div className="form-row">
                                 <div className="form-group half-width">
-                                    <label>Phone Number</label>
+                                    <label htmlFor="profile-phone">Phone Number</label>
                                     <input
+                                        id="profile-phone"
                                         type="text"
                                         value={isEditingProfile ? tempProfile.phone : profile.phone}
                                         disabled={!isEditingProfile}
@@ -1298,8 +1283,9 @@ export default function
                                 </div>
 
                                 <div className="form-group half-width">
-                                    <label>Branch</label>
+                                    <label htmlFor="profile-branch">Branch</label>
                                     <input
+                                        id="profile-branch"
                                         type="text"
                                         value={isEditingProfile ? tempProfile.branch : profile.branch}
                                         disabled={!isEditingProfile}
@@ -1312,8 +1298,9 @@ export default function
 
                             <div className="form-row">
                                 <div className="form-group half-width">
-                                    <label>Passing Year</label>
+                                    <label htmlFor="profile-passingYear">Passing Year</label>
                                     <input
+                                        id="profile-passingYear"
                                         type="text"
                                         value={isEditingProfile ? tempProfile.passingYear : profile.passingYear}
                                         disabled={!isEditingProfile}
@@ -1324,8 +1311,9 @@ export default function
                                 </div>
 
                                 <div className="form-group half-width">
-                                    <label>CGPA</label>
+                                    <label htmlFor="profile-cgpa">CGPA</label>
                                     <input
+                                        id="profile-cgpa"
                                         type="text"
                                         value={isEditingProfile ? tempProfile.cgpa : profile.cgpa}
                                         disabled={!isEditingProfile}
@@ -1337,8 +1325,9 @@ export default function
                             </div>
 
                             <div className="form-group">
-                                <label>Skills</label>
+                                <label htmlFor="profile-skills">Skills</label>
                                 <input
+                                    id="profile-skills"
                                     type="text"
                                     value={isEditingProfile ? tempProfile.skills : profile.skills}
                                     disabled={!isEditingProfile}
@@ -1350,9 +1339,10 @@ export default function
 
                             <div className="form-row">
                                 <div className="form-group half-width">
-                                    <label>LinkedIn URL</label>
+                                    <label htmlFor="profile-linkedin">LinkedIn URL</label>
                                     {isEditingProfile ? (
                                         <input
+                                            id="profile-linkedin"
                                             type="text"
                                             value={tempProfile.linkedinUrl}
                                             onChange={(e) => setTempProfile({ ...tempProfile, linkedinUrl: e.target.value })}
@@ -1362,6 +1352,7 @@ export default function
                                     ) : (
                                         <div className="link-display-wrapper">
                                             <input
+                                                id="profile-linkedin"
                                                 type="text"
                                                 value={profile.linkedinUrl || "Not Provided"}
                                                 disabled
@@ -1377,9 +1368,10 @@ export default function
                                 </div>
 
                                 <div className="form-group half-width">
-                                    <label>GitHub URL</label>
+                                    <label htmlFor="profile-github">GitHub URL</label>
                                     {isEditingProfile ? (
                                         <input
+                                            id="profile-github"
                                             type="text"
                                             value={tempProfile.githubUrl}
                                             onChange={(e) => setTempProfile({ ...tempProfile, githubUrl: e.target.value })}
@@ -1389,6 +1381,7 @@ export default function
                                     ) : (
                                         <div className="link-display-wrapper">
                                             <input
+                                                id="profile-github"
                                                 type="text"
                                                 value={profile.githubUrl || "Not Provided"}
                                                 disabled
@@ -1435,22 +1428,9 @@ export default function
 
 
             {isChangePasswordOpen && (
-                <div className="modal-overlay" role="presentation" onClick={() => {
-                    setIsChangePasswordOpen(false);
-                    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                    setShowCurrentPassword(false);
-                    setShowNewPassword(false);
-                    setShowConfirmPassword(false);
-                }} onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                        setIsChangePasswordOpen(false);
-                        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                        setShowCurrentPassword(false);
-                        setShowNewPassword(false);
-                        setShowConfirmPassword(false);
-                    }
-                }}>
-                    <div className="change-password-modal" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <div className="modal-overlay">
+                    <button type="button" aria-label="Close modal" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent', border: 'none', cursor: 'default' }} onClick={() => { setIsChangePasswordOpen(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); setShowCurrentPassword(false); setShowNewPassword(false); setShowConfirmPassword(false); }} onKeyDown={(e) => { if (e.key === 'Escape') { setIsChangePasswordOpen(false); setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); setShowCurrentPassword(false); setShowNewPassword(false); setShowConfirmPassword(false); } }} />
+                    <div className="change-password-modal" style={{ position: 'relative', zIndex: 1 }}>
                         <div className="modal-header">
                             <h4>Change Password</h4>
                             <button className="btn-close-modal" onClick={() => {
@@ -1551,8 +1531,9 @@ export default function
 
 
             {isNotificationSidebarOpen && (
-                <div className="sd-notification-sidebar-overlay" role="presentation" onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setIsNotificationSidebarOpen(false); }}>
-                    <div className="sd-notification-sidebar" role="dialog" aria-modal="true" tabIndex={-1} onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                <div className="sd-notification-sidebar-overlay">
+                    <button type="button" aria-label="Close sidebar" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', background: 'transparent', border: 'none', cursor: 'default' }} onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setIsNotificationSidebarOpen(false); }} />
+                    <div className="sd-notification-sidebar" style={{ position: 'relative', zIndex: 1 }}>
                         <div className="sidebar-header">
                             <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
@@ -1578,6 +1559,16 @@ export default function
                             ) : (
                                 notifications.map((notif, index) => {
                                     const isRead = notif.read || notif.status === 'read';
+                                    
+                                    let formattedDate = notif.date;
+                                    if (notif.displayDate) {
+                                        formattedDate = `${notif.displayDate} at ${notif.displayTime}`;
+                                    } else if (notif.createdDate) {
+                                        formattedDate = `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}`;
+                                    } else if (notif.createdAt) {
+                                        formattedDate = new Date(notif.createdAt).toLocaleString();
+                                    }
+
                                     return (
                                         <motion.div
                                             key={notif.id}
@@ -1588,7 +1579,7 @@ export default function
                                             style={{ borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
                                         >
                                             <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
-                                            <span className="notif-date">{notif.displayDate ? `${notif.displayDate} at ${notif.displayTime}` : (notif.createdDate ? `${notif.createdDate} ${notif.createdTime ? 'at ' + notif.createdTime : ''}` : (notif.createdAt ? new Date(notif.createdAt).toLocaleString() : notif.date))}</span>
+                                            <span className="notif-date">{formattedDate}</span>
                                         </motion.div>
                                     );
                                 })

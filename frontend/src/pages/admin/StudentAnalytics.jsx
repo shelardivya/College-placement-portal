@@ -234,7 +234,7 @@ export default function StudentAnalytics() {
             const payload = {
                 studentName: formData.name,
                 companyName: formData.company,
-                packageLpa: parseFloat(formData.lpa) || 12,
+                packageLpa: Number.parseFloat(formData.lpa) || 12,
                 cgpa: parseFloat(formData.cgpa) || 9.0,
                 skills: formData.skill || 'Full Stack'
             };

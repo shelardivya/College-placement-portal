@@ -125,7 +125,7 @@ function AdminDashboard({ onNavigate }) {
                         const match = timeStr.match(/(\d+):(\d+)\s(AM|PM)/);
                         if (match) {
                             let [, h, m, ampm] = match;
-                            h = parseInt(h);
+                            h = Number.parseInt(h);
                             if (ampm === 'PM' && h < 12) h += 12;
                             if (ampm === 'AM' && h === 12) h = 0;
                             d.setHours(h, parseInt(m));
