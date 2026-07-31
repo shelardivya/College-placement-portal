@@ -294,8 +294,8 @@ export default function StudentAnalytics() {
         student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
         student.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (student.branch && student.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (student.passingYear && student.passingYear.toString().includes(searchQuery))
+        student.branch?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.passingYear?.toString().includes(searchQuery)
     );
 
 
@@ -406,7 +406,7 @@ export default function StudentAnalytics() {
                             <svg viewBox="0 0 100 100" className="donut-svg">
                                 {segments.map((seg, i) => (
                                     <path
-                                        key={i}
+                                        key={seg.label || seg.color || i}
                                         d={seg.d}
                                         fill={seg.color}
                                         className="donut-segment"
@@ -425,7 +425,7 @@ export default function StudentAnalytics() {
                         {/* Legend */}
                         <div className="dept-legend">
                             {departmentData.map((dept, i) => (
-                                <div key={i} className="legend-item">
+                                <div key={dept.label || dept.color || i} className="legend-item">
                                     <span
                                         className="legend-dot"
                                         style={{ backgroundColor: dept.color }}
@@ -480,7 +480,7 @@ export default function StudentAnalytics() {
                                 const barHeight = (item.students / maxStudents) * 120;
                                 const y = 20 + (120 - barHeight);
                                 return (
-                                    <g key={i}>
+                                    <g key={item.range || i}>
                                         <rect
                                             x={x} y="20"
                                             width={barWidth} height="120"
@@ -546,7 +546,7 @@ export default function StudentAnalytics() {
                         {/* skill rows */}
                         <div className="skills-rows">
                             {skillsData.slice(0, 10).map((item, i) => (
-                                <div key={i} className="skill-row">
+                                <div key={item.skill || i} className="skill-row">
                                     <span className="skill-name">{item.skill}</span>
                                     <div className="skill-bar-track">
                                         <div
@@ -711,7 +711,7 @@ export default function StudentAnalytics() {
                             </button>
                             {new Array(totalPages).fill(0).map((_, i) => (
                                 <button
-                                    key={i + 1}
+                                    key={`page-${i + 1}`}
                                     type="button"
                                     className={`pagination-btn num-btn ${currentPage === i + 1 ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(i + 1)}
@@ -734,8 +734,8 @@ export default function StudentAnalytics() {
 
             {/* Add Top Placed Student Modal */}
             {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-                    <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                <button type="button" className="modal-overlay" aria-label="Close add student modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="modal-container">
                         <div className="modal-header">
                             <div>
                                 <h3 className="modal-title">Add Top Placed Student</h3>
@@ -748,10 +748,11 @@ export default function StudentAnalytics() {
 
                         <form onSubmit={handleAddStudent} className="modal-form">
                             <div className="form-group">
-                                <label className="form-label">
+                                <label htmlFor="add-student-name" className="form-label">
                                     Student Full Name <span className="required-star">*</span>
                                 </label>
                                 <input
+                                    id="add-student-name"
                                     type="text"
                                     className="form-input"
                                     placeholder="e.g. Priya Sharma"
@@ -763,11 +764,12 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-branch" className="form-label">
                                         Branch <span className="required-star">*</span>
                                     </label>
                                     <div className="select-wrapper">
                                         <select
+                                            id="add-student-branch"
                                             className="form-select"
                                             value={formData.branch}
                                             onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
@@ -783,11 +785,12 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-passing-year" className="form-label">
                                         Passing Year <span className="required-star">*</span>
                                     </label>
                                     <div className="select-wrapper">
                                         <select
+                                            id="add-student-passing-year"
                                             className="form-select"
                                             value={formData.passingYear}
                                             onChange={(e) => setFormData({ ...formData, passingYear: e.target.value })}
@@ -804,10 +807,11 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-cgpa" className="form-label">
                                         CGPA (out of 10) <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-cgpa"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. 9.4"
@@ -818,10 +822,11 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-lpa" className="form-label">
                                         Package (LPA) <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-lpa"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. 28"
@@ -834,8 +839,9 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Primary Skill</label>
+                                    <label htmlFor="add-student-skill" className="form-label">Primary Skill</label>
                                     <input
+                                        id="add-student-skill"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. Full Stack, Data Science, Back"
@@ -845,10 +851,11 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-company" className="form-label">
                                         Company Name <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-company"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. Amazon, Microsoft, Apple"
@@ -876,7 +883,7 @@ export default function StudentAnalytics() {
                             </div>
                         </form>
                     </div>
-                </div>
+                </button>
             )}
 
             {/* Toast */}
