@@ -536,20 +536,20 @@ const getDriveTime = (time) => {
 
 const getDriveTarget = (target) => {
     if (!target) return 'All Students';
-    
+
     if (Array.isArray(target)) {
         if (target.includes('ALL')) return 'All Students';
         if (target.includes('All')) return 'All Students';
         return target.join(', ');
     }
-    
+
     if (target === 'All') return 'All Students';
     return target;
 };
 
 const formatDriveDetails = (currentDrive) => {
     if (!currentDrive) return { formattedTime: 'TBA', formattedTarget: 'All Students' };
-    
+
     return {
         formattedTime: getDriveTime(currentDrive.time),
         formattedTarget: getDriveTarget(currentDrive.targetStudent)
@@ -742,10 +742,10 @@ export default function StudHub() {
 
     const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
     const studentName = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
-    
+
     const { storiesPage, setStoriesPage, totalStoriesPages, paginatedStories } = useStoriesPagination(stories);
     const { drivesPage, setDrivesPage, totalDrivePages, currentDrive } = useDrivesPagination(drives, studentEmail, studentName);
-    
+
     const {
         querySubject, setQuerySubject, queryMessage, setQueryMessage,
         toastMessage, toastType, showToast, handleRaiseQuery, handleResolveQuery,

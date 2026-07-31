@@ -180,7 +180,6 @@ function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, f
     return result;
 }
 
-// -----------------------------------------------------------------------------------------
 
 function AdminDashboard({ onNavigate }) {
     //1. Sidebar form visibility
