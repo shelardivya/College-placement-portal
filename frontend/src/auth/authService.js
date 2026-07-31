@@ -40,23 +40,24 @@ export const getDrafts = () => {
     });
 };
 
-/* Sanitizes and validates path parameters against URL path injection (SonarCloud S5144). */
-function sanitizeId(id) {
+/* Sanitizes and validates path parameters against URL path injection (SonarCloud S8476/S5144). */
+function sanitizePath(prefix, id, suffix = '') {
     if (id === null || id === undefined || id === '') {
         throw new TypeError('ID parameter is required and cannot be empty.');
     }
-    const cleanId = String(id).replace(/[^a-zA-Z0-9_-]/g, '');
-    if (!cleanId) {
-        throw new TypeError('Invalid ID parameter format.');
+    const strId = String(id).trim();
+    if (!/^[a-zA-Z0-9_-]+$/.test(strId)) {
+        throw new TypeError('Invalid ID format: contains non-alphanumeric characters.');
     }
-    return encodeURIComponent(cleanId);
+    const cleanId = encodeURIComponent(strId);
+    const fullPath = `${prefix}${cleanId}${suffix}`;
+    const validatedUrl = new URL(fullPath, api.defaults.baseURL || 'http://localhost');
+    return validatedUrl.pathname + validatedUrl.search;
 }
-
-
 
 export const getDraftById = (id) => {
     const token = localStorage.getItem("token");
-    return api.get('/admin/draft/' + sanitizeId(id), {
+    return api.get(sanitizePath('/admin/draft/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -66,7 +67,7 @@ export const getDraftById = (id) => {
 
 export const publishDraft = (id) => {
     const token = localStorage.getItem("token");
-    return api.put('/admin/draft/publish/' + sanitizeId(id), {}, {
+    return api.put(sanitizePath('/admin/draft/publish/', id), {}, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -167,7 +168,7 @@ export const getAllStudentsForDrive = () => {
 
 export const updatePlacementDrive = (id, driveData) => {
     const token = localStorage.getItem("token");
-    return api.put('/admin/placement-drive/update/' + sanitizeId(id), driveData, {
+    return api.put(sanitizePath('/admin/placement-drive/update/', id), driveData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -176,7 +177,7 @@ export const updatePlacementDrive = (id, driveData) => {
 
 export const deletePlacementDrive = (id) => {
     const token = localStorage.getItem("token");
-    return api.delete('/admin/placement-drive/delete/' + sanitizeId(id), {
+    return api.delete(sanitizePath('/admin/placement-drive/delete/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -212,7 +213,7 @@ export const getAllQueries = () => {
 
 export const replyToQuery = (id, replyText) => {
     const token = localStorage.getItem("token");
-    return api.put('/admin/query/' + sanitizeId(id) + '/reply', {
+    return api.put(sanitizePath('/admin/query/', id, '/reply'), {
         reply: replyText,
         adminReply: replyText,
         response: replyText
@@ -232,11 +233,11 @@ export const publishPlacementStory = (storyData, photoFile) => {
 
     // Add query parameters for the story data
     const params = new URLSearchParams({
-        studentName: storyData.studentName,
-        companyName: storyData.companyName,
-        jobRole: storyData.jobRole,
-        packageLpa: storyData.package,
-        successStory: storyData.storyText
+        studentName: String(storyData.studentName || ''),
+        companyName: String(storyData.companyName || ''),
+        jobRole: String(storyData.jobRole || ''),
+        packageLpa: String(storyData.package || ''),
+        successStory: String(storyData.storyText || '')
     });
 
     return api.post(`/admin/story/create?${params.toString()}`, formData, {
@@ -263,14 +264,14 @@ export const updatePlacementStory = (id, storyData, photoFile) => {
     }
 
     const params = new URLSearchParams({
-        studentName: storyData.studentName,
-        companyName: storyData.companyName,
-        jobRole: storyData.jobRole,
-        packageLpa: storyData.package,
-        successStory: storyData.storyText
+        studentName: String(storyData.studentName || ''),
+        companyName: String(storyData.companyName || ''),
+        jobRole: String(storyData.jobRole || ''),
+        packageLpa: String(storyData.package || ''),
+        successStory: String(storyData.storyText || '')
     });
 
-    return api.put('/admin/story/update/' + sanitizeId(id) + '?' + params.toString(), formData, {
+    return api.put(sanitizePath('/admin/story/update/', id, '?' + params.toString()), formData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -279,7 +280,7 @@ export const updatePlacementStory = (id, storyData, photoFile) => {
 
 export const deletePlacementStory = (id) => {
     const token = localStorage.getItem("token");
-    return api.delete('/admin/story/delete/' + sanitizeId(id), {
+    return api.delete(sanitizePath('/admin/story/delete/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -306,7 +307,7 @@ export const getLatestJobs = () => {
 
 export const getJobDetails = (id) => {
     const token = localStorage.getItem("token");
-    return api.get('/student/jobs/' + sanitizeId(id), {
+    return api.get(sanitizePath('/student/jobs/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -315,7 +316,7 @@ export const getJobDetails = (id) => {
 
 export const applyForJob = (jobId, formData) => {
     const token = localStorage.getItem("token");
-    return api.post('/student/jobs/' + sanitizeId(jobId) + '/apply', formData, {
+    return api.post(sanitizePath('/student/jobs/', jobId, '/apply'), formData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -342,7 +343,7 @@ export const submitStudentQuery = (queryData) => {
 
 export const resolveStudentQuery = (id) => {
     const token = localStorage.getItem("token");
-    return api.put('/student/query/resolve/' + sanitizeId(id), {}, {
+    return api.put(sanitizePath('/student/query/resolve/', id), {}, {
         headers: {
             Authorization: `Bearer ${token}`
         }

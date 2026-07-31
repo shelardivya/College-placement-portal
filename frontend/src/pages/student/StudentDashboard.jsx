@@ -719,10 +719,16 @@ export default function
                 // Sort by date descending (assuming it's not already sorted, optional but good UX)
                 const parseDateStr = (dateStr, timeStr) => {
                     if (!dateStr) return 0;
-                    // dateStr is DD/MM/YYYY, timeStr is hh:mm A
-                    const [day, month, year] = dateStr.split('/');
-                    if (!year) return new Date(dateStr).getTime() || 0;
-                    const d = new Date(`${year}-${month}-${day}T00:00:00`);
+                    const parts = dateStr.split('/');
+                    if (parts.length !== 3) return new Date(dateStr).getTime() || 0;
+                    const numDay = Number.parseInt(parts[0], 10);
+                    const numMonth = Number.parseInt(parts[1], 10);
+                    const numYear = Number.parseInt(parts[2], 10);
+                    if (!numDay || !numMonth || !numYear) return 0;
+
+                    let numHours = 0;
+                    let numMinutes = 0;
+
                     if (timeStr) {
                         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
                         if (match) {
@@ -732,10 +738,12 @@ export default function
                             const upperAmPm = ampm.toUpperCase();
                             if (upperAmPm === 'PM' && h < 12) h += 12;
                             if (upperAmPm === 'AM' && h === 12) h = 0;
-                            d.setHours(h, m);
+                            numHours = h;
+                            numMinutes = m;
                         }
                     }
-                    return d.getTime();
+                    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHours, numMinutes));
+                    return utcDate.getTime();
                 };
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 
