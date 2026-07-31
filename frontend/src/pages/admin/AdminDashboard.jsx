@@ -35,12 +35,13 @@ function parseDateStr(dateStr, timeStr) {
     if (timeStr) {
         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
         if (match) {
-            let [, h, m, ampm] = match;
-            h = Number.parseInt(h);
+            const [, rawH, rawM, ampm] = match;
+            let h = Number.parseInt(rawH, 10);
+            const m = Number.parseInt(rawM, 10);
             const upperAmPm = ampm.toUpperCase();
             if (upperAmPm === 'PM' && h < 12) h += 12;
             if (upperAmPm === 'AM' && h === 12) h = 0;
-            d.setHours(h, Number.parseInt(m));
+            d.setHours(h, m);
         }
     }
     return d.getTime();
@@ -52,13 +53,16 @@ function localizeNotification(notif) {
     const [day, month, year] = notif.createdDate.split('/');
     const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(notif.createdTime);
     if (!day || !month || !year || !match) return notif;
-    let [, h, m, ampm] = match;
-    h = Number.parseInt(h);
+    const [, rawH, rawM, ampm] = match;
+    const numYear = Number.parseInt(year, 10);
+    const numMonth = Number.parseInt(month, 10);
+    const numDay = Number.parseInt(day, 10);
+    let h = Number.parseInt(rawH, 10);
+    const m = Number.parseInt(rawM, 10);
     const upperAmPm = ampm.toUpperCase();
     if (upperAmPm === 'PM' && h < 12) h += 12;
     if (upperAmPm === 'AM' && h === 12) h = 0;
-    m = Number.parseInt(m);
-    const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
+    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, h, m));
     notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     return notif;
@@ -516,10 +520,13 @@ function AdminDashboard({ onNavigate }) {
         const fetchDrafts = async () => {
             try {
                 const response = await getDrafts();
-                // Map API response to UI state format safely
-                const rawData = response.data;
-                const isContentArray = rawData && Array.isArray(rawData.content);
-                const draftsData = Array.isArray(rawData) ? rawData : (isContentArray ? rawData.content : []);
+                const rawData = response ? response.data : null;
+                let draftsData = [];
+                if (Array.isArray(rawData)) {
+                    draftsData = rawData;
+                } else if (rawData && Array.isArray(rawData.content)) {
+                    draftsData = rawData.content;
+                }
 
                 const formattedDrafts = draftsData.map(d => ({
                     id: d.id,
@@ -1003,16 +1010,15 @@ function AdminDashboard({ onNavigate }) {
                     <div className='header-right'>
                         <span className='role-badge'>Admin</span>
 
-                        <div
+                        <button
+                            type="button"
                             className='notification-wrapper'
-                            role="button"
-                            tabIndex={0}
+                            aria-label="Notifications"
                             onClick={() => {
                                 setIsNotificationSidebarOpen(true);
                                 setIsProfileOpen(false);
                             }}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setIsNotificationSidebarOpen(true); setIsProfileOpen(false); } }}
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                         >
                             <motion.div style={{ display: 'flex' }} whileHover={{ rotate: [0, -15, 15, -15, 15, 0] }} transition={{ duration: 0.5 }}>
                                 <Bell className='bell-icon' size={22} />
@@ -1028,22 +1034,22 @@ function AdminDashboard({ onNavigate }) {
                                     {unreadCount}
                                 </motion.span>
                             )}
-                        </div>
+                        </button>
 
                         <div className='user-profile-container'>
-                            <div
+                            <button
+                                type="button"
                                 className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
-                                role="button"
-                                tabIndex={0}
+                                aria-label="User profile menu"
                                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsProfileOpen(!isProfileOpen); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                             >
                                 {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                            </div>
+                            </button>
 
                             {isProfileOpen && (
                                 <>
-                                    <div className='profile-dropdown-backdrop' role="button" tabIndex={0} aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setIsProfileOpen(false); }} />
+                                    <button type="button" className='profile-dropdown-backdrop' aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} style={{ border: 'none', padding: 0 }} />
                                     <div className='profile-dropdown-menu'>
                                         <div className='profile-header'>
                                             <span className='profile-avatar-large'>
@@ -1965,7 +1971,7 @@ function AdminDashboard({ onNavigate }) {
 
 
                 {isNotificationSidebarOpen && (
-                    <div className="sd-notification-sidebar-overlay" role="button" tabIndex={0} aria-label="Close notifications" onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setIsNotificationSidebarOpen(false); }}>
+                    <button type="button" className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={() => setIsNotificationSidebarOpen(false)} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
                         <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
                             <div className="sidebar-header">
                                 <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -2010,7 +2016,7 @@ function AdminDashboard({ onNavigate }) {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </button>
                 )}
 
             </div >

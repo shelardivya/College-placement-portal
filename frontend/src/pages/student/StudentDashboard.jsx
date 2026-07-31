@@ -729,12 +729,13 @@ export default function
                     if (timeStr) {
                         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
                         if (match) {
-                            let [, h, m, ampm] = match;
-                            h = Number.parseInt(h);
+                            const [, rawH, rawM, ampm] = match;
+                            let h = Number.parseInt(rawH, 10);
+                            const m = Number.parseInt(rawM, 10);
                             const upperAmPm = ampm.toUpperCase();
                             if (upperAmPm === 'PM' && h < 12) h += 12;
                             if (upperAmPm === 'AM' && h === 12) h = 0;
-                            d.setHours(h, Number.parseInt(m));
+                            d.setHours(h, m);
                         }
                     }
                     return d.getTime();
@@ -746,14 +747,17 @@ export default function
                         const [day, month, year] = notif.createdDate.split('/');
                         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(notif.createdTime);
                         if (day && month && year && match) {
-                            let [, h, m, ampm] = match;
-                            h = Number.parseInt(h);
+                            const [, rawH, rawM, ampm] = match;
+                            const numYear = Number.parseInt(year, 10);
+                            const numMonth = Number.parseInt(month, 10);
+                            const numDay = Number.parseInt(day, 10);
+                            let h = Number.parseInt(rawH, 10);
+                            const m = Number.parseInt(rawM, 10);
                             const upperAmPm = ampm.toUpperCase();
                             if (upperAmPm === 'PM' && h < 12) h += 12;
                             if (upperAmPm === 'AM' && h === 12) h = 0;
-                            m = Number.parseInt(m);
 
-                            const utcDate = new Date(Date.UTC(year, month - 1, day, h, m));
+                            const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, h, m));
 
                             notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
                             notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
