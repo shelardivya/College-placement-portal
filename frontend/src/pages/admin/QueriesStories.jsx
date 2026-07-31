@@ -1250,8 +1250,8 @@ export default function QueriesStories() {
 
             {
                 isDriveModalOpen && (
-                    <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
-                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
@@ -1351,15 +1351,22 @@ export default function QueriesStories() {
                                     <div className="qs-form-group">
                                         <label htmlFor="drive-target-student" className="form-label">Target Student *</label>
                                         <div className="multi-select-container" style={{ position: 'relative' }}>
-                                            <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
-                                                {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
-                                                    <span key={idx} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }}>
+                                                {driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean).map((target, idx) => (
+                                                    <span key={`${target}-${idx}`} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                         {target}
-                                                        <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
-                                                            setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
-                                                        }}>&times;</span>
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Remove ${target}`}
+                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', padding: '0 0 0 4px', color: 'inherit', fontSize: '14px', lineHeight: 1 }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
+                                                                setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
+                                                            }}
+                                                        >
+                                                            &times;
+                                                        </button>
                                                     </span>
                                                 ))}
                                                 <input
@@ -1378,12 +1385,13 @@ export default function QueriesStories() {
                                                     {availableStudents
                                                         .filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase()))
                                                         .map((student, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
+                                                            <button
+                                                                type="button"
+                                                                key={student.id || student.name || idx}
+                                                                style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
                                                                 onMouseDown={(e) => e.preventDefault()}
                                                                 onClick={() => {
-                                                                    const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t);
+                                                                    const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean);
                                                                     if (!currentTargets.includes(student.name)) {
                                                                         setDriveForm({ ...driveForm, targetStudent: [...currentTargets, student.name].join(', ') });
                                                                     }
@@ -1392,7 +1400,7 @@ export default function QueriesStories() {
                                                                 }}
                                                             >
                                                                 <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
-                                                            </div>
+                                                            </button>
                                                         ))}
                                                     {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
                                                         <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
@@ -1423,15 +1431,15 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </div>
+                    </button>
                 )
             }
 
 
             {
                 deletingDrive && (
-                    <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
                             </div>
@@ -1448,15 +1456,15 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 )
             }
 
 
             {
                 viewingQuery && (
-                    <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
-                        <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-modal-content view-query-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Student Query Details</h4>
@@ -1513,15 +1521,15 @@ export default function QueriesStories() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 )
             }
 
 
             {
                 replyingQuery && (
-                    <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
-                        <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-modal-content reply-query-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Reply to Query</h4>
@@ -1567,13 +1575,13 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </div>
+                    </button>
                 )
             }
             {
                 isStoryModalOpen && (
-                    <div className="qs-modal-overlay" onClick={() => setIsStoryModalOpen(false)}>
-                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Edit Placement Story</h4>
@@ -1697,14 +1705,14 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </div>
+                    </button>
                 )
             }
 
             {
                 deletingStory && (
-                    <div className="qs-modal-overlay" onClick={() => setDeletingStory(null)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
                             </div>
@@ -1721,13 +1729,13 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 )
             }
             {
                 confirmingPublish && (
-                    <div className="qs-modal-overlay" onClick={() => setConfirmingPublish(false)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <button type="button" className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
                                 <CheckCircle2 size={22} />
                             </div>
@@ -1744,7 +1752,7 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 )
             }
 
