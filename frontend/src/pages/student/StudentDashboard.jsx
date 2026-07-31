@@ -162,53 +162,53 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
                 </div>
 
 
-                        <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
-                            <div className="form-row">
-                                <ProfileInputField label="Full Name" isEditing={isEditingProfile} profileValue={profile.fullName} tempValue={tempProfile.fullName} onChange={(e) => setTempProfile({ ...tempProfile, fullName: e.target.value })} />
-                                <ProfileInputField label="Email Address" type="email" isEditing={isEditingProfile} profileValue={profile.email} tempValue={tempProfile.email} onChange={(e) => setTempProfile({ ...tempProfile, email: e.target.value })} />
-                            </div>
+                <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
+                    <div className="form-row">
+                        <ProfileInputField label="Full Name" isEditing={isEditingProfile} profileValue={profile.fullName} tempValue={tempProfile.fullName} onChange={(e) => setTempProfile({ ...tempProfile, fullName: e.target.value })} />
+                        <ProfileInputField label="Email Address" type="email" isEditing={isEditingProfile} profileValue={profile.email} tempValue={tempProfile.email} onChange={(e) => setTempProfile({ ...tempProfile, email: e.target.value })} />
+                    </div>
 
-                            <div className="form-row">
-                                <ProfileInputField label="Phone Number" isEditing={isEditingProfile} profileValue={profile.phone} tempValue={tempProfile.phone} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, phone: e.target.value })} />
-                                <ProfileInputField label="Branch" isEditing={isEditingProfile} profileValue={profile.branch} tempValue={tempProfile.branch} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, branch: e.target.value })} />
-                            </div>
+                    <div className="form-row">
+                        <ProfileInputField label="Phone Number" isEditing={isEditingProfile} profileValue={profile.phone} tempValue={tempProfile.phone} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, phone: e.target.value })} />
+                        <ProfileInputField label="Branch" isEditing={isEditingProfile} profileValue={profile.branch} tempValue={tempProfile.branch} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, branch: e.target.value })} />
+                    </div>
 
-                            <div className="form-row">
-                                <ProfileInputField label="Passing Year" isEditing={isEditingProfile} profileValue={profile.passingYear} tempValue={tempProfile.passingYear} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, passingYear: e.target.value })} />
-                                <ProfileInputField label="CGPA" isEditing={isEditingProfile} profileValue={profile.cgpa} tempValue={tempProfile.cgpa} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, cgpa: e.target.value })} />
-                            </div>
+                    <div className="form-row">
+                        <ProfileInputField label="Passing Year" isEditing={isEditingProfile} profileValue={profile.passingYear} tempValue={tempProfile.passingYear} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, passingYear: e.target.value })} />
+                        <ProfileInputField label="CGPA" isEditing={isEditingProfile} profileValue={profile.cgpa} tempValue={tempProfile.cgpa} placeholder="Not Provided" onChange={(e) => setTempProfile({ ...tempProfile, cgpa: e.target.value })} />
+                    </div>
 
-                            <ProfileInputField label="Skills" isEditing={isEditingProfile} profileValue={profile.skills} tempValue={tempProfile.skills} placeholder="Enter comma separated skills (e.g. React, CSS)" onChange={(e) => setTempProfile({ ...tempProfile, skills: e.target.value })} isFullWidth={true} />
+                    <ProfileInputField label="Skills" isEditing={isEditingProfile} profileValue={profile.skills} tempValue={tempProfile.skills} placeholder="Enter comma separated skills (e.g. React, CSS)" onChange={(e) => setTempProfile({ ...tempProfile, skills: e.target.value })} isFullWidth={true} />
 
-                            <div className="form-row">
-                                <ProfileLinkField label="LinkedIn URL" isEditing={isEditingProfile} profileValue={profile.linkedinUrl} tempValue={tempProfile.linkedinUrl} onChange={(e) => setTempProfile({ ...tempProfile, linkedinUrl: e.target.value })} linkText="LinkedIn" />
-                                <ProfileLinkField label="GitHub URL" isEditing={isEditingProfile} profileValue={profile.githubUrl} tempValue={tempProfile.githubUrl} onChange={(e) => setTempProfile({ ...tempProfile, githubUrl: e.target.value })} linkText="GitHub" />
-                            </div>
+                    <div className="form-row">
+                        <ProfileLinkField label="LinkedIn URL" isEditing={isEditingProfile} profileValue={profile.linkedinUrl} tempValue={tempProfile.linkedinUrl} onChange={(e) => setTempProfile({ ...tempProfile, linkedinUrl: e.target.value })} linkText="LinkedIn" />
+                        <ProfileLinkField label="GitHub URL" isEditing={isEditingProfile} profileValue={profile.githubUrl} tempValue={tempProfile.githubUrl} onChange={(e) => setTempProfile({ ...tempProfile, githubUrl: e.target.value })} linkText="GitHub" />
+                    </div>
 
-                            <div className="form-actions" style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
-                                {isEditingProfile ? (
-                                    <>
-                                        <button type="button" className="btn-cancel" onClick={handleCancelEdit}>
-                                            Cancel
-                                        </button>
-                                        <button type="button" className="btn-post" onClick={handleSaveProfile}>
-                                            Save Changes
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button type="button" className="btn-cancel" onClick={closeProfileModal}>
-                                            Close
-                                        </button>
-                                        <button type="button" className="btn-post" onClick={handleEditProfileClick}>
-                                            Edit Profile
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                    <div className="form-actions" style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                        {isEditingProfile ? (
+                            <>
+                                <button type="button" className="btn-cancel" onClick={handleCancelEdit}>
+                                    Cancel
+                                </button>
+                                <button type="button" className="btn-post" onClick={handleSaveProfile}>
+                                    Save Changes
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button type="button" className="btn-cancel" onClick={closeProfileModal}>
+                                    Close
+                                </button>
+                                <button type="button" className="btn-post" onClick={handleEditProfileClick}>
+                                    Edit Profile
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
+            </div>
+        </div>
     );
 }
 
@@ -225,90 +225,90 @@ function StudentChangePasswordModal({ isChangePasswordOpen, setIsChangePasswordO
         <div className="modal-overlay">
             <ModalBackdrop onClose={closePasswordModal} />
             <div className="change-password-modal" style={{ position: "relative", zIndex: 1 }}>
-                        <div className="modal-header">
-                            <h4>Change Password</h4>
-                            <button type="button" className="btn-close-modal" onClick={closePasswordModal}>
-                                <X size={18} />
-                            </button>
-                        </div>
-                        <form onSubmit={handlePasswordSubmit}>
-                            <div className="modal-body">
-                                <div className="form-group-custom">
-                                    <label htmlFor="currentPassword">Current Password</label>
-                                    <div className="password-input-wrapper">
-                                        <input
-                                            id="currentPassword"
-                                            type={showCurrentPassword ? "text" : "password"}
-                                            required
-                                            placeholder="Enter current password"
-                                            value={passwordForm.currentPassword}
-                                            onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="password-toggle-btn"
-                                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                        >
-                                            {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="form-group-custom">
-                                    <label htmlFor="newPassword">New Password</label>
-                                    <div className="password-input-wrapper">
-                                        <input
-                                            id="newPassword"
-                                            type={showNewPassword ? "text" : "password"}
-                                            required
-                                            placeholder="Enter new password (min. 8 characters)"
-                                            value={passwordForm.newPassword}
-                                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="password-toggle-btn"
-                                            onClick={() => setShowNewPassword(!showNewPassword)}
-                                        >
-                                            {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="form-group-custom">
-                                    <label htmlFor="confirmPassword">Confirm New Password</label>
-                                    <div className="password-input-wrapper">
-                                        <input
-                                            id="confirmPassword"
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            required
-                                            placeholder="Confirm your new password"
-                                            value={passwordForm.confirmPassword}
-                                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="password-toggle-btn"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        >
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
+                <div className="modal-header">
+                    <h4>Change Password</h4>
+                    <button type="button" className="btn-close-modal" onClick={closePasswordModal}>
+                        <X size={18} />
+                    </button>
+                </div>
+                <form onSubmit={handlePasswordSubmit}>
+                    <div className="modal-body">
+                        <div className="form-group-custom">
+                            <label htmlFor="currentPassword">Current Password</label>
+                            <div className="password-input-wrapper">
+                                <input
+                                    id="currentPassword"
+                                    type={showCurrentPassword ? "text" : "password"}
+                                    required
+                                    placeholder="Enter current password"
+                                    value={passwordForm.currentPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                                />
                                 <button
                                     type="button"
-                                    className="btn-cancel-modal"
-                                    onClick={closePasswordModal}
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                                 >
-                                    Cancel
-                                </button>
-                                <button type="submit" className="btn-confirm-apply">
-                                    Update Password
+                                    {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                 </button>
                             </div>
-                        </form>
+                        </div>
+                        <div className="form-group-custom">
+                            <label htmlFor="newPassword">New Password</label>
+                            <div className="password-input-wrapper">
+                                <input
+                                    id="newPassword"
+                                    type={showNewPassword ? "text" : "password"}
+                                    required
+                                    placeholder="Enter new password (min. 8 characters)"
+                                    value={passwordForm.newPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                >
+                                    {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="form-group-custom">
+                            <label htmlFor="confirmPassword">Confirm New Password</label>
+                            <div className="password-input-wrapper">
+                                <input
+                                    id="confirmPassword"
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    required
+                                    placeholder="Confirm your new password"
+                                    value={passwordForm.confirmPassword}
+                                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                >
+                                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                    <div className="modal-footer">
+                        <button
+                            type="button"
+                            className="btn-cancel-modal"
+                            onClick={closePasswordModal}
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" className="btn-confirm-apply">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     );
 }
 
@@ -323,287 +323,287 @@ function StudentNotificationSidebar({ isNotificationSidebarOpen, setIsNotificati
     };
 
     return (
-<div className="sd-notification-sidebar-overlay">
-                    <ModalBackdrop onClose={() => setIsNotificationSidebarOpen(false)} />
-                    <div className="sd-notification-sidebar" style={{ zIndex: 1 }}>
-                        <div className="sidebar-header">
-                            <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
-                                <h4 style={{ margin: 0 }}>Notifications</h4>
-                            </div>
-                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                {unreadCount > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={handleMarkAllRead}
-                                        style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
-                                    >
-                                        Mark all as read
-                                    </button>
-                                )}
-                                <button type="button" className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                    <X size={18} />
-                                </button>
-                            </div>
-                        </div>
-                        <div className="sidebar-body">
-                            {notifications.length === 0 ? (
-                                <p className="no-notifications">No new notifications</p>
-                            ) : (
-                                notifications.map((notif, index) => {
-                                    const isRead = notif.read || notif.status === 'read';
-                                    return (
-                                        <motion.div
-                                            key={notif.id}
-                                            className="notification-item"
-                                            initial={{ opacity: 0, y: -30 }}
-                                            animate={{ opacity: isRead ? 0.6 : 1, y: 0 }}
-                                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}
-                                            style={{ boxShadow: isRead ? 'none' : 'inset 4px 0 0 0 #3b82f6' }}
-                                        >
-                                            <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
-                                            <span className="notif-date">{formatNotificationDate(notif)}</span>
-                                        </motion.div>
-                                    );
-                                })
-                            )}
-                        </div>
+        <div className="sd-notification-sidebar-overlay">
+            <ModalBackdrop onClose={() => setIsNotificationSidebarOpen(false)} />
+            <div className="sd-notification-sidebar" style={{ zIndex: 1 }}>
+                <div className="sidebar-header">
+                    <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
+                        <h4 style={{ margin: 0 }}>Notifications</h4>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        {unreadCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleMarkAllRead}
+                                style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                Mark all as read
+                            </button>
+                        )}
+                        <button type="button" className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                            <X size={18} />
+                        </button>
                     </div>
                 </div>
+                <div className="sidebar-body">
+                    {notifications.length === 0 ? (
+                        <p className="no-notifications">No new notifications</p>
+                    ) : (
+                        notifications.map((notif, index) => {
+                            const isRead = notif.read || notif.status === 'read';
+                            return (
+                                <motion.div
+                                    key={notif.id}
+                                    className="notification-item"
+                                    initial={{ opacity: 0, y: -30 }}
+                                    animate={{ opacity: isRead ? 0.6 : 1, y: 0 }}
+                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}
+                                    style={{ boxShadow: isRead ? 'none' : 'inset 4px 0 0 0 #3b82f6' }}
+                                >
+                                    <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
+                                    <span className="notif-date">{formatNotificationDate(notif)}</span>
+                                </motion.div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
     );
 }
 
 function StudentMetricsGrid({ metrics }) {
     return (
-<section className="metrics-grid">
-                                {metrics.map((metric, index) => (
-                                    <motion.div className="metric-card" key={metric.id}
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        whileHover={{ y: -5, scale: 1.02 }}
-                                        transition={{ duration: 0.4, delay: index * 0.15 }}>
-                                        <div className="metric-header">
-                                            <div className={`metric-icon-wrapper ${metric.colorClass}`}>
-                                                {metric.icon}
-                                            </div>
+        <section className="metrics-grid">
+            {metrics.map((metric, index) => (
+                <motion.div className="metric-card" key={metric.id}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    transition={{ duration: 0.4, delay: index * 0.15 }}>
+                    <div className="metric-header">
+                        <div className={`metric-icon-wrapper ${metric.colorClass}`}>
+                            {metric.icon}
+                        </div>
 
-                                            <div className="metric-info">
-                                                <span className="metric-title"> {metric.title}</span>
-                                                <span className="metric-value">{metric.value}</span>
-                                            </div>
-                                        </div>
+                        <div className="metric-info">
+                            <span className="metric-title"> {metric.title}</span>
+                            <span className="metric-value">{metric.value}</span>
+                        </div>
+                    </div>
 
 
-                                        <div className="metric-progress-container">
-                                            <div className={`metric-progress-bar ${metric.colorClass}`}
+                    <div className="metric-progress-container">
+                        <div className={`metric-progress-bar ${metric.colorClass}`}
 
-                                                style={{ width: `${metric.progess || metric.progress}%` }}>
-                                            </div>
+                            style={{ width: `${metric.progess || metric.progress}%` }}>
+                        </div>
 
-                                        </div>
+                    </div>
 
-                                    </motion.div>
-                                ))}
+                </motion.div>
+            ))}
 
-                            </section>
+        </section>
     );
 }
 
 function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApplyClick, JOBS_PER_PAGE }) {
     return (
         <section className="dashboard-column jobs-column">
-                                    <div className="column-card-header">
-                                        <h3>Latest Job Opportunities</h3>
-                                    </div>
+            <div className="column-card-header">
+                <h3>Latest Job Opportunities</h3>
+            </div>
 
-                                    <div className="job-list">
-                                        {jobs && jobs.length > 0 ? (
-                                            jobs
-                                                .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                                                .map((job, index) => {
-                                                    const isApplied = job.isApplied || appliedJobs.includes(job.id);
-                                                    return (
-                                                        <motion.div className="job-card" key={job.id}
-                                                            initial={{ opacity: 0, y: -20 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
-                                                            <div className="job-card-header">
-                                                                 <CompanyLogoBadge
-                                                                    company={job.company}
-                                                                    logoUrl={job.logoUrl || job.logo}
-                                                                    logoColor={job.logoColor || job.logoClor}
-                                                                    logoLetter={job.logoLetter}
-                                                                />
-                                                                <h4 className="company-name">{job.company}</h4>
-                                                                <button
-                                                                    className={`btn-apply ${isApplied ? 'applied' : ''}`}
-                                                                    disabled={isApplied}
-                                                                    onClick={() => handleApplyClick(job)}
-                                                                >
-                                                                    {isApplied ? "Applied" : "Apply"}
-                                                                </button>
-                                                            </div>
-                                                            <div className="job-details-meta">
-                                                                <div className="meta-item">
-                                                                    <MapPin size={14} className="meta-icon" />
-                                                                    <span className="meta-label">Location</span>
-                                                                    <span className="meta-sep">:</span>
-                                                                    <strong>{job.location}</strong>
-                                                                </div>
-                                                                <div className="meta-item">
-                                                                    <Briefcase size={14} className="meta-icon" />
-                                                                    <span className="meta-label">Job Role</span>
-                                                                    <span className="meta-sep">:</span>
-                                                                    <strong>{job.role}</strong>
-                                                                </div>
-                                                                <div className="meta-item">
-                                                                    <Calendar size={14} className="meta-icon" />
-                                                                    <span className="meta-label">Deadline</span>
-                                                                    <span className="meta-sep">:</span>
-                                                                    <strong className="meta-deadline">{job.deadline}</strong>
-                                                                </div>
-                                                            </div>
-                                                        </motion.div>
-                                                    );
-                                                })
-                                        ) : (
-                                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                                                <p>No new job opportunities are currently available for your profile.</p>
-                                            </div>
-                                        )}
+            <div className="job-list">
+                {jobs && jobs.length > 0 ? (
+                    jobs
+                        .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
+                        .map((job, index) => {
+                            const isApplied = job.isApplied || appliedJobs.includes(job.id);
+                            return (
+                                <motion.div className="job-card" key={job.id}
+                                    initial={{ opacity: 0, y: -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+                                    <div className="job-card-header">
+                                        <CompanyLogoBadge
+                                            company={job.company}
+                                            logoUrl={job.logoUrl || job.logo}
+                                            logoColor={job.logoColor || job.logoClor}
+                                            logoLetter={job.logoLetter}
+                                        />
+                                        <h4 className="company-name">{job.company}</h4>
+                                        <button
+                                            className={`btn-apply ${isApplied ? 'applied' : ''}`}
+                                            disabled={isApplied}
+                                            onClick={() => handleApplyClick(job)}
+                                        >
+                                            {isApplied ? "Applied" : "Apply"}
+                                        </button>
                                     </div>
-
-                                    {jobs && jobs.length > JOBS_PER_PAGE && (
-                                        <div className="sd-pagination">
-                                            <button
-                                                className="sd-page-btn"
-                                                disabled={jobsPage === 1}
-                                                onClick={() => setJobsPage(p => p - 1)}
-                                            >
-                                                ← Prev
-                                            </button>
-                                            <span className="sd-page-info">
-                                                {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                                            </span>
-                                            <button
-                                                className="sd-page-btn"
-                                                disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                                                onClick={() => setJobsPage(p => p + 1)}
-                                            >
-                                                Next →
-                                            </button>
+                                    <div className="job-details-meta">
+                                        <div className="meta-item">
+                                            <MapPin size={14} className="meta-icon" />
+                                            <span className="meta-label">Location</span>
+                                            <span className="meta-sep">:</span>
+                                            <strong>{job.location}</strong>
                                         </div>
-                                    )}
-                                </section>
+                                        <div className="meta-item">
+                                            <Briefcase size={14} className="meta-icon" />
+                                            <span className="meta-label">Job Role</span>
+                                            <span className="meta-sep">:</span>
+                                            <strong>{job.role}</strong>
+                                        </div>
+                                        <div className="meta-item">
+                                            <Calendar size={14} className="meta-icon" />
+                                            <span className="meta-label">Deadline</span>
+                                            <span className="meta-sep">:</span>
+                                            <strong className="meta-deadline">{job.deadline}</strong>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            );
+                        })
+                ) : (
+                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                        <p>No new job opportunities are currently available for your profile.</p>
+                    </div>
+                )}
+            </div>
+
+            {jobs && jobs.length > JOBS_PER_PAGE && (
+                <div className="sd-pagination">
+                    <button
+                        className="sd-page-btn"
+                        disabled={jobsPage === 1}
+                        onClick={() => setJobsPage(p => p - 1)}
+                    >
+                        ← Prev
+                    </button>
+                    <span className="sd-page-info">
+                        {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                    </span>
+                    <button
+                        className="sd-page-btn"
+                        disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
+                        onClick={() => setJobsPage(p => p + 1)}
+                    >
+                        Next →
+                    </button>
+                </div>
+            )}
+        </section>
     );
 }
 
 function StudentResumeMatches({ resumeMatches, matchSearchQuery, setMatchSearchQuery, matchPage, setMatchPage, MATCHES_PER_PAGE }) {
     return (
         <section className="dashboard-column match-column">
-                                    <div className="column-card-header">
-                                        <h3>Resume Match Status</h3>
-                                        <div className="search-bar-wrapper">
-                                            <Search className="search-icon" size={16} />
-                                            <input
-                                                type="text"
-                                                className="search-input"
-                                                placeholder="Search company..."
-                                                value={matchSearchQuery}
-                                                onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
-                                            />
+            <div className="column-card-header">
+                <h3>Resume Match Status</h3>
+                <div className="search-bar-wrapper">
+                    <Search className="search-icon" size={16} />
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search company..."
+                        value={matchSearchQuery}
+                        onChange={(e) => { setMatchSearchQuery(e.target.value); setMatchPage(1); }}
+                    />
+                </div>
+            </div>
+
+
+            <div className="match-list">
+                {(() => {
+                    const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                    if (filtered.length === 0) {
+                        return (
+                            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
+                                <p>No resume matches found.</p>
+                            </div>
+                        );
+                    }
+                    return filtered
+                        .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
+                        .map((item, index) => (
+                            <motion.div className="match-card" key={item.id || item.company}
+                                initial={{ opacity: 0, y: 15 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}>
+
+                                <div className="match-card-header">
+                                    <div className="match-logo-details">
+                                        <CompanyLogoBadge
+                                            company={item.company}
+                                            logoUrl={item.logoUrl || item.logo}
+                                            logoColor={item.logoColor}
+                                            logoLetter={item.logoLetter}
+                                            className="logo-mini-badge"
+                                        />
+                                        <h4 className="match-company-name">{item.company}</h4>
+                                    </div>
+
+                                    <div className="match-score-container">
+                                        <span className="match-score-text">{item.score}% Match</span>
+                                        <div className="score-progress-track">
+                                            <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
                                         </div>
                                     </div>
+                                </div>
 
-
-                                    <div className="match-list">
-                                        {(() => {
-                                            const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                                            if (filtered.length === 0) {
-                                                return (
-                                                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-                                                        <p>No resume matches found.</p>
-                                                    </div>
-                                                );
-                                            }
-                                            return filtered
-                                                .slice((matchPage - 1) * MATCHES_PER_PAGE, matchPage * MATCHES_PER_PAGE)
-                                                .map((item, index) => (
-                                                    <motion.div className="match-card" key={item.id || item.company}
-                                                        initial={{ opacity: 0, y: 15 }}
-                                                        animate={{ opacity: 1, y: 0 }}
-                                                        transition={{ duration: 0.3, delay: index * 0.1 }}>
-
-                                                        <div className="match-card-header">
-                                                            <div className="match-logo-details">
-                                                                <CompanyLogoBadge
-                                                                    company={item.company}
-                                                                    logoUrl={item.logoUrl || item.logo}
-                                                                    logoColor={item.logoColor}
-                                                                    logoLetter={item.logoLetter}
-                                                                    className="logo-mini-badge"
-                                                                />
-                                                                <h4 className="match-company-name">{item.company}</h4>
-                                                            </div>
-
-                                                            <div className="match-score-container">
-                                                                <span className="match-score-text">{item.score}% Match</span>
-                                                                <div className="score-progress-track">
-                                                                    <div className="score-progress-bar" style={{ width: `${item.score}%` }}></div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="match-card-details">
-                                                            <div className="match-detail-item">
-                                                                <span className="match-detail-label">Location :</span>
-                                                                <strong>{item.location}</strong>
-                                                            </div>
-                                                            <div className="match-detail-item">
-                                                                <span className="match-detail-label">Job Role :</span>
-                                                                <strong>{item.role}</strong>
-                                                            </div>
-                                                            <div className="match-detail-item">
-                                                                <span className="match-detail-label">Deadline :</span>
-                                                                <strong>{item.deadline}</strong>
-                                                            </div>
-                                                        </div>
-
-                                                    </motion.div>
-                                                ));
-                                        })()}
+                                <div className="match-card-details">
+                                    <div className="match-detail-item">
+                                        <span className="match-detail-label">Location :</span>
+                                        <strong>{item.location}</strong>
                                     </div>
+                                    <div className="match-detail-item">
+                                        <span className="match-detail-label">Job Role :</span>
+                                        <strong>{item.role}</strong>
+                                    </div>
+                                    <div className="match-detail-item">
+                                        <span className="match-detail-label">Deadline :</span>
+                                        <strong>{item.deadline}</strong>
+                                    </div>
+                                </div>
+
+                            </motion.div>
+                        ));
+                })()}
+            </div>
 
 
 
 
-                                    {(() => {
-                                        const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
-                                        const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
+            {(() => {
+                const filtered = resumeMatches.filter(item => item.company.toLowerCase().includes(matchSearchQuery.toLowerCase()));
+                const totalPages = Math.max(1, Math.ceil(filtered.length / MATCHES_PER_PAGE));
 
-                                        return (
-                                            <div className="sd-pagination">
-                                                <button
-                                                    className="sd-page-btn"
-                                                    disabled={matchPage === 1}
-                                                    onClick={() => setMatchPage(p => p - 1)}
-                                                >
-                                                    ← Prev
-                                                </button>
-                                                <span className="sd-page-info">
-                                                    {matchPage} / {totalPages}
-                                                </span>
-                                                <button
-                                                    className="sd-page-btn"
-                                                    disabled={matchPage >= totalPages}
-                                                    onClick={() => setMatchPage(p => p + 1)}
-                                                >
-                                                    Next →
-                                                </button>
-                                            </div>
-                                        );
-                                    })()}
-                                </section>
+                return (
+                    <div className="sd-pagination">
+                        <button
+                            className="sd-page-btn"
+                            disabled={matchPage === 1}
+                            onClick={() => setMatchPage(p => p - 1)}
+                        >
+                            ← Prev
+                        </button>
+                        <span className="sd-page-info">
+                            {matchPage} / {totalPages}
+                        </span>
+                        <button
+                            className="sd-page-btn"
+                            disabled={matchPage >= totalPages}
+                            onClick={() => setMatchPage(p => p + 1)}
+                        >
+                            Next →
+                        </button>
+                    </div>
+                );
+            })()}
+        </section>
     );
 }
 export default function
@@ -1378,7 +1378,7 @@ export default function
 
             {selectedJob && (() => {
                 const eligibility = getJobEligibility(selectedJob);
-                    return (
+                return (
                     <div className="modal-overlay">
                         <button type="button" aria-label="Close" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={handleCancleApply} onKeyDown={(e) => { if (e.key === 'Escape') handleCancleApply(); }} />
                         <div className="student-apply-modal" style={{ position: "relative", zIndex: 1 }}>
