@@ -28,6 +28,34 @@ import StudHub from "./StudHub";
 // Default fallback mock data for Placement Drives
 const initialDrives = [];
 
+const handleImageError = (e) => {
+    e.target.style.display = 'none';
+    if (e.target.nextSibling) {
+        e.target.nextSibling.style.display = 'inline';
+    }
+};
+
+function CompanyLogoBadge({ company, logoUrl, logoColor, logoLetter, className = "company-logo-badge" }) {
+    const color = logoColor || '#e2e8f0';
+    const domain = typeof company === 'string' ? company.toLowerCase().replace(/\s+/g, '') : 'company';
+    const src = logoUrl || `https://www.google.com/s2/favicons?domain=${domain}.com&sz=128`;
+    const letter = logoLetter || (typeof company === 'string' ? company.charAt(0) : 'C');
+
+    return (
+        <div className={className} style={{ borderColor: color }}>
+            <img
+                src={src}
+                alt={company || 'Company'}
+                className="company-logo-img"
+                onError={handleImageError}
+            />
+            <span style={{ color, display: 'none' }}>
+                {letter}
+            </span>
+        </div>
+    );
+}
+
 
 const mapJobData = (job) => {
     const firstLetter = job.companyName ? job.companyName.charAt(0).toUpperCase() : 'C';
@@ -103,30 +131,35 @@ function ProfileLinkField({ label, isEditing, profileValue, tempValue, onChange,
     );
 }
 
+function ModalBackdrop({ onClose }) {
+    return (
+        <button
+            type="button"
+            aria-label="Close modal backdrop"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }}
+            onClick={onClose}
+            onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+        />
+    );
+}
+
 function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profile, isEditingProfile, setIsEditingProfile, handleEditProfileClick, handleCancelEdit, handleSaveProfile, tempProfile, setTempProfile }) {
     if (!isProfileModalOpen) return null;
+    const closeProfileModal = () => {
+        setIsProfileModalOpen(false);
+        setIsEditingProfile(false);
+    };
     return (
-<div className="modal-overlay">
-                    <button type="button" aria-label="Close" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={() => {
-                        setIsProfileModalOpen(false);
-                        setIsEditingProfile(false);
-                    }} onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                            setIsProfileModalOpen(false);
-                            setIsEditingProfile(false);
-                        }
-                    }} />
-                    <div className="student-apply-modal" style={{ position: "relative", zIndex: 1 }}>
+        <div className="modal-overlay">
+            <ModalBackdrop onClose={closeProfileModal} />
+            <div className="student-apply-modal" style={{ position: "relative", zIndex: 1 }}>
 
-                        <div className="modal-header">
-                            <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
-                            <button type="button" className="close-btn" onClick={() => {
-                                setIsProfileModalOpen(false);
-                                setIsEditingProfile(false);
-                            }}>
-                                <X size={20} />
-                            </button>
-                        </div>
+                <div className="modal-header">
+                    <h4>{isEditingProfile ? "Edit Profile" : "Student Profile"}</h4>
+                    <button type="button" className="close-btn" onClick={closeProfileModal}>
+                        <X size={20} />
+                    </button>
+                </div>
 
 
                         <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
@@ -164,10 +197,7 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
                                     </>
                                 ) : (
                                     <>
-                                        <button type="button" className="btn-cancel" onClick={() => {
-                                            setIsProfileModalOpen(false);
-                                            setIsEditingProfile(false);
-                                        }}>
+                                        <button type="button" className="btn-cancel" onClick={closeProfileModal}>
                                             Close
                                         </button>
                                         <button type="button" className="btn-post" onClick={handleEditProfileClick}>
@@ -184,33 +214,20 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
 
 function StudentChangePasswordModal({ isChangePasswordOpen, setIsChangePasswordOpen, passwordForm, setPasswordForm, showCurrentPassword, setShowCurrentPassword, showNewPassword, setShowNewPassword, showConfirmPassword, setShowConfirmPassword, handlePasswordSubmit }) {
     if (!isChangePasswordOpen) return null;
+    const closePasswordModal = () => {
+        setIsChangePasswordOpen(false);
+        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        setShowCurrentPassword(false);
+        setShowNewPassword(false);
+        setShowConfirmPassword(false);
+    };
     return (
-<div className="modal-overlay">
-                    <button type="button" aria-label="Close" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={() => {
-                        setIsChangePasswordOpen(false);
-                        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                        setShowCurrentPassword(false);
-                        setShowNewPassword(false);
-                        setShowConfirmPassword(false);
-                    }} onKeyDown={(e) => {
-                        if (e.key === 'Escape') {
-                            setIsChangePasswordOpen(false);
-                            setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                            setShowCurrentPassword(false);
-                            setShowNewPassword(false);
-                            setShowConfirmPassword(false);
-                        }
-                    }} />
-                    <div className="change-password-modal" style={{ position: "relative", zIndex: 1 }}>
+        <div className="modal-overlay">
+            <ModalBackdrop onClose={closePasswordModal} />
+            <div className="change-password-modal" style={{ position: "relative", zIndex: 1 }}>
                         <div className="modal-header">
                             <h4>Change Password</h4>
-                            <button className="btn-close-modal" onClick={() => {
-                                setIsChangePasswordOpen(false);
-                                setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                                setShowCurrentPassword(false);
-                                setShowNewPassword(false);
-                                setShowConfirmPassword(false);
-                            }}>
+                            <button type="button" className="btn-close-modal" onClick={closePasswordModal}>
                                 <X size={18} />
                             </button>
                         </div>
@@ -281,13 +298,7 @@ function StudentChangePasswordModal({ isChangePasswordOpen, setIsChangePasswordO
                                 <button
                                     type="button"
                                     className="btn-cancel-modal"
-                                    onClick={() => {
-                                        setIsChangePasswordOpen(false);
-                                        setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-                                        setShowCurrentPassword(false);
-                                        setShowNewPassword(false);
-                                        setShowConfirmPassword(false);
-                                    }}
+                                    onClick={closePasswordModal}
                                 >
                                     Cancel
                                 </button>
@@ -313,7 +324,7 @@ function StudentNotificationSidebar({ isNotificationSidebarOpen, setIsNotificati
 
     return (
 <div className="sd-notification-sidebar-overlay">
-                    <button type="button" aria-label="Close" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={() => setIsNotificationSidebarOpen(false)} onKeyDown={(e) => { if (e.key === 'Escape') setIsNotificationSidebarOpen(false); }} />
+                    <ModalBackdrop onClose={() => setIsNotificationSidebarOpen(false)} />
                     <div className="sd-notification-sidebar" style={{ zIndex: 1 }}>
                         <div className="sidebar-header">
                             <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -323,13 +334,14 @@ function StudentNotificationSidebar({ isNotificationSidebarOpen, setIsNotificati
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 {unreadCount > 0 && (
                                     <button
+                                        type="button"
                                         onClick={handleMarkAllRead}
                                         style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
                                     >
                                         Mark all as read
                                     </button>
                                 )}
-                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                                <button type="button" className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
                                     <X size={18} />
                                 </button>
                             </div>
@@ -416,20 +428,12 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                                                             animate={{ opacity: 1, y: 0 }}
                                                             transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
                                                             <div className="job-card-header">
-                                                                <div className="company-logo-badge" style={{ borderColor: job.logoColor || job.logoClor || '#e2e8f0' }}>
-                                                                    <img
-                                                                        src={job.logoUrl || job.logo || `https://www.google.com/s2/favicons?domain=${job.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                                        alt={job.company}
-                                                                        className="company-logo-img"
-                                                                        onError={(e) => {
-                                                                            e.target.style.display = 'none';
-                                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                                        }}
-                                                                    />
-                                                                    <span style={{ color: job.logoColor || job.logoClor, display: 'none' }}>
-                                                                        {job.logoLetter || job.company.charAt(0)}
-                                                                    </span>
-                                                                </div>
+                                                                 <CompanyLogoBadge
+                                                                    company={job.company}
+                                                                    logoUrl={job.logoUrl || job.logo}
+                                                                    logoColor={job.logoColor || job.logoClor}
+                                                                    logoLetter={job.logoLetter}
+                                                                />
                                                                 <h4 className="company-name">{job.company}</h4>
                                                                 <button
                                                                     className={`btn-apply ${isApplied ? 'applied' : ''}`}
@@ -532,20 +536,13 @@ function StudentResumeMatches({ resumeMatches, matchSearchQuery, setMatchSearchQ
 
                                                         <div className="match-card-header">
                                                             <div className="match-logo-details">
-                                                                <div className="logo-mini-badge" style={{ borderColor: item.logoColor || '#e2e8f0' }}>
-                                                                    <img
-                                                                        src={item.logoUrl || item.logo || `https://www.google.com/s2/favicons?domain=${item.company.toLowerCase().replace(/\s+/g, '')}.com&sz=128`}
-                                                                        alt={item.company}
-                                                                        className="company-logo-img"
-                                                                        onError={(e) => {
-                                                                            e.target.style.display = 'none';
-                                                                            if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline';
-                                                                        }}
-                                                                    />
-                                                                    <span style={{ color: item.logoColor, display: 'none' }}>
-                                                                        {item.logoLetter || item.company.charAt(0)}
-                                                                    </span>
-                                                                </div>
+                                                                <CompanyLogoBadge
+                                                                    company={item.company}
+                                                                    logoUrl={item.logoUrl || item.logo}
+                                                                    logoColor={item.logoColor}
+                                                                    logoLetter={item.logoLetter}
+                                                                    className="logo-mini-badge"
+                                                                />
                                                                 <h4 className="match-company-name">{item.company}</h4>
                                                             </div>
 
@@ -722,10 +719,16 @@ export default function
                 // Sort by date descending (assuming it's not already sorted, optional but good UX)
                 const parseDateStr = (dateStr, timeStr) => {
                     if (!dateStr) return 0;
-                    // dateStr is DD/MM/YYYY, timeStr is hh:mm A
-                    const [day, month, year] = dateStr.split('/');
-                    if (!year) return new Date(dateStr).getTime() || 0;
-                    const d = new Date(`${year}-${month}-${day}T00:00:00`);
+                    const parts = dateStr.split('/');
+                    if (parts.length !== 3) return new Date(dateStr).getTime() || 0;
+                    const numDay = Number.parseInt(parts[0], 10);
+                    const numMonth = Number.parseInt(parts[1], 10);
+                    const numYear = Number.parseInt(parts[2], 10);
+                    if (!numDay || !numMonth || !numYear) return 0;
+
+                    let numHours = 0;
+                    let numMinutes = 0;
+
                     if (timeStr) {
                         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
                         if (match) {
@@ -735,10 +738,12 @@ export default function
                             const upperAmPm = ampm.toUpperCase();
                             if (upperAmPm === 'PM' && h < 12) h += 12;
                             if (upperAmPm === 'AM' && h === 12) h = 0;
-                            d.setHours(h, m);
+                            numHours = h;
+                            numMinutes = m;
                         }
                     }
-                    return d.getTime();
+                    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHours, numMinutes));
+                    return utcDate.getTime();
                 };
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 

@@ -29,9 +29,16 @@ import {
 /** Parses a DD/MM/YYYY date string + 12-hour time string into a timestamp for sorting. */
 function parseDateStr(dateStr, timeStr) {
     if (!dateStr) return 0;
-    const [day, month, year] = dateStr.split('/');
-    if (!year) return new Date(dateStr).getTime() || 0;
-    const d = new Date(`${year}-${month}-${day}T00:00:00`);
+    const parts = dateStr.split('/');
+    if (parts.length !== 3) return new Date(dateStr).getTime() || 0;
+    const numDay = Number.parseInt(parts[0], 10);
+    const numMonth = Number.parseInt(parts[1], 10);
+    const numYear = Number.parseInt(parts[2], 10);
+    if (!numDay || !numMonth || !numYear) return 0;
+
+    let numHours = 0;
+    let numMinutes = 0;
+
     if (timeStr) {
         const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
         if (match) {
@@ -41,10 +48,12 @@ function parseDateStr(dateStr, timeStr) {
             const upperAmPm = ampm.toUpperCase();
             if (upperAmPm === 'PM' && h < 12) h += 12;
             if (upperAmPm === 'AM' && h === 12) h = 0;
-            d.setHours(h, m);
+            numHours = h;
+            numMinutes = m;
         }
     }
-    return d.getTime();
+    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHours, numMinutes));
+    return utcDate.getTime();
 }
 
 /*Converts a backend notification's raw date/time fields into localised display strings. */
