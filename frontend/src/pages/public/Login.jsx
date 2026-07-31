@@ -98,37 +98,40 @@ function Login({ onNavigate, initialView }) {
 
 
     const saveAdminProfile = (email, password, payload = {}) => {
+        const sanitizedName = String(payload.fullName || payload.name || payload.adminName || "Admin").trim();
+        const sanitizedEmail = String(payload.email || email).trim();
         localStorage.setItem("admin_user", JSON.stringify({
-            fullName: payload.fullName || payload.name || payload.adminName || "Admin",
-            email: payload.email || email,
+            fullName: sanitizedName,
+            email: sanitizedEmail,
             role: 'System Administrator'
         }));
         const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-        const adminEmail = (payload.email || email).trim();
+        const adminEmail = sanitizedEmail.toLowerCase();
         let found = false;
         const updated = adminProfiles.map(p => {
-            if (p.email?.trim().toLowerCase() === adminEmail.toLowerCase()) {
+            if (String(p.email || '').trim().toLowerCase() === adminEmail) {
                 found = true;
-                return { ...p, password };
+                return { ...p, password: String(password || '') };
             }
             return p;
         });
-        if (!found) updated.push({ email: adminEmail, password });
+        if (!found) updated.push({ email: sanitizedEmail, password: String(password || '') });
         localStorage.setItem('admin_profiles', JSON.stringify(updated));
     };
 
     const saveStudentProfile = (email, payload = {}) => {
-        const nameFromEmail = email.split('@')[0];
+        const cleanEmail = String(email || '').trim();
+        const nameFromEmail = cleanEmail.split('@')[0] || 'student';
         const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
         const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-        const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === email.trim().toLowerCase());
+        const matchedProfile = registeredProfiles.find(p => String(p.email || '').trim().toLowerCase() === cleanEmail.toLowerCase());
         
         if (matchedProfile) {
             localStorage.setItem("user", JSON.stringify(matchedProfile));
         } else {
             localStorage.setItem("user", JSON.stringify({
-                fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
-                email: payload.email || email
+                fullName: String(payload.fullName || payload.name || payload.studentName || fallbackName).trim(),
+                email: cleanEmail
             }));
         }
     };
@@ -161,7 +164,7 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const token = response.data.token;
+                const token = String(response.data.token).trim();
                 localStorage.setItem("token", token);
                 localStorage.setItem("role", isAdmin ? "admin" : "student");
                 
@@ -189,9 +192,8 @@ function Login({ onNavigate, initialView }) {
 
     const handleForgotSubmit = async () => {
         try {
-            const response = await forgotPassword(formData.email);
-            console.log("Forgot Password Response:", response.data);
-            localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
+            await forgotPassword(formData.email);
+            localStorage.setItem('allowed_reset_email', String(formData.email || '').trim().toLowerCase());
             showToastMessage("Reset link sent successfully! Check your email.", 'success', 2500, () => setLoginView('login'));
         } catch (error) {
             console.error("Forgot Password Error:", error);
@@ -340,7 +342,7 @@ function Login({ onNavigate, initialView }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}>
                     {/* Back to Home Action Button */}
-                    <button className="btn-back-home" onClick={() => onNavigate('landing')}>
+                    <button type="button" className="btn-back-home" onClick={() => onNavigate('landing')}>
                         <ArrowLeft size={16} />
                         Back to Home
                     </button>

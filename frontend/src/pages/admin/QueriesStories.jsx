@@ -366,7 +366,22 @@ export default function QueriesStories() {
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("placement_drives", JSON.stringify(drives));
+        if (!Array.isArray(drives)) return;
+        const sanitizedDrives = drives.map(drive => ({
+            id: drive.id,
+            company: String(drive.company || '').trim(),
+            role: String(drive.role || '').trim(),
+            date: String(drive.date || '').trim(),
+            time: String(drive.time || '').trim(),
+            venue: String(drive.venue || '').trim(),
+            targetStudent: Array.isArray(drive.targetStudent)
+                ? drive.targetStudent.map(t => String(t || '').trim())
+                : String(drive.targetStudent || '').trim(),
+            customTarget: String(drive.customTarget || '').trim(),
+            status: String(drive.status || '').trim(),
+            createdAt: drive.createdAt
+        }));
+        localStorage.setItem("placement_drives", JSON.stringify(sanitizedDrives));
     }, [drives]);
 
     // Modal states for adding/editing/deleting placement drives
@@ -535,7 +550,23 @@ export default function QueriesStories() {
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("placement_stories", JSON.stringify(stories));
+        if (!Array.isArray(stories)) return;
+        const sanitizedStories = stories.map(story => ({
+            id: story.id,
+            name: String(story.name || '').trim(),
+            branch: String(story.branch || '').trim(),
+            year: String(story.year || '').trim(),
+            company: String(story.company || '').trim(),
+            package: String(story.package || '').trim(),
+            quote: String(story.quote || '').trim(),
+            role: String(story.role || '').trim(),
+            tips: String(story.tips || '').trim(),
+            avatar: String(story.avatar || '').trim(),
+            logo: String(story.logo || '').trim(),
+            logoColor: String(story.logoColor || '').trim(),
+            createdAt: story.createdAt
+        }));
+        localStorage.setItem("placement_stories", JSON.stringify(sanitizedStories));
     }, [stories]);
 
     const [storyPage, setStoryPage] = useState(1);

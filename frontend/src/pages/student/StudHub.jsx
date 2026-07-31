@@ -387,6 +387,7 @@ const CampusDrivesPanel = ({ totalDrivePages, currentDrive, showDriveDetails, se
                 </div>
 
                 <button
+                    type="button"
                     className="btn-toggle-drive-details"
                     onClick={() => setShowDriveDetails(!showDriveDetails)}
                 >
@@ -613,7 +614,17 @@ function useStudHubData() {
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("student_queries", JSON.stringify(queries));
+        if (!Array.isArray(queries)) return;
+        const sanitizedQueries = queries.map(q => ({
+            id: q.id,
+            studentName: String(q.studentName || '').trim(),
+            subject: String(q.subject || '').trim(),
+            message: String(q.message || '').trim(),
+            date: String(q.date || '').trim(),
+            status: String(q.status || '').trim(),
+            reply: String(q.reply || '').trim()
+        }));
+        localStorage.setItem("student_queries", JSON.stringify(sanitizedQueries));
     }, [queries]);
 
     return { drives, setDrives, stories, setStories, queries, setQueries };
