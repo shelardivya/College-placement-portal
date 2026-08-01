@@ -282,7 +282,7 @@ function AdminHeader({
                             className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
                             aria-label="User profile menu"
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            style={{ border: 'none', cursor: 'pointer', padding: 0 }}
                         >
                             {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
                         </button>
