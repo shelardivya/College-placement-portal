@@ -501,29 +501,11 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                 )}
             </div>
 
-            {jobs && jobs.length > JOBS_PER_PAGE && (
-                <div className="sd-pagination">
-                    <button
-                        type="button"
-                        className="sd-page-btn"
-                        disabled={jobsPage === 1}
-                        onClick={() => setJobsPage(p => p - 1)}
-                    >
-                        ← Prev
-                    </button>
-                    <span className="sd-page-info">
-                        {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                    </span>
-                    <button
-                        type="button"
-                        className="sd-page-btn"
-                        disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
-                        onClick={() => setJobsPage(p => p + 1)}
-                    >
-                        Next →
-                    </button>
-                </div>
-            )}
+            <SimplePagination
+                currentPage={jobsPage}
+                totalPages={jobs ? Math.ceil(jobs.length / JOBS_PER_PAGE) : 0}
+                onPageChange={setJobsPage}
+            />
         </section>
     );
 }
