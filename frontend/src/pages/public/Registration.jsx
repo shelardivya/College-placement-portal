@@ -234,8 +234,7 @@ function Registration({ onNavigate }) {
 
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
-                const tokenStr = String(response.data.token).trim();
-                localStorage.setItem("token", encodeURIComponent(tokenStr.replace(/[^A-Za-z0-9._-]/g, '')));
+                localStorage.setItem("token", encodeURIComponent(String(response.data.token).replace(/[^A-Za-z0-9._-]/g, '').trim()));
             }
 
             // Save student details to local registry
