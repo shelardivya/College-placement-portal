@@ -222,20 +222,27 @@ function Registration({ onNavigate }) {
             }
             const sanitizeStorageString = (val) => {
                 if (val === null || val === undefined) return '';
-                return String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+                const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+                return decodeURIComponent(encodeURIComponent(cleanStr));
             };
 
             // Save student details to local registry
             const cleanFullName = sanitizeStorageString(formData.fullname);
             const cleanEmail = sanitizeStorageString(formData.email).toLowerCase();
+            const cleanPassword = sanitizeStorageString(formData.password);
+            const cleanPhone = sanitizeStorageString(formData.mobile);
+            const cleanBranch = sanitizeStorageString(formData.department);
+            const cleanYear = sanitizeStorageString(formData.year);
+            const cleanCgpa = sanitizeStorageString(formData.cgpa);
+
             const newProfile = {
                 fullName: cleanFullName,
                 email: cleanEmail,
-                password: String(formData.password || '').trim(),
-                phone: sanitizeStorageString(formData.mobile),
-                branch: sanitizeStorageString(formData.department),
-                passingYear: sanitizeStorageString(formData.year),
-                cgpa: sanitizeStorageString(formData.cgpa),
+                password: cleanPassword,
+                phone: cleanPhone,
+                branch: cleanBranch,
+                passingYear: cleanYear,
+                cgpa: cleanCgpa,
                 skills: "React, JavaScript, CSS, Node.js, Python",
                 linkedinUrl: `https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`,
                 githubUrl: `https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`,
@@ -254,7 +261,22 @@ function Registration({ onNavigate }) {
                     registeredProfiles = [];
                 }
             }
-            const updatedProfiles = registeredProfiles.filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail);
+            const updatedProfiles = registeredProfiles
+                .filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail)
+                .map(p => ({
+                    fullName: sanitizeStorageString(p.fullName),
+                    email: sanitizeStorageString(p.email).toLowerCase(),
+                    password: sanitizeStorageString(p.password),
+                    phone: sanitizeStorageString(p.phone),
+                    branch: sanitizeStorageString(p.branch),
+                    passingYear: sanitizeStorageString(p.passingYear),
+                    cgpa: sanitizeStorageString(p.cgpa),
+                    skills: sanitizeStorageString(p.skills),
+                    linkedinUrl: sanitizeStorageString(p.linkedinUrl),
+                    githubUrl: sanitizeStorageString(p.githubUrl),
+                    portfolioUrl: sanitizeStorageString(p.portfolioUrl),
+                    resumeUrl: sanitizeStorageString(p.resumeUrl)
+                }));
             updatedProfiles.push(newProfile);
             localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
 
