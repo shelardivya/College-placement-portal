@@ -216,15 +216,16 @@ function Registration({ onNavigate }) {
         try {
             const response = await registerStudent(requestBody);
 
-            // 1. Save the backend token and student details to localStorage
-            if (response.data?.token) {
-                localStorage.setItem("token", String(response.data.token).trim());
-            }
             const sanitizeStorageString = (val) => {
                 if (val === null || val === undefined) return '';
                 const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
                 return encodeURIComponent(cleanStr);
             };
+
+            // 1. Save the backend token and student details to localStorage
+            if (response.data?.token) {
+                localStorage.setItem("token", sanitizeStorageString(response.data.token));
+            }
 
             const getStorageString = (val) => {
                 if (val === null || val === undefined) return '';
