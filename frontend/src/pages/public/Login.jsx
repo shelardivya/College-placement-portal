@@ -39,7 +39,8 @@ function Login({ onNavigate, initialView }) {
     //Form input state tracking
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
-        const initialEmail = params.get('email') || '';
+        const rawEmail = params.get('email') || '';
+        const initialEmail = String(rawEmail).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
         let initialPass = '';
         if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');

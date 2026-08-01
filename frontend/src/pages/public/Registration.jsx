@@ -244,8 +244,8 @@ function Registration({ onNavigate }) {
                 passingYear: cleanYear,
                 cgpa: cleanCgpa,
                 skills: "React, JavaScript, CSS, Node.js, Python",
-                linkedinUrl: `https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`,
-                githubUrl: `https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`,
+                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`),
+                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`),
                 portfolioUrl: "",
                 resumeUrl: ""
             };
