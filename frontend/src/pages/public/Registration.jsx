@@ -223,7 +223,16 @@ function Registration({ onNavigate }) {
             const sanitizeStorageString = (val) => {
                 if (val === null || val === undefined) return '';
                 const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-                return decodeURIComponent(encodeURIComponent(cleanStr));
+                return encodeURIComponent(cleanStr);
+            };
+
+            const getStorageString = (val) => {
+                if (val === null || val === undefined) return '';
+                try {
+                    return decodeURIComponent(String(val));
+                } catch {
+                    return String(val);
+                }
             };
 
             // Save student details to local registry
@@ -243,9 +252,9 @@ function Registration({ onNavigate }) {
                 branch: cleanBranch,
                 passingYear: cleanYear,
                 cgpa: cleanCgpa,
-                skills: "React, JavaScript, CSS, Node.js, Python",
-                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`),
-                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`),
+                skills: sanitizeStorageString("React, JavaScript, CSS, Node.js, Python"),
+                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(formData.fullname.toLowerCase().replace(/\s+/g, '-'))}`),
+                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(formData.fullname.toLowerCase().replace(/\s+/g, ''))}`),
                 portfolioUrl: "",
                 resumeUrl: ""
             };
@@ -262,7 +271,7 @@ function Registration({ onNavigate }) {
                 }
             }
             const updatedProfiles = registeredProfiles
-                .filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail)
+                .filter(p => getStorageString(p.email).toLowerCase() !== getStorageString(cleanEmail).toLowerCase())
                 .map(p => ({
                     fullName: sanitizeStorageString(p.fullName),
                     email: sanitizeStorageString(p.email).toLowerCase(),

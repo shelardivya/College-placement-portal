@@ -16,11 +16,20 @@ import {
 } from 'lucide-react';
 import './QueriesStories.css';
 
-/** Sanitizes string input using encodeURIComponent to satisfy SonarQube DOM storage taint rules. */
+/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
     const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-    return decodeURIComponent(encodeURIComponent(cleanStr));
+    return encodeURIComponent(cleanStr);
+}
+
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    try {
+        return decodeURIComponent(String(val));
+    } catch {
+        return String(val);
+    }
 }
 
 /*
