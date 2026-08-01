@@ -212,6 +212,7 @@ function AdminHeader({
                         { id: 'queries', label: 'Queries & Stories' }
                     ].map(item => (
                         <button
+                            type="button"
                             key={item.id}
                             className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
                             onClick={() => setActiveTab(item.id)}
@@ -426,7 +427,7 @@ function RecentPostingsCard({
                 transition={{ duration: 0.4, delay: 0.2 }}>
                 <div className='card-box-header'>
                     <h4>Placement Posting Management</h4>
-                    <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
+                    <button type="button" className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
                         <Plus size={16} />
                         Create New Job Posting
                     </button>
@@ -607,7 +608,7 @@ function ApplicantsMatchingCard({
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
-                            <button className="search-btn">
+                            <button type="button" className="search-btn">
                                 <Search size={16} />
                             </button>
                         </div>
@@ -615,6 +616,7 @@ function ApplicantsMatchingCard({
                         <div className="custom-dropdown-container">
                             <span className="filter-label">Filter by</span>
                             <button
+                                type="button"
                                 className="dropdown-btn"
                                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
                             >
@@ -645,6 +647,7 @@ function ApplicantsMatchingCard({
                         {filterBy === 'By Date' && (
                             <div className="custom-date-picker-container" ref={datePickerRef}>
                                 <button
+                                    type="button"
                                     className="date-picker-trigger"
                                     onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
                                 >
@@ -689,8 +692,8 @@ function ApplicantsMatchingCard({
                                             })}
                                         </div>
                                         <div className="calendar-footer">
-                                            <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                            <button className="calendar-today-btn" onClick={() => {
+                                            <button type="button" className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
+                                            <button type="button" className="calendar-today-btn" onClick={() => {
                                                 const today = new Date();
                                                 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                                                 setFilterDate(todayStr);
@@ -753,6 +756,7 @@ function ApplicantsMatchingCard({
 
                 <div className='pagination-controls'>
                     <button
+                        type="button"
                         className='btn-pagination'
                         disabled={applicantsCurrentPage === 1}
                         onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
@@ -763,6 +767,7 @@ function ApplicantsMatchingCard({
                         Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
                     </span>
                     <button
+                        type="button"
                         className='btn-pagination'
                         disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
                         onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
@@ -803,7 +808,7 @@ function AddJobModal({
             <div className='add-job-modal'>
                 <div className='modal-header'>
                     <h4>Add Job Posting</h4>
-                    <button className='close-btn' onClick={() => setIsSidebarOpen(false)}>
+                    <button type="button" className='close-btn' onClick={() => setIsSidebarOpen(false)}>
                         <X size={20} />
                     </button>
                 </div>
@@ -1300,7 +1305,7 @@ function ProfileSettingsModal({
                                 <span>Edit Profile</span>
                             </button>
                         )}
-                        <button className='close-btn' onClick={handleCloseProfileModal}>
+                        <button type="button" className='close-btn' onClick={handleCloseProfileModal}>
                             <X size={20} />
                         </button>
                     </div>
@@ -1939,9 +1944,9 @@ function AdminDashboard({ onNavigate }) {
             const userInStorage = JSON.parse(localStorage.getItem("admin_user") || "{}");
             const updatedUser = {
                 ...userInStorage,
-                fullName: adminProfile.name,
-                email: adminProfile.email,
-                phone: adminProfile.phone
+                fullName: String(adminProfile.name || '').trim(),
+                email: String(adminProfile.email || '').trim(),
+                phone: String(adminProfile.phone || '').trim()
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
 

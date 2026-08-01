@@ -69,9 +69,9 @@ function LandingPage({ onNavigate }) {
                         <p>Manage placements, upload resumes, and track your placement journey from one centralized platform  -  built for students and the placement cell.</p>
 
                         <div className='hero-buttons'>
-                            <button className='btn-register' onClick={() => onNavigate('register')}>Register Now <ArrowRight size={18} />
+                            <button type="button" className='btn-register' onClick={() => onNavigate('register')}>Register Now <ArrowRight size={18} />
                             </button>
-                            <button className='btn-login' onClick={() => onNavigate('login')}>Login <ChevronRight size={18} />
+                            <button type="button" className='btn-login' onClick={() => onNavigate('login')}>Login <ChevronRight size={18} />
                             </button>
                         </div>
                     </motion.div>
@@ -351,11 +351,11 @@ function LandingPage({ onNavigate }) {
                     <h2>Ready to Start Your Placement Journey?</h2>
                     <p>Join 500+ students already using <strong>College Placement Portal</strong> to land their dream jobs.</p>
                     <div className="cta-buttons">
-                        <button className="btn-create-account" onClick={() => onNavigate('register')}>
+                        <button type="button" className="btn-create-account" onClick={() => onNavigate('register')}>
                             <UserPlus size={16} />
                             Create Account
                         </button>
-                        <button className="btn-sign-in" onClick={() => onNavigate('login')}>
+                        <button type="button" className="btn-sign-in" onClick={() => onNavigate('login')}>
                             <LogIn size={16} />
                             Sign In
                         </button>

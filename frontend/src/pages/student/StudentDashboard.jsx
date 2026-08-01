@@ -404,8 +404,34 @@ function StudentMetricsGrid({ metrics }) {
 
                 </motion.div>
             ))}
-
         </section>
+    );
+}
+
+function SimplePagination({ currentPage, totalPages, onPageChange }) {
+    if (!totalPages || totalPages <= 1) return null;
+    return (
+        <div className="sd-pagination">
+            <button
+                type="button"
+                className="sd-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => onPageChange(currentPage - 1)}
+            >
+                ← Prev
+            </button>
+            <span className="sd-page-info">
+                {currentPage} / {totalPages}
+            </span>
+            <button
+                type="button"
+                className="sd-page-btn"
+                disabled={currentPage >= totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+            >
+                Next →
+            </button>
+        </div>
     );
 }
 
@@ -420,13 +446,14 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                 {jobs && jobs.length > 0 ? (
                     jobs
                         .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
-                        .map((job, index) => {
-                            const isApplied = job.isApplied || appliedJobs.includes(job.id);
+                        .map((job) => {
+                            const isApplied = appliedJobs[job.id || job._id];
                             return (
-                                <motion.div className="job-card" key={job.id}
-                                    initial={{ opacity: 0, y: -20 }}
+                                <motion.div className="job-card" key={job.id || job._id || job.title}
+                                    initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+                                    transition={{ duration: 0.3 }}>
+
                                     <div className="job-card-header">
                                         <CompanyLogoBadge
                                             company={job.company}
@@ -436,6 +463,7 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                                         />
                                         <h4 className="company-name">{job.company}</h4>
                                         <button
+                                            type="button"
                                             className={`btn-apply ${isApplied ? 'applied' : ''}`}
                                             disabled={isApplied}
                                             onClick={() => handleApplyClick(job)}
@@ -476,6 +504,7 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
             {jobs && jobs.length > JOBS_PER_PAGE && (
                 <div className="sd-pagination">
                     <button
+                        type="button"
                         className="sd-page-btn"
                         disabled={jobsPage === 1}
                         onClick={() => setJobsPage(p => p - 1)}
@@ -486,6 +515,7 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                         {jobsPage} / {Math.ceil(jobs.length / JOBS_PER_PAGE)}
                     </span>
                     <button
+                        type="button"
                         className="sd-page-btn"
                         disabled={jobsPage >= Math.ceil(jobs.length / JOBS_PER_PAGE)}
                         onClick={() => setJobsPage(p => p + 1)}
@@ -854,7 +884,15 @@ export default function
                     const existingUser = JSON.parse(localStorage.getItem("user") || "{}");
                     localStorage.setItem("user", JSON.stringify({
                         ...existingUser,
-                        ...freshData
+                        fullName: String(freshData.fullName || existingUser.fullName || '').trim(),
+                        email: String(freshData.email || existingUser.email || '').trim(),
+                        phone: String(freshData.phone || existingUser.phone || '').trim(),
+                        branch: String(freshData.branch || existingUser.branch || '').trim(),
+                        passingYear: String(freshData.passingYear || existingUser.passingYear || '').trim(),
+                        cgpa: String(freshData.cgpa || existingUser.cgpa || '').trim(),
+                        skills: String(freshData.skills || existingUser.skills || '').trim(),
+                        linkedinUrl: String(freshData.linkedinUrl || existingUser.linkedinUrl || '').trim(),
+                        githubUrl: String(freshData.githubUrl || existingUser.githubUrl || '').trim()
                     }));
 
                 }
@@ -922,15 +960,15 @@ export default function
             setProfile({ ...tempProfile });
             localStorage.setItem("user", JSON.stringify({
                 ...JSON.parse(localStorage.getItem("user") || "{}"),
-                fullName: tempProfile.fullName,
-                email: tempProfile.email,
-                phone: tempProfile.phone,
-                branch: tempProfile.branch,
-                passingYear: tempProfile.passingYear,
-                cgpa: tempProfile.cgpa,
-                skills: tempProfile.skills,
-                linkedinUrl: tempProfile.linkedinUrl,
-                githubUrl: tempProfile.githubUrl
+                fullName: String(tempProfile.fullName || '').trim(),
+                email: String(tempProfile.email || '').trim(),
+                phone: String(tempProfile.phone || '').trim(),
+                branch: String(tempProfile.branch || '').trim(),
+                passingYear: String(tempProfile.passingYear || '').trim(),
+                cgpa: String(tempProfile.cgpa || '').trim(),
+                skills: String(tempProfile.skills || '').trim(),
+                linkedinUrl: String(tempProfile.linkedinUrl || '').trim(),
+                githubUrl: String(tempProfile.githubUrl || '').trim()
             }));
             setIsEditingProfile(false);
 
@@ -1129,8 +1167,7 @@ export default function
             value: dashboardStats ? `${dashboardStats.profileCompleted || 0}%` : `${profileCompletion}%`,
             icon: <User className="metric-icon-blue" />,
             colorClass: "blue",
-            progress: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion,
-            progess: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion
+            progress: dashboardStats ? (dashboardStats.profileCompleted || 0) : profileCompletion
         },
         {
             id: "selected",
@@ -1138,8 +1175,7 @@ export default function
             value: dashboardStats ? String(dashboardStats.selected || 0) : "0",
             icon: <CheckCircle2 className="metric-icon-green" />,
             colorClass: "green",
-            progress: dashboardStats?.selected ? 100 : 0,
-            progess: dashboardStats?.selected ? 100 : 0
+            progress: dashboardStats?.selected ? 100 : 0
         },
         {
             id: "pending",
@@ -1147,8 +1183,7 @@ export default function
             value: dashboardStats ? String(dashboardStats.pending || 0) : "0",
             icon: <Clock className="metric-icon-orange" />,
             colorClass: "orange",
-            progress: dashboardStats?.pending ? 100 : 0,
-            progess: dashboardStats?.pending ? 100 : 0
+            progress: dashboardStats?.pending ? 100 : 0
         },
         {
             id: "rejected",
@@ -1156,8 +1191,7 @@ export default function
             value: dashboardStats ? String(dashboardStats.rejected || 0) : "0",
             icon: <XCircle className="metric-icon-red" />,
             colorClass: "red",
-            progress: dashboardStats?.rejected ? 100 : 0,
-            progess: dashboardStats?.rejected ? 100 : 0
+            progress: dashboardStats?.rejected ? 100 : 0
         }
     ];
 
@@ -1305,14 +1339,14 @@ export default function
                                     <p>{profile.email}</p>
                                 </div>
                                 <hr className="dropdown-divider" />
-                                <button className="dropdown-item" onClick={() => {
+                                <button type="button" className="dropdown-item" onClick={() => {
                                     setIsProfileModalOpen(true);
                                     setIsProfileDropdownOpen(false);
                                 }}>
                                     <User size={16} />
                                     <span>View Profile</span>
                                 </button>
-                                <button className="dropdown-item" onClick={() => {
+                                <button type="button" className="dropdown-item" onClick={() => {
                                     setIsChangePasswordOpen(true);
                                     setIsProfileDropdownOpen(false);
                                 }}>
@@ -1320,7 +1354,7 @@ export default function
                                     <span>Change Password</span>
                                 </button>
                                 <hr className="dropdown-divider" />
-                                <button className="dropdown-item logout-btn" onClick={handleLogout}>
+                                <button type="button" className="dropdown-item logout-btn" onClick={handleLogout}>
                                     <LogOut size={16} />
                                     <span>Logout</span>
                                 </button>
@@ -1531,7 +1565,7 @@ export default function
                                                         <span className="file-name-text">{resumeFileName}</span>
                                                         <span className="file-size-text">{(resumeFile?.size / 1024).toFixed(1)} KB</span>
                                                     </div>
-                                                    <button className="file-remove-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setResumeFileName(""); setResumeFile(null); }}>Remove</button>
+                                                    <button type="button" className="file-remove-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setResumeFileName(""); setResumeFile(null); }}>Remove</button>
                                                 </div>
                                             ) : (
                                                 <div className="file-upload-placeholder">

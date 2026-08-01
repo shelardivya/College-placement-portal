@@ -7,7 +7,7 @@ function ResetLinkModal({ isOpen, onClose, onSimulateClick }) {
     if (!isOpen) return null;
 
     return (
-        <div className="modal-overlay">
+        <button type="button" className="modal-overlay" aria-label="Close reset link modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
             <div className="modal-container">
 
                 {/*Visual Header Graphic*/}
@@ -31,17 +31,17 @@ function ResetLinkModal({ isOpen, onClose, onSimulateClick }) {
 
                 {/*Simulated action triggers*/}
                 <div className="modal-actions">
-                    <button className="btn-cancel-modal" onClick={onClose}>
+                    <button type="button" className="btn-cancel-modal" onClick={onClose}>
                         Close
                     </button>
 
-                    <button className="btn-simulate-modal" onClick={onSimulateClick}>
+                    <button type="button" className="btn-simulate-modal" onClick={onSimulateClick}>
                         Simulate Link CLick
                         <ArrowRight size={16} />
                     </button>
                 </div>
             </div>
-        </div>
+        </button>
     );
 }
 

@@ -218,27 +218,29 @@ function Registration({ onNavigate }) {
 
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
-                localStorage.setItem("token", response.data.token);
+                localStorage.setItem("token", String(response.data.token).trim());
             }
             // Save student details to local registry
+            const cleanFullName = String(formData.fullname || '').trim();
+            const cleanEmail = String(formData.email || '').trim();
             const newProfile = {
-                fullName: formData.fullname,
-                email: formData.email,
-                password: formData.password,
-                phone: formData.mobile,
-                branch: formData.department,
-                passingYear: formData.year,
-                cgpa: formData.cgpa,
+                fullName: cleanFullName,
+                email: cleanEmail,
+                password: String(formData.password || ''),
+                phone: String(formData.mobile || '').trim(),
+                branch: String(formData.department || '').trim(),
+                passingYear: String(formData.year || '').trim(),
+                cgpa: String(formData.cgpa || '').trim(),
                 skills: "React, JavaScript, CSS, Node.js, Python",
-                linkedinUrl: `https://linkedin.com/in/${formData.fullname.toLowerCase().replace(/\s+/g, '-')}`,
-                githubUrl: `https://github.com/${formData.fullname.toLowerCase().replace(/\s+/g, '')}`,
+                linkedinUrl: `https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`,
+                githubUrl: `https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`,
                 portfolioUrl: "",
                 resumeUrl: ""
             };
             localStorage.setItem("user", JSON.stringify(newProfile));
 
             const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-            const updatedProfiles = registeredProfiles.filter(p => p.email.toLowerCase() !== formData.email.toLowerCase());
+            const updatedProfiles = registeredProfiles.filter(p => String(p.email || '').trim().toLowerCase() !== cleanEmail.toLowerCase());
             updatedProfiles.push(newProfile);
             localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
 
@@ -431,7 +433,7 @@ function Registration({ onNavigate }) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}>
                     {/* Back to Home Button */}
-                    <button className="btn-back-home" onClick={() => onNavigate('landing')}>
+                    <button type="button" className="btn-back-home" onClick={() => onNavigate('landing')}>
                         <ArrowLeft size={16} />
                         Back to Home
                     </button>
