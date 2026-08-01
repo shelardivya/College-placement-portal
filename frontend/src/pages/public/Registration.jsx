@@ -220,17 +220,22 @@ function Registration({ onNavigate }) {
             if (response.data?.token) {
                 localStorage.setItem("token", String(response.data.token).trim());
             }
+            const sanitizeStorageString = (val) => {
+                if (val === null || val === undefined) return '';
+                return String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+            };
+
             // Save student details to local registry
-            const cleanFullName = String(formData.fullname || '').trim();
-            const cleanEmail = String(formData.email || '').trim();
+            const cleanFullName = sanitizeStorageString(formData.fullname);
+            const cleanEmail = sanitizeStorageString(formData.email).toLowerCase();
             const newProfile = {
                 fullName: cleanFullName,
                 email: cleanEmail,
-                password: String(formData.password || ''),
-                phone: String(formData.mobile || '').trim(),
-                branch: String(formData.department || '').trim(),
-                passingYear: String(formData.year || '').trim(),
-                cgpa: String(formData.cgpa || '').trim(),
+                password: String(formData.password || '').trim(),
+                phone: sanitizeStorageString(formData.mobile),
+                branch: sanitizeStorageString(formData.department),
+                passingYear: sanitizeStorageString(formData.year),
+                cgpa: sanitizeStorageString(formData.cgpa),
                 skills: "React, JavaScript, CSS, Node.js, Python",
                 linkedinUrl: `https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`,
                 githubUrl: `https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`,
@@ -239,8 +244,17 @@ function Registration({ onNavigate }) {
             };
             localStorage.setItem("user", JSON.stringify(newProfile));
 
-            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-            const updatedProfiles = registeredProfiles.filter(p => String(p.email || '').trim().toLowerCase() !== cleanEmail.toLowerCase());
+            const rawProfiles = localStorage.getItem("registered_profiles");
+            let registeredProfiles = [];
+            if (rawProfiles) {
+                try {
+                    const parsed = JSON.parse(rawProfiles);
+                    if (Array.isArray(parsed)) registeredProfiles = parsed;
+                } catch {
+                    registeredProfiles = [];
+                }
+            }
+            const updatedProfiles = registeredProfiles.filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail);
             updatedProfiles.push(newProfile);
             localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
 

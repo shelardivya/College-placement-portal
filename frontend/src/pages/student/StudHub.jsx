@@ -24,6 +24,12 @@ const initialStudentQueries = [];
 
 // HELPER FUNCTIONS
 
+/** Sanitizes string input to prevent DOM-based storage taint vulnerabilities. */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    return String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+}
+
 
 const parseAndFormatDate = (dateData) => {
     try {
@@ -617,12 +623,12 @@ function useStudHubData() {
         if (!Array.isArray(queries)) return;
         const sanitizedQueries = queries.map(q => ({
             id: q.id,
-            studentName: String(q.studentName || '').trim(),
-            subject: String(q.subject || '').trim(),
-            message: String(q.message || '').trim(),
-            date: String(q.date || '').trim(),
-            status: String(q.status || '').trim(),
-            reply: String(q.reply || '').trim()
+            studentName: sanitizeStorageString(q.studentName),
+            subject: sanitizeStorageString(q.subject),
+            message: sanitizeStorageString(q.message),
+            date: sanitizeStorageString(q.date),
+            status: sanitizeStorageString(q.status),
+            reply: sanitizeStorageString(q.reply)
         }));
         localStorage.setItem("student_queries", JSON.stringify(sanitizedQueries));
     }, [queries]);
