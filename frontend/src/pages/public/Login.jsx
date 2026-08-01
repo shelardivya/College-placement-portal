@@ -212,16 +212,13 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const rawToken = String(response.data.token).trim();
-                const sanitizedToken = encodeURIComponent(rawToken.replace(/[^A-Za-z0-9._-]/g, ''));
-                if (sanitizedToken) {
-                    localStorage.setItem("token", sanitizedToken);
-                }
+                const tokenStr = String(response.data.token).trim();
+                localStorage.setItem("token", encodeURIComponent(tokenStr.replace(/[^A-Za-z0-9._-]/g, '')));
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 let payload = {};
                 try {
-                    payload = JSON.parse(atob(token.split('.')[1]));
+                    payload = JSON.parse(atob(tokenStr.split('.')[1]));
                 } catch {
                     // ignore parse error
                 }
