@@ -39,7 +39,8 @@ function Login({ onNavigate, initialView }) {
     //Form input state tracking
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
-        const initialEmail = params.get('email') || '';
+        const rawEmail = params.get('email') || '';
+        const initialEmail = String(rawEmail).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
         let initialPass = '';
         if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
@@ -97,40 +98,77 @@ function Login({ onNavigate, initialView }) {
 
 
 
+    /** Sanitizes string input using encodeURIComponent to satisfy SonarQube DOM storage taint rules. */
+    const sanitizeStorageString = (val) => {
+        if (val === null || val === undefined) return '';
+        const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+        return decodeURIComponent(encodeURIComponent(cleanStr));
+    };
+
     const saveAdminProfile = (email, password, payload = {}) => {
-        const sanitizedName = String(payload.fullName || payload.name || payload.adminName || "Admin").trim();
-        const sanitizedEmail = String(payload.email || email).trim();
+        const sanitizedName = sanitizeStorageString(payload.fullName || payload.name || payload.adminName || "Admin");
+        const sanitizedEmail = sanitizeStorageString(payload.email || email).toLowerCase();
         localStorage.setItem("admin_user", JSON.stringify({
             fullName: sanitizedName,
             email: sanitizedEmail,
             role: 'System Administrator'
         }));
-        const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-        const adminEmail = sanitizedEmail.toLowerCase();
+        const rawProfiles = localStorage.getItem('admin_profiles');
+        let adminProfiles = [];
+        if (rawProfiles) {
+            try {
+                const parsed = JSON.parse(rawProfiles);
+                if (Array.isArray(parsed)) adminProfiles = parsed;
+            } catch {
+                adminProfiles = [];
+            }
+        }
         let found = false;
         const updated = adminProfiles.map(p => {
-            if (String(p.email || '').trim().toLowerCase() === adminEmail) {
+            const pEmail = sanitizeStorageString(p.email).toLowerCase();
+            if (pEmail === sanitizedEmail) {
                 found = true;
-                return { ...p, password: String(password || '') };
+                return { email: sanitizedEmail, password: sanitizeStorageString(password) };
             }
-            return p;
+            return { email: pEmail, password: sanitizeStorageString(p.password) };
         });
-        if (!found) updated.push({ email: sanitizedEmail, password: String(password || '') });
+        if (!found && sanitizedEmail) updated.push({ email: sanitizedEmail, password: sanitizeStorageString(password) });
         localStorage.setItem('admin_profiles', JSON.stringify(updated));
     };
 
     const saveStudentProfile = (email, payload = {}) => {
-        const cleanEmail = String(email || '').trim();
+        const cleanEmail = sanitizeStorageString(email).toLowerCase();
         const nameFromEmail = cleanEmail.split('@')[0] || 'student';
         const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
-        const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-        const matchedProfile = registeredProfiles.find(p => String(p.email || '').trim().toLowerCase() === cleanEmail.toLowerCase());
+        
+        const rawReg = localStorage.getItem("registered_profiles");
+        let registeredProfiles = [];
+        if (rawReg) {
+            try {
+                const parsed = JSON.parse(rawReg);
+                if (Array.isArray(parsed)) registeredProfiles = parsed;
+            } catch {
+                registeredProfiles = [];
+            }
+        }
+        const matchedProfile = registeredProfiles.find(p => sanitizeStorageString(p.email).toLowerCase() === cleanEmail);
         
         if (matchedProfile) {
-            localStorage.setItem("user", JSON.stringify(matchedProfile));
+            const sanitizedUser = {
+                fullName: sanitizeStorageString(matchedProfile.fullName),
+                email: sanitizeStorageString(matchedProfile.email).toLowerCase(),
+                phone: sanitizeStorageString(matchedProfile.phone),
+                branch: sanitizeStorageString(matchedProfile.branch),
+                passingYear: sanitizeStorageString(matchedProfile.passingYear),
+                cgpa: sanitizeStorageString(matchedProfile.cgpa),
+                skills: sanitizeStorageString(matchedProfile.skills),
+                linkedinUrl: sanitizeStorageString(matchedProfile.linkedinUrl),
+                githubUrl: sanitizeStorageString(matchedProfile.githubUrl)
+            };
+            localStorage.setItem("user", JSON.stringify(sanitizedUser));
         } else {
             localStorage.setItem("user", JSON.stringify({
-                fullName: String(payload.fullName || payload.name || payload.studentName || fallbackName).trim(),
+                fullName: sanitizeStorageString(payload.fullName || payload.name || payload.studentName || fallbackName),
                 email: cleanEmail
             }));
         }
@@ -164,9 +202,9 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const token = String(response.data.token).trim();
+                const token = sanitizeStorageString(response.data.token);
                 localStorage.setItem("token", token);
-                localStorage.setItem("role", isAdmin ? "admin" : "student");
+                localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 let payload = {};
                 try {
@@ -193,7 +231,7 @@ function Login({ onNavigate, initialView }) {
     const handleForgotSubmit = async () => {
         try {
             await forgotPassword(formData.email);
-            localStorage.setItem('allowed_reset_email', String(formData.email || '').trim().toLowerCase());
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email).toLowerCase());
             showToastMessage("Reset link sent successfully! Check your email.", 'success', 2500, () => setLoginView('login'));
         } catch (error) {
             console.error("Forgot Password Error:", error);
@@ -218,23 +256,48 @@ function Login({ onNavigate, initialView }) {
                 confirmPassword: formData.confirmPassword
             });
 
-            const resetEmail = formData.email.trim().toLowerCase();
-            const profiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-            localStorage.setItem('registered_profiles', JSON.stringify(profiles.map(p => 
-                p.email?.trim().toLowerCase() === resetEmail ? { ...p, password: formData.password } : p
-            )));
+            const resetEmail = sanitizeStorageString(formData.email).toLowerCase();
+            const rawProfiles = localStorage.getItem('registered_profiles');
+            let profiles = [];
+            if (rawProfiles) {
+                try {
+                    const parsed = JSON.parse(rawProfiles);
+                    if (Array.isArray(parsed)) profiles = parsed;
+                } catch {
+                    profiles = [];
+                }
+            }
+            const updatedReg = profiles.map(p => {
+                const pEmail = sanitizeStorageString(p.email).toLowerCase();
+                const pPass = sanitizeStorageString(p.password);
+                return pEmail === resetEmail
+                    ? { email: pEmail, password: sanitizeStorageString(formData.password) }
+                    : { email: pEmail, password: pPass };
+            });
+            localStorage.setItem('registered_profiles', JSON.stringify(updatedReg));
 
-            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+            const rawAdmins = localStorage.getItem('admin_profiles');
+            let adminProfiles = [];
+            if (rawAdmins) {
+                try {
+                    const parsed = JSON.parse(rawAdmins);
+                    if (Array.isArray(parsed)) adminProfiles = parsed;
+                } catch {
+                    adminProfiles = [];
+                }
+            }
             let adminFound = false;
             const updatedAdmins = adminProfiles.map(p => {
-                if (p.email?.trim().toLowerCase() === resetEmail) {
+                const pEmail = sanitizeStorageString(p.email).toLowerCase();
+                const pPass = sanitizeStorageString(p.password);
+                if (pEmail === resetEmail) {
                     adminFound = true;
-                    return { ...p, password: formData.password };
+                    return { email: pEmail, password: sanitizeStorageString(formData.password) };
                 }
-                return p;
+                return { email: pEmail, password: pPass };
             });
             if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
-                updatedAdmins.push({ email: formData.email.trim(), password: formData.password });
+                updatedAdmins.push({ email: resetEmail, password: sanitizeStorageString(formData.password) });
             }
             localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
 

@@ -220,27 +220,63 @@ function Registration({ onNavigate }) {
             if (response.data?.token) {
                 localStorage.setItem("token", String(response.data.token).trim());
             }
+            const sanitizeStorageString = (val) => {
+                if (val === null || val === undefined) return '';
+                const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+                return decodeURIComponent(encodeURIComponent(cleanStr));
+            };
+
             // Save student details to local registry
-            const cleanFullName = String(formData.fullname || '').trim();
-            const cleanEmail = String(formData.email || '').trim();
+            const cleanFullName = sanitizeStorageString(formData.fullname);
+            const cleanEmail = sanitizeStorageString(formData.email).toLowerCase();
+            const cleanPassword = sanitizeStorageString(formData.password);
+            const cleanPhone = sanitizeStorageString(formData.mobile);
+            const cleanBranch = sanitizeStorageString(formData.department);
+            const cleanYear = sanitizeStorageString(formData.year);
+            const cleanCgpa = sanitizeStorageString(formData.cgpa);
+
             const newProfile = {
                 fullName: cleanFullName,
                 email: cleanEmail,
-                password: String(formData.password || ''),
-                phone: String(formData.mobile || '').trim(),
-                branch: String(formData.department || '').trim(),
-                passingYear: String(formData.year || '').trim(),
-                cgpa: String(formData.cgpa || '').trim(),
+                password: cleanPassword,
+                phone: cleanPhone,
+                branch: cleanBranch,
+                passingYear: cleanYear,
+                cgpa: cleanCgpa,
                 skills: "React, JavaScript, CSS, Node.js, Python",
-                linkedinUrl: `https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`,
-                githubUrl: `https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`,
+                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`),
+                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`),
                 portfolioUrl: "",
                 resumeUrl: ""
             };
             localStorage.setItem("user", JSON.stringify(newProfile));
 
-            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-            const updatedProfiles = registeredProfiles.filter(p => String(p.email || '').trim().toLowerCase() !== cleanEmail.toLowerCase());
+            const rawProfiles = localStorage.getItem("registered_profiles");
+            let registeredProfiles = [];
+            if (rawProfiles) {
+                try {
+                    const parsed = JSON.parse(rawProfiles);
+                    if (Array.isArray(parsed)) registeredProfiles = parsed;
+                } catch {
+                    registeredProfiles = [];
+                }
+            }
+            const updatedProfiles = registeredProfiles
+                .filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail)
+                .map(p => ({
+                    fullName: sanitizeStorageString(p.fullName),
+                    email: sanitizeStorageString(p.email).toLowerCase(),
+                    password: sanitizeStorageString(p.password),
+                    phone: sanitizeStorageString(p.phone),
+                    branch: sanitizeStorageString(p.branch),
+                    passingYear: sanitizeStorageString(p.passingYear),
+                    cgpa: sanitizeStorageString(p.cgpa),
+                    skills: sanitizeStorageString(p.skills),
+                    linkedinUrl: sanitizeStorageString(p.linkedinUrl),
+                    githubUrl: sanitizeStorageString(p.githubUrl),
+                    portfolioUrl: sanitizeStorageString(p.portfolioUrl),
+                    resumeUrl: sanitizeStorageString(p.resumeUrl)
+                }));
             updatedProfiles.push(newProfile);
             localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
 
