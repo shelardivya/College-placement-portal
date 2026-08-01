@@ -212,8 +212,11 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const token = sanitizeStorageString(response.data.token);
-                localStorage.setItem("token", token);
+                const rawToken = String(response.data.token).trim();
+                const sanitizedToken = encodeURIComponent(rawToken.replace(/[^A-Za-z0-9._-]/g, ''));
+                if (sanitizedToken) {
+                    localStorage.setItem("token", sanitizedToken);
+                }
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 let payload = {};
