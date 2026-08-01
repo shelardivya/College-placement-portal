@@ -25,6 +25,22 @@ import {
 } from "lucide-react";
 
 
+/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return encodeURIComponent(cleanStr);
+}
+
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    try {
+        return decodeURIComponent(String(val));
+    } catch {
+        return String(val);
+    }
+}
+
 function Registration({ onNavigate }) {
     // Component state to track all form field values
     const [formData, setFormData] = useState({
@@ -216,25 +232,10 @@ function Registration({ onNavigate }) {
         try {
             const response = await registerStudent(requestBody);
 
-            const sanitizeStorageString = (val) => {
-                if (val === null || val === undefined) return '';
-                const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-                return encodeURIComponent(cleanStr);
-            };
-
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
                 localStorage.setItem("token", sanitizeStorageString(response.data.token));
             }
-
-            const getStorageString = (val) => {
-                if (val === null || val === undefined) return '';
-                try {
-                    return decodeURIComponent(String(val));
-                } catch {
-                    return String(val);
-                }
-            };
 
             // Save student details to local registry
             const cleanFullName = sanitizeStorageString(formData.fullname);

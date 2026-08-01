@@ -19,6 +19,23 @@ import {
     XCircle
 } from 'lucide-react';
 
+/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return encodeURIComponent(cleanStr);
+}
+
+/** Safely retrieves and decodes a string from storage. */
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    try {
+        return decodeURIComponent(String(val));
+    } catch {
+        return String(val);
+    }
+}
+
 function Login({ onNavigate, initialView }) {
     //View controller state: login | forgot | reset
 
@@ -97,23 +114,6 @@ function Login({ onNavigate, initialView }) {
     };
 
 
-
-    /** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
-    const sanitizeStorageString = (val) => {
-        if (val === null || val === undefined) return '';
-        const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-        return encodeURIComponent(cleanStr);
-    };
-
-    /** Safely retrieves and decodes a string from storage. */
-    const getStorageString = (val) => {
-        if (val === null || val === undefined) return '';
-        try {
-            return decodeURIComponent(String(val));
-        } catch {
-            return String(val);
-        }
-    };
 
     const saveAdminProfile = (email, password, payload = {}) => {
         const sanitizedName = sanitizeStorageString(payload.fullName || payload.name || payload.adminName || "Admin");
