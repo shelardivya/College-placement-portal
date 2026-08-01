@@ -25,6 +25,22 @@ import {
 } from "lucide-react";
 
 
+/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return encodeURIComponent(cleanStr);
+}
+
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    try {
+        return decodeURIComponent(String(val));
+    } catch {
+        return String(val);
+    }
+}
+
 function Registration({ onNavigate }) {
     // Component state to track all form field values
     const [formData, setFormData] = useState({
@@ -218,13 +234,8 @@ function Registration({ onNavigate }) {
 
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
-                localStorage.setItem("token", String(response.data.token).trim());
+                localStorage.setItem("token", sanitizeStorageString(response.data.token));
             }
-            const sanitizeStorageString = (val) => {
-                if (val === null || val === undefined) return '';
-                const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-                return decodeURIComponent(encodeURIComponent(cleanStr));
-            };
 
             // Save student details to local registry
             const cleanFullName = sanitizeStorageString(formData.fullname);
@@ -243,9 +254,9 @@ function Registration({ onNavigate }) {
                 branch: cleanBranch,
                 passingYear: cleanYear,
                 cgpa: cleanCgpa,
-                skills: "React, JavaScript, CSS, Node.js, Python",
-                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, '-'))}`),
-                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(cleanFullName.toLowerCase().replace(/\s+/g, ''))}`),
+                skills: sanitizeStorageString("React, JavaScript, CSS, Node.js, Python"),
+                linkedinUrl: sanitizeStorageString(`https://linkedin.com/in/${encodeURIComponent(formData.fullname.toLowerCase().replace(/\s+/g, '-'))}`),
+                githubUrl: sanitizeStorageString(`https://github.com/${encodeURIComponent(formData.fullname.toLowerCase().replace(/\s+/g, ''))}`),
                 portfolioUrl: "",
                 resumeUrl: ""
             };
@@ -262,7 +273,7 @@ function Registration({ onNavigate }) {
                 }
             }
             const updatedProfiles = registeredProfiles
-                .filter(p => sanitizeStorageString(p.email).toLowerCase() !== cleanEmail)
+                .filter(p => getStorageString(p.email).toLowerCase() !== getStorageString(cleanEmail).toLowerCase())
                 .map(p => ({
                     fullName: sanitizeStorageString(p.fullName),
                     email: sanitizeStorageString(p.email).toLowerCase(),

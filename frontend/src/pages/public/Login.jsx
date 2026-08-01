@@ -19,6 +19,23 @@ import {
     XCircle
 } from 'lucide-react';
 
+/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return encodeURIComponent(cleanStr);
+}
+
+/** Safely retrieves and decodes a string from storage. */
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    try {
+        return decodeURIComponent(String(val));
+    } catch {
+        return String(val);
+    }
+}
+
 function Login({ onNavigate, initialView }) {
     //View controller state: login | forgot | reset
 
@@ -98,13 +115,6 @@ function Login({ onNavigate, initialView }) {
 
 
 
-    /** Sanitizes string input using encodeURIComponent to satisfy SonarQube DOM storage taint rules. */
-    const sanitizeStorageString = (val) => {
-        if (val === null || val === undefined) return '';
-        const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-        return decodeURIComponent(encodeURIComponent(cleanStr));
-    };
-
     const saveAdminProfile = (email, password, payload = {}) => {
         const sanitizedName = sanitizeStorageString(payload.fullName || payload.name || payload.adminName || "Admin");
         const sanitizedEmail = sanitizeStorageString(payload.email || email).toLowerCase();
@@ -125,12 +135,12 @@ function Login({ onNavigate, initialView }) {
         }
         let found = false;
         const updated = adminProfiles.map(p => {
-            const pEmail = sanitizeStorageString(p.email).toLowerCase();
-            if (pEmail === sanitizedEmail) {
+            const pEmail = getStorageString(p.email).toLowerCase();
+            if (pEmail === getStorageString(sanitizedEmail).toLowerCase()) {
                 found = true;
                 return { email: sanitizedEmail, password: sanitizeStorageString(password) };
             }
-            return { email: pEmail, password: sanitizeStorageString(p.password) };
+            return { email: sanitizeStorageString(pEmail), password: sanitizeStorageString(p.password) };
         });
         if (!found && sanitizedEmail) updated.push({ email: sanitizedEmail, password: sanitizeStorageString(password) });
         localStorage.setItem('admin_profiles', JSON.stringify(updated));
@@ -151,7 +161,7 @@ function Login({ onNavigate, initialView }) {
                 registeredProfiles = [];
             }
         }
-        const matchedProfile = registeredProfiles.find(p => sanitizeStorageString(p.email).toLowerCase() === cleanEmail);
+        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === rawEmailStr);
         
         if (matchedProfile) {
             const sanitizedUser = {
@@ -256,7 +266,7 @@ function Login({ onNavigate, initialView }) {
                 confirmPassword: formData.confirmPassword
             });
 
-            const resetEmail = sanitizeStorageString(formData.email).toLowerCase();
+            const resetEmail = getStorageString(formData.email).toLowerCase();
             const rawProfiles = localStorage.getItem('registered_profiles');
             let profiles = [];
             if (rawProfiles) {
@@ -268,11 +278,11 @@ function Login({ onNavigate, initialView }) {
                 }
             }
             const updatedReg = profiles.map(p => {
-                const pEmail = sanitizeStorageString(p.email).toLowerCase();
-                const pPass = sanitizeStorageString(p.password);
+                const pEmail = getStorageString(p.email).toLowerCase();
+                const pPass = p.password;
                 return pEmail === resetEmail
-                    ? { email: pEmail, password: sanitizeStorageString(formData.password) }
-                    : { email: pEmail, password: pPass };
+                    ? { email: sanitizeStorageString(pEmail), password: sanitizeStorageString(formData.password) }
+                    : { email: sanitizeStorageString(pEmail), password: sanitizeStorageString(pPass) };
             });
             localStorage.setItem('registered_profiles', JSON.stringify(updatedReg));
 
@@ -288,16 +298,16 @@ function Login({ onNavigate, initialView }) {
             }
             let adminFound = false;
             const updatedAdmins = adminProfiles.map(p => {
-                const pEmail = sanitizeStorageString(p.email).toLowerCase();
-                const pPass = sanitizeStorageString(p.password);
+                const pEmail = getStorageString(p.email).toLowerCase();
+                const pPass = p.password;
                 if (pEmail === resetEmail) {
                     adminFound = true;
-                    return { email: pEmail, password: sanitizeStorageString(formData.password) };
+                    return { email: sanitizeStorageString(pEmail), password: sanitizeStorageString(formData.password) };
                 }
-                return { email: pEmail, password: pPass };
+                return { email: sanitizeStorageString(pEmail), password: sanitizeStorageString(pPass) };
             });
             if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
-                updatedAdmins.push({ email: resetEmail, password: sanitizeStorageString(formData.password) });
+                updatedAdmins.push({ email: sanitizeStorageString(resetEmail), password: sanitizeStorageString(formData.password) });
             }
             localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
 
