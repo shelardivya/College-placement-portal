@@ -35,14 +35,7 @@ function sanitizeStorageString(val) {
     return encodeURIComponent(cleanStr);
 }
 
-function getStorageString(val) {
-    if (val === null || val === undefined) return '';
-    try {
-        return decodeURIComponent(String(val));
-    } catch {
-        return String(val);
-    }
-}
+
 
 const handleImageError = (e) => {
     e.target.style.display = 'none';

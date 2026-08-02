@@ -161,7 +161,7 @@ function Login({ onNavigate, initialView }) {
                 registeredProfiles = [];
             }
         }
-        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === rawEmailStr);
+        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
         
         if (matchedProfile) {
             const sanitizedUser = {
@@ -212,13 +212,13 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const tokenStr = String(response.data.token).trim();
-                localStorage.setItem("token", encodeURIComponent(tokenStr.replace(/[^A-Za-z0-9._-]/g, '')));
+                const rawToken = String(response.data.token).trim();
+                localStorage.setItem("token", encodeURIComponent(String(response.data.token).replace(/[^A-Za-z0-9._-]/g, '').trim()));
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 let payload = {};
                 try {
-                    payload = JSON.parse(atob(tokenStr.split('.')[1]));
+                    payload = JSON.parse(atob(rawToken.split('.')[1]));
                 } catch {
                     // ignore parse error
                 }
