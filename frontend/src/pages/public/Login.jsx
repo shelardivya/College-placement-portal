@@ -26,6 +26,12 @@ function sanitizeStorageString(val) {
     return encodeURIComponent(cleanStr);
 }
 
+/** Sanitizes JWT token strings strictly allowing valid base64url characters. */
+function sanitizeTokenString(val) {
+    if (val === null || val === undefined) return '';
+    return String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
+}
+
 /** Safely retrieves and decodes a string from storage. */
 function getStorageString(val) {
     if (val === null || val === undefined) return '';
@@ -212,15 +218,22 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const rawToken = String(response.data.token).trim();
-                localStorage.setItem("token", encodeURIComponent(String(response.data.token).replace(/[^A-Za-z0-9._-]/g, '').trim()));
+                const cleanToken = sanitizeTokenString(response.data.token);
+                localStorage.setItem("token", encodeURIComponent(cleanToken));
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 let payload = {};
                 try {
-                    payload = JSON.parse(atob(rawToken.split('.')[1]));
+                    const rawPayload = JSON.parse(atob(cleanToken.split('.')[1]));
+                    if (rawPayload && typeof rawPayload === 'object') {
+                        payload = {
+                            fullName: sanitizeStorageString(rawPayload.fullName || rawPayload.name || rawPayload.studentName || rawPayload.adminName),
+                            email: sanitizeStorageString(rawPayload.email).toLowerCase(),
+                            role: sanitizeStorageString(rawPayload.role)
+                        };
+                    }
                 } catch {
-                    // ignore parse error
+                    payload = {};
                 }
 
                 if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);

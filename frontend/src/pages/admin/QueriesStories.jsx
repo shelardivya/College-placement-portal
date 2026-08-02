@@ -288,14 +288,14 @@ export default function QueriesStories() {
     useEffect(() => {
         if (!Array.isArray(queries)) return;
         const sanitizedQueries = queries.map(q => ({
-            id: q.id,
+            id: typeof q.id === 'number' ? q.id : Number(q.id) || 0,
             studentName: sanitizeStorageString(q.studentName),
             email: sanitizeStorageString(q.email),
             subject: sanitizeStorageString(q.subject),
             message: sanitizeStorageString(q.message),
             category: sanitizeStorageString(q.category),
             status: sanitizeStorageString(q.status),
-            createdAt: q.createdAt,
+            createdAt: sanitizeStorageString(q.createdAt),
             reply: sanitizeStorageString(q.reply),
             adminReply: sanitizeStorageString(q.adminReply)
         }));
@@ -388,7 +388,7 @@ export default function QueriesStories() {
     useEffect(() => {
         if (!Array.isArray(drives)) return;
         const sanitizedDrives = drives.map(drive => ({
-            id: drive.id,
+            id: typeof drive.id === 'number' ? drive.id : Number(drive.id) || 0,
             company: sanitizeStorageString(drive.company),
             role: sanitizeStorageString(drive.role),
             date: sanitizeStorageString(drive.date),
@@ -399,7 +399,7 @@ export default function QueriesStories() {
                 : sanitizeStorageString(drive.targetStudent),
             customTarget: sanitizeStorageString(drive.customTarget),
             status: sanitizeStorageString(drive.status),
-            createdAt: drive.createdAt
+            createdAt: sanitizeStorageString(drive.createdAt)
         }));
         localStorage.setItem("placement_drives", JSON.stringify(sanitizedDrives));
     }, [drives]);
@@ -572,7 +572,7 @@ export default function QueriesStories() {
     useEffect(() => {
         if (!Array.isArray(stories)) return;
         const sanitizedStories = stories.map(story => ({
-            id: story.id,
+            id: typeof story.id === 'number' ? story.id : Number(story.id) || 0,
             name: sanitizeStorageString(story.name),
             branch: sanitizeStorageString(story.branch),
             year: sanitizeStorageString(story.year),
@@ -584,7 +584,7 @@ export default function QueriesStories() {
             avatar: sanitizeStorageString(story.avatar),
             logo: sanitizeStorageString(story.logo),
             logoColor: sanitizeStorageString(story.logoColor),
-            createdAt: story.createdAt
+            createdAt: sanitizeStorageString(story.createdAt)
         }));
         localStorage.setItem("placement_stories", JSON.stringify(sanitizedStories));
     }, [stories]);

@@ -625,7 +625,7 @@ function useStudHubData() {
     useEffect(() => {
         if (!Array.isArray(queries)) return;
         const sanitizedQueries = queries.map(q => ({
-            id: q.id,
+            id: typeof q.id === 'number' ? q.id : Number(q.id) || 0,
             studentName: sanitizeStorageString(q.studentName),
             subject: sanitizeStorageString(q.subject),
             message: sanitizeStorageString(q.message),

@@ -32,6 +32,12 @@ function sanitizeStorageString(val) {
     return encodeURIComponent(cleanStr);
 }
 
+/** Sanitizes JWT token strings strictly allowing valid base64url characters. */
+function sanitizeTokenString(val) {
+    if (val === null || val === undefined) return '';
+    return String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
+}
+
 function getStorageString(val) {
     if (val === null || val === undefined) return '';
     try {
@@ -234,7 +240,8 @@ function Registration({ onNavigate }) {
 
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
-                localStorage.setItem("token", encodeURIComponent(String(response.data.token).replace(/[^A-Za-z0-9._-]/g, '').trim()));
+                const cleanToken = sanitizeTokenString(response.data.token);
+                localStorage.setItem("token", encodeURIComponent(cleanToken));
             }
 
             // Save student details to local registry
