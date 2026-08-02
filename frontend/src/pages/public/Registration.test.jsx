@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Registration from './Registration';
-import * as authService from '../../auth/authService';
 
 vi.mock('../../auth/authService', () => ({
   registerStudent: vi.fn()

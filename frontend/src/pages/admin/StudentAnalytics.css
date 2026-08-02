@@ -640,10 +640,10 @@
 .table-search-input-expanded,
 .table-search-input-expanded:focus,
 .table-search-input-expanded:focus-visible {
-    border: none !important;
-    outline: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
     font-size: 0.85rem;
     width: 100%;
     color: #0f172a;

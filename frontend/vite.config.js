@@ -24,7 +24,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'lcov', 'html'],
       reportsDirectory: './coverage',
-      exclude: ['node_modules/', 'src/setupTests.js']
+      include: ['src/**/*.{js,jsx}'],
+      exclude: ['node_modules/', 'src/setupTests.js', 'src/**/*.test.{js,jsx}', 'src/main.jsx']
     }
   }
 })
