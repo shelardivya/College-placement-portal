@@ -161,7 +161,7 @@ function Login({ onNavigate, initialView }) {
                 registeredProfiles = [];
             }
         }
-        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === rawEmailStr);
+        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
         
         if (matchedProfile) {
             const sanitizedUser = {

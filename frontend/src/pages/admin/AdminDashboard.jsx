@@ -107,14 +107,7 @@ function sanitizeStorageString(val) {
     return encodeURIComponent(cleanStr);
 }
 
-function getStorageString(val) {
-    if (val === null || val === undefined) return '';
-    try {
-        return decodeURIComponent(String(val));
-    } catch {
-        return String(val);
-    }
-}
+
 
 /** Updates the admin_profiles list in localStorage so that the password autofill stays in sync. */
 function updateAdminPasswordInStorage(adminEmail, newPassword) {
