@@ -2,7 +2,7 @@ import { motion, easeOut } from 'framer-motion';
 
 import { useState } from 'react';
 import './Login.css';
-import { loginAdmin, loginStudent, forgotPassword, resetPassword } from '../../auth/authService';
+import { loginAdmin, loginStudent, forgotPassword, resetPassword, saveAuthToken } from '../../auth/authService';
 import {
     GraduationCap,
     ArrowLeft,
@@ -24,13 +24,6 @@ function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
     const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
     return encodeURIComponent(cleanStr);
-}
-
-/** Sanitizes JWT token strings strictly allowing valid base64url characters and encoding for storage. */
-function sanitizeTokenStorage(val) {
-    if (val === null || val === undefined) return '';
-    const cleanToken = String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
-    return encodeURIComponent(cleanToken);
 }
 
 /** Parses and sanitizes claims from a JWT token payload. */
@@ -239,8 +232,7 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const tokenVal = sanitizeTokenStorage(response.data.token);
-                localStorage.setItem("token", tokenVal);
+                saveAuthToken(response.data.token);
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
                 const payload = parseTokenPayload(response.data.token);

@@ -4,6 +4,7 @@ import {
   registerStudent,
   loginStudent,
   loginAdmin,
+  saveAuthToken,
   forgotPassword,
   resetPassword,
   createJobPosting,
@@ -465,5 +466,10 @@ describe('authService API Methods', () => {
     expect(api.get).toHaveBeenCalledWith('/api/admin/student-analytics/dashboard', {
       headers: { Authorization: 'Bearer test-jwt-token' }
     });
+  });
+
+  it('saveAuthToken sanitizes and stores token in localStorage', () => {
+    saveAuthToken('sample.jwt.token-123_abc');
+    expect(localStorage.getItem('token')).toBe('sample.jwt.token-123_abc');
   });
 });

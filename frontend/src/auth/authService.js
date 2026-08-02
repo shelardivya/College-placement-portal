@@ -12,6 +12,12 @@ export const loginAdmin = (adminData) => {
     return api.post("/auth/admin/login", adminData);
 };
 
+export const saveAuthToken = (rawToken) => {
+    if (!rawToken) return;
+    const cleanToken = encodeURIComponent(String(rawToken).replace(/[^A-Za-z0-9._-]/g, '').trim());
+    localStorage.setItem("token", cleanToken);
+};
+
 export const forgotPassword = (email) => {
     return api.post("/auth/forgot-password", { email });
 };

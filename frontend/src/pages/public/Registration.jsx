@@ -1,6 +1,6 @@
 import { easeOut, motion } from 'framer-motion';
 
-import { registerStudent } from "../../auth/authService";
+import { registerStudent, saveAuthToken } from "../../auth/authService";
 
 import { useState, useEffect, useRef } from "react";
 import './Registration.css';
@@ -25,18 +25,11 @@ import {
 } from "lucide-react";
 
 
-/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+/* Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475)*/
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
     const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
     return encodeURIComponent(cleanStr);
-}
-
-/** Sanitizes JWT token strings strictly allowing valid base64url characters and encoding for storage. */
-function sanitizeTokenStorage(val) {
-    if (val === null || val === undefined) return '';
-    const cleanToken = String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
-    return encodeURIComponent(cleanToken);
 }
 
 function getStorageString(val) {
@@ -241,8 +234,7 @@ function Registration({ onNavigate }) {
 
             // 1. Save the backend token and student details to localStorage
             if (response.data?.token) {
-                const tokenVal = sanitizeTokenStorage(response.data.token);
-                localStorage.setItem("token", tokenVal);
+                saveAuthToken(response.data.token);
             }
 
             // Save student details to local registry
