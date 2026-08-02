@@ -26,10 +26,31 @@ function sanitizeStorageString(val) {
     return encodeURIComponent(cleanStr);
 }
 
-/** Sanitizes JWT token strings strictly allowing valid base64url characters. */
-function sanitizeTokenString(val) {
+/** Sanitizes JWT token strings strictly allowing valid base64url characters and encoding for storage. */
+function sanitizeTokenStorage(val) {
     if (val === null || val === undefined) return '';
-    return String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
+    const cleanToken = String(val).replace(/[^A-Za-z0-9._-]/g, '').trim();
+    return encodeURIComponent(cleanToken);
+}
+
+/** Parses and sanitizes claims from a JWT token payload. */
+function parseTokenPayload(tokenStr) {
+    if (!tokenStr) return {};
+    try {
+        const parts = String(tokenStr).split('.');
+        if (parts.length < 2) return {};
+        const rawPayload = JSON.parse(atob(parts[1]));
+        if (rawPayload && typeof rawPayload === 'object') {
+            return {
+                fullName: sanitizeStorageString(rawPayload.fullName || rawPayload.name || rawPayload.studentName || rawPayload.adminName),
+                email: sanitizeStorageString(rawPayload.email).toLowerCase(),
+                role: sanitizeStorageString(rawPayload.role)
+            };
+        }
+    } catch {
+        return {};
+    }
+    return {};
 }
 
 /** Safely retrieves and decodes a string from storage. */
@@ -218,23 +239,11 @@ function Login({ onNavigate, initialView }) {
             });
 
             if (response.data?.token) {
-                const cleanToken = sanitizeTokenString(response.data.token);
-                localStorage.setItem("token", encodeURIComponent(cleanToken));
+                const tokenVal = sanitizeTokenStorage(response.data.token);
+                localStorage.setItem("token", tokenVal);
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
                 
-                let payload = {};
-                try {
-                    const rawPayload = JSON.parse(atob(cleanToken.split('.')[1]));
-                    if (rawPayload && typeof rawPayload === 'object') {
-                        payload = {
-                            fullName: sanitizeStorageString(rawPayload.fullName || rawPayload.name || rawPayload.studentName || rawPayload.adminName),
-                            email: sanitizeStorageString(rawPayload.email).toLowerCase(),
-                            role: sanitizeStorageString(rawPayload.role)
-                        };
-                    }
-                } catch {
-                    payload = {};
-                }
+                const payload = parseTokenPayload(response.data.token);
 
                 if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);
                 else saveStudentProfile(formData.email, payload);
