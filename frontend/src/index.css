@@ -305,7 +305,7 @@ table tr:nth-child(even) td {
 .toast-notification,
 .sd-toast-notification,
 .admin-toast-notification {
-  height: auto !important;
+  height: auto;
   max-height: max-content;
 }
 

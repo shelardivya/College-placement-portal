@@ -464,21 +464,21 @@
 }
 
 .trend-chart path[stroke] {
-    stroke: var(--blue) !important;
-    stroke-width: 3px !important;
+    stroke: var(--blue);
+    stroke-width: 3px;
     stroke-linecap: round;
     stroke-linejoin: round;
     filter: drop-shadow(0 0 8px rgba(99, 168, 255, 0.45));
 }
 
 #chartGradient stop:first-child {
-    stop-color: var(--blue) !important;
-    stop-opacity: 0.3 !important;
+    stop-color: var(--blue);
+    stop-opacity: 0.3;
 }
 
 #chartGradient stop:last-child {
-    stop-color: var(--blue) !important;
-    stop-opacity: 0.0 !important;
+    stop-color: var(--blue);
+    stop-opacity: 0.0;
 }
 
 
