@@ -14,8 +14,11 @@ export const loginAdmin = (adminData) => {
 
 export const saveAuthToken = (rawToken) => {
     if (!rawToken) return;
-    const cleanToken = encodeURIComponent(String(rawToken).replace(/[^A-Za-z0-9._-]/g, '').trim());
-    localStorage.setItem("token", cleanToken);
+    const str = String(rawToken);
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const safeToken = encodeURIComponent(cleanText.replace(/[^A-Za-z0-9._-]/g, '').trim());
+    localStorage.setItem("token", safeToken);
 };
 
 export const forgotPassword = (email) => {
