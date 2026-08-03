@@ -1898,6 +1898,7 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 2000;
+    font-family: inherit;
 }
 
 .sd-notification-sidebar {
@@ -1916,6 +1917,7 @@
     border-top-left-radius: 20px;
     border-bottom-left-radius: 20px;
     overflow: hidden;
+    font-family: var(--font-family, 'Inter', system-ui, -apple-system, sans-serif);
 }
 
 @keyframes sidebarSlideIn {
