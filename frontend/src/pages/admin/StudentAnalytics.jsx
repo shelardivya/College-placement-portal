@@ -49,7 +49,7 @@ const COMPANY_LOGOS = {
     Revdau: (
         <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
             <rect width="24" height="24" rx="6" fill="#059669" />
-            <path d="M7 17V7l5 5 5-5v10" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            <text x="12" y="16.5" fontSize="13" fontWeight="bold" fill="#ffffff" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif">R</text>
         </svg>
     ),
     Meesho: (
@@ -74,11 +74,55 @@ const COMPANY_LOGOS = {
     )
 };
 
-function getCompanyLogo(companyName) {
-    if (!companyName) return <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
-    const normalized = String(companyName).trim().toLowerCase();
-    const key = Object.keys(COMPANY_LOGOS).find(k => k.toLowerCase() === normalized);
-    return (key && COMPANY_LOGOS[key]) || <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
+function getCompanyBadgeColor(name) {
+    if (!name) return '#2563eb';
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0284c7', '#be185d', '#4f46e5'];
+    return colors[Math.abs(hash) % colors.length];
+}
+
+function CompanyLogo({ companyName }) {
+    const [imgError, setImgError] = useState(false);
+
+    if (!companyName) {
+        return <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
+    }
+
+    const trimmed = String(companyName).trim();
+    const normalized = trimmed.toLowerCase();
+    const svgKey = Object.keys(COMPANY_LOGOS).find(k => k.toLowerCase() === normalized);
+
+    // 1. Predefined brand SVG logo
+    if (svgKey && COMPANY_LOGOS[svgKey]) {
+        return COMPANY_LOGOS[svgKey];
+    }
+
+    const initialLetter = trimmed.charAt(0).toUpperCase() || '?';
+    const badgeColor = getCompanyBadgeColor(trimmed);
+
+    // 2. Initial letter badge fallback if image fails to load
+    if (imgError) {
+        return (
+            <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: badgeColor, color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: '700', marginRight: 8, flexShrink: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {initialLetter}
+            </div>
+        );
+    }
+
+    const domainName = normalized.replace(/[^a-z0-9]/g, '');
+    const logoUrl = `https://www.google.com/s2/favicons?domain=${domainName}.com&sz=64`;
+
+    return (
+        <img
+            src={logoUrl}
+            alt={trimmed}
+            onError={() => setImgError(true)}
+            style={{ width: 18, height: 18, marginRight: 8, borderRadius: 4, objectFit: 'contain', flexShrink: 0 }}
+        />
+    );
 }
 
 // calculates the SVG arc path for each segment of the donut chart
@@ -723,7 +767,7 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <div className="company-logo-cell">
-                                            {getCompanyLogo(student.company)}
+                                            <CompanyLogo companyName={student.company} />
                                             <span
                                                 className="company-text"
                                                 style={{ color: student.companyColor || '#1e293b' }}
