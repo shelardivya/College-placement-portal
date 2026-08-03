@@ -109,6 +109,25 @@ function buildQueryAvatar(studentName) {
     return avatar.toUpperCase();
 }
 
+/** Returns up to maxVisible page numbers centered around current page. */
+function getVisiblePageNumbers(current, total, maxVisible = 3) {
+    if (total <= maxVisible) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - 1);
+    let end = start + maxVisible - 1;
+    if (end > total) {
+        end = total;
+        start = Math.max(1, end - maxVisible + 1);
+    }
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    return pages;
+}
+
+
 /** Builds the API payload object for creating or updating a placement drive. */
 function buildDrivePayload(driveForm) {
     const targetStudent = typeof driveForm.targetStudent === 'string'
@@ -888,7 +907,7 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {new Array(totalPages).fill(0).map((_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(currentPage, totalPages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
                                     type="button"
@@ -1175,7 +1194,7 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {new Array(totalDrivePages).fill(0).map((_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(drivePage, totalDrivePages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
                                     type="button"
