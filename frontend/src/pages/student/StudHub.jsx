@@ -24,15 +24,37 @@ const initialStudentQueries = [];
 
 // HELPER FUNCTIONS
 
-/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+/** Sanitizes string input for DOM storage compliance (S8475). */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
-    const str = String(val);
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
     const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
     const cleanText = doc ? (doc.body.textContent || '') : str;
     const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
-    return encodeURIComponent(cleanStr);
+    return cleanStr;
 }
+
+/** Safely decodes URL-encoded strings from storage. */
+function decodeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            return decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    return str;
+}
+
 
 
 
@@ -763,8 +785,8 @@ export default function StudHub() {
 
     const { drives, stories, queries, setQueries } = useStudHubData();
 
-    const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
-    const studentName = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
+    const studentEmail = decodeStorageString(loggedInUser.email || "").toLowerCase().trim();
+    const studentName = decodeStorageString(loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
 
     const { storiesPage, setStoriesPage, totalStoriesPages, paginatedStories } = useStoriesPagination(stories);
     const { drivesPage, setDrivesPage, totalDrivePages, currentDrive } = useDrivesPagination(drives, studentEmail, studentName);
