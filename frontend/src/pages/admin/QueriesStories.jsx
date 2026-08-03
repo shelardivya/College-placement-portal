@@ -16,11 +16,21 @@ import {
 } from 'lucide-react';
 import './QueriesStories.css';
 
-/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+/** Sanitizes string input for DOM storage compliance (S8475). */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
-    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-    return encodeURIComponent(cleanStr);
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
+    return cleanStr;
 }
 
 

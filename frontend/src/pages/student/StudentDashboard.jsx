@@ -28,12 +28,35 @@ import StudHub from "./StudHub";
 // Default fallback mock data for Placement Drives
 const initialDrives = [];
 
-/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+/** Sanitizes string input for DOM storage compliance (S8475). */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
-    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-    return encodeURIComponent(cleanStr);
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback if str is not a valid encoded URI component
+    }
+    const cleanStr = str.replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return cleanStr;
 }
+
+/** Safely decodes URL-encoded strings from storage. */
+function decodeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            return decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    return str;
+}
+
 
 
 
@@ -631,7 +654,7 @@ export default function
     StudentDashboard({ onNavigate }) {
     // Retrieve the logged-in student's details from localStorage
     const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
-    const studentName = loggedInUser.fullName || "Student";
+    const studentName = decodeStorageString(loggedInUser.fullName || loggedInUser.name) || "Student";
 
     const getInitials = (name) => {
         if (!name || name === "Student") return "ST";
@@ -833,15 +856,15 @@ export default function
     const getInitialProfile = () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         return {
-            fullName: storedUser.fullName || "Student Name",
-            email: storedUser.email || "student@portal.edu",
-            phone: storedUser.phone || "",
-            branch: storedUser.branch || "",
-            passingYear: storedUser.passingYear || "",
-            cgpa: storedUser.cgpa || "",
-            skills: storedUser.skills || "",
-            linkedinUrl: storedUser.linkedinUrl || "",
-            githubUrl: storedUser.githubUrl || ""
+            fullName: decodeStorageString(storedUser.fullName) || "Student Name",
+            email: decodeStorageString(storedUser.email) || "student@portal.edu",
+            phone: decodeStorageString(storedUser.phone) || "",
+            branch: decodeStorageString(storedUser.branch) || "",
+            passingYear: decodeStorageString(storedUser.passingYear) || "",
+            cgpa: decodeStorageString(storedUser.cgpa) || "",
+            skills: decodeStorageString(storedUser.skills) || "",
+            linkedinUrl: decodeStorageString(storedUser.linkedinUrl) || "",
+            githubUrl: decodeStorageString(storedUser.githubUrl) || ""
         };
     };
 

@@ -12,6 +12,15 @@ export const loginAdmin = (adminData) => {
     return api.post("/auth/admin/login", adminData);
 };
 
+export const saveAuthToken = (rawToken) => {
+    if (!rawToken) return;
+    const str = String(rawToken);
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const safeToken = encodeURIComponent(cleanText.replace(/[^A-Za-z0-9._-]/g, '').trim());
+    localStorage.setItem("token", safeToken);
+};
+
 export const forgotPassword = (email) => {
     return api.post("/auth/forgot-password", { email });
 };

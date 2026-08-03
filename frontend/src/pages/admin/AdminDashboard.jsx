@@ -100,11 +100,19 @@ function formatDeadline(dateStr) {
     }
 }
 
-/** Sanitizes string input using encodeURIComponent for SonarQube DOM storage compliance (S8475). */
+/** Sanitizes string input for DOM storage compliance (S8475). */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
-    const cleanStr = String(val).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
-    return encodeURIComponent(cleanStr);
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const cleanStr = str.replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return cleanStr;
 }
 
 
