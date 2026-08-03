@@ -13,7 +13,8 @@ import {
     Plus,
     X,
     ChevronDown,
-    Check
+    Check,
+    Building2
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -39,7 +40,46 @@ const COMPANY_LOGOS = {
             <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.13-1.9-14.36-6.07-2.73-2.22-6.49-6.67-11.28-13.37-5.61-7.8-10.28-16.73-13.98-26.8-3.7-10.07-5.56-19.82-5.56-29.24 0-14.6 3.63-26.6 10.89-35.97 7.26-9.37 16.57-14.06 27.93-14.06 4.96 0 10.59 1.45 16.89 4.36 6.3 2.9 10.84 4.36 13.62 4.36 2.03 0 6.38-1.39 13.06-4.16 6.68-2.78 12.21-4.04 16.58-3.78 15.34.88 26.9 6.64 34.66 17.27-12.28 7.5-18.29 17.72-18.02 30.65.3 10.15 4.14 18.57 11.53 25.26 7.39 6.69 16.14 10.35 26.27 10.99-2.3 6.64-5.34 13.06-9.13 19.26zm-20.28-94.88c0-9.92 3.5-18.51 10.5-25.76 7-7.25 15.31-11.02 24.93-11.3 0.28 9.92-3.3 18.56-10.74 25.92-7.44 7.36-15.72 11.08-24.69 11.14z" />
         </svg>
     ),
+    Zepto: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#7e22ce" />
+            <path d="M7 7h10l-6 10h6" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+    ),
+    Revdau: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#059669" />
+            <path d="M7 17V7l5 5 5-5v10" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+    ),
+    Meesho: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#be185d" />
+            <path d="M6 17V7l6 6 6-6v10" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+    ),
+    Infosys: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#0284c7" />
+            <text x="12" y="16" fontSize="12" fontWeight="bold" fill="#ffffff" textAnchor="middle" fontFamily="sans-serif">i</text>
+        </svg>
+    ),
+    Google: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+        </svg>
+    )
 };
+
+function getCompanyLogo(companyName) {
+    if (!companyName) return <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
+    const normalized = String(companyName).trim().toLowerCase();
+    const key = Object.keys(COMPANY_LOGOS).find(k => k.toLowerCase() === normalized);
+    return (key && COMPANY_LOGOS[key]) || <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
+}
 
 // calculates the SVG arc path for each segment of the donut chart
 function getDonutSegments(data, cx = 50, cy = 50, r = 38, innerR = 24) {
@@ -683,7 +723,7 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <div className="company-logo-cell">
-                                            {COMPANY_LOGOS[student.company] || <Coffee size={16} color="#86efac" style={{ marginRight: '8px', fill: '#86efac', flexShrink: 0 }} />}
+                                            {getCompanyLogo(student.company)}
                                             <span
                                                 className="company-text"
                                                 style={{ color: student.companyColor || '#1e293b' }}
