@@ -324,29 +324,38 @@ export default function StudentAnalytics() {
             };
 
             const response = await addTopPlacedStudent(payload);
-            const savedStudent = response.data || payload;
+            const isObjectResponse = typeof response.data === 'object' && response.data !== null && response.data.studentName;
+            const savedStudent = isObjectResponse ? response.data : payload;
 
-            const nameParts = (savedStudent.studentName || '').trim().split(' ');
+            const studentName = savedStudent.studentName || formData.name || 'Student';
+            const companyName = savedStudent.companyName || formData.company || 'Company';
+            const skills = savedStudent.skills || formData.skill || 'Full Stack';
+            const cgpa = savedStudent.cgpa !== undefined ? savedStudent.cgpa : formData.cgpa;
+            const packageLpa = savedStudent.packageLpa !== undefined ? savedStudent.packageLpa : formData.lpa;
+
+            const nameParts = studentName.trim().split(' ');
             let initials = 'ST';
-            if (nameParts.length >= 2) {
+            if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
                 initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-            } else if (nameParts[0]) {
+            } else if (nameParts[0] && nameParts[0].length >= 2) {
                 initials = nameParts[0].substring(0, 2).toUpperCase();
+            } else if (nameParts[0]) {
+                initials = nameParts[0].toUpperCase();
             }
 
             const newStudent = {
                 id: savedStudent.id || Date.now(),
                 rank: studentsList.length + 1,
-                name: savedStudent.studentName,
+                name: studentName,
                 initials: initials,
                 branch: formData.branch || 'CS',
                 passingYear: formData.passingYear || '2026',
-                cgpa: savedStudent.cgpa,
-                lpa: savedStudent.packageLpa,
-                skill: savedStudent.skills || 'Full Stack',
+                cgpa: cgpa,
+                lpa: packageLpa,
+                skill: skills,
                 skillColor: '#f3e8ff',
                 skillTextColor: '#a855f7',
-                company: savedStudent.companyName,
+                company: companyName,
                 companyColor: '#2563eb'
             };
 
@@ -374,13 +383,23 @@ export default function StudentAnalytics() {
         }, 4000);
     };
 
-    const filteredStudents = studentsList.filter(student =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.branch?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.passingYear?.toString().includes(searchQuery)
-    );
+    const filteredStudents = studentsList.filter(student => {
+        if (!student) return false;
+        const name = (student.name || '').toLowerCase();
+        const company = (student.company || '').toLowerCase();
+        const skill = (student.skill || '').toLowerCase();
+        const branch = (student.branch || '').toLowerCase();
+        const year = String(student.passingYear || '');
+        const query = (searchQuery || '').toLowerCase();
+
+        return (
+            name.includes(query) ||
+            company.includes(query) ||
+            skill.includes(query) ||
+            branch.includes(query) ||
+            year.includes(query)
+        );
+    });
 
 
     const itemsPerPage = 5;
