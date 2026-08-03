@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
 import {
@@ -267,55 +267,69 @@ export default function StudentAnalytics() {
         fetchStats();
         fetchDepartmentData();
         fetchCgpaData();
+        fetchStats();
+        fetchDepartmentData();
+        fetchCgpaData();
         fetchSkillsData();
-
-        const fetchTopStudents = async () => {
-            try {
-                const response = await getAllTopPlacedStudents();
-                if (response.data && Array.isArray(response.data)) {
-                    const sorted = [...response.data].sort((a, b) => {
-                        const lpaA = Number.parseFloat(a.packageLpa) || 0;
-                        const lpaB = Number.parseFloat(b.packageLpa) || 0;
-                        if (lpaB !== lpaA) return lpaB - lpaA;
-                        const cgpaA = Number.parseFloat(a.cgpa) || 0;
-                        const cgpaB = Number.parseFloat(b.cgpa) || 0;
-                        return cgpaB - cgpaA;
-                    });
-
-                    const mapped = sorted.map((s, index) => {
-                        const nameParts = (s.studentName || '').trim().split(' ');
-                        let initials = 'ST';
-                        if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
-                            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                        } else if (nameParts[0] && nameParts[0].length >= 2) {
-                            initials = nameParts[0].substring(0, 2).toUpperCase();
-                        } else if (nameParts[0]) {
-                            initials = nameParts[0].toUpperCase();
-                        }
-                        return {
-                            id: s.id,
-                            rank: index + 1,
-                            name: s.studentName,
-                            initials: initials,
-                            branch: s.branch || s.department || s.course || 'CS',
-                            passingYear: s.passingYear || s.year || '2026',
-                            cgpa: s.cgpa || '9.0',
-                            lpa: s.packageLpa || '12',
-                            skill: s.skills || 'Full Stack',
-                            skillColor: '#f3e8ff',
-                            skillTextColor: '#a855f7',
-                            company: s.companyName,
-                            companyColor: '#c2410c'
-                        };
-                    });
-                    setStudentsList(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch top placed students", error);
-            }
-        };
-        fetchTopStudents();
     }, []);
+
+    const fetchTopStudents = useCallback(async (newStudentName = null) => {
+        try {
+            const response = await getAllTopPlacedStudents();
+            if (response.data && Array.isArray(response.data)) {
+                const sorted = [...response.data].sort((a, b) => {
+                    const lpaA = Number.parseFloat(a.packageLpa) || 0;
+                    const lpaB = Number.parseFloat(b.packageLpa) || 0;
+                    if (lpaB !== lpaA) return lpaB - lpaA;
+                    const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                    const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                    return cgpaB - cgpaA;
+                });
+
+                const mapped = sorted.map((s, index) => {
+                    const nameParts = (s.studentName || '').trim().split(' ');
+                    let initials = 'ST';
+                    if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
+                        initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                    } else if (nameParts[0] && nameParts[0].length >= 2) {
+                        initials = nameParts[0].substring(0, 2).toUpperCase();
+                    } else if (nameParts[0]) {
+                        initials = nameParts[0].toUpperCase();
+                    }
+                    return {
+                        id: s.id,
+                        rank: index + 1,
+                        name: s.studentName,
+                        initials: initials,
+                        branch: s.branch || s.department || s.course || 'CS',
+                        passingYear: s.passingYear || s.year || '2026',
+                        cgpa: s.cgpa || '9.0',
+                        lpa: s.packageLpa || '12',
+                        skill: s.skills || 'Full Stack',
+                        skillColor: '#f3e8ff',
+                        skillTextColor: '#a855f7',
+                        company: s.companyName,
+                        companyColor: '#2563eb'
+                    };
+                });
+                setStudentsList(mapped);
+
+                // If a new student was just added, calculate and set their correct target page
+                if (newStudentName) {
+                    const newIndex = mapped.findIndex(s => s.name?.toLowerCase() === newStudentName.toLowerCase());
+                    if (newIndex !== -1) {
+                        setCurrentPage(Math.floor(newIndex / 5) + 1);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch top placed students", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTopStudents();
+    }, [fetchTopStudents]);
 
     const segments = getDonutSegments(departmentData);
 
@@ -334,62 +348,10 @@ export default function StudentAnalytics() {
                 skills: formData.skill || 'Full Stack'
             };
 
-            const response = await addTopPlacedStudent(payload);
-            const isObjectResponse = typeof response.data === 'object' && response.data !== null && response.data.studentName;
-            const savedStudent = isObjectResponse ? response.data : payload;
+            await addTopPlacedStudent(payload);
 
-            const studentName = savedStudent.studentName || formData.name || 'Student';
-            const companyName = savedStudent.companyName || formData.company || 'Company';
-            const skills = savedStudent.skills || formData.skill || 'Full Stack';
-            const cgpa = savedStudent.cgpa !== undefined ? savedStudent.cgpa : formData.cgpa;
-            const packageLpa = savedStudent.packageLpa !== undefined ? savedStudent.packageLpa : formData.lpa;
-
-            const nameParts = studentName.trim().split(' ');
-            let initials = 'ST';
-            if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
-                initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-            } else if (nameParts[0] && nameParts[0].length >= 2) {
-                initials = nameParts[0].substring(0, 2).toUpperCase();
-            } else if (nameParts[0]) {
-                initials = nameParts[0].toUpperCase();
-            }
-
-            const newStudent = {
-                id: savedStudent.id || Date.now(),
-                rank: 1,
-                name: studentName,
-                initials: initials,
-                branch: formData.branch || savedStudent.branch || savedStudent.department || 'CS',
-                passingYear: formData.passingYear || savedStudent.passingYear || '2026',
-                cgpa: cgpa,
-                lpa: packageLpa,
-                skill: skills,
-                skillColor: '#f3e8ff',
-                skillTextColor: '#a855f7',
-                company: companyName,
-                companyColor: '#2563eb'
-            };
-
-            // Combine and sort by LPA descending, then CGPA descending
-            const rawList = [newStudent, ...studentsList];
-            rawList.sort((a, b) => {
-                const lpaA = Number.parseFloat(a.lpa) || 0;
-                const lpaB = Number.parseFloat(b.lpa) || 0;
-                if (lpaB !== lpaA) return lpaB - lpaA;
-                const cgpaA = Number.parseFloat(a.cgpa) || 0;
-                const cgpaB = Number.parseFloat(b.cgpa) || 0;
-                return cgpaB - cgpaA;
-            });
-
-            const rankedList = rawList.map((s, idx) => ({ ...s, rank: idx + 1 }));
-            setStudentsList(rankedList);
-
-            // Automatically navigate to the pagination page where the newly added student landed
-            const newIndex = rankedList.findIndex(s => s.id === newStudent.id);
-            if (newIndex !== -1) {
-                const targetPage = Math.floor(newIndex / 5) + 1;
-                setCurrentPage(targetPage);
-            }
+            // Fetch fresh canonical list from database API & jump to newly added student page
+            await fetchTopStudents(formData.name);
 
             setIsModalOpen(false);
             setFormData({
