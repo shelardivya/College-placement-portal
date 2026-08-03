@@ -273,21 +273,32 @@ export default function StudentAnalytics() {
             try {
                 const response = await getAllTopPlacedStudents();
                 if (response.data && Array.isArray(response.data)) {
-                    const mapped = response.data.map((s, index) => {
+                    const sorted = [...response.data].sort((a, b) => {
+                        const lpaA = Number.parseFloat(a.packageLpa) || 0;
+                        const lpaB = Number.parseFloat(b.packageLpa) || 0;
+                        if (lpaB !== lpaA) return lpaB - lpaA;
+                        const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                        const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                        return cgpaB - cgpaA;
+                    });
+
+                    const mapped = sorted.map((s, index) => {
                         const nameParts = (s.studentName || '').trim().split(' ');
                         let initials = 'ST';
-                        if (nameParts.length >= 2) {
+                        if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
                             initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                        } else if (nameParts[0]) {
+                        } else if (nameParts[0] && nameParts[0].length >= 2) {
                             initials = nameParts[0].substring(0, 2).toUpperCase();
+                        } else if (nameParts[0]) {
+                            initials = nameParts[0].toUpperCase();
                         }
                         return {
                             id: s.id,
                             rank: index + 1,
                             name: s.studentName,
                             initials: initials,
-                            branch: 'CS', // Hardcoded fallback if not in API
-                            passingYear: '2026', // Hardcoded fallback if not in API
+                            branch: s.branch || s.department || s.course || 'CS',
+                            passingYear: s.passingYear || s.year || '2026',
                             cgpa: s.cgpa || '9.0',
                             lpa: s.packageLpa || '12',
                             skill: s.skills || 'Full Stack',
@@ -345,11 +356,11 @@ export default function StudentAnalytics() {
 
             const newStudent = {
                 id: savedStudent.id || Date.now(),
-                rank: studentsList.length + 1,
+                rank: 1,
                 name: studentName,
                 initials: initials,
-                branch: formData.branch || 'CS',
-                passingYear: formData.passingYear || '2026',
+                branch: formData.branch || savedStudent.branch || savedStudent.department || 'CS',
+                passingYear: formData.passingYear || savedStudent.passingYear || '2026',
                 cgpa: cgpa,
                 lpa: packageLpa,
                 skill: skills,
@@ -359,7 +370,27 @@ export default function StudentAnalytics() {
                 companyColor: '#2563eb'
             };
 
-            setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
+            // Combine and sort by LPA descending, then CGPA descending
+            const rawList = [newStudent, ...studentsList];
+            rawList.sort((a, b) => {
+                const lpaA = Number.parseFloat(a.lpa) || 0;
+                const lpaB = Number.parseFloat(b.lpa) || 0;
+                if (lpaB !== lpaA) return lpaB - lpaA;
+                const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                return cgpaB - cgpaA;
+            });
+
+            const rankedList = rawList.map((s, idx) => ({ ...s, rank: idx + 1 }));
+            setStudentsList(rankedList);
+
+            // Automatically navigate to the pagination page where the newly added student landed
+            const newIndex = rankedList.findIndex(s => s.id === newStudent.id);
+            if (newIndex !== -1) {
+                const targetPage = Math.floor(newIndex / 5) + 1;
+                setCurrentPage(targetPage);
+            }
+
             setIsModalOpen(false);
             setFormData({
                 name: '',
