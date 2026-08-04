@@ -59,6 +59,8 @@ public class TopPlacedStudentService {
         student.setSkills(
                 request.getSkills()
         );
+        student.setBranch(request.getBranch());
+        student.setPassingYear(request.getPassingYear());
 
         topPlacedStudentRepository.save(student);
         // ==========================================
@@ -111,6 +113,8 @@ public class TopPlacedStudentService {
             dto.setPackageLpa(student.getPackageLpa());
             dto.setCgpa(student.getCgpa());
             dto.setSkills(student.getSkills());
+            dto.setBranch(student.getBranch());
+            dto.setPassingYear(student.getPassingYear());
 
             response.add(dto);
 
@@ -142,6 +146,8 @@ public class TopPlacedStudentService {
         dto.setPackageLpa(student.getPackageLpa());
         dto.setCgpa(student.getCgpa());
         dto.setSkills(student.getSkills());
+        dto.setBranch(student.getBranch());
+        dto.setPassingYear(student.getPassingYear());
 
         return dto;
 
@@ -166,6 +172,8 @@ public class TopPlacedStudentService {
         student.setPackageLpa(request.getPackageLpa());
         student.setCgpa(request.getCgpa());
         student.setSkills(request.getSkills());
+        student.setBranch(request.getBranch());
+        student.setPassingYear(request.getPassingYear());
 
         topPlacedStudentRepository.save(student);
 
