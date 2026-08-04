@@ -59,9 +59,7 @@ function sanitizePath(prefix, id, suffix = '') {
         throw new TypeError('Invalid ID format: contains non-alphanumeric characters.');
     }
     const cleanId = encodeURIComponent(strId);
-    const fullPath = `${prefix}${cleanId}${suffix}`;
-    const validatedUrl = new URL(fullPath, api.defaults.baseURL || 'http://localhost');
-    return validatedUrl.pathname + validatedUrl.search;
+    return `${prefix}${cleanId}${suffix}`;
 }
 
 export const getDraftById = (id) => {
@@ -205,6 +203,18 @@ export const getAllTopPlacedStudents = () => {
 export const addTopPlacedStudent = (studentData) => {
     const token = localStorage.getItem("token");
     return api.post("/admin/top-placed-student/add", studentData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const deleteTopPlacedStudent = (id) => {
+    if (id === null || id === undefined || id === '') {
+        return Promise.reject(new Error("Student ID is required for deletion."));
+    }
+    const token = localStorage.getItem("token");
+    return api.delete(sanitizePath('/admin/top-placed-student/delete/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }

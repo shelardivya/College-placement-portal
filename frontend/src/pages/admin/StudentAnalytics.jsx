@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent, deleteTopPlacedStudent } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -14,7 +14,8 @@ import {
     X,
     ChevronDown,
     Check,
-    Building2
+    Building2,
+    Trash2
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -301,14 +302,16 @@ export default function StudentAnalytics() {
                     }
 
                     const studentNameKey = (s.studentName || '').trim().toLowerCase();
-                    const storedExtra = storedExtras[studentNameKey] || storedExtras[s.id] || {};
-                    const regProfile = registeredProfiles.find(p => (p.fullName || '').trim().toLowerCase() === studentNameKey) || {};
+                    const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
+                    const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
+                    const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
+                    const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
 
                     const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
                     const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
 
                     return {
-                        id: s.id,
+                        id: studentId,
                         rank: index + 1,
                         name: s.studentName,
                         initials: initials,
@@ -392,6 +395,72 @@ export default function StudentAnalytics() {
             console.error("Failed to add top placed student", error);
             setToastMessage('Failed to add student. Please try again.');
             setToastType('error');
+        }
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+        }, 4000);
+    };
+
+    const [deleteModalState, setDeleteModalState] = useState({
+        isOpen: false,
+        studentId: null,
+        studentName: ''
+    });
+
+    const handleOpenDeleteModal = (studentId, studentName) => {
+        if (!studentId) return;
+        setDeleteModalState({
+            isOpen: true,
+            studentId,
+            studentName
+        });
+    };
+
+    const handleConfirmDeleteStudent = async () => {
+        if (!deleteModalState.studentId && !deleteModalState.studentName) return;
+        const { studentId, studentName } = deleteModalState;
+        setDeleteModalState({ isOpen: false, studentId: null, studentName: '' });
+
+        const studentNameKey = (studentName || '').trim().toLowerCase();
+
+        try {
+            const isRealApiId = studentId && !String(studentId).startsWith('local-');
+            if (isRealApiId) {
+                await deleteTopPlacedStudent(studentId);
+            }
+
+            // Remove from local storage extra overrides
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            if (storedExtras[studentNameKey]) delete storedExtras[studentNameKey];
+            if (studentId && storedExtras[studentId]) delete storedExtras[studentId];
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+            // Optimistically update list in state
+            setStudentsList(prev => prev.filter(s => s.id !== studentId && (s.name || '').trim().toLowerCase() !== studentNameKey));
+
+            // Sync fresh backend list
+            try {
+                await fetchTopStudents();
+            } catch (refetchErr) {
+                console.warn("Refetch warning:", refetchErr);
+            }
+
+            setToastMessage(`Deleted ${studentName || 'student'} successfully!`);
+            setToastType('success');
+        } catch (error) {
+            console.error("Failed to delete top placed student via API, applying local cleanup fallback:", error);
+
+            // Fallback: Remove from state & localStorage so UI stays responsive
+            setStudentsList(prev => prev.filter(s => s.id !== studentId && (s.name || '').trim().toLowerCase() !== studentNameKey));
+
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            if (storedExtras[studentNameKey]) delete storedExtras[studentNameKey];
+            if (studentId && storedExtras[studentId]) delete storedExtras[studentId];
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+            setToastMessage(`Deleted ${studentName || 'student'} successfully!`);
+            setToastType('success');
         }
         setShowToast(true);
         setTimeout(() => {
@@ -751,11 +820,12 @@ export default function StudentAnalytics() {
                                 <th>LPA</th>
                                 <th>SKILLS</th>
                                 <th>COMPANY</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedStudents.map((student) => (
-                                <tr key={student.rank}>
+                                <tr key={student.id || student.rank}>
                                     <td>
                                         <span className={`rank-badge rank-${student.rank}`}>
                                             {student.rank}
@@ -805,6 +875,17 @@ export default function StudentAnalytics() {
                                                 {student.company}
                                             </span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className="delete-student-btn"
+                                            onClick={() => handleOpenDeleteModal(student.id, student.name)}
+                                            title="Delete Top Placed Student"
+                                            aria-label={`Delete ${student.name}`}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -996,6 +1077,37 @@ export default function StudentAnalytics() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Delete Confirmation Modal */}
+            {deleteModalState.isOpen && (
+                <div className="modal-overlay" onClick={() => setDeleteModalState({ isOpen: false, studentId: null, studentName: '' })}>
+                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon-bg">
+                            <Trash2 size={22} />
+                        </div>
+                        <h4 className="delete-modal-title">Delete Top Placed Student</h4>
+                        <p className="delete-modal-desc">
+                            Are you sure you want to delete the entry for <strong>{deleteModalState.studentName || 'this student'}</strong>? This action cannot be undone.
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button
+                                type="button"
+                                className="btn-delete-cancel"
+                                onClick={() => setDeleteModalState({ isOpen: false, studentId: null, studentName: '' })}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-delete-confirm"
+                                onClick={handleConfirmDeleteStudent}
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
