@@ -574,16 +574,11 @@ export default function StudentAnalytics() {
                     <div className='bar-chart-wrapper'>
                         <svg viewBox="0 0 280 180" className="bar-chart-svg">
 
-                            {/* y-axis grid lines and labels */}
+                            {/* y-axis labels */}
                             {Array.from({ length: Math.floor(maxStudents / 10) + 1 }, (_, i) => i * 10).map((val) => {
                                 const y = 20 + ((maxStudents - val) / (maxStudents || 1)) * 120;
                                 return (
                                     <g key={val}>
-                                        <line
-                                            x1="36" y1={y}
-                                            x2="270" y2={y}
-                                            stroke="#f1f5f9" strokeWidth="1"
-                                        />
                                         <text x="30" y={y + 4} textAnchor="end" className="bar-axis-text">
                                             {val}
                                         </text>
