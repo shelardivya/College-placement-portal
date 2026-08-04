@@ -93,7 +93,14 @@ function Login({ onNavigate, initialView }) {
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
         const rawEmail = params.get('email') || '';
-        const initialEmail = getStorageString(rawEmail).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+        let initialEmail = getStorageString(rawEmail).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+
+        if (!initialEmail) {
+            const storedResetEmail = localStorage.getItem('allowed_reset_email');
+            if (storedResetEmail) {
+                initialEmail = getStorageString(storedResetEmail).trim();
+            }
+        }
         let initialPass = '';
         if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
@@ -285,20 +292,27 @@ function Login({ onNavigate, initialView }) {
             showToastMessage("Passwords do not match!", 'error', 3000);
             return;
         }
-        const allowedEmail = localStorage.getItem('allowed_reset_email');
-        if (!allowedEmail || getStorageString(allowedEmail).toLowerCase() !== getStorageString(formData.email).trim().toLowerCase()) {
+
+        const params = new URLSearchParams(window.location.search);
+        const tokenParam = params.get('token') || '';
+        const allowedEmail = localStorage.getItem('allowed_reset_email') || '';
+        const targetEmail = getStorageString(formData.email || allowedEmail).trim();
+
+        if (!tokenParam && !allowedEmail && !targetEmail) {
             showToastMessage("Unauthorized request. Please request a new reset link from this device.", 'error', 4000);
             return;
         }
+
         try {
             const newPassword = getStorageString(formData.password);
             await resetPassword({
-                email: getStorageString(formData.email).trim(),
+                email: targetEmail,
+                token: tokenParam,
                 newPassword: newPassword,
                 confirmPassword: newPassword
             });
 
-            const resetEmail = getStorageString(formData.email).trim().toLowerCase();
+            const resetEmail = targetEmail.toLowerCase();
             const rawProfiles = localStorage.getItem('registered_profiles');
             let profiles = [];
             if (rawProfiles) {
