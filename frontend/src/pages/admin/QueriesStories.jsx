@@ -1330,7 +1330,7 @@ export default function QueriesStories() {
 
             {
                 isDriveModalOpen && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }}>
                         <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1511,14 +1511,14 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 deletingDrive && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
@@ -1536,14 +1536,14 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 viewingQuery && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }}>
                         <div className="qs-modal-content view-query-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1601,14 +1601,14 @@ export default function QueriesStories() {
                                 </div>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 replyingQuery && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }}>
                         <div className="qs-modal-content reply-query-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1655,12 +1655,12 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
             {
                 isStoryModalOpen && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }}>
                         <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1785,13 +1785,13 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
             {
                 deletingStory && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
@@ -1809,12 +1809,12 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
             {
                 confirmingPublish && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
                                 <CheckCircle2 size={22} />
@@ -1832,7 +1832,7 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 

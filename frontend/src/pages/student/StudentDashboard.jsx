@@ -165,12 +165,10 @@ function ProfileLinkField({ label, isEditing, profileValue, tempValue, onChange,
 
 function ModalBackdrop({ onClose }) {
     return (
-        <button
-            type="button"
+        <div
             aria-label="Close modal backdrop"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }}
             onClick={onClose}
-            onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
         />
     );
 }
@@ -1458,7 +1456,7 @@ export default function
                 const eligibility = getJobEligibility(selectedJob);
                 return (
                     <div className="modal-overlay">
-                        <button type="button" aria-label="Close" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={handleCancleApply} onKeyDown={(e) => { if (e.key === 'Escape') handleCancleApply(); }} />
+                        <div aria-label="Close modal backdrop" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", background: "transparent", border: "none", cursor: "default" }} onClick={handleCancleApply} />
                         <div className="student-apply-modal" style={{ position: "relative", zIndex: 1 }}>
 
                             <div className="modal-header">

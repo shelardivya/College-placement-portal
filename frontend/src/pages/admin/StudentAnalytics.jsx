@@ -830,7 +830,7 @@ export default function StudentAnalytics() {
 
             {/* Add Top Placed Student Modal */}
             {isModalOpen && (
-                <button type="button" className="modal-overlay" aria-label="Close add student modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                <div className="modal-overlay" aria-label="Close add student modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}>
                     <div className="modal-container">
                         <div className="modal-header">
                             <div>
@@ -979,7 +979,7 @@ export default function StudentAnalytics() {
                             </div>
                         </form>
                     </div>
-                </button>
+                </div>
             )}
 
             {/* Toast */}
