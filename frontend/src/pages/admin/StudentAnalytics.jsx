@@ -382,8 +382,8 @@ export default function StudentAnalytics() {
             setIsModalOpen(false);
             setFormData({
                 name: '',
-                branch: 'CS',
-                passingYear: '2026',
+                branch: '',
+                passingYear: '',
                 cgpa: '',
                 lpa: '',
                 skill: '',

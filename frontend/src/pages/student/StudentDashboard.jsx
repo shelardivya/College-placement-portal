@@ -477,7 +477,10 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                     jobs
                         .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
                         .map((job) => {
-                            const isApplied = appliedJobs[job.id || job._id];
+                            const jobId = job.id || job._id;
+                            const isApplied = Array.isArray(appliedJobs)
+                                ? appliedJobs.some(id => String(id) === String(jobId))
+                                : Boolean(appliedJobs[jobId]);
                             return (
                                 <motion.div className="job-card" key={job.id || job._id || job.title}
                                     initial={{ opacity: 0, y: 15 }}
@@ -713,8 +716,16 @@ export default function
     const [selectedJob, setSelectedJob] =
         useState(null);
 
-    const [appliedJobs, setAppliedJobs] =
-        useState([]);
+    const userEmailKey = (loggedInUser.email || "").toLowerCase().trim();
+
+    const [appliedJobs, setAppliedJobs] = useState(() => {
+        try {
+            const stored = localStorage.getItem(`applied_jobs_${userEmailKey}`);
+            return stored ? JSON.parse(stored) : [];
+        } catch {
+            return [];
+        }
+    });
 
     const [matchSearchQuery, setMatchSearchQuery] =
         useState("");
@@ -1151,9 +1162,22 @@ export default function
                 const formData = new FormData();
                 formData.append('resume', resumeFile);
 
-                await applyForJob(selectedJob.id, formData);
+                const targetJobId = selectedJob.id || selectedJob._id;
+                await applyForJob(targetJobId, formData);
 
-                setAppliedJobs(prev => [...prev, selectedJob.id]);
+                setAppliedJobs(prev => {
+                    const prevArr = Array.isArray(prev) ? prev : [];
+                    if (!prevArr.some(id => String(id) === String(targetJobId))) {
+                        const updated = [...prevArr, targetJobId];
+                        try {
+                            localStorage.setItem(`applied_jobs_${userEmailKey}`, JSON.stringify(updated));
+                        } catch (e) {
+                            console.error("Failed to save applied jobs:", e);
+                        }
+                        return updated;
+                    }
+                    return prevArr;
+                });
                 setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
                 setToastType('success');
                 setShowToast(true);
@@ -1164,10 +1188,25 @@ export default function
 
             } catch (error) {
                 console.error("Failed to apply for job:", error);
+                const targetJobId = selectedJob?.id || selectedJob?._id;
                 if (error.response?.status === 409) {
                     setToastMessage(error.response.data?.message || "You have already applied for this job.");
                     setToastType('error');
-                    setAppliedJobs(prev => [...new Set([...prev, selectedJob.id])]);
+                    if (targetJobId) {
+                        setAppliedJobs(prev => {
+                            const prevArr = Array.isArray(prev) ? prev : [];
+                            if (!prevArr.some(id => String(id) === String(targetJobId))) {
+                                const updated = [...prevArr, targetJobId];
+                                try {
+                                    localStorage.setItem(`applied_jobs_${userEmailKey}`, JSON.stringify(updated));
+                                } catch (e) {
+                                    console.error("Failed to save applied jobs:", e);
+                                }
+                                return updated;
+                            }
+                            return prevArr;
+                        });
+                    }
                     setSelectedJob(null);
                     setResumeFile(null);
                     setResumeFileName("");
