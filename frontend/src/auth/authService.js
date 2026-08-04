@@ -26,7 +26,9 @@ export const forgotPassword = (email) => {
 };
 
 export const resetPassword = (resetData) => {
-    return api.post("/auth/reset-password", resetData);
+    const token = resetData?.token || resetData?.resetToken || '';
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    return api.post(`/auth/reset-password${query}`, resetData);
 };
 
 export const createJobPosting = (jobData) => {
