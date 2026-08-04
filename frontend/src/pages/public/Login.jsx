@@ -293,13 +293,18 @@ function Login({ onNavigate, initialView }) {
             return;
         }
 
+        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=]).{8,}$/;
+        if (!passwordPattern.test(formData.password)) {
+            showToastMessage("Password must be at least 8 characters and contain letters, numbers, and special characters (@$!%*?&).", 'error', 4500);
+            return;
+        }
+
         const params = new URLSearchParams(window.location.search);
-        const tokenParam = params.get('token') || '';
         const allowedEmail = localStorage.getItem('allowed_reset_email') || '';
         const targetEmail = getStorageString(formData.email || allowedEmail).trim();
 
-        if (!tokenParam && !allowedEmail && !targetEmail) {
-            showToastMessage("Unauthorized request. Please request a new reset link from this device.", 'error', 4000);
+        if (!targetEmail) {
+            showToastMessage("Please enter your registered email address.", 'error', 3000);
             return;
         }
 
@@ -307,7 +312,6 @@ function Login({ onNavigate, initialView }) {
             const newPassword = getStorageString(formData.password);
             await resetPassword({
                 email: targetEmail,
-                token: tokenParam,
                 newPassword: newPassword,
                 confirmPassword: newPassword
             });
@@ -379,6 +383,9 @@ function Login({ onNavigate, initialView }) {
 
             showToastMessage('Password reset successfully!', 'success', 2000, () => {
                 setLoginView('login');
+                if (window.history && window.history.pushState) {
+                    window.history.pushState(null, '', '/login');
+                }
                 setFormData(prev => ({
                     ...prev,
                     email: resetEmail,
@@ -389,7 +396,10 @@ function Login({ onNavigate, initialView }) {
             });
         } catch (error) {
             console.error("Reset Password Error:", error);
-            showToastMessage(error.response?.data?.message || "Failed to reset password", 'error', 3000);
+            const errMsg = typeof error.response?.data === 'string'
+                ? error.response.data
+                : (error.response?.data?.message || "Failed to reset password. Please check your details and try again.");
+            showToastMessage(errMsg, 'error', 4000);
         }
     };
 
@@ -596,6 +606,22 @@ function Login({ onNavigate, initialView }) {
                             {/* RESET PASSWORD INPUTS (Reset view) */}
                             {loginView === 'reset' && (
                                 <>
+                                    <div className="input-group full-width">
+                                        <label htmlFor="resetEmail">Email Address</label>
+                                        <div className="input-wrapper">
+                                            <Mail size={16} />
+                                            <input
+                                                id="resetEmail"
+                                                type="email"
+                                                name="email"
+                                                placeholder="name@company.com"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="input-group full-width">
                                         <label htmlFor="resetPassword">New Password</label>
                                         <div className="input-wrapper">
