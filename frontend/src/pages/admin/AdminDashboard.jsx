@@ -1646,7 +1646,7 @@ function AdminDashboard({ onNavigate }) {
     const JOBS_PER_PAGE = 3;
 
     const [applicantsCurrentPage, setApplicantsCurrentPage] = useState(1);
-    const APPLICANTS_PER_PAGE = 5;
+    const APPLICANTS_PER_PAGE = 4;
 
     const [filterDate, setFilterDate] = useState('');
     const [filterCompany, setFilterCompany] = useState('');
