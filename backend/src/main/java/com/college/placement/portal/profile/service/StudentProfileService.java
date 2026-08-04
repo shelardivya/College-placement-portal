@@ -2,8 +2,8 @@ package com.college.placement.portal.profile.service;
 
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.repository.RegisterRepository;
-import com.college.placement.portal.profile.Dto.StudentProfileUpdateDto;
-import com.college.placement.portal.profile.Dto.StudentProfileViewDto;
+import com.college.placement.portal.profile.dto.StudentProfileUpdateDto;
+import com.college.placement.portal.profile.dto.StudentProfileViewDto;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;

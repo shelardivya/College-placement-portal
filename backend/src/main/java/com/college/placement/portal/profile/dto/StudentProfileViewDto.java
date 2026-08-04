@@ -1,4 +1,4 @@
-package com.college.placement.portal.profile.Dto;
+package com.college.placement.portal.profile.dto;
 
 public class StudentProfileViewDto {
 

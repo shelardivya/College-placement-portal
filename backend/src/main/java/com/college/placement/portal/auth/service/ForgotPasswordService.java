@@ -38,7 +38,28 @@ public class ForgotPasswordService {
             return "Email does not exist";
         }
 
+        // ==========================================
+        // Expire Previous Reset Link
+        // ==========================================
+
+        Optional<ForgetPasswordEntity> oldRequest =
+                forgetPasswordRepository.findTopByEmailOrderByRequestTimeDesc(email);
+
+        if (oldRequest.isPresent()) {
+
+            ForgetPasswordEntity old = oldRequest.get();
+
+            old.setUsed(true);
+            old.setStatus("COMPLETED");
+
+            forgetPasswordRepository.save(old);
+        }
+
         ForgetPasswordEntity entity = new ForgetPasswordEntity();
+        String token = java.util.UUID.randomUUID().toString();
+
+        entity.setToken(token);
+        entity.setUsed(false);
         entity.setEmail(email);
         entity.setStatus("PENDING");
         entity.setRequestTime(LocalDateTime.now());
@@ -47,7 +68,7 @@ public class ForgotPasswordService {
         forgetPasswordRepository.save(entity);
 
         String resetLink =
-                "https://campus-hire.duckdns.org/reset-password?email="  + email;
+                "https://campus-hire.duckdns.org/reset-password?token=" + token;
 
         emailService.sendEmail(
                 email,
@@ -67,36 +88,41 @@ public class ForgotPasswordService {
             return "Password mismatch";
         }
 
-        Optional<RegisterEntity> userOpt =
-                userRepository.findByEmail(dto.getEmail());
 
-        if (userOpt.isEmpty()) {
-            return "User not found";
-        }
-
-        Optional<ForgetPasswordEntity> fp =
+        ForgetPasswordEntity request =
                 forgetPasswordRepository
-                        .findTopByEmailOrderByRequestTimeDesc(dto.getEmail());
+                        .findByToken(dto.getToken())
+                        .orElse(null);
 
-        if (fp.isEmpty()) {
-            return "No reset request found";
+        if (request == null) {
+            return "Invalid reset link";
         }
 
-        ForgetPasswordEntity request = fp.get();
+        if (Boolean.TRUE.equals(request.getUsed())) {
+            return "Reset link already used";
+        }
 
         if (request.getExpiryTime().isBefore(LocalDateTime.now())) {
             return "Reset link expired";
         }
 
-        if ("COMPLETED".equals(request.getStatus())) {
-            return "Reset link already used";
+        RegisterEntity user =
+                userRepository.findByEmail(request.getEmail())
+                        .orElse(null);
+
+        if (user == null) {
+            return "User not found";
         }
 
-        RegisterEntity user = userOpt.get();
-        user.setPassword(encoder.encode(dto.getNewPassword()));
+        user.setPassword(
+                encoder.encode(dto.getNewPassword())
+        );
+
         userRepository.save(user);
 
+        request.setUsed(true);
         request.setStatus("COMPLETED");
+
         forgetPasswordRepository.save(request);
 
         return "Password updated successfully";

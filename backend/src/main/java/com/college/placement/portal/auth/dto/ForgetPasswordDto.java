@@ -1,6 +1,5 @@
 package com.college.placement.portal.auth.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Data;
@@ -8,9 +7,8 @@ import lombok.Data;
 @Data
 public class ForgetPasswordDto {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Enter a valid email")
-    private String email;
+    @NotBlank(message = "Token is required")
+    private String token;
 
     @NotBlank(message = "New Password is required")
     @Pattern(
