@@ -352,8 +352,8 @@ export default function QueriesStories() {
                 if (q.id === replyingQuery.id) {
                     return {
                         ...q,
-                        status: 'resolved',
-                        reply: replyText
+                        reply: replyText,
+                        adminReply: replyText
                     };
                 }
                 return q;
