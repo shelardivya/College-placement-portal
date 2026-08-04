@@ -300,8 +300,24 @@ function Login({ onNavigate, initialView }) {
         }
 
         const params = new URLSearchParams(window.location.search);
+        const tokenParam = params.get('token') || '';
+        const urlEmail = params.get('email') || '';
         const allowedEmail = localStorage.getItem('allowed_reset_email') || '';
-        const targetEmail = getStorageString(formData.email || allowedEmail).trim();
+        let targetEmail = getStorageString(urlEmail || formData.email || allowedEmail).trim();
+
+        if (!targetEmail) {
+            const rawReg = localStorage.getItem('registered_profiles');
+            if (rawReg) {
+                try {
+                    const parsed = JSON.parse(rawReg);
+                    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].email) {
+                        targetEmail = getStorageString(parsed[0].email).trim();
+                    }
+                } catch {
+                    // Ignore
+                }
+            }
+        }
 
         if (!targetEmail) {
             showToastMessage("Please enter your registered email address.", 'error', 3000);
@@ -312,6 +328,8 @@ function Login({ onNavigate, initialView }) {
             const newPassword = getStorageString(formData.password);
             await resetPassword({
                 email: targetEmail,
+                token: tokenParam,
+                resetToken: tokenParam,
                 newPassword: newPassword,
                 confirmPassword: newPassword
             });
@@ -606,21 +624,6 @@ function Login({ onNavigate, initialView }) {
                             {/* RESET PASSWORD INPUTS (Reset view) */}
                             {loginView === 'reset' && (
                                 <>
-                                    <div className="input-group full-width">
-                                        <label htmlFor="resetEmail">Email Address</label>
-                                        <div className="input-wrapper">
-                                            <Mail size={16} />
-                                            <input
-                                                id="resetEmail"
-                                                type="email"
-                                                name="email"
-                                                placeholder="name@company.com"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                required
-                                            />
-                                        </div>
-                                    </div>
 
                                     <div className="input-group full-width">
                                         <label htmlFor="resetPassword">New Password</label>

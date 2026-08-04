@@ -100,7 +100,7 @@ describe('authService API Methods', () => {
   it('resetPassword calls api.post', async () => {
     api.post.mockResolvedValue({ data: { success: true } });
     await resetPassword({ token: 't', password: 'p' });
-    expect(api.post).toHaveBeenCalledWith('/auth/reset-password', { token: 't', password: 'p' });
+    expect(api.post).toHaveBeenCalledWith('/auth/reset-password?token=t', { token: 't', password: 'p' });
   });
 
   it('createJobPosting attaches Authorization header', async () => {
