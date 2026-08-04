@@ -828,12 +828,10 @@ function AddJobModal({
     modalTotalDays
 }) {
     return (
-        <button
-            type="button"
+        <div
             className='modal-overlay'
             aria-label="Close job modal backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) setIsSidebarOpen(false); }}
-            style={{ border: 'none', padding: 0, textAlign: 'left' }}
         >
             <div className='add-job-modal'>
                 <div className='modal-header'>
@@ -1032,7 +1030,7 @@ function AddJobModal({
                     </div>
                 </form>
             </div>
-        </button>
+        </div>
     );
 }
 
@@ -1304,12 +1302,10 @@ function ProfileSettingsModal({
     }
 
     return (
-        <button
-            type="button"
+        <div
             className='modal-overlay'
             aria-label="Close profile settings backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) handleCloseProfileModal(); }}
-            style={{ border: 'none', padding: 0, textAlign: 'left' }}
         >
             <div className='add-job-modal profile-settings-modal'>
                 <div className='modal-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1361,7 +1357,7 @@ function ProfileSettingsModal({
                     handleUpdatePassword
                 })}
             </div>
-        </button>
+        </div>
     );
 }
 
@@ -1390,7 +1386,7 @@ function NotificationSidebar({
     if (!isNotificationSidebarOpen) return null;
 
     return (
-        <button type="button" className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={(e) => { if (e.target === e.currentTarget) setIsNotificationSidebarOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+        <div className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={(e) => { if (e.target === e.currentTarget) setIsNotificationSidebarOpen(false); }}>
             <div className="sd-notification-sidebar">
                 <div className="sidebar-header">
                     <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1435,7 +1431,7 @@ function NotificationSidebar({
                     )}
                 </div>
             </div>
-        </button>
+        </div>
     );
 }
 
