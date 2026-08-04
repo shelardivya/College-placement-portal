@@ -2,7 +2,7 @@ package com.college.placement.portal.student.service;
 
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.repository.RegisterRepository;
-import com.college.placement.portal.student.Dto.DashboardStatsDto;
+import com.college.placement.portal.student.dto.DashboardStatsDto;
 import com.college.placement.portal.student.repository.JobApplyRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

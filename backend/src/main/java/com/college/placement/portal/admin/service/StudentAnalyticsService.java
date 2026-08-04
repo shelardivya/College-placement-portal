@@ -261,6 +261,8 @@ public class StudentAnalyticsService {
                 if (value.isEmpty()) {
                     continue;
                 }
+                value = value.toLowerCase();
+                value = Character.toUpperCase(value.charAt(0)) + value.substring(1);
 
                 skillCount.put(
                         value,

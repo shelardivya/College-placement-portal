@@ -5,7 +5,7 @@ import com.college.placement.portal.admin.repository.PlacementDriveRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
-import com.college.placement.portal.student.Dto.StudentPlacementDriveResponseDto;
+import com.college.placement.portal.student.dto.StudentPlacementDriveResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 

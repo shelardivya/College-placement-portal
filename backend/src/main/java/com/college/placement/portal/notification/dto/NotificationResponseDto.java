@@ -1,7 +1,5 @@
 package com.college.placement.portal.notification.dto;
 
-import java.time.LocalDateTime;
-
 public class NotificationResponseDto {
 
     private Long id;

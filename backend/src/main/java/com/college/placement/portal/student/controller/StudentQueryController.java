@@ -1,7 +1,7 @@
 package com.college.placement.portal.student.controller;
 
-import com.college.placement.portal.student.Dto.StudentQueryResponseDto;
-import com.college.placement.portal.student.Dto.SubmitQueryRequestDto;
+import com.college.placement.portal.student.dto.StudentQueryResponseDto;
+import com.college.placement.portal.student.dto.SubmitQueryRequestDto;
 import com.college.placement.portal.student.service.StudentQueryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;

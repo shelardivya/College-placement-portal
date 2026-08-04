@@ -1,9 +1,4 @@
 package com.college.placement.portal.admin.dto;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public class AddPlacementDriveRequestDto {
