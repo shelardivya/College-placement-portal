@@ -277,6 +277,9 @@ export default function StudentAnalytics() {
         try {
             const response = await getAllTopPlacedStudents();
             if (response.data && Array.isArray(response.data)) {
+                const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+                const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+
                 const sorted = [...response.data].sort((a, b) => {
                     const lpaA = Number.parseFloat(a.packageLpa) || 0;
                     const lpaB = Number.parseFloat(b.packageLpa) || 0;
@@ -296,13 +299,21 @@ export default function StudentAnalytics() {
                     } else if (nameParts[0]) {
                         initials = nameParts[0].toUpperCase();
                     }
+
+                    const studentNameKey = (s.studentName || '').trim().toLowerCase();
+                    const storedExtra = storedExtras[studentNameKey] || storedExtras[s.id] || {};
+                    const regProfile = registeredProfiles.find(p => (p.fullName || '').trim().toLowerCase() === studentNameKey) || {};
+
+                    const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
+                    const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
+
                     return {
                         id: s.id,
                         rank: index + 1,
                         name: s.studentName,
                         initials: initials,
-                        branch: s.branch || s.department || s.course || 'CS',
-                        passingYear: s.passingYear || s.year || '2026',
+                        branch: branch,
+                        passingYear: String(passingYear),
                         cgpa: s.cgpa || '9.0',
                         lpa: s.packageLpa || '12',
                         skill: s.skills || 'Full Stack',
@@ -345,8 +356,20 @@ export default function StudentAnalytics() {
                 companyName: formData.company,
                 packageLpa: Number.parseFloat(formData.lpa) || 12,
                 cgpa: Number.parseFloat(formData.cgpa) || 9.0,
-                skills: formData.skill || 'Full Stack'
+                skills: formData.skill || 'Full Stack',
+                branch: formData.branch || 'CS',
+                department: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026',
+                year: formData.passingYear || '2026'
             };
+
+            // Save branch and passingYear in localStorage extras so it is retained if backend response drops it
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            storedExtras[(formData.name || '').trim().toLowerCase()] = {
+                branch: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026'
+            };
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
 
             await addTopPlacedStudent(payload);
 
