@@ -11,7 +11,8 @@ vi.mock('../../auth/authService', async (importOriginal) => {
     getPlacementCgpaAnalytics: vi.fn().mockResolvedValue({ data: [] }),
     getDepartmentAnalytics: vi.fn().mockResolvedValue({ data: [] }),
     getAllTopPlacedStudents: vi.fn().mockResolvedValue({ data: [] }),
-    addTopPlacedStudent: vi.fn().mockResolvedValue({ data: {} })
+    addTopPlacedStudent: vi.fn().mockResolvedValue({ data: {} }),
+    deleteTopPlacedStudent: vi.fn().mockResolvedValue({ data: {} })
   };
 });
 
