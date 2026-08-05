@@ -83,18 +83,19 @@ public class PlacementDriveService {
         // ==========================================
 // Target Student Logic
 // ==========================================
-
         if (request.getTargetStudent() != null
                 && request.getTargetStudent().contains("ALL")) {
 
-            drive.setTargetStudent(List.of("ALL"));
+            drive.setTargetStudent(new ArrayList<>(List.of("ALL")));
             drive.setSpecificStudentName(null);
 
         }
         else if (request.getTargetStudent() != null
                 && !request.getTargetStudent().isEmpty()) {
 
-            drive.setTargetStudent(request.getTargetStudent());
+            drive.setTargetStudent(
+                    new ArrayList<>(request.getTargetStudent())
+            );
             drive.setSpecificStudentName(null);
 
         }
@@ -112,6 +113,7 @@ public class PlacementDriveService {
             );
 
         }
+
         placementDriveRepository.save(drive);
         // ==========================================
 // Placement Drive Notification
@@ -232,6 +234,13 @@ public class PlacementDriveService {
                 new ArrayList<>();
 
         for (PlacementDriveEntity drive : drives) {
+            if (drive.getDriveDate().isBefore(LocalDate.now())
+                    && !"CLOSED".equalsIgnoreCase(drive.getStatus())) {
+
+                drive.setStatus("CLOSED");
+                placementDriveRepository.save(drive);
+
+            }
 
             PlacementDriveResponseDto dto =
                     new PlacementDriveResponseDto();
@@ -251,6 +260,7 @@ public class PlacementDriveService {
             dto.setLocation(
                     drive.getLocation()
             );
+            dto.setVenue(drive.getVenue());
 
             dto.setDriveDate(
                     drive.getDriveDate().format(
@@ -302,6 +312,7 @@ public class PlacementDriveService {
         dto.setCompanyName(drive.getCompanyName());
         dto.setJobRole(drive.getJobRole());
         dto.setLocation(drive.getLocation());
+        dto.setVenue(drive.getVenue());
         dto.setDriveDate(
                 drive.getDriveDate().format(
                         DateTimeFormatter.ofPattern(
@@ -350,6 +361,7 @@ public class PlacementDriveService {
         drive.setLocation(
                 request.getLocation()
         );
+        drive.setVenue(request.getVenue());
 
         DateTimeFormatter dateFormatter =
                 DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.ENGLISH);
@@ -377,18 +389,19 @@ public class PlacementDriveService {
 // ==========================================
 // Target Student Logic
 // ==========================================
-
         if (request.getTargetStudent() != null
                 && request.getTargetStudent().contains("ALL")) {
 
-            drive.setTargetStudent(List.of("ALL"));
+            drive.setTargetStudent(new ArrayList<>(List.of("ALL")));
             drive.setSpecificStudentName(null);
 
         }
         else if (request.getTargetStudent() != null
                 && !request.getTargetStudent().isEmpty()) {
 
-            drive.setTargetStudent(request.getTargetStudent());
+            drive.setTargetStudent(
+                    new ArrayList<>(request.getTargetStudent())
+            );
             drive.setSpecificStudentName(null);
 
         }
