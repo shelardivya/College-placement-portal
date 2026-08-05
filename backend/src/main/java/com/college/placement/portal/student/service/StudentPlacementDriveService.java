@@ -58,7 +58,8 @@ public class StudentPlacementDriveService {
         for (PlacementDriveEntity drive : drives) {
 
             // Only ACTIVE drives
-            if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
+            if (!"OPEN".equalsIgnoreCase(drive.getStatus())
+                    && !"UPCOMING".equalsIgnoreCase(drive.getStatus())) {
                 continue;
             }
 
@@ -122,9 +123,11 @@ public class StudentPlacementDriveService {
                 placementDriveRepository.findById(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException("Placement Drive Not Found."));
+        if (!"OPEN".equalsIgnoreCase(drive.getStatus())
+                && !"UPCOMING".equalsIgnoreCase(drive.getStatus())) {
 
-        if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
             throw new IllegalArgumentException("Placement Drive Not Available.");
+
         }
 
         if (drive.getDriveDate().isBefore(LocalDate.now())) {
