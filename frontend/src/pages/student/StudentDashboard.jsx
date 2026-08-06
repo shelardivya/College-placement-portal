@@ -28,7 +28,7 @@ import StudHub from "./StudHub";
 // Default fallback mock data for Placement Drives
 const initialDrives = [];
 
-/** Sanitizes string input for DOM storage compliance (S8475). */
+/** Cleans and sanitizes user input strings before storing or displaying. */
 function sanitizeStorageString(val) {
     if (val === null || val === undefined) return '';
     let str = String(val);
