@@ -1346,6 +1346,36 @@
     color: var(--text-light);
 }
 
+.btn-page-number {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.btn-page-number:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+.btn-page-number.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
 /*GREETING SECTION BANNER STYLEs */
 .greeting-section {
     background-color: #1e40af;

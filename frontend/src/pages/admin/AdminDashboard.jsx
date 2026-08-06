@@ -440,6 +440,10 @@ function AdminStatsGrid({ dashboardStats }) {
 
 function RecentPostingsCard({
     drafts,
+    paginatedDrafts,
+    draftsCurrentPage,
+    totalDraftsPages,
+    setDraftsCurrentPage,
     handleEditDraft,
     handlePublishDraft,
     paginatedRecentPosts,
@@ -468,34 +472,73 @@ function RecentPostingsCard({
                         <h5>Saved Drafts ({drafts.length})</h5>
                     </div>
 
-                    {drafts.map(draft => (
-                        <div key={draft.id} className='draft-item'>
-                            <div className='draft-info'>
-                                <span className='badge-draft'>Draft</span>
-                                <div>
-                                    <h6>{draft.title}</h6>
-                                    <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                    {paginatedDrafts && paginatedDrafts.length > 0 ? (
+                        paginatedDrafts.map(draft => (
+                            <div key={draft.id} className='draft-item'>
+                                <div className='draft-info'>
+                                    <span className='badge-draft'>Draft</span>
+                                    <div>
+                                        <h6>{draft.title}</h6>
+                                        <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                                    </div>
+                                </div>
+
+                                <div className='draft-actions'>
+                                    <button
+                                        type="button"
+                                        className='btn-resume-draft'
+                                        onClick={() => handleEditDraft(draft.id)}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className='btn-publish-draft'
+                                        onClick={() => handlePublishDraft(draft.id)}
+                                    >
+                                        Publish
+                                    </button>
                                 </div>
                             </div>
+                        ))
+                    ) : (
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '12px 0' }}>No drafts saved.</p>
+                    )}
 
-                            <div className='draft-actions'>
+                    {totalDraftsPages > 1 && (
+                        <div className='pagination-controls' style={{ marginTop: '12px', gap: '6px', justifyContent: 'center' }}>
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === 1}
+                                onClick={() => setDraftsCurrentPage(prev => Math.max(prev - 1, 1))}
+                                title="Previous Page"
+                            >
+                                &larr;
+                            </button>
+
+                            {Array.from({ length: totalDraftsPages }, (_, i) => i + 1).map(pageNum => (
                                 <button
+                                    key={pageNum}
                                     type="button"
-                                    className='btn-resume-draft'
-                                    onClick={() => handleEditDraft(draft.id)}
+                                    className={`btn-page-number ${draftsCurrentPage === pageNum ? 'active' : ''}`}
+                                    onClick={() => setDraftsCurrentPage(pageNum)}
                                 >
-                                    Edit
+                                    {pageNum}
                                 </button>
-                                <button
-                                    type="button"
-                                    className='btn-publish-draft'
-                                    onClick={() => handlePublishDraft(draft.id)}
-                                >
-                                    Publish
-                                </button>
-                            </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === totalDraftsPages || totalDraftsPages === 0}
+                                onClick={() => setDraftsCurrentPage(prev => Math.min(prev + 1, totalDraftsPages))}
+                                title="Next Page"
+                            >
+                                &rarr;
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
             </motion.div>
 
@@ -1476,6 +1519,8 @@ function AdminDashboard({ onNavigate }) {
     ]);
 
     const [drafts, setDrafts] = useState([]);
+    const [draftsCurrentPage, setDraftsCurrentPage] = useState(1);
+    const DRAFTS_PER_PAGE = 3;
     const [dashboardStats, setDashboardStats] = useState(null);
     const [applicants, setApplicants] = useState([]);
     const [filteredApplicants, setFilteredApplicants] = useState([]);
@@ -2059,6 +2104,12 @@ function AdminDashboard({ onNavigate }) {
         setValidationError(false);
     };
 
+    const totalDraftsPages = Math.ceil(drafts.length / DRAFTS_PER_PAGE);
+    const paginatedDrafts = drafts.slice(
+        (draftsCurrentPage - 1) * DRAFTS_PER_PAGE,
+        draftsCurrentPage * DRAFTS_PER_PAGE
+    );
+
     const totalJobsPages = Math.ceil(recentPosts.length / JOBS_PER_PAGE);
     const paginatedRecentPosts = recentPosts.slice(
         (jobsCurrentPage - 1) * JOBS_PER_PAGE,
@@ -2116,6 +2167,10 @@ function AdminDashboard({ onNavigate }) {
                                     <div className='dashboard-grid-lower'>
                                         <RecentPostingsCard
                                             drafts={drafts}
+                                            paginatedDrafts={paginatedDrafts}
+                                            draftsCurrentPage={draftsCurrentPage}
+                                            totalDraftsPages={totalDraftsPages}
+                                            setDraftsCurrentPage={setDraftsCurrentPage}
                                             handleEditDraft={handleEditDraft}
                                             handlePublishDraft={handlePublishDraft}
                                             paginatedRecentPosts={paginatedRecentPosts}
