@@ -514,7 +514,7 @@ const QueryResponsesPanel = ({
                                     title={query.status === 'resolved' ? 'Resolved' : 'Click to mark query as resolved'}
                                 >
                                     <CheckCircle2 size={13} />
-                                    {query.status === 'resolved' ? 'Resolved' : 'Query Resolved'}
+                                    {query.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
                                 </button>
                             </div>
                         </div>

@@ -151,8 +151,7 @@ function loadInitialStudentQueries() {
     const stored = localStorage.getItem("student_queries");
     if (stored) {
         try {
-            const parsed = JSON.parse(stored);
-            return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
+            return JSON.parse(stored);
         } catch {
             return [];
         }
