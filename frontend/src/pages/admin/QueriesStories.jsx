@@ -12,7 +12,7 @@ import {
     Clock,
     X,
     CheckCircle2,
-    XCircle 
+    XCircle
 } from 'lucide-react';
 import './QueriesStories.css';
 
@@ -885,7 +885,25 @@ export default function QueriesStories() {
                                         </span>
                                         <div className="action-links-group">
                                             <button type="button" className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
-                                            <button type="button" className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
+                                            {(() => {
+                                                const hasReply = Boolean((query.reply && String(query.reply).trim()) || (query.adminReply && String(query.adminReply).trim()));
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        className={`text-action-btn primary-action ${hasReply ? 'disabled' : ''}`}
+                                                        disabled={hasReply}
+                                                        onClick={() => {
+                                                            if (!hasReply) {
+                                                                setReplyingQuery(query);
+                                                                setReplyText(query.reply || '');
+                                                            }
+                                                        }}
+                                                        title={hasReply ? "Reply has already been given to this query" : "Reply to query"}
+                                                    >
+                                                        Reply
+                                                    </button>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
@@ -1673,7 +1691,7 @@ export default function QueriesStories() {
                             </div>
                             <form onSubmit={handleUpdateStory} className="qs-modal-form">
                                 <div className="qs-form-grid">
-                                     <div className="qs-form-group full-width">
+                                    <div className="qs-form-group full-width">
                                         <button
                                             type="button"
                                             aria-label="Upload new photo"
