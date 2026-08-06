@@ -77,17 +77,17 @@ function localizeNotification(notif) {
     return notif;
 }
 
-/** Formats date strings into YYYY-MM-DD format required by the backend API. */
+/** Formats date strings into DD-MM-YYYY format for the backend API. */
 function formatApiDeadline(deadline) {
-    if (!deadline) return '2026-08-24';
-    if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+    if (!deadline) return '24-08-2026';
+    if (/^\d{2}-\d{2}-\d{4}$/.test(deadline)) {
         return deadline;
     }
     const parts = deadline.split('-');
     if (parts.length === 3) {
         const [first, month, last] = parts;
-        if (first.length === 2 && last.length === 4) {
-            return `${last}-${month.padStart(2, '0')}-${first.padStart(2, '0')}`;
+        if (first.length === 4 && last.length === 2) {
+            return `${last.padStart(2, '0')}-${month.padStart(2, '0')}-${first}`;
         }
     }
     const parsedDate = new Date(deadline);
@@ -95,7 +95,7 @@ function formatApiDeadline(deadline) {
         const year = parsedDate.getFullYear();
         const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
         const day = String(parsedDate.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        return `${day}-${month}-${year}`;
     }
     return deadline;
 }
