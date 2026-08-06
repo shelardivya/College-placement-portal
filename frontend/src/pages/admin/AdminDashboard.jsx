@@ -1606,15 +1606,31 @@ function AdminDashboard({ onNavigate }) {
         const fetchDraftsData = async () => {
             try {
                 const response = await getDrafts();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrafts = response.data.map(d => ({
-                        id: d.id,
-                        title: d.jobRoleOverview || d.title || 'Untitled Draft',
-                        company: d.companyName || d.company || 'Unknown Company',
-                        lastSaved: new Date(d.createdAt || Date.now()).toLocaleDateString()
-                    }));
-                    setDrafts(mappedDrafts);
+                const rawData = response ? response.data : null;
+                let draftsData = [];
+                if (Array.isArray(rawData)) {
+                    draftsData = rawData;
+                } else if (rawData && Array.isArray(rawData.drafts)) {
+                    draftsData = rawData.drafts;
+                } else if (rawData && Array.isArray(rawData.content)) {
+                    draftsData = rawData.content;
                 }
+
+                const mappedDrafts = draftsData.map(d => ({
+                    id: d.id,
+                    title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
+                    company: d.companyName || d.company || 'Unknown Company',
+                    location: d.location || "Remote",
+                    requirements: d.jobRequirements || "",
+                    degree: d.degree || "",
+                    branch: d.branch || "",
+                    cgpa: d.minCgpa || "",
+                    year: d.passingYear || "",
+                    experience: d.experience || "",
+                    deadline: d.deadline || "",
+                    lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
+                }));
+                setDrafts(mappedDrafts);
             } catch (error) {
                 console.error("Failed to fetch drafts", error);
             }
@@ -1731,23 +1747,25 @@ function AdminDashboard({ onNavigate }) {
                 let draftsData = [];
                 if (Array.isArray(rawData)) {
                     draftsData = rawData;
+                } else if (rawData && Array.isArray(rawData.drafts)) {
+                    draftsData = rawData.drafts;
                 } else if (rawData && Array.isArray(rawData.content)) {
                     draftsData = rawData.content;
                 }
 
                 const formattedDrafts = draftsData.map(d => ({
                     id: d.id,
-                    title: d.jobRoleOverview,
-                    company: d.companyName,
+                    title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
+                    company: d.companyName || d.company || 'Unknown Company',
                     location: d.location || "Remote",
-                    requirements: d.jobRequirements,
-                    degree: d.degree,
-                    branch: d.branch,
-                    cgpa: d.minCgpa,
-                    year: d.passingYear,
-                    experience: d.experience,
-                    deadline: d.deadline,
-                    lastSaved: 'Saved'
+                    requirements: d.jobRequirements || "",
+                    degree: d.degree || "",
+                    branch: d.branch || "",
+                    cgpa: d.minCgpa || "",
+                    year: d.passingYear || "",
+                    experience: d.experience || "",
+                    deadline: d.deadline || "",
+                    lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
                 }));
                 setDrafts(formattedDrafts);
             } catch (error) {
