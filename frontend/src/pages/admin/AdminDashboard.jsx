@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
 import {
     GraduationCap,
     Bell,
@@ -77,7 +77,7 @@ function localizeNotification(notif) {
     return notif;
 }
 
-/*Converts a YYYY-MM-DD deadline from the date-picker into the DD-MM-YYY */
+/** Formats date strings into YYYY-MM-DD format required by the backend API. */
 function formatApiDeadline(deadline) {
     if (!deadline) return '2026-08-24';
     if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
@@ -87,8 +87,15 @@ function formatApiDeadline(deadline) {
     if (parts.length === 3) {
         const [first, month, last] = parts;
         if (first.length === 2 && last.length === 4) {
-            return `${last}-${month}-${first}`;
+            return `${last}-${month.padStart(2, '0')}-${first.padStart(2, '0')}`;
         }
+    }
+    const parsedDate = new Date(deadline);
+    if (!isNaN(parsedDate.getTime())) {
+        const year = parsedDate.getFullYear();
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(parsedDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
     return deadline;
 }
@@ -948,7 +955,7 @@ function AddJobModal({
                                 <option value="">Select degree</option>
                                 <option value="BCA">BCA</option>
                                 <option value="MCA">MCA</option>
-                                <option value="BSC Cs">BSC Cs</option>
+                                <option value="BSC Cs">BSc CS</option>
                                 <option value="IT">IT</option>
                             </select>
                         </div>
@@ -1746,6 +1753,7 @@ function AdminDashboard({ onNavigate }) {
 
     const [isModalDatePickerOpen, setIsModalDatePickerOpen] = useState(false);
     const [modalCalDate, setModalCalDate] = useState(new Date());
+    const [editingDraftId, setEditingDraftId] = useState(null);
     const modalDatePickerRef = useRef(null);
 
     const handleModalPrevMonth = () => {
@@ -1855,21 +1863,28 @@ function AdminDashboard({ onNavigate }) {
                 location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "Requirements details",
                 jobRoleOverview: newJob.jobRoleOverview || "Role Overview",
-                degree: newJob.degree || "B.Tech",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "post"
+                action: "POST"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await publishDraft(editingDraftId);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            }
 
             const createdJob = {
-                id: response.data.id || (jobs.length + 1),
+                id: (response && response.data && response.data.id) || (jobs.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -1883,16 +1898,19 @@ function AdminDashboard({ onNavigate }) {
             };
 
             setJobs([createdJob, ...jobs]);
+            setDrafts(drafts.filter(d => d.id !== editingDraftId));
+            setEditingDraftId(null);
             setNewJob({
                 companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
                 degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
             });
 
-            triggerToast(`Job posted successfully for ${newJob.companyName}!`, 'success');
+            triggerToast(`Job posted successfully for ${createdJob.company}!`, 'success');
             setIsSidebarOpen(false);
         } catch (error) {
             console.error("Failed to post job:", error);
-            const errorMsg = error.response?.data?.message || "Failed to create job posting. Please try again.";
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to post job. Please try again.";
             triggerToast(errorMsg, 'error');
         }
     };
@@ -1909,25 +1927,34 @@ function AdminDashboard({ onNavigate }) {
             const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "None",
                 jobRoleOverview: newJob.jobRoleOverview,
-                degree: newJob.degree || "B.Tech",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "draft"
+                action: "DRAFT"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await updateDraft(editingDraftId, payload);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            } else {
+                response = await createJobPosting(payload);
+            }
 
             const newDraft = {
-                id: response.data.id || (drafts.length + 1),
+                id: (response && response.data && response.data.id) || editingDraftId || (drafts.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -1939,7 +1966,8 @@ function AdminDashboard({ onNavigate }) {
                 lastSaved: 'Just now'
             };
 
-            setDrafts([newDraft, ...drafts]);
+            setDrafts([newDraft, ...drafts.filter(d => d.id !== editingDraftId)]);
+            setEditingDraftId(null);
             setNewJob({
                 companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
                 degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
@@ -1949,7 +1977,8 @@ function AdminDashboard({ onNavigate }) {
             setIsSidebarOpen(false);
         } catch (error) {
             console.error("Failed to save draft:", error);
-            const errorMsg = error.response?.data?.message || "Failed to save draft. Please try again.";
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to save draft. Please try again.";
             triggerToast(errorMsg, 'error');
         }
     };
@@ -1991,6 +2020,8 @@ function AdminDashboard({ onNavigate }) {
         try {
             const response = await getDraftById(draftId);
             const draftToEdit = response.data;
+
+            setEditingDraftId(draftId);
 
             setNewJob({
                 companyName: draftToEdit.companyName,

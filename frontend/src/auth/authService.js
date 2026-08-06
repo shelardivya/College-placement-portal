@@ -51,7 +51,7 @@ export const getDrafts = () => {
     });
 };
 
-/* Sanitizes and validates path parameters against URL path injection (SonarCloud S8476/S5144). */
+/** Sanitizes and validates path parameters to prevent invalid characters in API endpoints. */
 function sanitizePath(prefix, id, suffix = '') {
     if (id === null || id === undefined || id === '') {
         throw new TypeError('ID parameter is required and cannot be empty.');
@@ -73,6 +73,15 @@ export const getDraftById = (id) => {
     });
 };
 
+
+export const updateDraft = (id, draftData) => {
+    const token = localStorage.getItem("token");
+    return api.put(sanitizePath('/admin/draft/', id), draftData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
 
 export const publishDraft = (id) => {
     const token = localStorage.getItem("token");
