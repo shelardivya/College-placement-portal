@@ -1,4 +1,3 @@
-
 .queries-stories-container {
     display: flex;
     flex-direction: column;
@@ -138,6 +137,7 @@
     background-color: #f5f3ff;
     color: #4f46e5;
 }
+
 .pill-btn.all-pill:hover,
 .pill-btn.all-pill.active {
     border-color: #4f46e5;
@@ -149,6 +149,7 @@
     background-color: #fffbeb;
     color: #b45309;
 }
+
 .pill-btn.pending-pill:hover,
 .pill-btn.pending-pill.active {
     border-color: #b45309;
@@ -160,6 +161,7 @@
     background-color: #eff6ff;
     color: #1d4ed8;
 }
+
 .pill-btn.progress-pill:hover,
 .pill-btn.progress-pill.active {
     border-color: #1d4ed8;
@@ -171,6 +173,7 @@
     background-color: #f0fdf4;
     color: #15803d;
 }
+
 .pill-btn.resolved-pill:hover,
 .pill-btn.resolved-pill.active {
     border-color: #15803d;
@@ -344,6 +347,16 @@
 
 .text-action-btn.primary-action:hover {
     color: #4f46e5;
+}
+
+.text-action-btn:disabled,
+.text-action-btn.disabled,
+.text-action-btn.primary-action:disabled,
+.text-action-btn.primary-action.disabled {
+    color: #94a3b8 ;
+    cursor: not-allowed ;
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .icon-menu-btn {
