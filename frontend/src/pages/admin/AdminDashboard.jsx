@@ -79,11 +79,16 @@ function localizeNotification(notif) {
 
 /*Converts a YYYY-MM-DD deadline from the date-picker into the DD-MM-YYY */
 function formatApiDeadline(deadline) {
-    if (!deadline) return '10-07-2026';
+    if (!deadline) return '2026-08-24';
+    if (/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
+        return deadline;
+    }
     const parts = deadline.split('-');
     if (parts.length === 3) {
-        const [year, month, day] = parts;
-        return `${day}-${month}-${year}`;
+        const [first, month, last] = parts;
+        if (first.length === 2 && last.length === 4) {
+            return `${last}-${month}-${first}`;
+        }
     }
     return deadline;
 }
@@ -1846,10 +1851,10 @@ function AdminDashboard({ onNavigate }) {
             const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
-                jobRequirements: newJob.jobRequirements,
-                jobRoleOverview: newJob.jobRoleOverview,
+                jobRequirements: newJob.jobRequirements || "Requirements details",
+                jobRoleOverview: newJob.jobRoleOverview || "Role Overview",
                 degree: newJob.degree || "B.Tech",
                 branch: newJob.branch || "Computer Science",
                 minCgpa: Number(newJob.minCgpa) || 0,

@@ -598,13 +598,19 @@ const getDriveTarget = (target) => {
     if (!target) return 'All Students';
 
     if (Array.isArray(target)) {
-        if (target.includes('ALL')) return 'All Students';
-        if (target.includes('All')) return 'All Students';
-        return target.join(', ');
+        const specificTargets = target.filter(t => typeof t === 'string' && t.trim() !== '' && t.toLowerCase() !== 'all');
+        if (specificTargets.length > 0) {
+            return specificTargets.join(', ');
+        }
+        return 'All Students';
     }
 
-    if (target === 'All') return 'All Students';
-    return target;
+    if (typeof target === 'string') {
+        if (target.toLowerCase() === 'all') return 'All Students';
+        return target;
+    }
+
+    return 'All Students';
 };
 
 const formatDriveDetails = (currentDrive) => {
