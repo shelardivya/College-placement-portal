@@ -496,39 +496,64 @@ const QueryResponsesPanel = ({
 
         <div className="query-responses-list">
             {paginatedQueryResponses.length > 0 ? (
-                paginatedQueryResponses.map((query) => (
-                    <div key={query.id} className="query-response-card">
-                        <div className="query-card-header-line">
-                            <h4 className="query-card-title">{query.title || query.subject || 'Student Query'}</h4>
-                            <div className="query-status-action-wrapper">
-                                {query.status !== 'resolved' && (
-                                    <div className="query-click-popup">
-                                        Click to mark resolved &rarr;
-                                    </div>
-                                )}
-                                <button
-                                    type="button"
-                                    className={`query-status-pill-btn ${query.status === 'resolved' ? 'resolved' : 'pending'}`}
-                                    onClick={() => handleResolveQuery(query.id)}
-                                    disabled={query.status === 'resolved'}
-                                    title={query.status === 'resolved' ? 'Resolved' : 'Click to mark query as resolved'}
-                                >
-                                    <CheckCircle2 size={13} />
-                                    {query.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
-                                </button>
-                            </div>
-                        </div>
+                paginatedQueryResponses.map((query) => {
+                    const rawReply = (query.reply || query.adminReply || '').trim();
+                    const hasAdminReply = rawReply !== '' && rawReply !== 'Your query has been submitted. Admin team will respond shortly.';
+                    const isResolved = query.status === 'resolved';
 
-                        {(query.reply || query.adminReply) && (
-                            <div className="admin-reply-box">
-                                <span className="reply-header-label">ADMIN REPLY:</span>
-                                <p className="reply-text-content">
-                                    {query.reply || query.adminReply}
-                                </p>
+                    return (
+                        <div key={query.id} className="query-response-card">
+                            <div className="query-card-header-line">
+                                <h4 className="query-card-title">{query.title || query.subject || 'Student Query'}</h4>
+                                <div className="query-status-action-wrapper">
+                                    {!isResolved && hasAdminReply && (
+                                        <div className="query-click-popup">
+                                            Click to mark resolved &rarr;
+                                        </div>
+                                    )}
+                                    {isResolved ? (
+                                        <button
+                                            type="button"
+                                            className="query-status-pill-btn resolved"
+                                            disabled
+                                            title="Resolved"
+                                        >
+                                            <CheckCircle2 size={13} />
+                                            Resolved
+                                        </button>
+                                    ) : hasAdminReply ? (
+                                        <button
+                                            type="button"
+                                            className="query-status-pill-btn pending"
+                                            onClick={() => handleResolveQuery(query.id)}
+                                            title="Click to mark query as resolved"
+                                        >
+                                            <CheckCircle2 size={13} />
+                                            Mark Resolved
+                                        </button>
+                                    ) : (
+                                        <span
+                                            className="query-status-pill-btn awaiting"
+                                            title="Awaiting official admin reply"
+                                        >
+                                            <Clock size={13} />
+                                            Awaiting Admin Reply
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))
+
+                            {hasAdminReply && (
+                                <div className="admin-reply-box">
+                                    <span className="reply-header-label">ADMIN REPLY:</span>
+                                    <p className="reply-text-content">
+                                        {rawReply}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             ) : (
                 <div className="sh-empty-state">
                     <p>No {queryResponseTab === 'resolved' ? 'resolved' : ''} queries found.</p>
@@ -692,7 +717,7 @@ function useQueriesPanel(queries, setQueries) {
                 title: createdQuery.subject,
                 message: createdQuery.description,
                 status: 'pending',
-                reply: 'Your query has been submitted. Admin team will respond shortly.',
+                reply: '',
                 date: new Date(createdQuery.createdAt || new Date()).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
             };
 
