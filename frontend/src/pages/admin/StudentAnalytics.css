@@ -639,15 +639,21 @@
 
 .table-search-input-expanded,
 .table-search-input-expanded:focus,
-.table-search-input-expanded:focus-visible {
+.table-search-input-expanded:focus-visible,
+.table-search-input-expanded:active {
     border: none;
     outline: none;
     background: transparent;
+    background-color: transparent;
     box-shadow: none;
     font-size: 0.85rem;
     width: 100%;
     color: #0f172a;
     padding: 0;
+    margin: 0;
+    border-radius: 0;
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .table-search-input-expanded::placeholder {
@@ -668,6 +674,34 @@
 
 .search-clear-btn:hover {
     color: #475569;
+}
+
+.rows-per-page-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 4px 10px;
+}
+
+.rows-per-page-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+.rows-per-page-select {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    padding-right: 4px;
 }
 
 .add-student-btn {
@@ -701,20 +735,26 @@
 .students-table {
     width: 100%;
     border-collapse: collapse;
-    text-align: left;
+    text-align: center;
 }
 
 .students-table th:nth-child(1) {
     width: 5%;
-    padding-left: 20px;
 }
 
 .students-table td:nth-child(1) {
-    padding-left: 20px;
+    text-align: center;
 }
 
 .students-table th:nth-child(2) {
     width: 20%;
+    text-align: left;
+    padding-left: 24px;
+}
+
+.students-table td:nth-child(2) {
+    text-align: left;
+    padding-left: 24px;
 }
 
 .students-table th:nth-child(3) {
@@ -739,6 +779,13 @@
 
 .students-table th:nth-child(8) {
     width: 16%;
+    text-align: left;
+    padding-left: 24px;
+}
+
+.students-table td:nth-child(8) {
+    text-align: left;
+    padding-left: 24px;
 }
 
 .students-table th {
@@ -748,11 +795,49 @@
     color: #94a3b8;
     letter-spacing: 0.05em;
     border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.sortable-th:hover {
+    color: #2563eb;
+    background-color: #f8fafc;
+}
+
+.th-sort-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.students-table th:nth-child(2) .th-sort-wrapper,
+.students-table th:nth-child(8) .th-sort-wrapper {
+    justify-content: flex-start;
+}
+
+.sort-icon-active {
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+.sort-icon-idle {
+    color: #cbd5e1;
+    opacity: 0.6;
+    flex-shrink: 0;
+    transition: opacity 0.2s ease;
+}
+
+.sortable-th:hover .sort-icon-idle {
+    opacity: 1;
+    color: #3b82f6;
 }
 
 .students-table td {
     padding: 16px;
     vertical-align: middle;
+    text-align: center;
     border-bottom: 1px solid #f8fafc;
 }
 
@@ -770,6 +855,7 @@
     justify-content: center;
     font-size: 0.75rem;
     font-weight: 700;
+    margin: 0 auto;
 }
 
 .rank-1 {
@@ -796,6 +882,7 @@
 .student-profile-cell {
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 12px;
 }
 
@@ -849,7 +936,14 @@
     display: inline-block;
 }
 
-/* Company text */
+/* Company text & logo */
+.company-logo-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
 .company-text {
     font-size: 0.88rem;
     font-weight: 700;

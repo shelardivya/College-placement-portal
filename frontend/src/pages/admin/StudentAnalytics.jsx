@@ -15,7 +15,10 @@ import {
     ChevronDown,
     Check,
     Building2,
-    Trash2
+    Trash2,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -276,64 +279,83 @@ export default function StudentAnalytics() {
 
     const fetchTopStudents = useCallback(async (newStudentName = null) => {
         try {
-            const response = await getAllTopPlacedStudents();
-            if (response.data && Array.isArray(response.data)) {
-                const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
-                const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+            let apiData = [];
+            try {
+                const response = await getAllTopPlacedStudents();
+                if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+                    apiData = response.data;
+                    localStorage.setItem("top_placed_students_local", JSON.stringify(response.data));
+                }
+            } catch (apiErr) {
+                console.warn("API fetch for top placed students failed, using local storage fallback", apiErr);
+            }
 
-                const sorted = [...response.data].sort((a, b) => {
-                    const lpaA = Number.parseFloat(a.packageLpa) || 0;
-                    const lpaB = Number.parseFloat(b.packageLpa) || 0;
-                    if (lpaB !== lpaA) return lpaB - lpaA;
-                    const cgpaA = Number.parseFloat(a.cgpa) || 0;
-                    const cgpaB = Number.parseFloat(b.cgpa) || 0;
-                    return cgpaB - cgpaA;
-                });
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
 
-                const mapped = sorted.map((s, index) => {
-                    const nameParts = (s.studentName || '').trim().split(' ');
-                    let initials = 'ST';
-                    if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
-                        initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                    } else if (nameParts[0] && nameParts[0].length >= 2) {
-                        initials = nameParts[0].substring(0, 2).toUpperCase();
-                    } else if (nameParts[0]) {
-                        initials = nameParts[0].toUpperCase();
-                    }
+            const combined = [...apiData];
+            for (const locItem of localList) {
+                const locName = (locItem.studentName || locItem.name || '').trim().toLowerCase();
+                const exists = combined.some(item => (item.studentName || item.name || '').trim().toLowerCase() === locName);
+                if (!exists) {
+                    combined.push(locItem);
+                }
+            }
 
-                    const studentNameKey = (s.studentName || '').trim().toLowerCase();
-                    const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
-                    const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
-                    const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
-                    const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
+            const sorted = combined.sort((a, b) => {
+                const lpaA = Number.parseFloat(a.packageLpa || a.lpa) || 0;
+                const lpaB = Number.parseFloat(b.packageLpa || b.lpa) || 0;
+                if (lpaB !== lpaA) return lpaB - lpaA;
+                const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                return cgpaB - cgpaA;
+            });
 
-                    const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
-                    const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
+            const mapped = sorted.map((s, index) => {
+                const sName = s.studentName || s.name || 'Student';
+                const nameParts = sName.trim().split(' ');
+                let initials = 'ST';
+                if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
+                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                } else if (nameParts[0] && nameParts[0].length >= 2) {
+                    initials = nameParts[0].substring(0, 2).toUpperCase();
+                } else if (nameParts[0]) {
+                    initials = nameParts[0].toUpperCase();
+                }
 
-                    return {
-                        id: studentId,
-                        rank: index + 1,
-                        name: s.studentName,
-                        initials: initials,
-                        branch: branch,
-                        passingYear: String(passingYear),
-                        cgpa: s.cgpa || '9.0',
-                        lpa: s.packageLpa || '12',
-                        skill: s.skills || 'Full Stack',
-                        skillColor: '#f3e8ff',
-                        skillTextColor: '#a855f7',
-                        company: s.companyName,
-                        companyColor: '#2563eb'
-                    };
-                });
-                setStudentsList(mapped);
+                const studentNameKey = sName.trim().toLowerCase();
+                const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
+                const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
+                const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
+                const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
 
-                // If a new student was just added, calculate and set their correct target page
-                if (newStudentName) {
-                    const newIndex = mapped.findIndex(s => s.name?.toLowerCase() === newStudentName.toLowerCase());
-                    if (newIndex !== -1) {
-                        setCurrentPage(Math.floor(newIndex / 5) + 1);
-                    }
+                const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
+                const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
+
+                return {
+                    id: studentId,
+                    rank: index + 1,
+                    name: sName,
+                    initials: initials,
+                    branch: branch,
+                    passingYear: String(passingYear),
+                    cgpa: s.cgpa || '9.0',
+                    lpa: s.packageLpa || s.lpa || '12',
+                    skill: s.skills || s.skill || 'Full Stack',
+                    skillColor: '#f3e8ff',
+                    skillTextColor: '#a855f7',
+                    company: s.companyName || s.company,
+                    companyColor: '#2563eb'
+                };
+            });
+            setStudentsList(mapped);
+
+            // If a new student was just added, calculate and set their correct target page
+            if (newStudentName) {
+                const newIndex = mapped.findIndex(s => s.name?.toLowerCase() === newStudentName.toLowerCase());
+                if (newIndex !== -1) {
+                    setCurrentPage(Math.floor(newIndex / 5) + 1);
                 }
             }
         } catch (error) {
@@ -346,7 +368,6 @@ export default function StudentAnalytics() {
     }, [fetchTopStudents]);
 
     const segments = getDonutSegments(departmentData);
-
 
 
     const handleAddStudent = async (e) => {
@@ -370,13 +391,35 @@ export default function StudentAnalytics() {
             const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
             storedExtras[(formData.name || '').trim().toLowerCase()] = {
                 branch: formData.branch || 'CS',
-                passingYear: formData.passingYear || '2026'
+                passingYear: formData.passingYear || '2026',
+                skill: formData.skill || 'Full Stack'
             };
             localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
 
-            await addTopPlacedStudent(payload);
+            // Also save to top_placed_students_local so student side and fallback store syncs seamlessly
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const newStudentObj = {
+                id: `local-${Date.now()}`,
+                studentName: formData.name,
+                companyName: formData.company,
+                packageLpa: Number.parseFloat(formData.lpa) || 12,
+                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
+                skills: formData.skill || 'Full Stack',
+                branch: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026'
+            };
+            const filteredLocal = localList.filter(s => (s.studentName || s.name || '').trim().toLowerCase() !== (formData.name || '').trim().toLowerCase());
+            filteredLocal.push(newStudentObj);
+            localStorage.setItem("top_placed_students_local", JSON.stringify(filteredLocal));
+            window.dispatchEvent(new Event('storage'));
 
-            // Fetch fresh canonical list from database API & jump to newly added student page
+            try {
+                await addTopPlacedStudent(payload);
+            } catch (apiErr) {
+                console.warn("API add top student failed, using local storage fallback", apiErr);
+            }
+
+            // Fetch fresh canonical list & jump to newly added student page
             await fetchTopStudents(formData.name);
 
             setIsModalOpen(false);
@@ -427,14 +470,23 @@ export default function StudentAnalytics() {
         try {
             const isRealApiId = studentId && !String(studentId).startsWith('local-');
             if (isRealApiId) {
-                await deleteTopPlacedStudent(studentId);
+                try {
+                    await deleteTopPlacedStudent(studentId);
+                } catch (delErr) {
+                    console.warn("API delete top student failed", delErr);
+                }
             }
 
-            // Remove from local storage extra overrides
+            // Remove from local storage extra overrides and local list
             const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
             if (storedExtras[studentNameKey]) delete storedExtras[studentNameKey];
             if (studentId && storedExtras[studentId]) delete storedExtras[studentId];
             localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const updatedLocal = localList.filter(s => s.id !== studentId && (s.studentName || s.name || '').trim().toLowerCase() !== studentNameKey);
+            localStorage.setItem("top_placed_students_local", JSON.stringify(updatedLocal));
+            window.dispatchEvent(new Event('storage'));
 
             // Optimistically update list in state
             setStudentsList(prev => prev.filter(s => s.id !== studentId && (s.name || '').trim().toLowerCase() !== studentNameKey));
@@ -468,6 +520,17 @@ export default function StudentAnalytics() {
         }, 4000);
     };
 
+    const [sortConfig, setSortConfig] = useState({ key: 'lpa', direction: 'desc' });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key === key) {
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            }
+            return { key, direction: key === 'name' || key === 'branch' ? 'asc' : 'desc' };
+        });
+    };
+
     const filteredStudents = studentsList.filter(student => {
         if (!student) return false;
         const name = (student.name || '').toLowerCase();
@@ -486,18 +549,36 @@ export default function StudentAnalytics() {
         );
     });
 
+    const sortedStudents = [...filteredStudents].sort((a, b) => {
+        const { key, direction } = sortConfig;
+        let aVal = a[key];
+        let bVal = b[key];
 
-    const itemsPerPage = 5;
+        if (key === 'lpa' || key === 'cgpa' || key === 'passingYear' || key === 'rank') {
+            aVal = Number.parseFloat(aVal) || 0;
+            bVal = Number.parseFloat(bVal) || 0;
+        } else {
+            aVal = String(aVal || '').toLowerCase();
+            bVal = String(bVal || '').toLowerCase();
+        }
 
-    // Reset to page 1 whenever search query changes
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    // Reset to page 1 whenever search query, itemsPerPage, or sort changes
     useEffect(() => {
         const timer = setTimeout(() => setCurrentPage(1), 0);
         return () => clearTimeout(timer);
-    }, [searchQuery]);
+    }, [searchQuery, sortConfig, itemsPerPage]);
 
-    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+    const numericItemsPerPage = itemsPerPage === 'all' ? Math.max(sortedStudents.length, 1) : Number(itemsPerPage);
+    const totalPages = Math.ceil(sortedStudents.length / numericItemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * numericItemsPerPage;
+    const paginatedStudents = sortedStudents.slice(startIndex, startIndex + numericItemsPerPage);
 
     return (
         <div className="analytics-page-wrapper">
@@ -782,6 +863,18 @@ export default function StudentAnalytics() {
                                     type="text"
                                     placeholder="Search student..."
                                     className="table-search-input-expanded"
+                                    style={{
+                                        border: 'none',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        backgroundColor: 'transparent',
+                                        boxShadow: 'none',
+                                        borderRadius: '0px',
+                                        padding: '0px',
+                                        margin: '0px',
+                                        WebkitAppearance: 'none',
+                                        appearance: 'none'
+                                    }}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     autoFocus
@@ -812,12 +905,42 @@ export default function StudentAnalytics() {
                     <table className="students-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>STUDENT NAME</th>
-                                <th>BRANCH</th>
-                                <th>PASSING YEAR</th>
-                                <th>CGPA</th>
-                                <th>LPA</th>
+                                <th onClick={() => handleSort('rank')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>#</span>
+                                        {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('name')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>STUDENT NAME</span>
+                                        {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('branch')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>BRANCH</span>
+                                        {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('passingYear')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>PASSING YEAR</span>
+                                        {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('cgpa')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>CGPA</span>
+                                        {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('lpa')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>LPA</span>
+                                        {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                    </div>
+                                </th>
                                 <th>SKILLS</th>
                                 <th>COMPANY</th>
                                 <th>ACTIONS</th>

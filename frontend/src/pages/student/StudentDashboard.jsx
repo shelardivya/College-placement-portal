@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import "./StudentDashboard.css";
 import StudHub from "./StudHub";
+import Placeview from "./Placeview";
 
 // Default fallback mock data for Placement Drives
 const initialDrives = [];
@@ -663,7 +664,7 @@ export default function
         return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
     };
 
-    const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' or 'studhub'
+    const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'studhub', or 'placeview'
 
 
     // Sync states from localStorage (with mock fallbacks)
@@ -1376,6 +1377,13 @@ export default function
                         <span>Stud Hub</span>
                         {activeTab === 'studhub' && <span className="tab-underline" />}
                     </button>
+                    <button type="button"
+                        className={`student-nav-tab ${activeTab === 'placeview' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('placeview')}
+                    >
+                        <span>Placeview</span>
+                        {activeTab === 'placeview' && <span className="tab-underline" />}
+                    </button>
                 </div>
 
                 <div className="header-actions">
@@ -1487,6 +1495,8 @@ export default function
 
 
                     {activeTab === 'studhub' && <StudHub />}
+
+                    {activeTab === 'placeview' && <Placeview />}
                 </motion.div>
             </AnimatePresence>
 

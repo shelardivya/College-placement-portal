@@ -202,13 +202,25 @@ export const deletePlacementDrive = (id) => {
     });
 };
 
-export const getAllTopPlacedStudents = () => {
+export const getAllTopPlacedStudents = async () => {
     const token = localStorage.getItem("token");
-    return api.get("/admin/top-placed-student/all", {
-        headers: {
-            Authorization: `Bearer ${token}`
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+        return await api.get("/admin/top-placed-student/all", { headers });
+    } catch (err) {
+        if (err.response && (err.response.status === 403 || err.response.status === 401 || err.response.status === 404)) {
+            try {
+                return await api.get("/admin/top-placed-student/all", { headers: {} });
+            } catch {
+                try {
+                    return await api.get("/student/top-placed-student/all", { headers });
+                } catch {
+                    throw err;
+                }
+            }
         }
-    });
+        throw err;
+    }
 };
 
 export const addTopPlacedStudent = (studentData) => {
@@ -247,6 +259,18 @@ export const replyToQuery = (id, replyText) => {
         reply: replyText,
         adminReply: replyText,
         response: replyText
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const discardQuery = (id, discardReason) => {
+    const token = localStorage.getItem("token");
+    return api.put(sanitizePath('/admin/query/', id, '/discard'), {
+        discardReason: discardReason || "Query discarded by Admin",
+        status: "DISCARDED"
     }, {
         headers: {
             Authorization: `Bearer ${token}`

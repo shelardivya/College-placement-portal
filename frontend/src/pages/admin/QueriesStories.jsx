@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 import { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, discardQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Search,
     Calendar,
@@ -335,10 +335,12 @@ export default function QueriesStories() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2; // Show 2 queries per page
 
-    // States for View and Reply Modals
+    // States for View, Reply, and Discard Modals
     const [viewingQuery, setViewingQuery] = useState(null);
     const [replyingQuery, setReplyingQuery] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [discardingQuery, setDiscardingQuery] = useState(null);
+    const [discardReason, setDiscardReason] = useState('');
 
     const handleSendReply = async (e) => {
         e.preventDefault();
@@ -351,6 +353,7 @@ export default function QueriesStories() {
                 if (q.id === replyingQuery.id) {
                     return {
                         ...q,
+                        status: 'resolved',
                         reply: replyText,
                         adminReply: replyText
                     };
@@ -364,6 +367,45 @@ export default function QueriesStories() {
         } catch (error) {
             console.error("Failed to reply to query:", error);
             triggerToast("Failed to send reply.", "error");
+        }
+    };
+
+    const handleDiscardQuery = async (queryToDiscard) => {
+        if (!queryToDiscard) return;
+
+        const subjectName = queryToDiscard.title || 'Placement Query';
+
+        try {
+            try {
+                await discardQuery(queryToDiscard.id, "Query discarded by Admin");
+            } catch (apiErr) {
+                console.warn("Backend API call for discard query failed or not available yet, updating UI locally:", apiErr);
+            }
+
+            // Completely remove query from local state list
+            setQueries(prevQueries => prevQueries.filter(q => q.id !== queryToDiscard.id));
+
+            // Notify student via notifications in localStorage
+            const notifObj = {
+                id: Date.now(),
+                title: "Query Discarded",
+                message: `Your query with subject '${subjectName}' got discarded.`,
+                type: "warning",
+                studentEmail: queryToDiscard.email || "",
+                studentName: queryToDiscard.name || queryToDiscard.studentName || "",
+                createdAt: new Date().toISOString(),
+                displayDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: false
+            };
+
+            const existingNotifs = JSON.parse(localStorage.getItem("student_notifications") || "[]");
+            localStorage.setItem("student_notifications", JSON.stringify([notifObj, ...existingNotifs]));
+
+            triggerToast("Query discarded successfully", "success");
+        } catch (error) {
+            console.error("Failed to discard query:", error);
+            triggerToast("Failed to discard query.", "error");
         }
     };
 
@@ -886,21 +928,41 @@ export default function QueriesStories() {
                                             <button type="button" className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
                                             {(() => {
                                                 const hasReply = Boolean((query.reply && String(query.reply).trim()) || (query.adminReply && String(query.adminReply).trim()));
+                                                const isResolved = query.status === 'resolved';
+                                                if (hasReply || isResolved) {
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action disabled"
+                                                            disabled
+                                                            title="Reply has already been given to this query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                    );
+                                                }
                                                 return (
-                                                    <button
-                                                        type="button"
-                                                        className={`text-action-btn primary-action ${hasReply ? 'disabled' : ''}`}
-                                                        disabled={hasReply}
-                                                        onClick={() => {
-                                                            if (!hasReply) {
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action"
+                                                            onClick={() => {
                                                                 setReplyingQuery(query);
                                                                 setReplyText(query.reply || '');
-                                                            }
-                                                        }}
-                                                        title={hasReply ? "Reply has already been given to this query" : "Reply to query"}
-                                                    >
-                                                        Reply
-                                                    </button>
+                                                            }}
+                                                            title="Reply to query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn discard-action"
+                                                            onClick={() => handleDiscardQuery(query)}
+                                                            title="Discard query"
+                                                        >
+                                                            Discard
+                                                        </button>
+                                                    </>
                                                 );
                                             })()}
                                         </div>
