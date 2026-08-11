@@ -15,6 +15,8 @@ import {
     GraduationCap as CourseIcon,
     Award,
     Lock,
+    Eye,
+    EyeOff,
     ArrowRight,
     Building2,
     TrendingUp,
@@ -68,6 +70,10 @@ function Registration({ onNavigate }) {
 
     // Validation errors state tracking
     const [errors, setErrors] = useState({});
+
+    // Password visibility toggle states
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Toast notification states
     const [showToast, setShowToast] = useState(false);
@@ -620,12 +626,19 @@ function Registration({ onNavigate }) {
                                                         const day = i + 1;
                                                         const dateStr = `${dobCalDate.getFullYear()}-${String(dobCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                         const isSelected = formData.dob === dateStr;
+                                                        const today = new Date();
+                                                        today.setHours(0, 0, 0, 0);
+                                                        const thisDate = new Date(dobCalDate.getFullYear(), dobCalDate.getMonth(), day);
+                                                        const isFuture = thisDate > today;
+
                                                         return (
                                                             <button
                                                                 type="button"
                                                                 key={day}
-                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                                disabled={isFuture}
+                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isFuture ? 'disabled-past-day' : ''}`}
                                                                 onClick={() => {
+                                                                    if (isFuture) return;
                                                                     setFormData(prev => ({ ...prev, dob: dateStr }));
                                                                     const fieldError = validateField('dob', dateStr);
                                                                     setErrors(prev => ({ ...prev, dob: fieldError }));
@@ -747,13 +760,23 @@ function Registration({ onNavigate }) {
                                     <Lock size={16} />
                                     <input
                                         id="passwordInput"
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         name="password"
                                         placeholder="Min. 8 characters"
                                         value={formData.password}
                                         onChange={handleChange}
+                                        style={{ paddingRight: '38px' }}
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        className="btn-toggle-eye"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        tabIndex={-1}
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
                                 </div>
                                 {errors.password && <span className="error-message">{errors.password}</span>}
                             </div>
@@ -765,13 +788,23 @@ function Registration({ onNavigate }) {
                                     <Lock size={16} />
                                     <input
                                         id="confirmPasswordInput"
-                                        type="password"
+                                        type={showConfirmPassword ? "text" : "password"}
                                         name="confirmPassword"
                                         placeholder="Re-enter password"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
+                                        style={{ paddingRight: '38px' }}
                                         required
                                     />
+                                    <button
+                                        type="button"
+                                        className="btn-toggle-eye"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        tabIndex={-1}
+                                        aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                    >
+                                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
                                 </div>
                                 {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
                             </div>

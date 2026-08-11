@@ -572,6 +572,25 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.btn-toggle-eye {
+    position: absolute;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+}
+
+.btn-toggle-eye:hover {
+    color: #2563eb;
+}
+
 
 
 .btn-submit-register {
@@ -917,6 +936,17 @@
     background-color: #2563eb;
     color: white;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+
+.calendar-day-btn.disabled-past-day,
+.calendar-day-btn:disabled {
+    opacity: 0.35;
+    filter: blur(0.4px);
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    text-decoration: line-through;
 }
 
 .empty-day {

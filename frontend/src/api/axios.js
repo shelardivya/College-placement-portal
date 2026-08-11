@@ -19,8 +19,8 @@ api.interceptors.request.use((config) => {
     // are inconsistently mapped: most admin/student routes are mapped to /api/admin/... 
     // and /api/student/..., BUT /student/resume-match is missing the /api prefix!
     if (config.url) {
-        if (config.url.startsWith('/admin/') || 
-           (config.url.startsWith('/student/') && !config.url.includes('resume-match'))) {
+        if (config.url.startsWith('/admin/') ||
+            (config.url.startsWith('/student/') && !config.url.includes('resume-match'))) {
             config.url = `/api${config.url}`;
         }
     }

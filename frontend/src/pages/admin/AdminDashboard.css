@@ -51,11 +51,9 @@
     top: 0;
     z-index: 100;
     width: 100%;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     transition: all 0.3s ease;
 }
 
@@ -1824,6 +1822,17 @@
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
 }
 
+.calendar-day-btn.disabled-past-day,
+.calendar-day-btn:disabled {
+    opacity: 0.35;
+    filter: blur(0.4px);
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    text-decoration: line-through;
+}
+
 .empty-day {
     height: 28px;
     width: 28px;
@@ -1864,6 +1873,15 @@
 
 .calendar-today-btn:hover {
     background-color: #eff6ff;
+}
+
+.error-input,
+select.error-input,
+textarea.error-input,
+.date-picker-trigger.error-input {
+    border: 1.5px solid #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
 }
 
 /* Expired Status Badge */

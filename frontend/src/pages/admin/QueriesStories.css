@@ -320,6 +320,22 @@
     color: #15803d;
 }
 
+.status-discarded,
+.status-rejected {
+    background-color: #fef2f2;
+    color: #b91c1c;
+}
+
+.pill-btn.discarded-pill {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+.pill-btn.discarded-pill.active {
+    background-color: #dc2626;
+    color: #ffffff;
+}
+
 .action-links-group {
     display: flex;
     align-items: center;
@@ -345,8 +361,21 @@
     color: #6366f1;
 }
 
-.text-action-btn.primary-action:hover {
+.text-action-btn.primary-action:hover:not(.disabled) {
     color: #4f46e5;
+}
+
+.text-action-btn.discard-action {
+    color: #ef4444;
+}
+
+.text-action-btn.discard-action:hover:not(.disabled) {
+    color: #b91c1c;
+}
+
+.text-action-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed !important;
 }
 
 .text-action-btn:disabled,

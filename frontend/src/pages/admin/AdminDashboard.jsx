@@ -77,7 +77,7 @@ function localizeNotification(notif) {
     return notif;
 }
 
-/** Formats date strings into DD-MM-YYYY format for the backend API. */
+/*Formats date strings into DD-MM-YYYY format for the backend API. */
 function formatApiDeadline(deadline) {
     if (!deadline) return '24-08-2026';
     if (/^\d{2}-\d{2}-\d{4}$/.test(deadline)) {
@@ -761,12 +761,19 @@ function ApplicantsMatchingCard({
                                                 const day = i + 1;
                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                 const isSelected = filterDate === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
                                                 return (
                                                     <button
                                                         key={dateStr}
                                                         type="button"
-                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
                                                         onClick={() => {
+                                                            if (isPast) return;
                                                             setFilterDate(dateStr);
                                                             setIsDatePickerOpen(false);
                                                         }}
@@ -898,42 +905,46 @@ function AddJobModal({
 
                 <form className='modal-form' onSubmit={handlePostJob}>
                     <div className='form-group'>
-                        <label htmlFor="job-company-name">Company Name</label>
+                        <label htmlFor="job-company-name">Company Name <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <input type="text"
                             id="job-company-name"
                             name='companyName'
                             placeholder='Enter Company Name'
                             value={newJob.companyName}
                             onChange={handleInputChange}
-                            className={validationError && !newJob.companyName ? 'error-input' : ''}
+                            className={validationError && !newJob.companyName?.trim() ? 'error-input' : ''}
                             required />
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-location">Location</label>
+                        <label htmlFor="job-location">Location <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <input type="text"
                             id="job-location"
                             name='location'
                             placeholder='e.g. Bangalore, India (or Remote)'
                             value={newJob.location}
                             onChange={handleInputChange}
+                            className={validationError && !newJob.location?.trim() ? 'error-input' : ''}
+                            required
                         />
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-requirements">Job Requirements</label>
+                        <label htmlFor="job-requirements">Job Requirements <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <textarea
                             id="job-requirements"
                             name='jobRequirements'
                             placeholder='Enter job requirements'
                             value={newJob.jobRequirements}
                             onChange={handleInputChange}
-                            rows={3}>
+                            rows={3}
+                            className={validationError && !newJob.jobRequirements?.trim() ? 'error-input' : ''}
+                            required>
                         </textarea>
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-role-overview">Job Role Overview</label>
+                        <label htmlFor="job-role-overview">Job Role Overview <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <textarea
                             id="job-role-overview"
                             name="jobRoleOverview"
@@ -941,7 +952,7 @@ function AddJobModal({
                             value={newJob.jobRoleOverview}
                             onChange={handleInputChange}
                             rows={3}
-                            className={validationError && !newJob.jobRoleOverview ? 'error-input' : ''}
+                            className={validationError && !newJob.jobRoleOverview?.trim() ? 'error-input' : ''}
                             required>
                         </textarea>
                     </div>
@@ -950,8 +961,8 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-degree">Degree</label>
-                            <select id="job-degree" name="degree" value={newJob.degree} onChange={handleInputChange}>
+                            <label htmlFor="job-degree">Degree <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-degree" name="degree" value={newJob.degree} onChange={handleInputChange} className={validationError && !newJob.degree?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select degree</option>
                                 <option value="BCA">BCA</option>
                                 <option value="MCA">MCA</option>
@@ -961,8 +972,8 @@ function AddJobModal({
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-branch">Branch</label>
-                            <select id="job-branch" name="branch" value={newJob.branch} onChange={handleInputChange}>
+                            <label htmlFor="job-branch">Branch <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-branch" name="branch" value={newJob.branch} onChange={handleInputChange} className={validationError && !newJob.branch?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select branch</option>
                                 <option value="Computer Science">Computer Science</option>
                                 <option value="Computer Applications">Computer Applications</option>
@@ -972,7 +983,7 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-min-cgpa">Min CGPA</label>
+                            <label htmlFor="job-min-cgpa">Min CGPA <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                             <input
                                 type="text"
                                 id="job-min-cgpa"
@@ -980,12 +991,14 @@ function AddJobModal({
                                 placeholder="Enter minimum CGPA"
                                 value={newJob.minCgpa}
                                 onChange={handleInputChange}
+                                className={validationError && !newJob.minCgpa?.toString().trim() ? 'error-input' : ''}
+                                required
                             />
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-passing-year">Passing Year</label>
-                            <select id="job-passing-year" name="passingYear" value={newJob.passingYear} onChange={handleInputChange}>
+                            <label htmlFor="job-passing-year">Passing Year <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-passing-year" name="passingYear" value={newJob.passingYear} onChange={handleInputChange} className={validationError && !newJob.passingYear?.toString().trim() ? 'error-input' : ''} required>
                                 <option value="">Select Passing Year</option>
                                 <option value="2024">2024</option>
                                 <option value="2025">2025</option>
@@ -996,8 +1009,8 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-experience">Experience</label>
-                            <select id="job-experience" name="experience" value={newJob.experience} onChange={handleInputChange}>
+                            <label htmlFor="job-experience">Experience <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-experience" name="experience" value={newJob.experience} onChange={handleInputChange} className={validationError && !newJob.experience?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select experience</option>
                                 <option value="Fresher">Fresher</option>
                                 <option value="1 Year">1 Year</option>
@@ -1006,12 +1019,12 @@ function AddJobModal({
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-deadline-btn">Deadline</label>
+                            <label htmlFor="job-deadline-btn">Deadline <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                             <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
                                 <button
                                     type="button"
                                     id="job-deadline-btn"
-                                    className="date-picker-trigger"
+                                    className={`date-picker-trigger ${validationError && !newJob.deadline?.trim() ? 'error-input' : ''}`}
                                     onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
                                     style={{ width: '100%', justifyContent: 'space-between' }}
                                 >
@@ -1040,12 +1053,19 @@ function AddJobModal({
                                                 const day = i + 1;
                                                 const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                 const isSelected = newJob.deadline === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(modalCalDate.getFullYear(), modalCalDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
                                                 return (
                                                     <button
                                                         type="button"
                                                         key={dateStr}
-                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
                                                         onClick={() => {
+                                                            if (isPast) return;
                                                             setNewJob(prev => ({ ...prev, deadline: dateStr }));
                                                             setIsModalDatePickerOpen(false);
                                                         }}
@@ -1848,9 +1868,20 @@ function AdminDashboard({ onNavigate }) {
     const handlePostJob = async (e) => {
         e.preventDefault();
 
-        if (!newJob.companyName || !newJob.jobRoleOverview || !newJob.jobRequirements) {
+        if (
+            !newJob.companyName?.trim() ||
+            !newJob.location?.trim() ||
+            !newJob.jobRequirements?.trim() ||
+            !newJob.jobRoleOverview?.trim() ||
+            !newJob.degree?.trim() ||
+            !newJob.branch?.trim() ||
+            !newJob.minCgpa?.toString().trim() ||
+            !newJob.passingYear?.toString().trim() ||
+            !newJob.experience?.trim() ||
+            !newJob.deadline?.trim()
+        ) {
             setValidationError(true);
-            triggerToast("Please fill in Company Name, Job Role Overview, and Job Requirements!", 'error');
+            triggerToast("Please fill out all required fields marked with * before posting!", 'error');
             return;
         }
 
