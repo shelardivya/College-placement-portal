@@ -1460,3 +1460,46 @@
 .btn-delete-confirm:hover {
     background-color: #991b1b;
 }
+
+/* ── Sort Column Styles ───────────────────────── */
+/* Idle sortable column header */
+.sortable-th {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sortable-th:hover {
+    background-color: #f0f7ff;
+    color: #2563eb;
+}
+
+/* Active sorted column — blue highlight */
+.sortable-th.th-sorted {
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+/* Wrapper to align text + arrow side by side */
+.th-sort-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Idle arrow — grey, small */
+.sort-arrow-idle {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 400;
+}
+
+/* Active arrow — blue, bold, with label */
+.sort-arrow-active {
+    font-size: 0.78rem;
+    color: #2563eb;
+    font-weight: 700;
+    background-color: #dbeafe;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}

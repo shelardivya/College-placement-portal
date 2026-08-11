@@ -745,40 +745,52 @@ export default function Placeview() {
                         <table className="placeview-students-table">
                             <thead>
                                 <tr>
-                                    <th onClick={() => handleSort('rank')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('rank')} className={`placeview-sortable-th${sortConfig.key === 'rank' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>#</span>
-                                            {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'rank' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
-                                    <th onClick={() => handleSort('name')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('name')} className={`placeview-sortable-th${sortConfig.key === 'name' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>STUDENT NAME</span>
-                                            {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'name' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
-                                    <th onClick={() => handleSort('branch')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('branch')} className={`placeview-sortable-th${sortConfig.key === 'branch' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>BRANCH</span>
-                                            {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'branch' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
-                                    <th onClick={() => handleSort('passingYear')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('passingYear')} className={`placeview-sortable-th${sortConfig.key === 'passingYear' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>PASSING YEAR</span>
-                                            {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'passingYear' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? '↑ Old→New' : '↓ New→Old') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
-                                    <th onClick={() => handleSort('cgpa')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('cgpa')} className={`placeview-sortable-th${sortConfig.key === 'cgpa' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>CGPA</span>
-                                            {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'cgpa' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
-                                    <th onClick={() => handleSort('lpa')} className="placeview-sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <th onClick={() => handleSort('lpa')} className={`placeview-sortable-th${sortConfig.key === 'lpa' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>LPA</span>
-                                            {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="placeview-sort-icon-active" /> : <ArrowDown size={13} className="placeview-sort-icon-active" />) : <ArrowUpDown size={13} className="placeview-sort-icon-idle" />}
+                                            <span className={sortConfig.key === 'lpa' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
+                                                {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                            </span>
                                         </div>
                                     </th>
                                     <th>SKILLS</th>
