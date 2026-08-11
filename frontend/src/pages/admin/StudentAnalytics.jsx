@@ -905,40 +905,52 @@ export default function StudentAnalytics() {
                     <table className="students-table">
                         <thead>
                             <tr>
-                                <th onClick={() => handleSort('rank')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('rank')} className={`sortable-th${sortConfig.key === 'rank' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>#</span>
-                                        {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'rank' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
-                                <th onClick={() => handleSort('name')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('name')} className={`sortable-th${sortConfig.key === 'name' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>STUDENT NAME</span>
-                                        {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'name' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
-                                <th onClick={() => handleSort('branch')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('branch')} className={`sortable-th${sortConfig.key === 'branch' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>BRANCH</span>
-                                        {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'branch' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
-                                <th onClick={() => handleSort('passingYear')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('passingYear')} className={`sortable-th${sortConfig.key === 'passingYear' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>PASSING YEAR</span>
-                                        {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'passingYear' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? '↑ Old→New' : '↓ New→Old') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
-                                <th onClick={() => handleSort('cgpa')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('cgpa')} className={`sortable-th${sortConfig.key === 'cgpa' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>CGPA</span>
-                                        {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'cgpa' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
-                                <th onClick={() => handleSort('lpa')} className="sortable-th" style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                <th onClick={() => handleSort('lpa')} className={`sortable-th${sortConfig.key === 'lpa' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>LPA</span>
-                                        {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? <ArrowUp size={13} className="sort-icon-active" /> : <ArrowDown size={13} className="sort-icon-active" />) : <ArrowUpDown size={13} className="sort-icon-idle" />}
+                                        <span className={sortConfig.key === 'lpa' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                        </span>
                                     </div>
                                 </th>
                                 <th>SKILLS</th>
