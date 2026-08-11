@@ -745,30 +745,8 @@ export default function Placeview() {
                         <table className="placeview-students-table">
                             <thead>
                                 <tr>
-                                    <th onClick={() => handleSort('rank')} className={`placeview-sortable-th${sortConfig.key === 'rank' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                        <div className="placeview-th-sort-wrapper">
-                                            <span>#</span>
-                                            <span className={sortConfig.key === 'rank' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
-                                                {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th onClick={() => handleSort('name')} className={`placeview-sortable-th${sortConfig.key === 'name' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                        <div className="placeview-th-sort-wrapper">
-                                            <span>STUDENT NAME</span>
-                                            <span className={sortConfig.key === 'name' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
-                                                {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
-                                            </span>
-                                        </div>
-                                    </th>
-                                    <th onClick={() => handleSort('branch')} className={`placeview-sortable-th${sortConfig.key === 'branch' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                        <div className="placeview-th-sort-wrapper">
-                                            <span>BRANCH</span>
-                                            <span className={sortConfig.key === 'branch' ? 'placeview-sort-arrow-active' : 'placeview-sort-arrow-idle'}>
-                                                {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
-                                            </span>
-                                        </div>
-                                    </th>
+                                    <th>STUDENT NAME</th>
+                                    <th>BRANCH</th>
                                     <th onClick={() => handleSort('passingYear')} className={`placeview-sortable-th${sortConfig.key === 'passingYear' ? ' placeview-th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                         <div className="placeview-th-sort-wrapper">
                                             <span>PASSING YEAR</span>
@@ -801,11 +779,6 @@ export default function Placeview() {
                                 {paginatedStudents.length > 0 ? (
                                     paginatedStudents.map((student) => (
                                         <tr key={student.id || student.rank}>
-                                            <td>
-                                                <span className={`placeview-rank-badge placeview-rank-${student.rank}`}>
-                                                    {student.rank}
-                                                </span>
-                                            </td>
                                             <td>
                                                 <div className="placeview-student-profile-cell">
                                                     <div className="placeview-student-avatar">{student.initials}</div>

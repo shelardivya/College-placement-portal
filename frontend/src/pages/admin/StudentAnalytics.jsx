@@ -905,30 +905,8 @@ export default function StudentAnalytics() {
                     <table className="students-table">
                         <thead>
                             <tr>
-                                <th onClick={() => handleSort('rank')} className={`sortable-th${sortConfig.key === 'rank' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                    <div className="th-sort-wrapper">
-                                        <span>#</span>
-                                        <span className={sortConfig.key === 'rank' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
-                                            {sortConfig.key === 'rank' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : '↕'}
-                                        </span>
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('name')} className={`sortable-th${sortConfig.key === 'name' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                    <div className="th-sort-wrapper">
-                                        <span>STUDENT NAME</span>
-                                        <span className={sortConfig.key === 'name' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
-                                            {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
-                                        </span>
-                                    </div>
-                                </th>
-                                <th onClick={() => handleSort('branch')} className={`sortable-th${sortConfig.key === 'branch' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
-                                    <div className="th-sort-wrapper">
-                                        <span>BRANCH</span>
-                                        <span className={sortConfig.key === 'branch' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
-                                            {sortConfig.key === 'branch' ? (sortConfig.direction === 'asc' ? '↑ A→Z' : '↓ Z→A') : '↕'}
-                                        </span>
-                                    </div>
-                                </th>
+                                <th>STUDENT NAME</th>
+                                <th>BRANCH</th>
                                 <th onClick={() => handleSort('passingYear')} className={`sortable-th${sortConfig.key === 'passingYear' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
                                     <div className="th-sort-wrapper">
                                         <span>PASSING YEAR</span>
@@ -961,11 +939,6 @@ export default function StudentAnalytics() {
                         <tbody>
                             {paginatedStudents.map((student) => (
                                 <tr key={student.id || student.rank}>
-                                    <td>
-                                        <span className={`rank-badge rank-${student.rank}`}>
-                                            {student.rank}
-                                        </span>
-                                    </td>
                                     <td>
                                         <div className="student-profile-cell">
                                             <div className="student-avatar">{student.initials}</div>
