@@ -100,8 +100,9 @@ public class StudentQueryService {
 
         List<StudentQueryEntity> queries =
                 studentQueryRepository
-                        .findByStudentIdOrderByCreatedAtDesc(
-                                student.getId()
+                        .findByStudentIdAndStatusNotOrderByCreatedAtDesc(
+                                student.getId(),
+                                "DISCARDED"
                         );
 
         List<StudentQueryResponseDto> response =

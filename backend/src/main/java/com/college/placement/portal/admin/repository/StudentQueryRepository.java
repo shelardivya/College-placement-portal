@@ -8,13 +8,44 @@ import java.util.List;
 public interface StudentQueryRepository
         extends JpaRepository<StudentQueryEntity, Long> {
 
-    // Student ki saari queries (Latest First)
-    List<StudentQueryEntity> findByStudentIdOrderByCreatedAtDesc(Long studentId);
+    // ==========================================
+    // Student ki saari queries - Latest First
+    // Existing method - isko mat hatao
+    // ==========================================
 
-    // Admin - All Queries (Latest First)
+    List<StudentQueryEntity> findByStudentIdOrderByCreatedAtDesc(
+            Long studentId
+    );
+
+    // ==========================================
+    // Student - Discarded queries ko hide karne ke liye
+    // ==========================================
+
+    List<StudentQueryEntity>
+    findByStudentIdAndStatusNotOrderByCreatedAtDesc(
+            Long studentId,
+            String status
+    );
+
+    // ==========================================
+    // Admin - All Queries - Latest First
+    // ==========================================
+
     List<StudentQueryEntity> findAllByOrderByCreatedAtDesc();
 
+    // ==========================================
     // Admin - Pending Queries
-    List<StudentQueryEntity> findByStatusOrderByCreatedAtDesc(String status);
+    // ==========================================
 
+    List<StudentQueryEntity> findByStatusOrderByCreatedAtDesc(
+            String status
+    );
+
+    // ==========================================
+    // Admin - All Queries Except Discarded
+    // ==========================================
+
+    List<StudentQueryEntity> findByStatusNotOrderByCreatedAtDesc(
+            String status
+    );
 }
