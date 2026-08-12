@@ -35,4 +35,26 @@ describe('AdminDashboard Component', () => {
     render(<AdminDashboard onNavigate={() => {}} />);
     expect(screen.getByText(/Welcome,/i)).toBeInTheDocument();
   });
+
+  it('renders notifications with correct formatted timestamp without timezone shifting', async () => {
+    const { getAdminNotifications } = await import('../../auth/authService');
+    vi.mocked(getAdminNotifications).mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          message: 'Test notification message',
+          createdDate: '12/08/2026',
+          createdTime: '06:40 PM',
+          read: false
+        }
+      ]
+    });
+
+    render(<AdminDashboard onNavigate={() => {}} />);
+    const bellButton = await screen.findByRole('button', { name: /notifications/i });
+    bellButton.click();
+    expect(await screen.findByText('Test notification message')).toBeInTheDocument();
+    expect(screen.getByText('12/08/2026 at 06:40 PM')).toBeInTheDocument();
+  });
 });
+

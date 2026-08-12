@@ -30,4 +30,26 @@ describe('StudentDashboard Component', () => {
     render(<StudentDashboard onNavigate={() => {}} />);
     expect(screen.getByText('Campus_Hire')).toBeInTheDocument();
   });
+
+  it('renders student notifications with correct formatted timestamp without timezone shifting', async () => {
+    const { getStudentNotifications } = await import('../../auth/authService');
+    vi.mocked(getStudentNotifications).mockResolvedValueOnce({
+      data: [
+        {
+          id: 1,
+          message: 'Student notification test',
+          createdDate: '12/08/2026',
+          createdTime: '06:40 PM',
+          read: false
+        }
+      ]
+    });
+
+    render(<StudentDashboard onNavigate={() => {}} />);
+    const bellButton = await screen.findByRole('button', { name: /notifications/i });
+    bellButton.click();
+    expect(await screen.findByText('Student notification test')).toBeInTheDocument();
+    expect(screen.getByText('12/08/2026 at 06:40 PM')).toBeInTheDocument();
+  });
 });
+

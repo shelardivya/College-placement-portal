@@ -26,54 +26,104 @@ import {
 
 
 
-/** Parses a DD/MM/YYYY date string + 12-hour time string into a timestamp for sorting. */
+/** Parses a DD/MM/YYYY or YYYY-MM-DD date string + 12-hour/24-hour time string into a timestamp for sorting. */
 function parseDateStr(dateStr, timeStr) {
     if (!dateStr) return 0;
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return new Date(dateStr).getTime() || 0;
-    const numDay = Number.parseInt(parts[0], 10);
-    const numMonth = Number.parseInt(parts[1], 10);
-    const numYear = Number.parseInt(parts[2], 10);
-    if (!numDay || !numMonth || !numYear) return 0;
+
+    let numDay, numMonth, numYear;
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            numDay = Number.parseInt(parts[0], 10);
+            numMonth = Number.parseInt(parts[1], 10);
+            numYear = Number.parseInt(parts[2], 10);
+        }
+    } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                numYear = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numDay = Number.parseInt(parts[2], 10);
+            } else {
+                numDay = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numYear = Number.parseInt(parts[2], 10);
+            }
+        }
+    }
+
+    if (!numDay || !numMonth || !numYear) {
+        return new Date(dateStr).getTime() || 0;
+    }
 
     let numHours = 0;
     let numMinutes = 0;
 
     if (timeStr) {
-        const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
+        const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(timeStr);
         if (match) {
             const [, rawH, rawM, ampm] = match;
             let h = Number.parseInt(rawH, 10);
             const m = Number.parseInt(rawM, 10);
-            const upperAmPm = ampm.toUpperCase();
-            if (upperAmPm === 'PM' && h < 12) h += 12;
-            if (upperAmPm === 'AM' && h === 12) h = 0;
+            if (ampm) {
+                const upperAmPm = ampm.toUpperCase();
+                if (upperAmPm === 'PM' && h < 12) h += 12;
+                if (upperAmPm === 'AM' && h === 12) h = 0;
+            }
             numHours = h;
             numMinutes = m;
         }
     }
-    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHours, numMinutes));
-    return utcDate.getTime();
+    const localDate = new Date(numYear, numMonth - 1, numDay, numHours, numMinutes);
+    return localDate.getTime();
 }
 
-/*Converts a backend notification's raw date/time fields into localised display strings. */
+/* Converts a backend notification's raw date/time fields into localized display strings without shifting timezones. */
 function localizeNotification(notif) {
-    if (!notif.createdDate || !notif.createdTime) return notif;
-    const [day, month, year] = notif.createdDate.split('/');
-    const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(notif.createdTime);
-    if (!day || !month || !year || !match) return notif;
-    const [, rawH, rawM, ampm] = match;
-    const numYear = Number.parseInt(year, 10);
-    const numMonth = Number.parseInt(month, 10);
-    const numDay = Number.parseInt(day, 10);
-    let h = Number.parseInt(rawH, 10);
-    const m = Number.parseInt(rawM, 10);
-    const upperAmPm = ampm.toUpperCase();
-    if (upperAmPm === 'PM' && h < 12) h += 12;
-    if (upperAmPm === 'AM' && h === 12) h = 0;
-    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, h, m));
-    notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    if (!notif) return notif;
+
+    if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            notif.displayDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            notif.displayTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return notif;
+        }
+    }
+
+    if (notif.createdDate) {
+        let displayDate = notif.createdDate;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(displayDate)) {
+            const [y, m, d] = displayDate.split('-');
+            displayDate = `${d}/${m}/${y}`;
+        }
+        notif.displayDate = displayDate;
+
+        if (notif.createdTime) {
+            const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(notif.createdTime);
+            if (match) {
+                const [, rawH, rawM, ampm] = match;
+                let h = Number.parseInt(rawH, 10);
+                const m = Number.parseInt(rawM, 10);
+                if (ampm) {
+                    const padH = String(h).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${ampm.toUpperCase()}`;
+                } else {
+                    const period = h >= 12 ? 'PM' : 'AM';
+                    let h12 = h % 12;
+                    if (h12 === 0) h12 = 12;
+                    const padH = String(h12).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${period}`;
+                }
+            } else {
+                notif.displayTime = notif.createdTime;
+            }
+        }
+    }
+
     return notif;
 }
 
@@ -1439,13 +1489,19 @@ function ProfileSettingsModal({
 function formatNotificationTimestamp(notif) {
     if (!notif) return '';
     if (notif.displayDate) {
-        return `${notif.displayDate} at ${notif.displayTime || ''}`;
+        return `${notif.displayDate}${notif.displayTime ? ' at ' + notif.displayTime : ''}`;
     }
     if (notif.createdDate) {
         const timePart = notif.createdTime ? ` at ${notif.createdTime}` : '';
         return `${notif.createdDate}${timePart}`;
     }
     if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return `${dateStr} at ${timeStr}`;
+        }
         return new Date(notif.createdAt).toLocaleString();
     }
     return notif.date || '';
