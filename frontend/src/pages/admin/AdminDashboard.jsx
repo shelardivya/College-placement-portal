@@ -5,6 +5,7 @@ import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
 import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
     Bell,
@@ -1627,6 +1628,7 @@ function AdminDashboard({ onNavigate }) {
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const prevUnreadCountRef = useRef(null);
 
     const fetchNotifications = async () => {
         try {
@@ -1643,6 +1645,10 @@ function AdminDashboard({ onNavigate }) {
             const countResponse = await getAdminUnreadCount();
             if (countResponse.data !== undefined) {
                 const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                if (prevUnreadCountRef.current !== null && count > prevUnreadCountRef.current) {
+                    playNotificationAlert();
+                }
+                prevUnreadCountRef.current = count;
                 setUnreadCount(count);
             }
         } catch (error) {
