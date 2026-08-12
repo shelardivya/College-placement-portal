@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
+import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
     Bell,
@@ -777,6 +778,7 @@ export default function
     // Notification Data
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const prevUnreadCountRef = useRef(null);
 
     const fetchNotifications = async () => {
         try {
@@ -890,6 +892,10 @@ export default function
             if (countResponse.data !== undefined) {
                 // If it returns an object like { count: 5 } or just a number
                 const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                if (prevUnreadCountRef.current !== null && count > prevUnreadCountRef.current) {
+                    playNotificationAlert();
+                }
+                prevUnreadCountRef.current = count;
                 setUnreadCount(count);
             }
         } catch (error) {
