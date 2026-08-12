@@ -1910,6 +1910,8 @@ function AdminDashboard({ onNavigate }) {
                 } catch {
                     response = await createJobPosting(payload);
                 }
+            } else {
+                response = await createJobPosting(payload);
             }
 
             const createdJob = {
