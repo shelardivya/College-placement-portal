@@ -271,10 +271,33 @@ export default function StudentAnalytics() {
         fetchStats();
         fetchDepartmentData();
         fetchCgpaData();
-        fetchStats();
-        fetchDepartmentData();
-        fetchCgpaData();
         fetchSkillsData();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const fetchTopStudents = useCallback(async (newStudentName = null) => {
@@ -365,6 +388,26 @@ export default function StudentAnalytics() {
 
     useEffect(() => {
         fetchTopStudents();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchTopStudents();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchTopStudents();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, [fetchTopStudents]);
 
     const segments = getDonutSegments(departmentData);

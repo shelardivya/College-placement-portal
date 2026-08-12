@@ -29,6 +29,27 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const config = error.config;
+        if (!config || config._retryCount >= 2) {
+            return Promise.reject(error);
+        }
+
+        const isNetworkError = !error.response;
+        const isServerError = error.response && error.response.status >= 500;
+
+        if (isNetworkError || isServerError) {
+            config._retryCount = (config._retryCount || 0) + 1;
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            return api(config);
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 export default api;
 
 
