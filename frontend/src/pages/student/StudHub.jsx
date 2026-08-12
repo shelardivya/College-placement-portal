@@ -61,26 +61,49 @@ function decodeStorageString(val) {
 
 const parseAndFormatDate = (dateData) => {
     try {
+        const gbOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
         if (!dateData) {
-            return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+            return new Date().toLocaleString('en-GB', gbOptions).replace(',', '');
         }
         if (Array.isArray(dateData)) {
             if (dateData.length >= 5) {
-                const utcDate = new Date(Date.UTC(dateData[0], dateData[1] - 1, dateData[2], dateData[3], dateData[4]));
-                return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+                const year = String(dateData[0]);
+                const month = String(dateData[1]).padStart(2, '0');
+                const day = String(dateData[2]).padStart(2, '0');
+                const hour = String(dateData[3]).padStart(2, '0');
+                const minute = String(dateData[4]).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${minute}`;
             }
-            return new Date(dateData[0], dateData[1] - 1, dateData[2]).toLocaleDateString();
+            if (dateData.length >= 3) {
+                const day = String(dateData[2]).padStart(2, '0');
+                const month = String(dateData[1]).padStart(2, '0');
+                const year = String(dateData[0]);
+                return `${day}/${month}/${year}`;
+            }
         }
         const dateStr = dateData;
-        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
-            const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-            const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+            return dateStr;
         }
+
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr)) {
+            if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+                const parsed = new Date(dateStr);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+                }
+            } else {
+                const [datePart, timePart] = dateStr.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [hh, mm] = timePart.split(':');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y} ${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
+            }
+        }
+
         const parsed = new Date(dateStr);
-        if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-        return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+        if (Number.isNaN(parsed.getTime())) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+        return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
     } catch {
         return "Recently";
     }
@@ -504,7 +527,14 @@ const QueryResponsesPanel = ({
                     return (
                         <div key={query.id} className="query-response-card">
                             <div className="query-card-header-line">
-                                <h4 className="query-card-title">{query.title || query.subject || 'Student Query'}</h4>
+                                <div>
+                                    <h4 className="query-card-title" style={{ margin: 0 }}>{query.title || query.subject || 'Student Query'}</h4>
+                                    {query.date && (
+                                        <div className="query-date-text" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Calendar size={12} /> {query.date}
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="query-status-action-wrapper">
                                     {!isResolved && hasAdminReply && (
                                         <div className="query-click-popup">

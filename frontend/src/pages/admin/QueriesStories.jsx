@@ -47,23 +47,40 @@ function parseCreatedAt(createdAt) {
         }
         if (Array.isArray(createdAt)) {
             if (createdAt.length >= 5) {
-                const utcDate = new Date(Date.UTC(createdAt[0], createdAt[1] - 1, createdAt[2], createdAt[3], createdAt[4]));
-                return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+                const year = String(createdAt[0]);
+                const month = String(createdAt[1]).padStart(2, '0');
+                const day = String(createdAt[2]).padStart(2, '0');
+                const hour = String(createdAt[3]).padStart(2, '0');
+                const minute = String(createdAt[4]).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${minute}`;
             }
-            return new Date(createdAt[0], createdAt[1] - 1, createdAt[2]).toLocaleDateString();
+            if (createdAt.length >= 3) {
+                const day = String(createdAt[2]).padStart(2, '0');
+                const month = String(createdAt[1]).padStart(2, '0');
+                const year = String(createdAt[0]);
+                return `${day}/${month}/${year}`;
+            }
         }
         const dateStr = createdAt;
-        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
-            const [, rawDay, rawMonth, rawYear, rawHour, rawMinute] = ddMmYyyyMatch;
-            const numYear = Number.parseInt(rawYear, 10);
-            const numMonth = Number.parseInt(rawMonth, 10);
-            const numDay = Number.parseInt(rawDay, 10);
-            const numHour = Number.parseInt(rawHour, 10);
-            const numMinute = Number.parseInt(rawMinute, 10);
-            const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHour, numMinute));
-            return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+            return dateStr;
         }
+
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr)) {
+            if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+                const parsed = new Date(dateStr);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+                }
+            } else {
+                const [datePart, timePart] = dateStr.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [hh, mm] = timePart.split(':');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y} ${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
+            }
+        }
+
         const parsed = new Date(dateStr);
         if (Number.isNaN(parsed.getTime())) {
             return typeof dateStr === 'string' ? dateStr.split('T')[0] : 'Recently';
