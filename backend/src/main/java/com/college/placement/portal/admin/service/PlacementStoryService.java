@@ -512,24 +512,8 @@ public class PlacementStoryService {
         }
 
         // ==========================================
-        // Multiple Exact Matches
-        // ==========================================
-
-        if (students.size() > 1) {
-
-            throw new IllegalArgumentException(
-                    "Multiple students found with this name. " +
-                            "Please select the correct student."
-            );
-
-        }
-
-        // ==========================================
         // No Exact Match
         // ==========================================
-
-        // Abhi koi exact student nahi mila.
-        // Isliye similar spelling search karenge.
 
         java.util.List<RegisterEntity> allStudents =
                 registerRepository.findAllByRole(Role.STUDENT);
