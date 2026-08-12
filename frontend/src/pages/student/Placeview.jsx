@@ -336,11 +336,38 @@ export default function Placeview() {
         fetchSkillsData();
         fetchTopStudents();
 
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+                fetchTopStudents();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+                fetchTopStudents();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
         const handleStorageChange = () => {
             fetchTopStudents();
         };
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
     const segments = getDonutSegments(departmentData);

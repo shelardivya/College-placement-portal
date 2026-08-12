@@ -675,6 +675,26 @@ function useStudHubData() {
             }
         };
         fetchQueries();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchQueries();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchQueries();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
@@ -706,6 +726,28 @@ function useStudHubData() {
 
         fetchStories();
         fetchDrives();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStories();
+                fetchDrives();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStories();
+                fetchDrives();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {

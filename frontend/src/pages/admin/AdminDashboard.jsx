@@ -1785,6 +1785,34 @@ function AdminDashboard({ onNavigate }) {
         fetchApplicantsMatching();
         fetchDraftsData();
         fetchDashboardStats();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const [showAdminCurrentPassword, setShowAdminCurrentPassword] = useState(false);
@@ -1996,6 +2024,8 @@ function AdminDashboard({ onNavigate }) {
 
             triggerToast(`Job posted successfully for ${createdJob.company}!`, 'success');
             setIsSidebarOpen(false);
+            fetchRecentPosts();
+            fetchDraftsData();
         } catch (error) {
             console.error("Failed to post job:", error);
             const serverMsg = error.response?.data?.message;
@@ -2064,6 +2094,7 @@ function AdminDashboard({ onNavigate }) {
 
             triggerToast(`Draft saved for ${newDraft.company}!`, 'success');
             setIsSidebarOpen(false);
+            fetchDraftsData();
         } catch (error) {
             console.error("Failed to save draft:", error);
             const serverMsg = error.response?.data?.message;
@@ -2099,6 +2130,8 @@ function AdminDashboard({ onNavigate }) {
             setJobs([newPublishedJob, ...jobs]);
             setDrafts(drafts.filter(d => d.id !== draftId));
             triggerToast(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`, 'success');
+            fetchRecentPosts();
+            fetchDraftsData();
         } catch (error) {
             console.error("Failed to publish draft:", error);
             triggerToast("Failed to publish draft. Please try again.", 'error');

@@ -1006,6 +1006,28 @@ export default function
 
         fetchStudentProfile();
         fetchDashboardStats();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchDashboardStats();
+                fetchNotifications();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchDashboardStats();
+                fetchNotifications();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     // Password change form state
@@ -1246,6 +1268,8 @@ export default function
                 setResumeFile(null);
                 setResumeFileName("");
 
+                fetchDashboardStats();
+
             } catch (error) {
                 console.error("Failed to apply for job:", error);
                 const targetJobId = selectedJob?.id || selectedJob?._id;
@@ -1363,6 +1387,26 @@ export default function
             }
         };
         fetchJobs();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchJobs();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchJobs();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const [resumeMatches, setResumeMatches] = useState([]);
@@ -1392,6 +1436,26 @@ export default function
             }
         };
         fetchMatches();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchMatches();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchMatches();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
     }, []);
 
     const getJobEligibility = (job) => {
