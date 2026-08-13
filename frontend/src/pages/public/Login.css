@@ -270,6 +270,27 @@
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
+.login-page .btn-toggle-eye {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s ease;
+}
+
+.login-page .btn-toggle-eye:hover {
+    color: #2563eb;
+}
+
 .form-grid-login {
     background-color: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -312,6 +333,10 @@
     font-weight: 600;
     color: #2563eb;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
 }
 
 .link-span-forgot:hover {
@@ -407,6 +432,11 @@
     color: #2563eb;
     font-weight: 600;
     cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
 }
 
 .link-span-register:hover {

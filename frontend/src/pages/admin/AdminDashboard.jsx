@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
     Bell,
@@ -13,7 +16,6 @@ import {
     Search,
     ChevronDown,
     X,
-    Factory,
     User,
     Lock,
     LogOut,
@@ -21,26 +23,1563 @@ import {
     Eye,
     EyeOff,
     Edit3,
-    BarChart
 } from 'lucide-react';
+
+
+
+/** Parses a DD/MM/YYYY or YYYY-MM-DD date string + 12-hour/24-hour time string into a timestamp for sorting. */
+function parseDateStr(dateStr, timeStr) {
+    if (!dateStr) return 0;
+
+    let numDay, numMonth, numYear;
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            numDay = Number.parseInt(parts[0], 10);
+            numMonth = Number.parseInt(parts[1], 10);
+            numYear = Number.parseInt(parts[2], 10);
+        }
+    } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                numYear = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numDay = Number.parseInt(parts[2], 10);
+            } else {
+                numDay = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numYear = Number.parseInt(parts[2], 10);
+            }
+        }
+    }
+
+    if (!numDay || !numMonth || !numYear) {
+        return new Date(dateStr).getTime() || 0;
+    }
+
+    let numHours = 0;
+    let numMinutes = 0;
+
+    if (timeStr) {
+        const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(timeStr);
+        if (match) {
+            const [, rawH, rawM, ampm] = match;
+            let h = Number.parseInt(rawH, 10);
+            const m = Number.parseInt(rawM, 10);
+            if (ampm) {
+                const upperAmPm = ampm.toUpperCase();
+                if (upperAmPm === 'PM' && h < 12) h += 12;
+                if (upperAmPm === 'AM' && h === 12) h = 0;
+            }
+            numHours = h;
+            numMinutes = m;
+        }
+    }
+    const localDate = new Date(numYear, numMonth - 1, numDay, numHours, numMinutes);
+    return localDate.getTime();
+}
+
+/* Converts a backend notification's raw date/time fields into localized display strings without shifting timezones. */
+function localizeNotification(notif) {
+    if (!notif) return notif;
+
+    if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            notif.displayDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            notif.displayTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return notif;
+        }
+    }
+
+    if (notif.createdDate) {
+        let displayDate = notif.createdDate;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(displayDate)) {
+            const [y, m, d] = displayDate.split('-');
+            displayDate = `${d}/${m}/${y}`;
+        }
+        notif.displayDate = displayDate;
+
+        if (notif.createdTime) {
+            const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(notif.createdTime);
+            if (match) {
+                const [, rawH, rawM, ampm] = match;
+                let h = Number.parseInt(rawH, 10);
+                const m = Number.parseInt(rawM, 10);
+                if (ampm) {
+                    const padH = String(h).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${ampm.toUpperCase()}`;
+                } else {
+                    const period = h >= 12 ? 'PM' : 'AM';
+                    let h12 = h % 12;
+                    if (h12 === 0) h12 = 12;
+                    const padH = String(h12).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${period}`;
+                }
+            } else {
+                notif.displayTime = notif.createdTime;
+            }
+        }
+    }
+
+    return notif;
+}
+
+/*Formats date strings into DD-MM-YYYY format for the backend API. */
+function formatApiDeadline(deadline) {
+    if (!deadline) return '24-08-2026';
+    if (/^\d{2}-\d{2}-\d{4}$/.test(deadline)) {
+        return deadline;
+    }
+    const parts = deadline.split('-');
+    if (parts.length === 3) {
+        const [first, month, last] = parts;
+        if (first.length === 4 && last.length === 2) {
+            return `${last.padStart(2, '0')}-${month.padStart(2, '0')}-${first}`;
+        }
+    }
+    const parsedDate = new Date(deadline);
+    if (!isNaN(parsedDate.getTime())) {
+        const year = parsedDate.getFullYear();
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(parsedDate.getDate()).padStart(2, '0');
+        return `${day}-${month}-${year}`;
+    }
+    return deadline;
+}
+
+/** Formats a YYYY-MM-DD or ISO deadline string into a human-readable DD Mmm YYYY format. */
+function formatDeadline(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const date = new Date(dateStr);
+        if (Number.isNaN(date.getTime())) return dateStr;
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
+}
+
+/** Sanitizes string input for DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const cleanStr = str.replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+
+
+/** Updates the admin_profiles list in localStorage so that the password autofill stays in sync. */
+function updateAdminPasswordInStorage(adminEmail, newPassword) {
+    const rawData = localStorage.getItem('admin_profiles');
+    let adminProfiles = [];
+    if (rawData) {
+        try {
+            const parsed = JSON.parse(rawData);
+            if (Array.isArray(parsed)) adminProfiles = parsed;
+        } catch {
+            adminProfiles = [];
+        }
+    }
+    const cleanEmail = sanitizeStorageString(adminEmail).toLowerCase();
+    const cleanPass = sanitizeStorageString(newPassword);
+    let adminFound = false;
+    const updatedAdmins = adminProfiles.map(p => {
+        const pEmail = sanitizeStorageString(p.email).toLowerCase();
+        const pPass = sanitizeStorageString(p.password);
+        if (pEmail && pEmail === cleanEmail) {
+            adminFound = true;
+            return { email: cleanEmail, password: cleanPass };
+        }
+        return { email: pEmail, password: pPass };
+    });
+    if (!adminFound && cleanEmail) {
+        updatedAdmins.push({ email: cleanEmail, password: cleanPass });
+    }
+    localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+}
+
+/** Returns a favicon-based company logo element with a fallback initial letter. */
+function getCompanyLogo(company) {
+    const domainMap = {
+        'google': 'google.com', 'microsoft': 'microsoft.com', 'amazon': 'amazon.com',
+        'infosys': 'infosys.com', 'tcs': 'tcs.com', 'wipro': 'wipro.com',
+        'cognizant': 'cognizant.com', 'ibm': 'ibm.com', 'accenture': 'accenture.com',
+        'capgemini': 'capgemini.com', 'deloitte': 'deloitte.com', 'oracle': 'oracle.com',
+        'sap': 'sap.com', 'meta': 'meta.com', 'apple': 'apple.com', 'uber': 'uber.com',
+        'flipkart': 'flipkart.com', 'zoho': 'zoho.com', 'freshworks': 'freshworks.com',
+    };
+    const lower = company.toLowerCase().trim();
+    const domain = domainMap[lower] || `${lower.replace(/\s+/g, '')}.com`;
+    const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    return (
+        <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
+            <img
+                src={logoUrl}
+                alt={company}
+                style={{ width: '28px', height: '28px', objectFit: 'contain', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#f8fafc', padding: '2px', display: 'block' }}
+                onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                }}
+            />
+            <div className="company-logo default-logo" style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '28px', height: '28px' }}>
+                {company.charAt(0).toUpperCase()}
+            </div>
+        </div>
+    );
+}
+
+/** Pure helper: filters and sorts the applicants list based on current search/filter state. */
+function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, filterCompany) {
+    let result = [...applicants];
+
+    if (searchTerm.trim() !== '') {
+        const lower = searchTerm.toLowerCase();
+        result = result.filter(app =>
+            app.name.toLowerCase().includes(lower) ||
+            app.company.toLowerCase().includes(lower)
+        );
+    }
+
+    const filterByLower = filterBy.toLowerCase();
+    if (filterByLower === 'by company name') {
+        if (filterCompany.trim() !== '') {
+            result = result.filter(app =>
+                app.company.toLowerCase().includes(filterCompany.toLowerCase())
+            );
+        }
+        result.sort((a, b) => a.company.localeCompare(b.company));
+    } else if (filterByLower === 'by date') {
+        if (filterDate) {
+            result = result.filter(app => app.date === filterDate);
+        }
+        result.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else {
+        result.sort((a, b) => b.match - a.match);
+    }
+
+    return result;
+}
+
+
+// --- Sub-components extracted to keep cognitive complexity low for SonarQube ---  
+
+function AdminHeader({
+    activeTab,
+    setActiveTab,
+    unreadCount,
+    isProfileOpen,
+    setIsProfileOpen,
+    adminProfile,
+    setIsNotificationSidebarOpen,
+    setProfileTab,
+    setIsEditingProfile,
+    setValidationError,
+    setIsProfileModalOpen,
+    onNavigate
+}) {
+    return (
+        <header className='admin-header'>
+            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
+                <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                    <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+                </div>
+
+                <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                    {[
+                        { id: 'dashboard', label: 'Dashboard' },
+                        { id: 'analytics', label: 'Student Analytics' },
+                        { id: 'queries', label: 'Queries & Stories' }
+                    ].map(item => (
+                        <button
+                            type="button"
+                            key={item.id}
+                            className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
+                            onClick={() => setActiveTab(item.id)}
+                            style={{
+                                border: 'none',
+                                background: 'transparent',
+                                color: activeTab === item.id ? '#2563eb' : '#64748b',
+                                fontWeight: activeTab === item.id ? '600' : '500',
+                                fontSize: '0.95rem',
+                                cursor: 'pointer',
+                                padding: '8px 0',
+                                position: 'relative',
+                                transition: 'color 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                            }}
+                        >
+                            <span>{item.label}</span>
+                            {activeTab === item.id && (
+                                <span style={{
+                                    position: 'absolute',
+                                    bottom: '-6px',
+                                    left: 0,
+                                    right: 0,
+                                    height: '2px',
+                                    backgroundColor: '#2563eb',
+                                    borderRadius: '2px'
+                                }} />
+                            )}
+                        </button>
+                    ))}
+                </nav>
+
+                <div className='header-right'>
+                    <span className='role-badge'>Admin</span>
+
+                    <button
+                        type="button"
+                        className='notification-wrapper'
+                        aria-label="Notifications"
+                        onClick={() => {
+                            setIsNotificationSidebarOpen(true);
+                            setIsProfileOpen(false);
+                        }}
+                        style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                    >
+                        <motion.div style={{ display: 'flex' }} whileHover={{ rotate: [0, -15, 15, -15, 15, 0] }} transition={{ duration: 0.5 }}>
+                            <Bell className='bell-icon' size={22} />
+                        </motion.div>
+                        {unreadCount > 0 && (
+                            <motion.span
+                                className='notification-badge'
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                style={{ width: '16px', height: '16px', borderRadius: '50%', right: '-2px', top: '-2px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                                {unreadCount}
+                            </motion.span>
+                        )}
+                    </button>
+
+                    <div className='user-profile-container'>
+                        <button
+                            type="button"
+                            className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
+                            aria-label="User profile menu"
+                            onClick={() => setIsProfileOpen(!isProfileOpen)}
+                            style={{ border: 'none', cursor: 'pointer', padding: 0 }}
+                        >
+                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                        </button>
+
+                        {isProfileOpen && (
+                            <>
+                                <button type="button" className='profile-dropdown-backdrop' aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} style={{ border: 'none', padding: 0 }} />
+                                <div className='profile-dropdown-menu'>
+                                    <div className='profile-header'>
+                                        <span className='profile-avatar-large'>
+                                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                                        </span>
+                                        <div className='profile-meta-info'>
+                                            <span className='profile-name'>{adminProfile.name}</span>
+                                            <span className='profile-email'>{adminProfile.email}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className='profile-divider' />
+
+                                    <div className='profile-options-list'>
+                                        <button type="button" className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                            <User size={16} />
+                                            <span>View Profile</span>
+                                        </button>
+
+                                        <button type="button" className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
+                                            <Lock size={16} />
+                                            <span>Change Password</span>
+                                        </button>
+
+                                        <div className='profile-divider' />
+
+                                        <button type="button" className='profile-option-btn logout-btn' onClick={() => {
+                                            setIsProfileOpen(false);
+                                            localStorage.removeItem("token");
+                                            localStorage.removeItem("user");
+                                            localStorage.removeItem("role");
+                                            onNavigate('login');
+                                        }}>
+                                            <LogOut size={16} />
+                                            <span>Logout</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+}
+
+function formatGrowthText(stats, fieldName) {
+    if (!stats) return 'Loading...';
+    const val = stats[fieldName];
+    if (val === undefined || val === null) return 'Loading...';
+    const prefix = val >= 0 ? '+' : '';
+    return `${prefix}${val}% from last month`;
+}
+
+function AdminStatsGrid({ dashboardStats }) {
+    return (
+        <section className='stats-grid'>
+            <motion.div className='stat-card'
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}>
+                <div className='stat-icon-wrapper blue-icon'>
+                    <FileText size={20} />
+                </div>
+                <div className='stat-details'>
+                    <span className='stat-label'>Active Posting</span>
+                    <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalActivePosts : '-'}</h3>
+                    <span className='stat-trend'>
+                        <span className='trend-subtext'>
+                            {formatGrowthText(dashboardStats, 'activePostsGrowth')}
+                        </span>
+                    </span>
+                </div>
+            </motion.div>
+
+            <motion.div className='stat-card'
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}>
+                <div className='stat-icon-wrapper green-icon'>
+                    <Users size={20} />
+                </div>
+                <div className='stat-details'>
+                    <span className='stat-label'>Total Students</span>
+                    <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalStudents : '-'}</h3>
+                    <span className='stat-trend'>
+                        <span className='trend-subtext'>
+                            {formatGrowthText(dashboardStats, 'studentGrowth')}
+                        </span>
+                    </span>
+                </div>
+            </motion.div>
+
+            <motion.div className='stat-card'
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                transition={{ duration: 0.3 }}>
+                <div className='stat-icon-wrapper purple-icon'>
+                    <Briefcase size={20} />
+                </div>
+                <div className='stat-details'>
+                    <span className='stat-label'>Resume Received</span>
+                    <h3 className='stat-value'>{dashboardStats ? dashboardStats.totalResumeReceived : '-'}</h3>
+                    <span className='stat-trend'>
+                        <span className='trend-subtext'>
+                            {formatGrowthText(dashboardStats, 'resumeGrowth')}
+                        </span>
+                    </span>
+                </div>
+            </motion.div>
+        </section>
+    );
+}
+
+function RecentPostingsCard({
+    drafts,
+    paginatedDrafts,
+    draftsCurrentPage,
+    totalDraftsPages,
+    setDraftsCurrentPage,
+    handleEditDraft,
+    handlePublishDraft,
+    paginatedRecentPosts,
+    jobsCurrentPage,
+    totalJobsPages,
+    setJobsCurrentPage,
+    setValidationError,
+    setIsSidebarOpen
+}) {
+    return (
+        <div className='lower-left-column'>
+            <motion.div className='card-box posting-management-card'
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}>
+                <div className='card-box-header'>
+                    <h4>Placement Posting Management</h4>
+                    <button type="button" className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
+                        <Plus size={16} />
+                        Create New Job Posting
+                    </button>
+                </div>
+
+                <div className='drafts-list'>
+                    <div className='drafts-section-header'>
+                        <h5>Saved Drafts ({drafts.length})</h5>
+                    </div>
+
+                    {paginatedDrafts && paginatedDrafts.length > 0 ? (
+                        paginatedDrafts.map(draft => (
+                            <div key={draft.id} className='draft-item'>
+                                <div className='draft-info'>
+                                    <span className='badge-draft'>Draft</span>
+                                    <div>
+                                        <h6>{draft.title}</h6>
+                                        <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                                    </div>
+                                </div>
+
+                                <div className='draft-actions'>
+                                    <button
+                                        type="button"
+                                        className='btn-resume-draft'
+                                        onClick={() => handleEditDraft(draft.id)}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className='btn-publish-draft'
+                                        onClick={() => handlePublishDraft(draft.id)}
+                                    >
+                                        Publish
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '12px 0' }}>No drafts saved.</p>
+                    )}
+
+                    {totalDraftsPages > 1 && (
+                        <div className='pagination-controls' style={{ marginTop: '12px', gap: '6px', justifyContent: 'center' }}>
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === 1}
+                                onClick={() => setDraftsCurrentPage(prev => Math.max(prev - 1, 1))}
+                                title="Previous Page"
+                            >
+                                &larr;
+                            </button>
+
+                            {Array.from({ length: totalDraftsPages }, (_, i) => i + 1).map(pageNum => (
+                                <button
+                                    key={pageNum}
+                                    type="button"
+                                    className={`btn-page-number ${draftsCurrentPage === pageNum ? 'active' : ''}`}
+                                    onClick={() => setDraftsCurrentPage(pageNum)}
+                                >
+                                    {pageNum}
+                                </button>
+                            ))}
+
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === totalDraftsPages || totalDraftsPages === 0}
+                                onClick={() => setDraftsCurrentPage(prev => Math.min(prev + 1, totalDraftsPages))}
+                                title="Next Page"
+                            >
+                                &rarr;
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </motion.div>
+
+            <motion.div className='card-box recent-postings-card'
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}>
+                <div className='card-box-header'>
+                    <h4>Recent Postings</h4>
+                </div>
+
+                <div className='postings-list'>
+                    {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
+                        paginatedRecentPosts.map((post, index) => (
+                            <motion.div key={post.id || `${post.companyName || 'post'}-${post.jobRole || index}`} className='posting-card-item'
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+
+                                <div className='posting-card-logo-wrap'>
+                                    {post.companyName ? (
+                                        <img
+                                            src={post.logoUrl || `https://www.google.com/s2/favicons?domain=${post.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`}
+                                            alt={post.companyName}
+                                            style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <div className='posting-logo-fallback'>
+                                            <Briefcase size={18} />
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className='posting-card-body'>
+                                    <h5 className='posting-card-title'>{post.companyName}</h5>
+                                    <div className='posting-info-rows'>
+                                        {post.location && (
+                                            <div className='posting-info-row'>
+                                                <span className='posting-info-icon'>📍</span>
+                                                <span className='posting-info-label'>Location</span>
+                                                <span className='posting-info-sep'>:</span>
+                                                <span className='posting-info-value'>{post.location}</span>
+                                            </div>
+                                        )}
+                                        <div className='posting-info-row'>
+                                            <span className='posting-info-icon'>👤</span>
+                                            <span className='posting-info-label'>Job Role</span>
+                                            <span className='posting-info-sep'>:</span>
+                                            <span className='posting-info-value'>{post.jobRole}</span>
+                                        </div>
+                                        {post.deadline && (
+                                            <div className='posting-info-row'>
+                                                <span className='posting-info-icon'>📅</span>
+                                                <span className='posting-info-label'>Deadline</span>
+                                                <span className='posting-info-sep'>:</span>
+                                                <span className='posting-info-value posting-info-deadline'>{formatDeadline(post.deadline)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className='posting-card-status'>
+                                    {post.status?.toLowerCase() === 'expired' ? (
+                                        <span className='badge-expired'>Expired</span>
+                                    ) : (
+                                        <span className='badge-active'>{post.status || 'Active'}</span>
+                                    )}
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <div className='no-postings'>No recent postings found.</div>
+                    )}
+                </div>
+
+                <div className='pagination-controls'>
+                    <button
+                        type="button"
+                        className='btn-pagination'
+                        disabled={jobsCurrentPage === 1}
+                        onClick={() => setJobsCurrentPage(prev => prev - 1)}
+                    >
+                        Previous
+                    </button>
+                    <span className='pagination-info'>
+                        Page {jobsCurrentPage} of {totalJobsPages || 1}
+                    </span>
+                    <button
+                        type="button"
+                        className='btn-pagination'
+                        disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
+                        onClick={() => setJobsCurrentPage(prev => prev + 1)}
+                    >
+                        Next
+                    </button>
+                </div>
+
+            </motion.div>
+        </div>
+    );
+}
+
+function ApplicantsMatchingCard({
+    searchTerm,
+    setSearchTerm,
+    filterBy,
+    isFilterDropdownOpen,
+    setIsFilterDropdownOpen,
+    handleFilterByChange,
+    filterDate,
+    setFilterDate,
+    isDatePickerOpen,
+    setIsDatePickerOpen,
+    datePickerRef,
+    calDate,
+    handlePrevMonth,
+    handleNextMonth,
+    firstDayIndex,
+    totalDays,
+    filterCompany,
+    setFilterCompany,
+    paginatedApplicants,
+    applicantsCurrentPage,
+    totalApplicantsPages,
+    setApplicantsCurrentPage
+}) {
+    return (
+        <div className='lower-right-column'>
+            <motion.div className='card-box applicants-card'
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}>
+                <div className='card-box-header search-filter-header'>
+                    <h4>Applicants Matching Your Requirements</h4>
+                    <div className="search-filter-row">
+                        <div className="search-box-wrapper">
+                            <input
+                                type="text"
+                                placeholder="Search by name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <button type="button" className="search-btn">
+                                <Search size={16} />
+                            </button>
+                        </div>
+
+                        <div className="custom-dropdown-container">
+                            <span className="filter-label">Filter by</span>
+                            <button
+                                type="button"
+                                className="dropdown-btn"
+                                onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                            >
+                                {filterBy} <ChevronDown size={14} />
+                            </button>
+                            {isFilterDropdownOpen && (
+                                <div className="dropdown-menu">
+                                    <button
+                                        type="button"
+                                        className="dropdown-item"
+                                        style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+                                        onClick={() => handleFilterByChange('By Date')}
+                                    >
+                                        By Date
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="dropdown-item"
+                                        style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+                                        onClick={() => handleFilterByChange('By Company Name')}
+                                    >
+                                        By Company Name
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {filterBy === 'By Date' && (
+                            <div className="custom-date-picker-container" ref={datePickerRef}>
+                                <button
+                                    type="button"
+                                    className="date-picker-trigger"
+                                    onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
+                                >
+                                    {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
+                                    <Calendar size={14} style={{ marginLeft: '8px' }} />
+                                </button>
+
+                                {isDatePickerOpen && (
+                                    <div className="custom-calendar-popup">
+                                        <div className="calendar-header">
+                                            <button type="button" onClick={handlePrevMonth}>&lt;</button>
+                                            <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
+                                            <button type="button" onClick={handleNextMonth}>&gt;</button>
+                                        </div>
+                                        <div className="calendar-weekdays">
+                                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                <span key={d}>{d}</span>
+                                            ))}
+                                        </div>
+                                        <div className="calendar-days">
+                                            {new Array(firstDayIndex).fill(0).map((_, i) => (
+                                                <span key={`blank-slot-${calDate.getFullYear()}-${calDate.getMonth()}-${i}`} className="empty-day"></span>
+                                            ))}
+
+                                            {new Array(totalDays).fill(0).map((_, i) => {
+                                                const day = i + 1;
+                                                const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                const isSelected = filterDate === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
+                                                return (
+                                                    <button
+                                                        key={dateStr}
+                                                        type="button"
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
+                                                        onClick={() => {
+                                                            if (isPast) return;
+                                                            setFilterDate(dateStr);
+                                                            setIsDatePickerOpen(false);
+                                                        }}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="calendar-footer">
+                                            <button type="button" className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
+                                            <button type="button" className="calendar-today-btn" onClick={() => {
+                                                const today = new Date();
+                                                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                setFilterDate(todayStr);
+                                                setIsDatePickerOpen(false);
+                                            }}>Today</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {filterBy === 'By Company Name' && (
+                            <input
+                                type="text"
+                                className="filter-company-input"
+                                placeholder="Enter company name..."
+                                value={filterCompany}
+                                onChange={(e) => setFilterCompany(e.target.value)}
+                            />
+                        )}
+                    </div>
+                </div>
+
+                <div className='applicants-list'>
+                    {paginatedApplicants.map((app, index) => (
+                        <motion.div key={app.id || `${app.name || 'applicant'}-${index}`} className='applicant-item'
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}>
+
+                            <div className='applicant-top'>
+                                {getCompanyLogo(app.company)}
+
+                                <div className='applicant-details'>
+                                    <h5>{app.company}</h5>
+
+                                    <span className='applicant-name'>👤{app.name}</span>
+                                    <span className='applicant-education'>{app.degree} - {app.branch}</span>
+                                    <div className='applicant-tags'>
+                                        <span className='tag-cgpa'>{app.cgpa}CGPA</span>
+                                        <span className='tag-passout'>{app.year}</span>
+                                        <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
+                                    </div>
+                                </div>
+
+                                <div className='match-status'>
+                                    <span className='match-percent'>
+                                        {app.match}% Match
+                                    </span>
+
+                                    <div className='progress-bar-bg'>
+                                        <div className='progress-bar-fill'
+                                            style={{ width: `${app.match}%` }}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+
+                <div className='pagination-controls'>
+                    <button
+                        type="button"
+                        className='btn-pagination'
+                        disabled={applicantsCurrentPage === 1}
+                        onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
+                    >
+                        Previous
+                    </button>
+                    <span className='pagination-info'>
+                        Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
+                    </span>
+                    <button
+                        type="button"
+                        className='btn-pagination'
+                        disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
+                        onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
+                    >
+                        Next
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
+}
+
+function AddJobModal({
+    setIsSidebarOpen,
+    handlePostJob,
+    newJob,
+    setNewJob,
+    handleInputChange,
+    validationError,
+    handleSaveDraft,
+    modalDatePickerRef,
+    isModalDatePickerOpen,
+    setIsModalDatePickerOpen,
+    modalCalDate,
+    handleModalPrevMonth,
+    handleModalNextMonth,
+    modalFirstDayIndex,
+    modalTotalDays
+}) {
+    return (
+        <div
+            className='modal-overlay'
+            aria-label="Close job modal backdrop"
+            onClick={(e) => { if (e.target === e.currentTarget) setIsSidebarOpen(false); }}
+        >
+            <div className='add-job-modal'>
+                <div className='modal-header'>
+                    <h4>Add Job Posting</h4>
+                    <button type="button" className='close-btn' onClick={() => setIsSidebarOpen(false)}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <form className='modal-form' onSubmit={handlePostJob}>
+                    <div className='form-group'>
+                        <label htmlFor="job-company-name">Company Name <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                        <input type="text"
+                            id="job-company-name"
+                            name='companyName'
+                            placeholder='Enter Company Name'
+                            value={newJob.companyName}
+                            onChange={handleInputChange}
+                            className={validationError && !newJob.companyName?.trim() ? 'error-input' : ''}
+                            required />
+                    </div>
+
+                    <div className='form-group'>
+                        <label htmlFor="job-location">Location <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                        <input type="text"
+                            id="job-location"
+                            name='location'
+                            placeholder='e.g. Bangalore, India (or Remote)'
+                            value={newJob.location}
+                            onChange={handleInputChange}
+                            className={validationError && !newJob.location?.trim() ? 'error-input' : ''}
+                            required
+                        />
+                    </div>
+
+                    <div className='form-group'>
+                        <label htmlFor="job-requirements">Job Requirements <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                        <textarea
+                            id="job-requirements"
+                            name='jobRequirements'
+                            placeholder='Enter job requirements'
+                            value={newJob.jobRequirements}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className={validationError && !newJob.jobRequirements?.trim() ? 'error-input' : ''}
+                            required>
+                        </textarea>
+                    </div>
+
+                    <div className='form-group'>
+                        <label htmlFor="job-role-overview">Job Role Overview <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                        <textarea
+                            id="job-role-overview"
+                            name="jobRoleOverview"
+                            placeholder='Enter job role overview'
+                            value={newJob.jobRoleOverview}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className={validationError && !newJob.jobRoleOverview?.trim() ? 'error-input' : ''}
+                            required>
+                        </textarea>
+                    </div>
+
+                    <div className='form-section-title'>Eligibility Criteria</div>
+
+                    <div className='form-row'>
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-degree">Degree <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-degree" name="degree" value={newJob.degree} onChange={handleInputChange} className={validationError && !newJob.degree?.trim() ? 'error-input' : ''} required>
+                                <option value="">Select degree</option>
+                                <option value="BCA">BCA</option>
+                                <option value="MCA">MCA</option>
+                                <option value="BSC Cs">BSc CS</option>
+                                <option value="IT">IT</option>
+                            </select>
+                        </div>
+
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-branch">Branch <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-branch" name="branch" value={newJob.branch} onChange={handleInputChange} className={validationError && !newJob.branch?.trim() ? 'error-input' : ''} required>
+                                <option value="">Select branch</option>
+                                <option value="Computer Science">Computer Science</option>
+                                <option value="Computer Applications">Computer Applications</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className='form-row'>
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-min-cgpa">Min CGPA <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <input
+                                type="text"
+                                id="job-min-cgpa"
+                                name="minCgpa"
+                                placeholder="Enter minimum CGPA"
+                                value={newJob.minCgpa}
+                                onChange={handleInputChange}
+                                className={validationError && !newJob.minCgpa?.toString().trim() ? 'error-input' : ''}
+                                required
+                            />
+                        </div>
+
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-passing-year">Passing Year <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-passing-year" name="passingYear" value={newJob.passingYear} onChange={handleInputChange} className={validationError && !newJob.passingYear?.toString().trim() ? 'error-input' : ''} required>
+                                <option value="">Select Passing Year</option>
+                                <option value="2024">2024</option>
+                                <option value="2025">2025</option>
+                                <option value="2026">2026</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className='form-row'>
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-experience">Experience <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-experience" name="experience" value={newJob.experience} onChange={handleInputChange} className={validationError && !newJob.experience?.trim() ? 'error-input' : ''} required>
+                                <option value="">Select experience</option>
+                                <option value="Fresher">Fresher</option>
+                                <option value="1 Year">1 Year</option>
+                                <option value="2 Year+">2 Year+</option>
+                            </select>
+                        </div>
+
+                        <div className='form-group half-width'>
+                            <label htmlFor="job-deadline-btn">Deadline <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
+                                <button
+                                    type="button"
+                                    id="job-deadline-btn"
+                                    className={`date-picker-trigger ${validationError && !newJob.deadline?.trim() ? 'error-input' : ''}`}
+                                    onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
+                                    style={{ width: '100%', justifyContent: 'space-between' }}
+                                >
+                                    {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'}
+                                    <Calendar size={14} />
+                                </button>
+
+                                {isModalDatePickerOpen && (
+                                    <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
+                                        <div className="calendar-header">
+                                            <button type="button" onClick={handleModalPrevMonth}>&lt;</button>
+                                            <span>{modalCalDate.toLocaleString('default', { month: 'long' })} {modalCalDate.getFullYear()}</span>
+                                            <button type="button" onClick={handleModalNextMonth}>&gt;</button>
+                                        </div>
+                                        <div className="calendar-weekdays">
+                                            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                <span key={d}>{d}</span>
+                                            ))}
+                                        </div>
+                                        <div className="calendar-days">
+                                            {new Array(modalFirstDayIndex).fill(0).map((_, i) => (
+                                                <span key={`modal-blank-slot-${modalCalDate.getFullYear()}-${modalCalDate.getMonth()}-${i}`} className="empty-day"></span>
+                                            ))}
+
+                                            {new Array(modalTotalDays).fill(0).map((_, i) => {
+                                                const day = i + 1;
+                                                const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                                const isSelected = newJob.deadline === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(modalCalDate.getFullYear(), modalCalDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={dateStr}
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
+                                                        onClick={() => {
+                                                            if (isPast) return;
+                                                            setNewJob(prev => ({ ...prev, deadline: dateStr }));
+                                                            setIsModalDatePickerOpen(false);
+                                                        }}
+                                                    >
+                                                        {day}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div className="calendar-footer">
+                                            <button type="button" className="calendar-clear-btn" onClick={() => { setNewJob(prev => ({ ...prev, deadline: '' })); setIsModalDatePickerOpen(false); }}>Clear</button>
+                                            <button type="button" className="calendar-today-btn" onClick={() => {
+                                                const today = new Date();
+                                                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                                                setNewJob(prev => ({ ...prev, deadline: todayStr }));
+                                                setIsModalDatePickerOpen(false);
+                                            }}>Today</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className='form-actions'>
+                        <button type='button' className='btn-cancel' onClick={() => setIsSidebarOpen(false)}>
+                            Cancel
+                        </button>
+
+                        <button type='button' className='btn-save-draft-form' onClick={handleSaveDraft}>
+                            Save Draft
+                        </button>
+
+                        <button type='submit' className='btn-post'>
+                            Post Job
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
+
+function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfile, setIsEditingProfile }) {
+    return (
+        <form className='modal-form' onSubmit={handleUpdateProfile}>
+            <div className='form-group'>
+                <label htmlFor="admin-profile-name">Full Name</label>
+                <input
+                    id="admin-profile-name"
+                    type="text"
+                    name="name"
+                    value={adminProfile.name}
+                    onChange={handleProfileChange}
+                    required
+                />
+            </div>
+            <div className='form-group'>
+                <label htmlFor="admin-profile-email">Email Address</label>
+                <input
+                    id="admin-profile-email"
+                    type="email"
+                    name="email"
+                    value={adminProfile.email}
+                    onChange={handleProfileChange}
+                    required
+                />
+            </div>
+            <div className='form-group'>
+                <label htmlFor="admin-profile-phone">Phone Number</label>
+                <input
+                    id="admin-profile-phone"
+                    type="text"
+                    name="phone"
+                    value={adminProfile.phone}
+                    onChange={handleProfileChange}
+                />
+            </div>
+            <div className='form-group'>
+                <label htmlFor="admin-profile-role">Role</label>
+                <input
+                    id="admin-profile-role"
+                    type="text"
+                    value={adminProfile.role}
+                    disabled
+                    className="disabled-input"
+                />
+            </div>
+
+            <div className='form-actions'>
+                <button type='button' className='btn-cancel' onClick={() => setIsEditingProfile(false)}>
+                    Cancel
+                </button>
+                <button type='submit' className='btn-confirm-apply' style={{ borderRadius: '9999px' }}>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    );
+}
+
+function ProfileDetailsView({ adminProfile, handleCloseProfileModal }) {
+    return (
+        <div className='modal-form'>
+            <div className='form-group'>
+                <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Full Name</span>
+                <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.name}</div>
+            </div>
+            <div className='form-group'>
+                <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Email Address</span>
+                <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.email}</div>
+            </div>
+            <div className='form-group'>
+                <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Phone Number</span>
+                <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.phone}</div>
+            </div>
+            <div className='form-group'>
+                <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Role</span>
+                <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f1f5f9', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#64748b', border: '1px solid #e2e8f0' }}>{adminProfile.role}</div>
+            </div>
+
+            <div className='form-actions'>
+                <button type='button' className='btn-cancel' onClick={handleCloseProfileModal} style={{ width: '100%', textAlign: 'center' }}>
+                    Close
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function ProfileChangePasswordForm({
+    passwordData,
+    handlePasswordChange,
+    showAdminCurrentPassword,
+    setShowAdminCurrentPassword,
+    showAdminNewPassword,
+    setShowAdminNewPassword,
+    showAdminConfirmPassword,
+    setShowAdminConfirmPassword,
+    validationError,
+    handleUpdatePassword,
+    handleCloseProfileModal
+}) {
+    return (
+        <form className='modal-form' onSubmit={handleUpdatePassword}>
+            <div className='form-group'>
+                <label htmlFor="admin-current-password">Current Password</label>
+                <div className="password-input-wrapper">
+                    <input
+                        id="admin-current-password"
+                        type={showAdminCurrentPassword ? "text" : "password"}
+                        name="currentPassword"
+                        placeholder="Enter current password"
+                        value={passwordData.currentPassword}
+                        onChange={handlePasswordChange}
+                        required
+                    />
+                    <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowAdminCurrentPassword(!showAdminCurrentPassword)}
+                    >
+                        {showAdminCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                </div>
+            </div>
+            <div className='form-group'>
+                <label htmlFor="admin-new-password">New Password</label>
+                <div className="password-input-wrapper">
+                    <input
+                        id="admin-new-password"
+                        type={showAdminNewPassword ? "text" : "password"}
+                        name="newPassword"
+                        placeholder="Enter new password"
+                        value={passwordData.newPassword}
+                        onChange={handlePasswordChange}
+                        className={validationError && passwordData.newPassword !== passwordData.confirmPassword ? 'error-input' : ''}
+                        required
+                    />
+                    <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowAdminNewPassword(!showAdminNewPassword)}
+                    >
+                        {showAdminNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                </div>
+            </div>
+            <div className='form-group'>
+                <label htmlFor="admin-confirm-password">Confirm New Password</label>
+                <div className="password-input-wrapper">
+                    <input
+                        id="admin-confirm-password"
+                        type={showAdminConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        placeholder="Confirm new password"
+                        value={passwordData.confirmPassword}
+                        onChange={handlePasswordChange}
+                        className={validationError && passwordData.newPassword !== passwordData.confirmPassword ? 'error-input' : ''}
+                        required
+                    />
+                    <button
+                        type="button"
+                        className="password-toggle-btn"
+                        onClick={() => setShowAdminConfirmPassword(!showAdminConfirmPassword)}
+                    >
+                        {showAdminConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                </div>
+            </div>
+
+            <div className='form-actions'>
+                <button type='button' className='btn-cancel' onClick={handleCloseProfileModal}>
+                    Cancel
+                </button>
+                <button type='submit' className='btn-post'>
+                    Update Password
+                </button>
+            </div>
+        </form>
+    );
+}
+
+function renderProfileModalBody(props) {
+    const {
+        profileTab,
+        isEditingProfile,
+        adminProfile,
+        handleProfileChange,
+        handleUpdateProfile,
+        setIsEditingProfile,
+        handleCloseProfileModal,
+        passwordData,
+        handlePasswordChange,
+        showAdminCurrentPassword,
+        setShowAdminCurrentPassword,
+        showAdminNewPassword,
+        setShowAdminNewPassword,
+        showAdminConfirmPassword,
+        setShowAdminConfirmPassword,
+        validationError,
+        handleUpdatePassword
+    } = props;
+
+    if (profileTab !== 'edit') {
+        return (
+            <ProfileChangePasswordForm
+                passwordData={passwordData}
+                handlePasswordChange={handlePasswordChange}
+                showAdminCurrentPassword={showAdminCurrentPassword}
+                setShowAdminCurrentPassword={setShowAdminCurrentPassword}
+                showAdminNewPassword={showAdminNewPassword}
+                setShowAdminNewPassword={setShowAdminNewPassword}
+                showAdminConfirmPassword={showAdminConfirmPassword}
+                setShowAdminConfirmPassword={setShowAdminConfirmPassword}
+                validationError={validationError}
+                handleUpdatePassword={handleUpdatePassword}
+                handleCloseProfileModal={handleCloseProfileModal}
+            />
+        );
+    }
+
+    if (isEditingProfile) {
+        return (
+            <ProfileEditForm
+                adminProfile={adminProfile}
+                handleProfileChange={handleProfileChange}
+                handleUpdateProfile={handleUpdateProfile}
+                setIsEditingProfile={setIsEditingProfile}
+            />
+        );
+    }
+
+    return (
+        <ProfileDetailsView
+            adminProfile={adminProfile}
+            handleCloseProfileModal={handleCloseProfileModal}
+        />
+    );
+}
+
+function ProfileSettingsModal({
+    isProfileModalOpen,
+    handleCloseProfileModal,
+    profileTab,
+    isEditingProfile,
+    setIsEditingProfile,
+    adminProfile,
+    handleProfileChange,
+    handleUpdateProfile,
+    passwordData,
+    handlePasswordChange,
+    showAdminCurrentPassword,
+    setShowAdminCurrentPassword,
+    showAdminNewPassword,
+    setShowAdminNewPassword,
+    showAdminConfirmPassword,
+    setShowAdminConfirmPassword,
+    validationError,
+    handleUpdatePassword
+}) {
+    if (!isProfileModalOpen) return null;
+
+    let modalTitle = 'Admin Profile Details';
+    if (profileTab === 'edit' && isEditingProfile) {
+        modalTitle = 'Edit Admin Profile';
+    } else if (profileTab !== 'edit') {
+        modalTitle = 'Change Password';
+    }
+
+    return (
+        <div
+            className='modal-overlay'
+            aria-label="Close profile settings backdrop"
+            onClick={(e) => { if (e.target === e.currentTarget) handleCloseProfileModal(); }}
+        >
+            <div className='add-job-modal profile-settings-modal'>
+                <div className='modal-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4>{modalTitle}</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {profileTab === 'edit' && !isEditingProfile && (
+                            <button
+                                type="button"
+                                className="btn-confirm-apply"
+                                style={{
+                                    padding: '6px 14px',
+                                    fontSize: '0.8125rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    borderRadius: '9999px',
+                                    margin: 0,
+                                    cursor: 'pointer'
+                                }}
+                                onClick={() => setIsEditingProfile(true)}
+                            >
+                                <Edit3 size={14} />
+                                <span>Edit Profile</span>
+                            </button>
+                        )}
+                        <button type="button" className='close-btn' onClick={handleCloseProfileModal}>
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+
+                {renderProfileModalBody({
+                    profileTab,
+                    isEditingProfile,
+                    adminProfile,
+                    handleProfileChange,
+                    handleUpdateProfile,
+                    setIsEditingProfile,
+                    handleCloseProfileModal,
+                    passwordData,
+                    handlePasswordChange,
+                    showAdminCurrentPassword,
+                    setShowAdminCurrentPassword,
+                    showAdminNewPassword,
+                    setShowAdminNewPassword,
+                    showAdminConfirmPassword,
+                    setShowAdminConfirmPassword,
+                    validationError,
+                    handleUpdatePassword
+                })}
+            </div>
+        </div>
+    );
+}
+
+function formatNotificationTimestamp(notif) {
+    if (!notif) return '';
+    if (notif.displayDate) {
+        return `${notif.displayDate}${notif.displayTime ? ' at ' + notif.displayTime : ''}`;
+    }
+    if (notif.createdDate) {
+        const timePart = notif.createdTime ? ` at ${notif.createdTime}` : '';
+        return `${notif.createdDate}${timePart}`;
+    }
+    if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return `${dateStr} at ${timeStr}`;
+        }
+        return new Date(notif.createdAt).toLocaleString();
+    }
+    return notif.date || '';
+}
+
+function NotificationSidebar({
+    isNotificationSidebarOpen,
+    setIsNotificationSidebarOpen,
+    unreadCount,
+    handleMarkAllRead,
+    notifications
+}) {
+    if (!isNotificationSidebarOpen) return null;
+
+    return (
+        <div className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={(e) => { if (e.target === e.currentTarget) setIsNotificationSidebarOpen(false); }}>
+            <div className="sd-notification-sidebar">
+                <div className="sidebar-header">
+                    <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
+                        <h4 style={{ margin: 0 }}>Notifications</h4>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        {unreadCount > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleMarkAllRead}
+                                style={{ fontSize: '0.8rem', color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                            >
+                                Mark all as read
+                            </button>
+                        )}
+                        <button type="button" className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
+                <div className="sidebar-body">
+                    {notifications.length === 0 ? (
+                        <p className="no-notifications">No new notifications</p>
+                    ) : (
+                        notifications.map((notif, index) => {
+                            const isRead = notif.read || notif.status === 'read';
+                            return (
+                                <motion.div
+                                    key={notif.id}
+                                    className="notification-item"
+                                    initial={{ opacity: 0, y: -30 }}
+                                    animate={{ opacity: isRead ? 0.6 : 1, y: 0 }}
+                                    transition={{ delay: index * 0.08, type: "spring", stiffness: 300, damping: 24 }}
+                                    style={{ borderLeft: isRead ? '4px solid transparent' : '4px solid #2563eb' }}
+                                >
+                                    <p style={{ fontWeight: isRead ? 'normal' : '600' }}>{notif.message || notif.text}</p>
+                                    <span className="notif-date">{formatNotificationTimestamp(notif)}</span>
+                                </motion.div>
+                            );
+                        })
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 function AdminDashboard({ onNavigate }) {
     //1. Sidebar form visibility
-    const [isSidebarOpen, setIsSidebarOpen] =
-        useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Active menu tab state
     const [activeTab, setActiveTab] = useState('dashboard');
 
-
     //2. Search and filter state
-    const [searchTerm, setSearchTerm] =
-        useState('');
-    const [filterBy, setFilterBy] =
-        useState('By Date');  // By date or by company name
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterBy, setFilterBy] = useState('By Date');
     const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
-    //3. Mock job postings list (Initialized with 3 default items)
+    //3. Mock job postings list
     const [jobs, setJobs] = useState([
         {
             id: 1, title: 'Software Developer Intern',
@@ -50,7 +1589,6 @@ function AdminDashboard({ onNavigate }) {
             logoUrl: 'https://www.google.com/s2/favicons?domain=google.com&sz=128',
             location: 'Bangalore, India'
         },
-
         {
             id: 2, title: 'Data Analyst',
             company: 'Microsoft', status: 'Active',
@@ -59,7 +1597,6 @@ function AdminDashboard({ onNavigate }) {
             logoUrl: 'https://www.google.com/s2/favicons?domain=microsoft.com&sz=128',
             location: 'Hyderabad, India'
         },
-
         {
             id: 3, title: 'SDE Intern',
             company: 'Infosys', status: 'Active',
@@ -70,47 +1607,88 @@ function AdminDashboard({ onNavigate }) {
         }
     ]);
 
-    // Draft Lists State
     const [drafts, setDrafts] = useState([]);
+    const [draftsCurrentPage, setDraftsCurrentPage] = useState(1);
+    const DRAFTS_PER_PAGE = 3;
+    const [dashboardStats, setDashboardStats] = useState(null);
+    const [applicants, setApplicants] = useState([]);
+    const [filteredApplicants, setFilteredApplicants] = useState([]);
 
-    //Applicants mock data
-    const [applicants, setApplicants] =
-        useState([]);
-    const [filteredApplicants, setFilteredApplicants] =
-        useState([]);
-
-    // 5.Form state for adding a new job
     const [newJob, setNewJob] = useState({
-        companyName: '',
-        location: '',
-        jobRequirements: '',
-        jobRoleOverview: '',
-        degree: '',
-        branch: '',
-        minCgpa: '',
-        passingYear: '',
-        experience: '',
-        deadline: ''
+        companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
+        degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
     });
 
-    // Success Toast States
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [validationError, setValidationError] = useState(false);
 
-    // Profile Dropdown State
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-
-    // Notifications Sidebar State
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
+    const [unreadCount, setUnreadCount] = useState(0);
+    const prevUnreadCountRef = useRef(null);
 
-    // Profile Settings Modal States
+    const fetchNotifications = async () => {
+        try {
+            const response = await getAdminNotifications();
+            if (response.data) {
+                const fallback = response.data.content ? response.data.content : [];
+                const data = Array.isArray(response.data) ? response.data : fallback;
+                const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
+
+                const uniqueMap = new Map();
+                sorted.forEach(notif => {
+                    const msgKey = `${(notif.message || notif.text || '').trim()}-${notif.createdDate || notif.createdAt || ''}-${notif.createdTime || ''}`;
+                    const idKey = notif.id ? `id-${notif.id}` : null;
+                    if (idKey && uniqueMap.has(idKey)) return;
+                    if (uniqueMap.has(msgKey)) return;
+
+                    if (idKey) uniqueMap.set(idKey, notif);
+                    uniqueMap.set(msgKey, notif);
+                });
+                const deduplicated = Array.from(new Set(uniqueMap.values()));
+
+                const localizedData = deduplicated.map(notif => localizeNotification(notif));
+                setNotifications(localizedData);
+            }
+
+            const countResponse = await getAdminUnreadCount();
+            if (countResponse.data !== undefined) {
+                const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                if (prevUnreadCountRef.current !== null && count > prevUnreadCountRef.current) {
+                    playNotificationAlert();
+                }
+                prevUnreadCountRef.current = count;
+                setUnreadCount(count);
+            }
+        } catch (error) {
+            console.error("Error fetching admin notifications or unread count:", error);
+        }
+    };
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        fetchNotifications();
+    }, []);
+
+    const handleMarkAllRead = async () => {
+        try {
+            await markAllAdminNotificationsAsRead();
+            await fetchNotifications();
+            setToastMessage("All admin notifications marked as read");
+            setToastType("success");
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        } catch (error) {
+            console.error("Error marking all admin read:", error);
+        }
+    };
+
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [profileTab, setProfileTab] = useState('edit'); // 'edit' or 'password'
+    const [profileTab, setProfileTab] = useState('edit');
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    // Load active admin details from localStorage (stored under "admin_user" on admin login)
     const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
 
     const [adminProfile, setAdminProfile] = useState({
@@ -120,13 +1698,88 @@ function AdminDashboard({ onNavigate }) {
         role: 'System Administrator'
     });
     const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: '', newPassword: '', confirmPassword: ''
     });
 
-
     const [recentPosts, setRecentPosts] = useState([]);
+
+    const fetchRecentPosts = async () => {
+        try {
+            const response = await getAdminRecentPosts();
+            if (response && response.data) {
+                setRecentPosts(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching recent posts:", error);
+        }
+    };
+
+    const fetchDraftsData = async () => {
+        try {
+            const response = await getDrafts();
+            const rawData = response ? response.data : null;
+            let draftsData = [];
+            if (Array.isArray(rawData)) {
+                draftsData = rawData;
+            } else if (rawData && Array.isArray(rawData.drafts)) {
+                draftsData = rawData.drafts;
+            } else if (rawData && Array.isArray(rawData.content)) {
+                draftsData = rawData.content;
+            }
+
+            const mappedDrafts = draftsData.map(d => ({
+                id: d.id,
+                title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
+                company: d.companyName || d.company || 'Unknown Company',
+                location: d.location || "Remote",
+                requirements: d.jobRequirements || "",
+                degree: d.degree || "",
+                branch: d.branch || "",
+                cgpa: d.minCgpa || "",
+                year: d.passingYear || "",
+                experience: d.experience || "",
+                deadline: d.deadline || "",
+                lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
+            }));
+            setDrafts(mappedDrafts);
+        } catch (error) {
+            console.error("Failed to fetch drafts", error);
+        }
+    };
+
+    const fetchApplicantsMatching = async () => {
+        try {
+            const response = await getAdminApplicantsMatching();
+            if (response.data && Array.isArray(response.data)) {
+                const mapped = response.data.map(app => ({
+                    id: app.id || crypto.randomUUID(),
+                    name: app.studentName || '',
+                    company: app.companyName || app.jobRole || '',
+                    degree: app.course || app.degree || '',
+                    branch: app.department || app.branch || '',
+                    cgpa: app.cgpa ?? '',
+                    year: app.passingYear || '',
+                    match: app.matchPercentage ?? app.matchScore ?? '',
+                    date: app.appliedAt || app.appliedDate || ''
+                }));
+                setApplicants(mapped);
+                setFilteredApplicants(mapped);
+            }
+        } catch (error) {
+            console.error("Failed to fetch matching applicants", error);
+        }
+    };
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response && response.data) {
+                setDashboardStats(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin dashboard stats:", error);
+        }
+    };
 
     useEffect(() => {
         const fetchAdminProfile = async () => {
@@ -139,93 +1792,62 @@ function AdminDashboard({ onNavigate }) {
                         phone: response.data.mobile || response.data.phone || '',
                         role: response.data.role || 'System Administrator'
                     });
-                    console.log("Admin profile fetched:", response.data);
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
             }
         };
 
-        const fetchRecentPosts = async () => {
-            try {
-                const response = await getAdminRecentPosts();
-                if (response.data) {
-                    setRecentPosts(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching recent posts:", error);
-            }
-        };
-
-        const fetchApplicantsMatching = async () => {
-            try {
-                const response = await getAdminApplicantsMatching();
-                if (response.data && Array.isArray(response.data)) {
-                    const mapped = response.data.map(app => {
-                        const dateObj = new Date();
-                        const dateString = dateObj.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-                        return {
-                            id: app.id || Date.now() + Math.random(),
-                            name: app.studentName || 'Student',
-                            company: app.jobRole || 'SDE',
-                            degree: app.degree || 'B.Tech',
-                            branch: app.branch || 'N/A',
-                            cgpa: app.cgpa || 0.0,
-                            year: app.passingYear || 'N/A',
-                            match: app.matchScore !== undefined ? app.matchScore : 0,
-                            date: app.appliedDate || dateString
-                        };
-                    });
-                    setApplicants(mapped);
-                    setFilteredApplicants(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch matching applicants", error);
-            }
-        };
-
-        const fetchDrafts = async () => {
-            try {
-                const response = await getDrafts();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrafts = response.data.map(d => ({
-                        id: d.id,
-                        title: d.jobRoleOverview || d.title || 'Untitled Draft',
-                        company: d.companyName || d.company || 'Unknown Company',
-                        lastSaved: new Date(d.createdAt || Date.now()).toLocaleDateString()
-                    }));
-                    setDrafts(mappedDrafts);
-                }
-            } catch (error) {
-                console.error("Failed to fetch drafts", error);
-            }
-        };
-
         fetchAdminProfile();
         fetchRecentPosts();
         fetchApplicantsMatching();
-        fetchDrafts();
+        fetchDraftsData();
+        fetchDashboardStats();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
-
-
-    // Admin password visibility states
     const [showAdminCurrentPassword, setShowAdminCurrentPassword] = useState(false);
     const [showAdminNewPassword, setShowAdminNewPassword] = useState(false);
     const [showAdminConfirmPassword, setShowAdminConfirmPassword] = useState(false);
 
-    // Pagination States
     const [jobsCurrentPage, setJobsCurrentPage] = useState(1);
     const JOBS_PER_PAGE = 3;
 
     const [applicantsCurrentPage, setApplicantsCurrentPage] = useState(1);
-    const APPLICANTS_PER_PAGE = 5;
+    const APPLICANTS_PER_PAGE = 4;
 
-    // Secondary filter inputs states
     const [filterDate, setFilterDate] = useState('');
     const [filterCompany, setFilterCompany] = useState('');
 
-    // Custom calendar popup states
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
     const [calDate, setCalDate] = useState(new Date());
     const datePickerRef = useRef(null);
@@ -241,7 +1863,6 @@ function AdminDashboard({ onNavigate }) {
     const totalDays = new Date(calDate.getFullYear(), calDate.getMonth() + 1, 0).getDate();
     const firstDayIndex = new Date(calDate.getFullYear(), calDate.getMonth(), 1).getDay();
 
-    // Click away to close date picker
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
@@ -254,9 +1875,9 @@ function AdminDashboard({ onNavigate }) {
         };
     }, []);
 
-    // Modal Job Deadline calendar states
     const [isModalDatePickerOpen, setIsModalDatePickerOpen] = useState(false);
     const [modalCalDate, setModalCalDate] = useState(new Date());
+    const [editingDraftId, setEditingDraftId] = useState(null);
     const modalDatePickerRef = useRef(null);
 
     const handleModalPrevMonth = () => {
@@ -272,7 +1893,6 @@ function AdminDashboard({ onNavigate }) {
     const modalTotalDays = new Date(modalCalDate.getFullYear(), modalCalDate.getMonth() + 1, 0).getDate();
     const modalFirstDayIndex = new Date(modalCalDate.getFullYear(), modalCalDate.getMonth(), 1).getDay();
 
-    // Click away to close modal date picker
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (modalDatePickerRef.current && !modalDatePickerRef.current.contains(event.target)) {
@@ -285,10 +1905,6 @@ function AdminDashboard({ onNavigate }) {
         };
     }, []);
 
-
-
-
-
     const handleFilterByChange = (value) => {
         setFilterBy(value);
         setFilterDate('');
@@ -296,130 +1912,82 @@ function AdminDashboard({ onNavigate }) {
         setIsFilterDropdownOpen(false);
     };
 
-    // 6. Side Effect: Recalcuuate applicant matches whenever Search or Filter changes
     useEffect(() => {
-        let result = [...applicants];
-
-        // Search term (by name or company)
-        if (searchTerm.trim() !== '') {
-            result = result.filter(app =>
-                app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                app.company.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // Dropdown specific filters
-        if (filterBy.toLowerCase() === 'by company name') {
-            if (filterCompany.trim() !== '') {
-                result = result.filter(app =>
-                    app.company.toLowerCase().includes(filterCompany.toLowerCase())
-                );
-            }
-            result.sort((a, b) => a.company.localeCompare(b.company));
-        } else if (filterBy.toLowerCase() === 'by date') {
-            if (filterDate) {
-                result = result.filter(app => app.date === filterDate);
-            }
-            result.sort((a, b) => new Date(b.date) - new Date(a.date));
-        } else {
-            // Default: Sort by Match percentage
-            result.sort((a, b) => b.match - a.match);
-        }
-
-        setApplicantsCurrentPage(1); // Reset page to 1 when search or filter changes
-        setFilteredApplicants(result);
+        const result = filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, filterCompany);
+        const timer = setTimeout(() => {
+            setApplicantsCurrentPage(1);
+            setFilteredApplicants(result);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
 
-    // Fetch drafts on component mount
-    useEffect(() => {
-        const fetchDrafts = async () => {
-            try {
-                const response = await getDrafts();
-                // Map API response to UI state format
-                const formattedDrafts = response.data.map(d => ({
-                    id: d.id,
-                    title: d.jobRoleOverview,
-                    company: d.companyName,
-                    location: d.location || "Remote",
-                    requirements: d.jobRequirements,
-                    degree: d.degree,
-                    branch: d.branch,
-                    cgpa: d.minCgpa,
-                    year: d.passingYear,
-                    experience: d.experience,
-                    deadline: d.deadline,
-                    lastSaved: 'Saved'
-                }));
-                setDrafts(formattedDrafts);
-            } catch (error) {
-                console.error("Error fetching drafts:", error);
-            }
-        };
-        fetchDrafts();
-    }, []);
 
-    // 7. Handler: Updates the new job form state whenever a user types or selects an option 
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setNewJob(prev => ({
-            ...prev,
-            [name]: value //Dynamically updates the specific key (like companyName, degree, etc)
-        }));
+        setNewJob(prev => ({ ...prev, [name]: value }));
     };
 
-    // 8. Handler: Creates a new job posting and adds it to the list 
-    const handlePostJob = async (e) => {
-        e.preventDefault(); // Prevents the browser from reloading the page
+    const triggerToast = (msg, type = 'success') => {
+        setToastType(type);
+        setToastMessage(msg);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
 
-        //Quick validation
-        if (!newJob.companyName || !newJob.jobRoleOverview || !newJob.jobRequirements) {
+    const handlePostJob = async (e) => {
+        e.preventDefault();
+
+        if (
+            !newJob.companyName?.trim() ||
+            !newJob.location?.trim() ||
+            !newJob.jobRequirements?.trim() ||
+            !newJob.jobRoleOverview?.trim() ||
+            !newJob.degree?.trim() ||
+            !newJob.branch?.trim() ||
+            !newJob.minCgpa?.toString().trim() ||
+            !newJob.passingYear?.toString().trim() ||
+            !newJob.experience?.trim() ||
+            !newJob.deadline?.trim()
+        ) {
             setValidationError(true);
-            setToastMessage("Please fill in Company Name, Job Role Overview, and Job Requirements!");
-            setToastType('error');
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            triggerToast("Please fill out all required fields marked with * before posting!", 'error');
             return;
         }
 
         try {
             setValidationError(false);
-
-            let apiDeadline = "";
-            if (newJob.deadline) {
-                const parts = newJob.deadline.split("-");
-                if (parts.length === 3) {
-                    const [year, month, day] = parts;
-                    apiDeadline = `${day}-${month}-${year}`;
-                } else {
-                    apiDeadline = newJob.deadline;
-                }
-            } else {
-                apiDeadline = "10-07-2026";
-            }
+            const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
-                jobRequirements: newJob.jobRequirements,
-                jobRoleOverview: newJob.jobRoleOverview,
-                degree: newJob.degree || "B.Tech",
+                jobRequirements: newJob.jobRequirements || "Requirements details",
+                jobRoleOverview: newJob.jobRoleOverview || "Role Overview",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "post"
+                action: "POST"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await publishDraft(editingDraftId);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            } else {
+                response = await createJobPosting(payload);
+            }
 
-            // Create a new job item structure
             const createdJob = {
-                id: response.data.id || (jobs.length + 1),
+                id: (response && response.data && response.data.id) || (jobs.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -432,95 +2000,73 @@ function AdminDashboard({ onNavigate }) {
                 date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
             };
 
-            // Update state : and new job at the front of the list , keeping previous jobs 
             setJobs([createdJob, ...jobs]);
-
-            // Reset the form fields back to empty
+            setDrafts(drafts.filter(d => d.id !== editingDraftId));
+            setEditingDraftId(null);
             setNewJob({
-                companyName: '',
-                location: '',
-                jobRequirements: '',
-                jobRoleOverview: '',
-                degree: '',
-                branch: '',
-                minCgpa: '',
-                passingYear: '',
-                experience: '',
-                deadline: ''
+                companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
+                degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
             });
 
-            // Trigger Success Toast Notification
-            setToastType('success');
-            setToastMessage(`Job posted successfully for ${newJob.companyName}!`);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
-
-            // Close the sidebar panel
+            triggerToast(`Job posted successfully for ${createdJob.company}!`, 'success');
             setIsSidebarOpen(false);
-
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats(),
+                    fetchNotifications()
+                ]);
+            } catch (err) { console.error("Error refreshing data:", err); }
         } catch (error) {
             console.error("Failed to post job:", error);
-            const errorMsg = error.response?.data?.message || "Failed to create job posting. Please try again.";
-            setToastType('error');
-            setToastMessage(errorMsg);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to post job. Please try again.";
+            triggerToast(errorMsg, 'error');
         }
     };
 
-    // Save as draft handler
     const handleSaveDraft = async () => {
         if (!newJob.companyName || !newJob.jobRoleOverview) {
             setValidationError(true);
-            setToastMessage("Please fill in Company Name and Job Role Overview to save as a draft!");
-            setToastType('error');
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            triggerToast("Please fill in Company Name and Job Role Overview to save as a draft!", 'error');
             return;
         }
 
         try {
             setValidationError(false);
-
-            let apiDeadline = "";
-            if (newJob.deadline) {
-                const parts = newJob.deadline.split("-");
-                if (parts.length === 3) {
-                    const [year, month, day] = parts;
-                    apiDeadline = `${day}-${month}-${year}`;
-                } else {
-                    apiDeadline = newJob.deadline;
-                }
-            } else {
-                apiDeadline = "10-07-2026";
-            }
+            const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "None",
                 jobRoleOverview: newJob.jobRoleOverview,
-                degree: newJob.degree || "B.Tech",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "draft"
+                action: "DRAFT"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await updateDraft(editingDraftId, payload);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            } else {
+                response = await createJobPosting(payload);
+            }
 
             const newDraft = {
-                id: response.data.id || (drafts.length + 1),
+                id: (response && response.data && response.data.id) || editingDraftId || (drafts.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -532,52 +2078,37 @@ function AdminDashboard({ onNavigate }) {
                 lastSaved: 'Just now'
             };
 
-            setDrafts([newDraft, ...drafts]);
+            setDrafts([newDraft, ...drafts.filter(d => d.id !== editingDraftId)]);
+            setEditingDraftId(null);
             setNewJob({
-                companyName: '',
-                location: '',
-                jobRequirements: '',
-                jobRoleOverview: '',
-                degree: '',
-                branch: '',
-                minCgpa: '',
-                passingYear: '',
-                experience: '',
-                deadline: ''
+                companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
+                degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
             });
 
-            // Trigger Toast Notification
-            setToastType('success');
-            setToastMessage(`Draft saved for ${newDraft.company}!`);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
-
+            triggerToast(`Draft saved for ${newDraft.company}!`, 'success');
             setIsSidebarOpen(false);
-
+            try {
+                await Promise.allSettled([
+                    fetchDraftsData(),
+                    fetchRecentPosts(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing drafts:", err); }
         } catch (error) {
             console.error("Failed to save draft:", error);
-            const errorMsg = error.response?.data?.message || "Failed to save draft. Please try again.";
-            setToastType('error');
-            setToastMessage(errorMsg);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to save draft. Please try again.";
+            triggerToast(errorMsg, 'error');
         }
     };
 
-
-    // Publish draft handler (moves draft to active jobs list)
     const handlePublishDraft = async (draftId) => {
         const draftToPublish = drafts.find(d => d.id === draftId);
         if (!draftToPublish) return;
 
         try {
-            // Call the publish API
             const response = await publishDraft(draftId);
-            const apiJob = response.data; // Data returned from backend
+            const apiJob = response.data;
 
             const newPublishedJob = {
                 id: apiJob.id || (jobs.length + 1),
@@ -597,29 +2128,27 @@ function AdminDashboard({ onNavigate }) {
 
             setJobs([newPublishedJob, ...jobs]);
             setDrafts(drafts.filter(d => d.id !== draftId));
-
-            setToastType('success');
-            setToastMessage(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`);
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            triggerToast(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`, 'success');
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing data after publish:", err); }
         } catch (error) {
             console.error("Failed to publish draft:", error);
-            setToastType('error');
-            setToastMessage("Failed to publish draft. Please try again.");
-            setShowToast(true);
-            setTimeout(() => {
-                setShowToast(false);
-            }, 3000);
+            triggerToast("Failed to publish draft. Please try again.", 'error');
         }
     };
 
-    // Edit draft handler (populates form inputs and removes from drafts feed)
     const handleEditDraft = async (draftId) => {
         try {
             const response = await getDraftById(draftId);
             const draftToEdit = response.data;
+
+            setEditingDraftId(draftId);
 
             setNewJob({
                 companyName: draftToEdit.companyName,
@@ -639,36 +2168,23 @@ function AdminDashboard({ onNavigate }) {
             setIsSidebarOpen(true);
         } catch (error) {
             console.error("Failed to load draft details:", error);
-            setToastType('error');
-            setToastMessage("Failed to fetch draft details from the server.");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            triggerToast("Failed to fetch draft details from the server.", 'error');
         }
     };
 
-    // Profile and Password input handlers
     const handleProfileChange = (e) => {
         const { name, value } = e.target;
-        setAdminProfile(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setAdminProfile(prev => ({ ...prev, [name]: value }));
     };
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
-        setPasswordData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+        setPasswordData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Update profile submit handler
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
-
         try {
-            // Map state to API payload
             const payload = {
                 fullName: adminProfile.name,
                 email: adminProfile.email,
@@ -678,41 +2194,38 @@ function AdminDashboard({ onNavigate }) {
 
             await updateAdminProfile(payload);
 
-            // Persist to localStorage under admin_user key as fallback
-            const loggedInAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+            const rawUser = localStorage.getItem("admin_user");
+            let userInStorage = {};
+            if (rawUser) {
+                try {
+                    const parsed = JSON.parse(rawUser);
+                    if (parsed && typeof parsed === 'object') userInStorage = parsed;
+                } catch {
+                    userInStorage = {};
+                }
+            }
+
             const updatedUser = {
-                ...loggedInAdmin,
-                fullName: adminProfile.name,
-                email: adminProfile.email,
-                phone: adminProfile.phone
+                fullName: sanitizeStorageString(adminProfile.name),
+                email: sanitizeStorageString(adminProfile.email).toLowerCase(),
+                phone: sanitizeStorageString(adminProfile.phone),
+                role: sanitizeStorageString(adminProfile.role || userInStorage.role || 'System Administrator')
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
-            
 
-
-            setToastType('success');
-            setToastMessage("Admin profile updated successfully!");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            triggerToast("Admin profile updated successfully!", 'success');
             setIsProfileModalOpen(false);
         } catch (error) {
             console.error("Failed to update profile:", error);
-            setToastType('error');
-            setToastMessage("Failed to update profile.");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            triggerToast("Failed to update profile.", 'error');
         }
     };
 
-    // Change password submit handler
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
         if (passwordData.newPassword !== passwordData.confirmPassword) {
             setValidationError(true);
-            setToastType('error');
-            setToastMessage("New passwords do not match!");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            triggerToast("New passwords do not match!", 'error');
             return;
         }
 
@@ -723,17 +2236,17 @@ function AdminDashboard({ onNavigate }) {
                 confirmPassword: passwordData.confirmPassword
             });
 
-            setValidationError(false);
-            setToastType('success');
-            setToastMessage("Admin password changed successfully!");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            const adminUser = JSON.parse(localStorage.getItem('admin_user') || '{}');
+            const adminEmail = adminUser.email || 'saurabh@gmail.com';
 
-            setPasswordData({
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            });
+            if (adminEmail) {
+                updateAdminPasswordInStorage(adminEmail, passwordData.newPassword);
+            }
+
+            setValidationError(false);
+            triggerToast("Admin password changed successfully!", 'success');
+
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
             setShowAdminCurrentPassword(false);
             setShowAdminNewPassword(false);
             setShowAdminConfirmPassword(false);
@@ -741,103 +2254,31 @@ function AdminDashboard({ onNavigate }) {
         } catch (error) {
             console.error("Error changing password:", error);
             setValidationError(true);
-            setToastType('error');
-            setToastMessage(error.response?.data?.message || "Failed to change password. Please check your current password.");
-            setShowToast(true);
-            setTimeout(() => setShowToast(false), 3000);
+            triggerToast(error.response?.data?.message || "Failed to change password. Please check your current password.", 'error');
         }
     };
 
     const handleCloseProfileModal = () => {
         setIsProfileModalOpen(false);
-        setPasswordData({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        });
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         setShowAdminCurrentPassword(false);
         setShowAdminNewPassword(false);
         setShowAdminConfirmPassword(false);
         setValidationError(false);
     };
 
-    // Helper to format date strings to readable DD Mmm YYYY
-    const formatDeadline = (dateStr) => {
-        if (!dateStr) return '';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime())) return dateStr;
-            return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        } catch (e) {
-            return dateStr;
-        }
-    };
+    const totalDraftsPages = Math.ceil(drafts.length / DRAFTS_PER_PAGE);
+    const paginatedDrafts = drafts.slice(
+        (draftsCurrentPage - 1) * DRAFTS_PER_PAGE,
+        draftsCurrentPage * DRAFTS_PER_PAGE
+    );
 
-    // 9. Helper: Returns a real company logo from Clearbit API, falls back to initial letter
-    const getCompanyLogo = (company) => {
-        const domainMap = {
-            'google': 'google.com',
-            'microsoft': 'microsoft.com',
-            'amazon': 'amazon.com',
-            'infosys': 'infosys.com',
-            'tcs': 'tcs.com',
-            'wipro': 'wipro.com',
-            'cognizant': 'cognizant.com',
-            'ibm': 'ibm.com',
-            'accenture': 'accenture.com',
-            'capgemini': 'capgemini.com',
-            'deloitte': 'deloitte.com',
-            'oracle': 'oracle.com',
-            'sap': 'sap.com',
-            'meta': 'meta.com',
-            'apple': 'apple.com',
-            'uber': 'uber.com',
-            'flipkart': 'flipkart.com',
-            'zoho': 'zoho.com',
-            'freshworks': 'freshworks.com',
-        };
-        const lower = company.toLowerCase().trim();
-        const domain = domainMap[lower] || `${lower.replace(/\s+/g, '')}.com`;
-        const logoUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-
-        return (
-            <div style={{ position: 'relative', width: '28px', height: '28px', flexShrink: 0 }}>
-                <img
-                    src={logoUrl}
-                    alt={company}
-                    style={{
-                        width: '28px',
-                        height: '28px',
-                        objectFit: 'contain',
-                        borderRadius: '6px',
-                        border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
-                        padding: '2px',
-                        display: 'block'
-                    }}
-                    onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                    }}
-                />
-                <div
-                    className="company-logo default-logo"
-                    style={{ display: 'none', position: 'absolute', top: 0, left: 0, width: '28px', height: '28px' }}
-                >
-                    {company.charAt(0).toUpperCase()}
-                </div>
-            </div>
-        );
-    };
-
-    // Jobs Pagination Calculations
     const totalJobsPages = Math.ceil(recentPosts.length / JOBS_PER_PAGE);
     const paginatedRecentPosts = recentPosts.slice(
         (jobsCurrentPage - 1) * JOBS_PER_PAGE,
         jobsCurrentPage * JOBS_PER_PAGE
     );
 
-    // Applicants Pagination Calculations
     const totalApplicantsPages = Math.ceil(filteredApplicants.length / APPLICANTS_PER_PAGE);
     const paginatedApplicants = filteredApplicants.slice(
         (applicantsCurrentPage - 1) * APPLICANTS_PER_PAGE,
@@ -846,721 +2287,116 @@ function AdminDashboard({ onNavigate }) {
 
     return (
         <div className='admin-dashboard-container'>
+            <AdminHeader
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                unreadCount={unreadCount}
+                isProfileOpen={isProfileOpen}
+                setIsProfileOpen={setIsProfileOpen}
+                adminProfile={adminProfile}
+                setIsNotificationSidebarOpen={setIsNotificationSidebarOpen}
+                setProfileTab={setProfileTab}
+                setIsEditingProfile={setIsEditingProfile}
+                setValidationError={setValidationError}
+                setIsProfileModalOpen={setIsProfileModalOpen}
+                onNavigate={onNavigate}
+            />
 
-
-            <header className='admin-header'>
-                <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
-                    <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
-                        <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
-                    </div>
-
-                    <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
-                        {[
-                            { id: 'dashboard', label: 'Dashboard' },
-                            { id: 'analytics', label: 'Student Analytics' },
-                            { id: 'queries', label: 'Queries & Stories' }
-                        ].map(item => (
-                            <button
-                                key={item.id}
-                                className={`navbar-menu-btn ${activeTab === item.id ? 'active' : ''}`}
-                                onClick={() => setActiveTab(item.id)}
-                                style={{
-                                    border: 'none',
-                                    background: 'transparent',
-                                    color: activeTab === item.id ? '#2563eb' : '#64748b',
-                                    fontWeight: activeTab === item.id ? '600' : '500',
-                                    fontSize: '0.95rem',
-                                    cursor: 'pointer',
-                                    padding: '8px 0',
-                                    position: 'relative',
-                                    transition: 'color 0.2s ease',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px'
-                                }}
-                            >
-                                <span>{item.label}</span>
-                                {activeTab === item.id && (
-                                    <span style={{
-                                        position: 'absolute',
-                                        bottom: '-6px',
-                                        left: 0,
-                                        right: 0,
-                                        height: '2px',
-                                        backgroundColor: '#2563eb',
-                                        borderRadius: '2px'
-                                    }} />
-                                )}
-                            </button>
-                        ))}
-                    </nav>
-
-                    <div className='header-right'>
-                        <span className='role-badge'>Admin</span>
-
-                        <div className='notification-wrapper' onClick={() => {
-                            setIsNotificationSidebarOpen(true);
-                            setIsProfileOpen(false);
-                        }} style={{ cursor: 'pointer' }}>
-                            <Bell className='bell-icon' size={22} />
-                            {notifications.length > 0 && (
-                                <span className='notification-badge'>{notifications.length}</span>
-                            )}
-                        </div>
-
-                        <div className='user-profile-container'>
-                            <div
-                                className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
-                                onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            >
-                                {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                            </div>
-
-                            {isProfileOpen && (
+            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
+                <main className='dashboard-main'>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeTab}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                            style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}
+                        >
+                            {activeTab === 'dashboard' && (
                                 <>
-                                    <div className='profile-dropdown-backdrop' onClick={() => setIsProfileOpen(false)} />
-                                    <div className='profile-dropdown-menu'>
-                                        <div className='profile-header'>
-                                            <span className='profile-avatar-large'>
-                                                {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                                            </span>
-                                            <div className='profile-meta-info'>
-                                                <span className='profile-name'>{adminProfile.name}</span>
-                                                <span className='profile-email'>{adminProfile.email}</span>
-                                            </div>
+                                    <section className='greeting-section'>
+                                        <div className='greeting-content'>
+                                            <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
+                                            <p>Here's what's happening with your placement portal today.</p>
                                         </div>
-
-                                        <div className='profile-divider' />
-
-                                        <div className='profile-options-list'>
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('edit'); setIsEditingProfile(false); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                <User size={16} />
-                                                <span>View Profile</span>
-                                            </button>
-
-                                            <button className='profile-option-btn' onClick={() => { setIsProfileOpen(false); setProfileTab('password'); setValidationError(false); setIsProfileModalOpen(true); }}>
-                                                <Lock size={16} />
-                                                <span>Change Password</span>
-                                            </button>
-
-                                            <div className='profile-divider' />
-
-                                            <button className='profile-option-btn logout-btn' onClick={() => {
-                                                setIsProfileOpen(false);
-                                                localStorage.removeItem("token");
-                                                localStorage.removeItem("user");
-                                                localStorage.removeItem("role");
-                                                onNavigate('login');
-                                            }}>
-                                                <LogOut size={16} />
-                                                <span>Logout</span>
-                                            </button>
+                                        <div className='greeting-date-badge'>
+                                            <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                         </div>
+                                    </section>
+
+                                    <AdminStatsGrid dashboardStats={dashboardStats} />
+
+                                    <div className='dashboard-grid-lower'>
+                                        <RecentPostingsCard
+                                            drafts={drafts}
+                                            paginatedDrafts={paginatedDrafts}
+                                            draftsCurrentPage={draftsCurrentPage}
+                                            totalDraftsPages={totalDraftsPages}
+                                            setDraftsCurrentPage={setDraftsCurrentPage}
+                                            handleEditDraft={handleEditDraft}
+                                            handlePublishDraft={handlePublishDraft}
+                                            paginatedRecentPosts={paginatedRecentPosts}
+                                            jobsCurrentPage={jobsCurrentPage}
+                                            totalJobsPages={totalJobsPages}
+                                            setJobsCurrentPage={setJobsCurrentPage}
+                                            setValidationError={setValidationError}
+                                            setIsSidebarOpen={setIsSidebarOpen}
+                                        />
+
+                                        <ApplicantsMatchingCard
+                                            searchTerm={searchTerm}
+                                            setSearchTerm={setSearchTerm}
+                                            filterBy={filterBy}
+                                            isFilterDropdownOpen={isFilterDropdownOpen}
+                                            setIsFilterDropdownOpen={setIsFilterDropdownOpen}
+                                            handleFilterByChange={handleFilterByChange}
+                                            filterDate={filterDate}
+                                            setFilterDate={setFilterDate}
+                                            isDatePickerOpen={isDatePickerOpen}
+                                            setIsDatePickerOpen={setIsDatePickerOpen}
+                                            datePickerRef={datePickerRef}
+                                            calDate={calDate}
+                                            handlePrevMonth={handlePrevMonth}
+                                            handleNextMonth={handleNextMonth}
+                                            firstDayIndex={firstDayIndex}
+                                            totalDays={totalDays}
+                                            filterCompany={filterCompany}
+                                            setFilterCompany={setFilterCompany}
+                                            paginatedApplicants={paginatedApplicants}
+                                            applicantsCurrentPage={applicantsCurrentPage}
+                                            totalApplicantsPages={totalApplicantsPages}
+                                            setApplicantsCurrentPage={setApplicantsCurrentPage}
+                                        />
                                     </div>
                                 </>
                             )}
-                        </div>
-                    </div>
-                </div>
-            </header>
 
-            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
-
-
-                <main className='dashboard-main'>
-                    {activeTab === 'dashboard' && (
-                        <>
-
-
-                            <section className='greeting-section'>
-                                <div className='greeting-content'>
-                                    <h2>Welcome, {adminProfile.name} <span className='waving-hand'>👋</span></h2>
-                                    <p>Here's what's happening with your placement portal today.</p>
-                                </div>
-                                <div className='greeting-date-badge'>
-                                    <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                                </div>
-                            </section>
-
-
-                            <section className='stats-grid'>
-                                <div className='stat-card'>
-                                    <div className='stat-icon-wrapper blue-icon'>
-                                        <FileText size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Active Posting</span>
-                                        <h3 className='stat-value'>{jobs.length}</h3>
-                                        <span className='stat-trend green-trend'>
-                                            0% <span className='trend-subtext'>from last month</span>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className='stat-card'>
-                                    <div className='stat-icon-wrapper green-icon'>
-                                        <Users size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Total Students</span>
-                                        <h3 className='stat-value'>-</h3>
-                                        <span className='stat-trend'>
-                                            <span className='trend-subtext'>API pending</span>
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className='stat-card'>
-                                    <div className='stat-icon-wrapper purple-icon'>
-                                        <Briefcase size={20} />
-                                    </div>
-                                    <div className='stat-details'>
-                                        <span className='stat-label'>Resume Received</span>
-                                        <h3 className='stat-value'>-</h3>
-                                        <span className='stat-trend'>
-                                            <span className='trend-subtext'>API pending</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            </section>
-
-
-                            <div className='dashboard-grid-lower'>
-
-
-                                <div className='lower-left-column'>
-                                    <div className='card-box posting-management-card'>
-                                        <div className='card-box-header'>
-                                            <h4>Placement Posting Management</h4>
-                                            <button className='btn-primary' onClick={() => { setValidationError(false); setIsSidebarOpen(true); }}>
-                                                < Plus size={16} />
-                                                Create New Job Posting
-                                            </button>
-                                        </div>
-
-                                        <div className='drafts-list'>
-                                            <div className='drafts-section-header'>
-                                                <h5>Saved Drafts ({drafts.length})</h5>
-                                            </div>
-
-                                            {drafts.map(draft => (
-                                                <div key={draft.id} className='draft-item'>
-                                                    <div className='draft-info'>
-                                                        <span className='badge-draft'>Draft</span>
-                                                        <div>
-                                                            <h6>{draft.title}</h6>
-                                                            <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className='draft-actions'>
-                                                        <button
-                                                            className='btn-resume-draft'
-                                                            onClick={() => handleEditDraft(draft.id)}
-                                                        >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            className='btn-publish-draft'
-                                                            onClick={() => handlePublishDraft(draft.id)}
-                                                        >
-                                                            Publish
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    <div className='card-box recent-postings-card'>
-                                        <div className='card-box-header'>
-                                            <h4>Recent Postings</h4>
-                                        </div>
-
-                                        <div className='postings-list'>
-                                            {paginatedRecentPosts && paginatedRecentPosts.length > 0 ? (
-                                                paginatedRecentPosts.map((post, index) => (
-                                                    <div key={index} className='posting-card-item'>
-
-                                                        <div className='posting-card-logo-wrap'>
-                                                            <div className='posting-logo-fallback'>
-                                                                <Briefcase size={18} />
-                                                            </div>
-                                                        </div>
-
-                                                        <div className='posting-card-body'>
-                                                            <h5 className='posting-card-title'>{post.companyName}</h5>
-                                                            <div className='posting-info-rows'>
-                                                                {post.location && (
-                                                                    <div className='posting-info-row'>
-                                                                        <span className='posting-info-icon'>📍</span>
-                                                                        <span className='posting-info-label'>Location</span>
-                                                                        <span className='posting-info-sep'>:</span>
-                                                                        <span className='posting-info-value'>{post.location}</span>
-                                                                    </div>
-                                                                )}
-                                                                <div className='posting-info-row'>
-                                                                    <span className='posting-info-icon'>👤</span>
-                                                                    <span className='posting-info-label'>Job Role</span>
-                                                                    <span className='posting-info-sep'>:</span>
-                                                                    <span className='posting-info-value'>{post.jobRole}</span>
-                                                                </div>
-                                                                {post.deadline && (
-                                                                    <div className='posting-info-row'>
-                                                                        <span className='posting-info-icon'>📅</span>
-                                                                        <span className='posting-info-label'>Deadline</span>
-                                                                        <span className='posting-info-sep'>:</span>
-                                                                        <span className='posting-info-value posting-info-deadline'>{formatDeadline(post.deadline)}</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className='posting-card-status'>
-                                                            {post.status && post.status.toLowerCase() === 'expired' ? (
-                                                                <span className='badge-expired'>Expired</span>
-                                                            ) : (
-                                                                <span className='badge-active'>{post.status || 'Active'}</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className='no-postings'>No recent postings found.</div>
-                                            )}
-                                        </div>
-
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === 1}
-                                                onClick={() => setJobsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {jobsCurrentPage} of {totalJobsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={jobsCurrentPage === totalJobsPages || totalJobsPages === 0}
-                                                onClick={() => setJobsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div className='lower-right-column'>
-                                    <div className='card-box applicants-card'>
-                                        <div className='card-box-header search-filter-header'>
-                                            <h4>Applicants Matching Your Requirements</h4>
-                                            <div className="search-filter-row">
-                                                <div className="search-box-wrapper">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Search by name..."
-                                                        value={searchTerm}
-                                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                                    />
-                                                    <button className="search-btn">
-                                                        <Search size={16} />
-                                                    </button>
-                                                </div>
-
-                                                <div className="custom-dropdown-container">
-                                                    <span className="filter-label">Filter by</span>
-                                                    <button
-                                                        className="dropdown-btn"
-                                                        onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                                                    >
-                                                        {filterBy} <ChevronDown size={14} />
-                                                    </button>
-                                                    {isFilterDropdownOpen && (
-                                                        <div className="dropdown-menu">
-                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Date')}>By Date</div>
-                                                            <div className="dropdown-item" onClick={() => handleFilterByChange('By Company Name')}>By Company Name</div>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-
-                                                {filterBy === 'By Date' && (
-                                                    <div className="custom-date-picker-container" ref={datePickerRef}>
-                                                        <button
-                                                            className="date-picker-trigger"
-                                                            onClick={() => setIsDatePickerOpen(!isDatePickerOpen)}
-                                                        >
-                                                            {filterDate ? formatDeadline(filterDate) : 'Select Date...'}
-                                                            <Calendar size={14} style={{ marginLeft: '8px' }} />
-                                                        </button>
-
-                                                        {isDatePickerOpen && (
-                                                            <div className="custom-calendar-popup">
-                                                                <div className="calendar-header">
-                                                                    <button onClick={handlePrevMonth}>&lt;</button>
-                                                                    <span>{calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}</span>
-                                                                    <button onClick={handleNextMonth}>&gt;</button>
-                                                                </div>
-                                                                <div className="calendar-weekdays">
-                                                                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                                                        <span key={d}>{d}</span>
-                                                                    ))}
-                                                                </div>
-                                                                <div className="calendar-days">
-
-                                                                    {Array.from({ length: firstDayIndex }).map((_, i) => (
-                                                                        <span key={`empty-${i}`} className="empty-day"></span>
-                                                                    ))}
-
-                                                                    {Array.from({ length: totalDays }).map((_, i) => {
-                                                                        const day = i + 1;
-                                                                        const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                                        const isSelected = filterDate === dateStr;
-                                                                        return (
-                                                                            <button
-                                                                                key={day}
-                                                                                className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
-                                                                                onClick={() => {
-                                                                                    setFilterDate(dateStr);
-                                                                                    setIsDatePickerOpen(false);
-                                                                                }}
-                                                                            >
-                                                                                {day}
-                                                                            </button>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                                <div className="calendar-footer">
-                                                                    <button className="calendar-clear-btn" onClick={() => { setFilterDate(''); setIsDatePickerOpen(false); }}>Clear</button>
-                                                                    <button className="calendar-today-btn" onClick={() => {
-                                                                        const today = new Date();
-                                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                                        setFilterDate(todayStr);
-                                                                        setIsDatePickerOpen(false);
-                                                                    }}>Today</button>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                                {filterBy === 'By Company Name' && (
-                                                    <input
-                                                        type="text"
-                                                        className="filter-company-input"
-                                                        placeholder="Enter company name..."
-                                                        value={filterCompany}
-                                                        onChange={(e) => setFilterCompany(e.target.value)}
-                                                    />
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className='applicants-list'>
-                                            {paginatedApplicants.map((app) => (
-                                                <div key={app.id} className='applicant-item'>
-
-                                                    <div className='applicant-top'>
-                                                        {getCompanyLogo(app.company)}
-
-                                                        <div className='applicant-details'>
-                                                            <h5>{app.company}</h5>
-
-                                                            <span className='applicant-name'>👤{app.name}</span>
-                                                            <span className='applicant-education'>{app.degree} - {app.branch}</span>
-                                                            <div className='applicant-tags'>
-                                                                <span className='tag-cgpa'>{app.cgpa}CGPA</span>
-                                                                <span className='tag-passout'>{app.year}</span>
-                                                                <span className='tag-date'>📅 {app.date ? formatDeadline(app.date) : ''}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className='match-status'>
-                                                            <span className='match-percent'>
-                                                                {app.match}% Match
-                                                            </span>
-
-                                                            <div className='progress-bar-bg'>
-                                                                <div className='progress-bar-fill'
-                                                                    style={{ width: `${app.match}%` }}>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className='pagination-controls'>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === 1}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev - 1)}
-                                            >
-                                                Previous
-                                            </button>
-                                            <span className='pagination-info'>
-                                                Page {applicantsCurrentPage} of {totalApplicantsPages || 1}
-                                            </span>
-                                            <button
-                                                className='btn-pagination'
-                                                disabled={applicantsCurrentPage === totalApplicantsPages || totalApplicantsPages === 0}
-                                                onClick={() => setApplicantsCurrentPage(prev => prev + 1)}
-                                            >
-                                                Next
-                                            </button>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {activeTab === 'analytics' && (
-                        <StudentAnalytics />
-                    )}
-
-                    {activeTab === 'queries' && (
-                        <QueriesStories />
-                    )}
+                            {activeTab === 'analytics' && <StudentAnalytics />}
+                            {activeTab === 'queries' && <QueriesStories />}
+                        </motion.div>
+                    </AnimatePresence>
                 </main>
 
                 {isSidebarOpen && (
-                    <div className='modal-overlay' onClick={() =>
-                        setIsSidebarOpen(false)
-                    }>
-
-                        <div className='add-job-modal' onClick={(e) =>
-                            e.stopPropagation()
-                        }>
-
-
-                            <div className='modal-header'>
-                                <h4>Add Job Posting</h4>
-                                <button className='close-btn' onClick={() =>
-                                    setIsSidebarOpen(false)
-                                }>
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-
-                            <form className='modal-form' onSubmit={handlePostJob}>
-                                <div className='form-group'>
-                                    <label>Company Name</label>
-
-                                    <input type="text"
-                                        name='companyName'
-                                        placeholder='Enter Company Name'
-                                        value={newJob.companyName}
-                                        onChange={handleInputChange}
-                                        className={validationError && !newJob.companyName ? 'error-input' : ''}
-                                        required />
-
-                                </div>
-
-                                <div className='form-group'>
-                                    <label>Location</label>
-
-                                    <input type="text"
-                                        name='location'
-                                        placeholder='e.g. Bangalore, India (or Remote)'
-                                        value={newJob.location}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-
-                                <div className='form-group'>
-                                    <label>Job Requirements</label>
-
-                                    <textarea name='jobRequirements'
-                                        placeholder='Enter job requirements'
-                                        value={newJob.jobRequirements}
-                                        onChange={handleInputChange}
-                                        rows={3}>
-                                    </textarea>
-                                </div>
-
-                                <div className='form-group'>
-                                    <label>Job Role Overview</label>
-
-                                    <textarea name="jobRoleOverview"
-                                        placeholder='Enter job role overview'
-                                        value={newJob.jobRoleOverview}
-                                        onChange={handleInputChange}
-                                        rows={3}
-                                        className={validationError && !newJob.jobRoleOverview ? 'error-input' : ''}
-                                        required>
-                                    </textarea>
-                                </div>
-
-                                <div className='form-section-title'>Eligibility Criteria</div>
-
-                                <div className='form-row'>
-                                    <div className='form-group half-width'>
-
-                                        <label>Degree</label>
-
-                                        <select name="degree" value={newJob.degree}
-                                            onChange={handleInputChange}>
-
-                                            <option value="">Select degree</option>
-                                            <option value="BCA">BCA</option>
-                                            <option value="MCA">MCA</option>
-                                            <option value="BSC Cs">BSC Cs</option>
-                                            <option value="IT">IT</option>
-                                        </select>
-                                    </div>
-
-                                    <div className='form-group half-width'>
-                                        <label htmlFor="">Branch</label>
-
-                                        <select name="branch" value={newJob.branch}
-                                            onChange={handleInputChange}>
-
-                                            <option value="">Select branch</option>
-                                            <option value="Computer Science">Computer Science</option>
-                                            <option value="Computer Applications">Computer Applications</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className='form-row'>
-                                    <div className='form-group half-width'>
-                                        <label htmlFor="">Min CGPA</label>
-
-                                        <input
-                                            type="text"
-                                            name="minCgpa"
-                                            placeholder="Enter minimum CGPA"
-                                            value={newJob.minCgpa}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-
-                                    <div className='form-group half-width'>
-                                        <label htmlFor="">Passing Year</label>
-
-                                        <select name="passingYear" value={newJob.passingYear}
-                                            onChange={handleInputChange}>
-
-                                            <option value="">Select Passing Year</option>
-                                            <option value="2024">2024</option>
-                                            <option value="2025">2025</option>
-                                            <option value="2026">2026</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className='form-row'>
-                                    <div className='form-group half-width'>
-                                        <label htmlFor="">Experience</label>
-
-                                        <select name="experience" value={newJob.experience}
-                                            onChange={handleInputChange}>
-
-                                            <option value="">Select experience</option>
-                                            <option value="Fresher">Fresher</option>
-                                            <option value="1 Year">1 Year</option>
-                                            <option value="2 Year+">2 Year+</option>
-                                        </select>
-                                    </div>
-
-                                    <div className='form-group half-width'>
-                                        <label htmlFor="">Deadline</label>
-                                        <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
-                                            <button
-                                                type="button"
-                                                className="date-picker-trigger"
-                                                onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
-                                                style={{ width: '100%', justifyContent: 'space-between' }}
-                                            >
-                                                {newJob.deadline ? formatDeadline(newJob.deadline) : 'Select Deadline...'}
-                                                <Calendar size={14} />
-                                            </button>
-
-                                            {isModalDatePickerOpen && (
-                                                <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
-                                                    <div className="calendar-header">
-                                                        <button type="button" onClick={handleModalPrevMonth}>&lt;</button>
-                                                        <span>{modalCalDate.toLocaleString('default', { month: 'long' })} {modalCalDate.getFullYear()}</span>
-                                                        <button type="button" onClick={handleModalNextMonth}>&gt;</button>
-                                                    </div>
-                                                    <div className="calendar-weekdays">
-                                                        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
-                                                            <span key={d}>{d}</span>
-                                                        ))}
-                                                    </div>
-                                                    <div className="calendar-days">
-
-                                                        {Array.from({ length: modalFirstDayIndex }).map((_, i) => (
-                                                            <span key={`empty-${i}`} className="empty-day"></span>
-                                                        ))}
-
-                                                        {Array.from({ length: modalTotalDays }).map((_, i) => {
-                                                            const day = i + 1;
-                                                            const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                                                            const isSelected = newJob.deadline === dateStr;
-                                                            return (
-                                                                <button
-                                                                    type="button"
-                                                                    key={day}
-                                                                    className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
-                                                                    onClick={() => {
-                                                                        setNewJob(prev => ({ ...prev, deadline: dateStr }));
-                                                                        setIsModalDatePickerOpen(false);
-                                                                    }}
-                                                                >
-                                                                    {day}
-                                                                </button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    <div className="calendar-footer">
-                                                        <button type="button" className="calendar-clear-btn" onClick={() => { setNewJob(prev => ({ ...prev, deadline: '' })); setIsModalDatePickerOpen(false); }}>Clear</button>
-                                                        <button type="button" className="calendar-today-btn" onClick={() => {
-                                                            const today = new Date();
-                                                            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                            setNewJob(prev => ({ ...prev, deadline: todayStr }));
-                                                            setIsModalDatePickerOpen(false);
-                                                        }}>Today</button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className='form-actions'>
-                                    <button type='button'
-                                        className='btn-cancel'
-                                        onClick={() => setIsSidebarOpen(false)}>
-                                        Cancel
-                                    </button>
-
-                                    <button type='button'
-                                        className='btn-save-draft-form'
-                                        onClick={handleSaveDraft}>
-                                        Save Draft
-                                    </button>
-
-                                    <button type='submit' className='btn-post'>
-                                        Post Job
-                                    </button>
-
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <AddJobModal
+                        setIsSidebarOpen={setIsSidebarOpen}
+                        handlePostJob={handlePostJob}
+                        newJob={newJob}
+                        setNewJob={setNewJob}
+                        handleInputChange={handleInputChange}
+                        validationError={validationError}
+                        handleSaveDraft={handleSaveDraft}
+                        modalDatePickerRef={modalDatePickerRef}
+                        isModalDatePickerOpen={isModalDatePickerOpen}
+                        setIsModalDatePickerOpen={setIsModalDatePickerOpen}
+                        modalCalDate={modalCalDate}
+                        handleModalPrevMonth={handleModalPrevMonth}
+                        handleModalNextMonth={handleModalNextMonth}
+                        modalFirstDayIndex={modalFirstDayIndex}
+                        modalTotalDays={modalTotalDays}
+                    />
                 )}
-
 
                 {showToast && (
                     <div className={`admin-toast-notification ${toastType}`}>
@@ -1571,239 +2407,37 @@ function AdminDashboard({ onNavigate }) {
                     </div>
                 )}
 
+                <ProfileSettingsModal
+                    isProfileModalOpen={isProfileModalOpen}
+                    handleCloseProfileModal={handleCloseProfileModal}
+                    profileTab={profileTab}
+                    isEditingProfile={isEditingProfile}
+                    setIsEditingProfile={setIsEditingProfile}
+                    adminProfile={adminProfile}
+                    handleProfileChange={handleProfileChange}
+                    handleUpdateProfile={handleUpdateProfile}
+                    passwordData={passwordData}
+                    handlePasswordChange={handlePasswordChange}
+                    showAdminCurrentPassword={showAdminCurrentPassword}
+                    setShowAdminCurrentPassword={setShowAdminCurrentPassword}
+                    showAdminNewPassword={showAdminNewPassword}
+                    setShowAdminNewPassword={setShowAdminNewPassword}
+                    showAdminConfirmPassword={showAdminConfirmPassword}
+                    setShowAdminConfirmPassword={setShowAdminConfirmPassword}
+                    validationError={validationError}
+                    handleUpdatePassword={handleUpdatePassword}
+                />
 
-                {isProfileModalOpen && (
-                    <div className='modal-overlay' onClick={handleCloseProfileModal}>
-                        <div className='add-job-modal profile-settings-modal' onClick={(e) => e.stopPropagation()}>
-                            <div className='modal-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h4>
-                                    {profileTab === 'edit'
-                                        ? isEditingProfile
-                                            ? 'Edit Admin Profile'
-                                            : 'Admin Profile Details'
-                                        : 'Change Password'}
-                                </h4>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    {profileTab === 'edit' && !isEditingProfile && (
-                                        <button
-                                            type="button"
-                                            className="btn-confirm-apply"
-                                            style={{
-                                                padding: '6px 14px',
-                                                fontSize: '0.8125rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '6px',
-                                                borderRadius: '9999px',
-                                                margin: 0,
-                                                cursor: 'pointer'
-                                            }}
-                                            onClick={() => setIsEditingProfile(true)}
-                                        >
-                                            <Edit3 size={14} />
-                                            <span>Edit Profile</span>
-                                        </button>
-                                    )}
-                                    <button className='close-btn' onClick={handleCloseProfileModal}>
-                                        <X size={20} />
-                                    </button>
-                                </div>
-                            </div>
-
-
-                            {profileTab === 'edit' ? (
-                                isEditingProfile ? (
-                                    <form className='modal-form' onSubmit={handleUpdateProfile}>
-                                        <div className='form-group'>
-                                            <label>Full Name</label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                value={adminProfile.name}
-                                                onChange={handleProfileChange}
-                                                required
-                                            />
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Email Address</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={adminProfile.email}
-                                                onChange={handleProfileChange}
-                                                required
-                                            />
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Phone Number</label>
-                                            <input
-                                                type="text"
-                                                name="phone"
-                                                value={adminProfile.phone}
-                                                onChange={handleProfileChange}
-                                            />
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Role</label>
-                                            <input
-                                                type="text"
-                                                value={adminProfile.role}
-                                                disabled
-                                                className="disabled-input"
-                                            />
-                                        </div>
-
-                                        <div className='form-actions'>
-                                            <button type='button' className='btn-cancel' onClick={() => setIsEditingProfile(false)}>
-                                                Cancel
-                                            </button>
-                                            <button type='submit' className='btn-confirm-apply' style={{ borderRadius: '9999px' }}>
-                                                Save Changes
-                                            </button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <div className='modal-form'>
-                                        <div className='form-group'>
-                                            <label>Full Name</label>
-                                            <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.name}</div>
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Email Address</label>
-                                            <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.email}</div>
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Phone Number</label>
-                                            <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.phone}</div>
-                                        </div>
-                                        <div className='form-group'>
-                                            <label>Role</label>
-                                            <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f1f5f9', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#64748b', border: '1px solid #e2e8f0' }}>{adminProfile.role}</div>
-                                        </div>
-
-                                        <div className='form-actions'>
-                                            <button type='button' className='btn-cancel' onClick={handleCloseProfileModal} style={{ width: '100%', textAlign: 'center' }}>
-                                                Close
-                                            </button>
-                                        </div>
-                                    </div>
-                                )
-                            ) : (
-                                <form className='modal-form' onSubmit={handleUpdatePassword}>
-                                    <div className='form-group'>
-                                        <label>Current Password</label>
-                                        <div className="password-input-wrapper">
-                                            <input
-                                                type={showAdminCurrentPassword ? "text" : "password"}
-                                                name="currentPassword"
-                                                placeholder="Enter current password"
-                                                value={passwordData.currentPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                className="password-toggle-btn"
-                                                onClick={() => setShowAdminCurrentPassword(!showAdminCurrentPassword)}
-                                            >
-                                                {showAdminCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className='form-group'>
-                                        <label>New Password</label>
-                                        <div className="password-input-wrapper">
-                                            <input
-                                                type={showAdminNewPassword ? "text" : "password"}
-                                                name="newPassword"
-                                                placeholder="Enter new password"
-                                                value={passwordData.newPassword}
-                                                onChange={handlePasswordChange}
-                                                className={validationError && passwordData.newPassword !== passwordData.confirmPassword ? 'error-input' : ''}
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                className="password-toggle-btn"
-                                                onClick={() => setShowAdminNewPassword(!showAdminNewPassword)}
-                                            >
-                                                {showAdminNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className='form-group'>
-                                        <label>Confirm New Password</label>
-                                        <div className="password-input-wrapper">
-                                            <input
-                                                type={showAdminConfirmPassword ? "text" : "password"}
-                                                name="confirmPassword"
-                                                placeholder="Confirm new password"
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                className={validationError && passwordData.newPassword !== passwordData.confirmPassword ? 'error-input' : ''}
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                className="password-toggle-btn"
-                                                onClick={() => setShowAdminConfirmPassword(!showAdminConfirmPassword)}
-                                            >
-                                                {showAdminConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className='form-actions'>
-                                        <button type='button' className='btn-cancel' onClick={handleCloseProfileModal}>
-                                            Cancel
-                                        </button>
-                                        <button type='submit' className='btn-post'>
-                                            Update Password
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-
-                {isNotificationSidebarOpen && (
-                    <div className="sd-notification-sidebar-overlay" onClick={() => setIsNotificationSidebarOpen(false)}>
-                        <div className="sd-notification-sidebar" onClick={(e) => e.stopPropagation()}>
-                            <div className="sidebar-header">
-                                <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <Bell size={20} className="sidebar-bell-icon" style={{ color: '#2563eb' }} />
-                                    <h4 style={{ margin: 0 }}>Notifications</h4>
-                                </div>
-                                <button className="btn-close-sidebar" onClick={() => setIsNotificationSidebarOpen(false)}>
-                                    <X size={18} />
-                                </button>
-                            </div>
-                            <div className="sidebar-body">
-                                {notifications.length === 0 ? (
-                                    <p className="no-notifications">No new notifications</p>
-                                ) : (
-                                    notifications.map((notif) => (
-                                        <div key={notif.id} className="notification-item">
-                                            <p>{notif.text}</p>
-                                            <span className="notif-date">{notif.date}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-            </div >
-        </div >
+                <NotificationSidebar
+                    isNotificationSidebarOpen={isNotificationSidebarOpen}
+                    setIsNotificationSidebarOpen={setIsNotificationSidebarOpen}
+                    unreadCount={unreadCount}
+                    handleMarkAllRead={handleMarkAllRead}
+                    notifications={notifications}
+                />
+            </div>
+        </div>
     );
 }
-
-
 export default AdminDashboard;
 
-
-
-//admin profile push

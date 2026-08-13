@@ -1,9 +1,13 @@
+
+
+import { easeOut, motion } from 'framer-motion';
+
 import './LandingPage.css'
+
 import { useState } from 'react';
 
 import {
     GraduationCap,
-    Moon,
     ArrowRight,
     ChevronRight,
     Users,
@@ -16,14 +20,8 @@ import {
     Bell,
     BarChart3,
     ShieldCheck,
-    Settings,
-    Clock,
-    Layout,
     UserPlus,
-    LogIn,
-    Mail,
-    Phone,
-    MapPin
+    LogIn
 } from 'lucide-react'
 
 
@@ -59,20 +57,29 @@ function LandingPage({ onNavigate }) {
             </header>
             <main className='hero-section'>
                 <div className='hero-container'>
-                    <div className='hero-left'>
+                    <motion.div
+                        className='hero-left'
+                        initial={{ opacity: 0, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                    >
                         <div className='hero-badge'>Campus Recruitment Platform</div>
                         <h1>College <span className='text-highlight'>Placement</span> Portal</h1>
                         <h2>Connecting Students with Placement Opportunities</h2>
                         <p>Manage placements, upload resumes, and track your placement journey from one centralized platform  -  built for students and the placement cell.</p>
 
                         <div className='hero-buttons'>
-                            <button className='btn-register' onClick={() => onNavigate('register')}>Register Now <ArrowRight size={18} />
+                            <button type="button" className='btn-register' onClick={() => onNavigate('register')}>Register Now <ArrowRight size={18} />
                             </button>
-                            <button className='btn-login' onClick={() => onNavigate('login')}>Login <ChevronRight size={18} />
+                            <button type="button" className='btn-login' onClick={() => onNavigate('login')}>Login <ChevronRight size={18} />
                             </button>
                         </div>
-                    </div>
-                    <div className='hero-right'>
+                    </motion.div>
+
+                    <motion.div className='hero-right'
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8, delay: 0.3, ease: easeOut }}>
                         <div className='dashboard-card'>
                             <div className='card-header'>
                                 <div className='header-left'>
@@ -136,9 +143,9 @@ function LandingPage({ onNavigate }) {
                                     <div className='chart-tooltip-dot' style={{ left: activePoint.left, top: activePoint.top }}></div>
                                     <div className='chart-tooltip-line' style={{ left: activePoint.left }}></div>
                                     <div className="hover-zones">
-                                        {chartData.map((point, index) => (
+                                        {chartData.map((point) => (
                                             <div
-                                                key={index}
+                                                key={point.month}
                                                 className="hover-zone"
                                                 onMouseEnter={() => setActivePoint(point)}
                                             />
@@ -175,7 +182,7 @@ function LandingPage({ onNavigate }) {
 
 
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
                 <div className="wave-container">
                     <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -344,11 +351,11 @@ function LandingPage({ onNavigate }) {
                     <h2>Ready to Start Your Placement Journey?</h2>
                     <p>Join 500+ students already using <strong>College Placement Portal</strong> to land their dream jobs.</p>
                     <div className="cta-buttons">
-                        <button className="btn-create-account" onClick={() => onNavigate('register')}>
+                        <button type="button" className="btn-create-account" onClick={() => onNavigate('register')}>
                             <UserPlus size={16} />
                             Create Account
                         </button>
-                        <button className="btn-sign-in" onClick={() => onNavigate('login')}>
+                        <button type="button" className="btn-sign-in" onClick={() => onNavigate('login')}>
                             <LogIn size={16} />
                             Sign In
                         </button>

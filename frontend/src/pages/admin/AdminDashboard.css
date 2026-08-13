@@ -34,7 +34,7 @@
 
 /* Conditionally stretch layouts on Student Analytics tab */
 .dashboard-content-layout.wide-layout {
-    max-width: 100% !important;
+    max-width: 100%;
     padding-left: 40px;
     padding-right: 40px;
 }
@@ -43,22 +43,7 @@
     flex: 1;
 }
 
-.greeting-section {
-    margin-bottom: 24px;
-}
 
-.greeting-section h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0 0 6px 0;
-    color: #0f172a;
-}
-
-.greeting-section p {
-    color: var(--text-light);
-    margin: 0;
-    font-size: 0.95rem;
-}
 
 /*Navbar Styles */
 .admin-header {
@@ -66,11 +51,9 @@
     top: 0;
     z-index: 100;
     width: 100%;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
     transition: all 0.3s ease;
 }
 
@@ -85,7 +68,7 @@
 }
 
 .header-container.wide-layout {
-    max-width: 100% !important;
+    max-width: 100%;
     padding-left: 40px;
     padding-right: 40px;
 }
@@ -124,15 +107,7 @@
     border-radius: 20px;
 }
 
-.badge-expired {
-    background-color: #f1f5f9;
-    color: #e81919;
-    border: 1px solid #e2e8f0;
-    font-size: 0.7125rem;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 6px;
-}
+
 
 .notification-wrapper {
     position: relative;
@@ -158,7 +133,7 @@
     position: absolute;
     top: -2px;
     right: -2px;
-    background-color: #ef4444;
+    background-color: #b91c1c;
     color: white;
     font-size: 0.625rem;
     font-weight: bold;
@@ -171,17 +146,7 @@
     border: 2px solid white;
 }
 
-.user-avatar {
-    width: 36px;
-    height: 36px;
-    background-color: #cfd5e1;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    cursor: pointer;
-}
+
 
 
 /*Stat Cards Styles*/
@@ -245,12 +210,12 @@
 
 .green-icon {
     background-color: #ecfdf5;
-    color: #10b981;
+    color: #047857;
 }
 
 .purple-icon {
     background-color: #f5f3ff;
-    color: #8b5cf6;
+    color: #6d28d9;
 }
 
 .stat-details {
@@ -371,7 +336,7 @@
     height: 64px;
     border-radius: 50%;
     background-color: #eff6ff;
-    color: #3b82f6;
+    color: #1d4ed8;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -550,7 +515,7 @@
 
 .badge-active {
     background-color: #f0fdf4;
-    color: #16a34a;
+    color: #15803d;
     border: 1px solid #dcfce7;
     font-size: 0.7125rem;
     font-weight: 600;
@@ -565,7 +530,7 @@
 
 .posting-deadline {
     font-size: 0.7125rem;
-    color: #dc2626;
+    color: #b91c1c;
     font-weight: 600;
     background-color: #fef2f2;
     border: 1px solid #fee2e2;
@@ -749,13 +714,13 @@
 
 .google-logo {
     background-color: #fff1f2;
-    color: #ea4335;
+    color: #b91c1c;
     border: 1px solid #fecdd3;
 }
 
 .microsoft-logo {
     background-color: #eff6ff;
-    color: #0078d4;
+    color: #02589f;
     border: 1px solid #dbeafe;
 }
 
@@ -1181,7 +1146,7 @@
 }
 
 .admin-toast-icon {
-    background-color: #10b981;
+    background-color: #047857;
     color: #ffffff;
     width: 20px;
     height: 20px;
@@ -1266,7 +1231,7 @@
 
 .badge-draft {
     background-color: #fffbeb;
-    color: #d97706;
+    color: #b45309;
     border: 1px solid #fef3c7;
     font-size: 0.7125rem;
     font-weight: 600;
@@ -1324,20 +1289,20 @@
 }
 
 .admin-toast-notification.error .admin-toast-icon {
-    background-color: #ef4444;
+    background-color: #b91c1c;
     color: #ffffff;
 }
 
 /* Input boxes highlight on error */
 .form-group input.error-input,
 .form-group textarea.error-input {
-    border-color: #ef4444 !important;
-    background-color: #fff5f5 !important;
+    border-color: #ef4444;
+    background-color: #fff5f5 ;
 }
 
 .form-group input.error-input:focus,
 .form-group textarea.error-input:focus {
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
 }
 
 /*PAGINATION CONTROLS STYLES*/
@@ -1379,13 +1344,44 @@
     color: var(--text-light);
 }
 
+.btn-page-number {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color, #e2e8f0);
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.btn-page-number:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    border-color: #cbd5e1;
+}
+
+.btn-page-number.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
 /*GREETING SECTION BANNER STYLEs */
 .greeting-section {
-    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 50%, #60a5fa 100%);
+    background-color: #1e40af;
+    background-image: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 50%, #60a5fa 100%);
+    color: white;
     border-radius: var(--border-radius-lg);
     padding: 32px 40px;
     margin-bottom: 32px;
-    color: white;
     position: relative;
     overflow: hidden;
     box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.2), 0 8px 16px -6px rgba(30, 58, 138, 0.15);
@@ -1412,18 +1408,16 @@
     font-weight: 800;
     margin: 0 0 6px 0;
     letter-spacing: -0.03em;
-    color: white !important;
 }
 
 .greeting-content p {
-    color: rgba(255, 255, 255, 0.9);
     font-size: 0.95rem;
     margin: 0;
     font-weight: 500;
 }
 
 .greeting-date-badge {
-    background: rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1431,7 +1425,6 @@
     border-radius: 999px;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: white;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1487,12 +1480,13 @@
 .user-avatar {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background-color: #1d4ed8;
+    background-image: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
+    color: #ffffff;
     font-size: 0.8125rem;
     font-weight: 700;
     cursor: pointer;
@@ -1551,17 +1545,17 @@
 }
 
 .profile-dropdown-menu .profile-avatar-large {
-    width: 44px !important;
-    height: 44px !important;
-    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 100%) !important;
-    color: white !important;
-    font-size: 0.875rem !important;
-    font-weight: 700 !important;
-    border-radius: 50% !important;
-    border: none !important;
-    box-shadow: none !important;
-    animation: none !important;
-    position: static !important;
+    width: 44px ;
+    height: 44px ;
+    background: linear-gradient(135deg, var(--primary-navy) 0%, var(--primary-blue) 100%) ;
+    color: white ;
+    font-size: 0.875rem;
+    font-weight: 700 ;
+    border-radius: 50% ;
+    border: none ;
+    box-shadow: none;
+    animation: none ;
+    position: static ;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1686,10 +1680,10 @@
 
 /* Disabled input style for Role column */
 .disabled-input {
-    background-color: #f1f5f9 !important;
-    color: var(--text-light) !important;
+    background-color: #f1f5f9;
+    color: var(--text-light);
     cursor: not-allowed;
-    border-color: var(--border-color) !important;
+    border-color: var(--border-color) ;
 }
 
 /* Secondary filter inputs styled*/
@@ -1828,6 +1822,17 @@
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
 }
 
+.calendar-day-btn.disabled-past-day,
+.calendar-day-btn:disabled {
+    opacity: 0.35;
+    filter: blur(0.4px);
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed !important;
+    pointer-events: none;
+    text-decoration: line-through;
+}
+
 .empty-day {
     height: 28px;
     width: 28px;
@@ -1870,10 +1875,19 @@
     background-color: #eff6ff;
 }
 
+.error-input,
+select.error-input,
+textarea.error-input,
+.date-picker-trigger.error-input {
+    border: 1.5px solid #ef4444 !important;
+    background-color: #fef2f2 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
 /* Expired Status Badge */
 .badge-expired {
     background-color: #fef2f2;
-    color: #ef4444;
+    color: #b91c1c;
     border: 1px solid #fee2e2;
     font-size: 0.7125rem;
     font-weight: 600;
@@ -1891,7 +1905,7 @@
 
 .password-input-wrapper input {
     width: 100%;
-    padding-right: 44px !important;
+    padding-right: 44px ;
     box-sizing: border-box;
 }
 
@@ -1917,7 +1931,7 @@
 
 /* Give dropdown arrows and text some breathable space */
 .form-group select {
-    padding-right: 40px !important;
+    padding-right: 40px ;
     cursor: pointer;
 }
 
@@ -1932,6 +1946,7 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 2000;
+    font-family: inherit;
 }
 
 .sd-notification-sidebar {
@@ -1950,6 +1965,7 @@
     border-top-left-radius: 20px;
     border-bottom-left-radius: 20px;
     overflow: hidden;
+    font-family: var(--font-family, 'Inter', system-ui, -apple-system, sans-serif);
 }
 
 @keyframes sidebarSlideIn {
@@ -1993,7 +2009,7 @@
 }
 
 .sd-notification-sidebar .btn-close-sidebar:hover {
-    color: #ef4444;
+    color: #b91c1c;
     background-color: #fef2f2;
 }
 

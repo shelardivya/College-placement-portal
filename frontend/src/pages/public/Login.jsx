@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { motion, easeOut } from 'framer-motion';
+
+import { useState } from 'react';
 import './Login.css';
-import logoGrad from "../../assets/logo_grad.png";
-import { loginAdmin, loginStudent, forgotPassword, resetPassword } from '../../auth/authService';
+import { loginAdmin, loginStudent, forgotPassword, resetPassword, saveAuthToken } from '../../auth/authService';
 import {
     GraduationCap,
     ArrowLeft,
@@ -14,11 +15,62 @@ import {
     Award,
     Building2,
     TrendingUp,
-    FileText,
-    Briefcase,
     CheckCircle2,
     XCircle
 } from 'lucide-react';
+
+/** Cleans and sanitizes user input strings before storing or displaying. */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+/** Parses and sanitizes claims from a JWT token payload. */
+function parseTokenPayload(tokenStr) {
+    if (!tokenStr) return {};
+    try {
+        const parts = String(tokenStr).split('.');
+        if (parts.length < 2) return {};
+        const rawPayload = JSON.parse(atob(parts[1]));
+        if (rawPayload && typeof rawPayload === 'object') {
+            return {
+                fullName: sanitizeStorageString(rawPayload.fullName || rawPayload.name || rawPayload.studentName || rawPayload.adminName),
+                email: sanitizeStorageString(rawPayload.email).toLowerCase(),
+                role: sanitizeStorageString(rawPayload.role)
+            };
+        }
+    } catch {
+        return {};
+    }
+    return {};
+}
+
+/** Safely retrieves and decodes a string from storage. */
+function getStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    while (str.includes('%')) {
+        try {
+            const decoded = decodeURIComponent(str);
+            if (decoded === str) break;
+            str = decoded;
+        } catch {
+            break;
+        }
+    }
+    return str;
+}
 
 function Login({ onNavigate, initialView }) {
     //View controller state: login | forgot | reset
@@ -40,13 +92,27 @@ function Login({ onNavigate, initialView }) {
     //Form input state tracking
     const [formData, setFormData] = useState(() => {
         const params = new URLSearchParams(window.location.search);
-        const initialEmail = params.get('email') || '';
+        const rawEmail = params.get('email') || '';
+        let initialEmail = getStorageString(rawEmail).replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+
+        if (!initialEmail) {
+            const storedResetEmail = localStorage.getItem('allowed_reset_email');
+            if (storedResetEmail) {
+                initialEmail = getStorageString(storedResetEmail).trim();
+            }
+        }
         let initialPass = '';
-        if (initialEmail) {
+        if (initialEmail && initialView !== 'reset') {
             const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-            const matched = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === initialEmail.trim().toLowerCase());
-            if (matched && matched.password) {
-                initialPass = matched.password;
+            const matched = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === initialEmail.toLowerCase());
+
+            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+            const matchedAdmin = adminProfiles.find(p => getStorageString(p.email).toLowerCase() === initialEmail.toLowerCase());
+
+            if (matched?.password) {
+                initialPass = getStorageString(matched.password);
+            } else if (matchedAdmin?.password) {
+                initialPass = getStorageString(matchedAdmin.password);
             }
         }
         return {
@@ -61,13 +127,19 @@ function Login({ onNavigate, initialView }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (name === 'email') {
-            const trimmed = value.trim().toLowerCase();
+            const trimmed = getStorageString(value).trim().toLowerCase();
             let autoPass = '';
             if (trimmed !== '') {
                 const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-                const matchedProfile = registeredProfiles.find(p => p.email && p.email.trim().toLowerCase() === trimmed);
-                if (matchedProfile && matchedProfile.password) {
-                    autoPass = matchedProfile.password;
+                const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === trimmed);
+
+                const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+                const matchedAdmin = adminProfiles.find(p => getStorageString(p.email).toLowerCase() === trimmed);
+
+                if (matchedProfile?.password) {
+                    autoPass = getStorageString(matchedProfile.password);
+                } else if (matchedAdmin?.password) {
+                    autoPass = getStorageString(matchedAdmin.password);
                 }
             }
             setFormData(prev => ({
@@ -85,206 +157,276 @@ function Login({ onNavigate, initialView }) {
     };
 
 
+
+    const saveAdminProfile = (email, password, payload = {}) => {
+        const sanitizedName = sanitizeStorageString(payload.fullName || payload.name || payload.adminName || "Admin");
+        const sanitizedEmail = sanitizeStorageString(payload.email || email).toLowerCase();
+        const rawPassword = getStorageString(password);
+        localStorage.setItem("admin_user", JSON.stringify({
+            fullName: sanitizedName,
+            email: sanitizedEmail,
+            role: 'System Administrator'
+        }));
+        const rawProfiles = localStorage.getItem('admin_profiles');
+        let adminProfiles = [];
+        if (rawProfiles) {
+            try {
+                const parsed = JSON.parse(rawProfiles);
+                if (Array.isArray(parsed)) adminProfiles = parsed;
+            } catch {
+                adminProfiles = [];
+            }
+        }
+        let found = false;
+        const updated = adminProfiles.map(p => {
+            const pEmail = getStorageString(p.email).toLowerCase();
+            if (pEmail === getStorageString(sanitizedEmail).toLowerCase()) {
+                found = true;
+                return { ...p, email: sanitizedEmail, password: rawPassword };
+            }
+            return { ...p, email: getStorageString(pEmail), password: getStorageString(p.password) };
+        });
+        if (!found && sanitizedEmail) updated.push({ email: sanitizedEmail, password: rawPassword });
+        localStorage.setItem('admin_profiles', JSON.stringify(updated));
+    };
+
+    const saveStudentProfile = (email, payload = {}) => {
+        const cleanEmail = sanitizeStorageString(email).toLowerCase();
+        const nameFromEmail = cleanEmail.split('@')[0] || 'student';
+        const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
+        
+        const rawReg = localStorage.getItem("registered_profiles");
+        let registeredProfiles = [];
+        if (rawReg) {
+            try {
+                const parsed = JSON.parse(rawReg);
+                if (Array.isArray(parsed)) registeredProfiles = parsed;
+            } catch {
+                registeredProfiles = [];
+            }
+        }
+        const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
+        
+        if (matchedProfile) {
+            const sanitizedUser = {
+                fullName: sanitizeStorageString(matchedProfile.fullName),
+                email: sanitizeStorageString(matchedProfile.email).toLowerCase(),
+                phone: sanitizeStorageString(matchedProfile.phone),
+                branch: sanitizeStorageString(matchedProfile.branch),
+                passingYear: sanitizeStorageString(matchedProfile.passingYear),
+                cgpa: sanitizeStorageString(matchedProfile.cgpa),
+                skills: sanitizeStorageString(matchedProfile.skills),
+                linkedinUrl: sanitizeStorageString(matchedProfile.linkedinUrl),
+                githubUrl: sanitizeStorageString(matchedProfile.githubUrl)
+            };
+            localStorage.setItem("user", JSON.stringify(sanitizedUser));
+        } else {
+            localStorage.setItem("user", JSON.stringify({
+                fullName: sanitizeStorageString(payload.fullName || payload.name || payload.studentName || fallbackName),
+                email: cleanEmail
+            }));
+        }
+    };
+
+    const showToastMessage = (msg, type, timeout, callback) => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+            if (callback) callback();
+        }, timeout);
+    };
+
+    const handleLoginSubmit = async () => {
+        if (formData.password !== formData.confirmPassword) {
+            showToastMessage("Password and Confirm Password do not match!", 'error', 3000);
+            return;
+        }
+        try {
+            const emailLower = formData.email.trim().toLowerCase();
+            const isAdmin = emailLower === 'saurabh@gmail.com' || emailLower.startsWith('admin') || emailLower.includes('@admin.') || emailLower.includes('.admin');
+            
+            const apiCall = isAdmin ? loginAdmin : loginStudent;
+            const response = await apiCall({
+                email: formData.email.trim(),
+                password: getStorageString(formData.password),
+                confirmPassword: getStorageString(formData.confirmPassword),
+                ...(isAdmin && { rememberMe: formData.rememberMe })
+            });
+
+            if (response.data?.token) {
+                saveAuthToken(response.data.token);
+                localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
+                
+                const payload = parseTokenPayload(response.data.token);
+
+                if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);
+                else saveStudentProfile(formData.email, payload);
+
+                showToastMessage("Login successful!", 'success', 1500, () => {
+                    onNavigate(isAdmin ? 'admin' : 'student');
+                });
+            } else {
+                throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
+            }
+        } catch (error) {
+            console.error("Login Error:", error);
+            showToastMessage(error.response?.data?.message || "Invalid email or password", 'error', 3000);
+        }
+    };
+
+    const handleForgotSubmit = async () => {
+        try {
+            await forgotPassword(formData.email);
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email).toLowerCase());
+            showToastMessage("Reset link sent successfully! Check your email.", 'success', 2500, () => setLoginView('login'));
+        } catch (error) {
+            console.error("Forgot Password Error:", error);
+            showToastMessage(error.response?.data?.message || "Failed to send reset link", 'error', 3000);
+        }
+    };
+
+    const handleResetSubmit = async () => {
+        if (formData.password !== formData.confirmPassword) {
+            showToastMessage("Passwords do not match!", 'error', 3000);
+            return;
+        }
+
+        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=]).{8,}$/;
+        if (!passwordPattern.test(formData.password)) {
+            showToastMessage("Password must be at least 8 characters and contain letters, numbers, and special characters (@$!%*?&).", 'error', 4500);
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const tokenParam = params.get('token') || '';
+        const urlEmail = params.get('email') || '';
+        const allowedEmail = localStorage.getItem('allowed_reset_email') || '';
+        let targetEmail = getStorageString(urlEmail || formData.email || allowedEmail).trim();
+
+        if (!targetEmail) {
+            const rawReg = localStorage.getItem('registered_profiles');
+            if (rawReg) {
+                try {
+                    const parsed = JSON.parse(rawReg);
+                    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].email) {
+                        targetEmail = getStorageString(parsed[0].email).trim();
+                    }
+                } catch {
+                    // Ignore
+                }
+            }
+        }
+
+        if (!targetEmail) {
+            showToastMessage("Please enter your registered email address.", 'error', 3000);
+            return;
+        }
+
+        try {
+            const newPassword = getStorageString(formData.password);
+            await resetPassword({
+                email: targetEmail,
+                token: tokenParam,
+                resetToken: tokenParam,
+                newPassword: newPassword,
+                confirmPassword: newPassword
+            });
+
+            const resetEmail = targetEmail.toLowerCase();
+            const rawProfiles = localStorage.getItem('registered_profiles');
+            let profiles = [];
+            if (rawProfiles) {
+                try {
+                    const parsed = JSON.parse(rawProfiles);
+                    if (Array.isArray(parsed)) profiles = parsed;
+                } catch {
+                    profiles = [];
+                }
+            }
+            let regFound = false;
+            const updatedReg = profiles.map(p => {
+                const pEmail = getStorageString(p.email).toLowerCase();
+                if (pEmail === resetEmail) {
+                    regFound = true;
+                    return { ...p, email: sanitizeStorageString(pEmail), password: newPassword };
+                }
+                return { ...p, email: pEmail, password: getStorageString(p.password) };
+            });
+            if (!regFound) {
+                updatedReg.push({
+                    email: resetEmail,
+                    password: newPassword
+                });
+            }
+            localStorage.setItem('registered_profiles', JSON.stringify(updatedReg));
+
+            const rawAdmins = localStorage.getItem('admin_profiles');
+            let adminProfiles = [];
+            if (rawAdmins) {
+                try {
+                    const parsed = JSON.parse(rawAdmins);
+                    if (Array.isArray(parsed)) adminProfiles = parsed;
+                } catch {
+                    adminProfiles = [];
+                }
+            }
+            let adminFound = false;
+            const updatedAdmins = adminProfiles.map(p => {
+                const pEmail = getStorageString(p.email).toLowerCase();
+                if (pEmail === resetEmail) {
+                    adminFound = true;
+                    return { ...p, email: sanitizeStorageString(pEmail), password: newPassword };
+                }
+                return { ...p, email: pEmail, password: getStorageString(p.password) };
+            });
+            if (!adminFound && (resetEmail === 'saurabh@gmail.com' || resetEmail.startsWith('admin') || resetEmail.includes('@admin.') || resetEmail.includes('.admin'))) {
+                updatedAdmins.push({ email: resetEmail, password: newPassword });
+            }
+            localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
+
+            const rawUser = localStorage.getItem('user');
+            if (rawUser) {
+                try {
+                    const userObj = JSON.parse(rawUser);
+                    if (userObj && getStorageString(userObj.email).toLowerCase() === resetEmail) {
+                        userObj.password = newPassword;
+                        localStorage.setItem('user', JSON.stringify(userObj));
+                    }
+                } catch {
+                    // Ignore
+                }
+            }
+
+            showToastMessage('Password reset successfully!', 'success', 2000, () => {
+                setLoginView('login');
+                if (window.history && window.history.pushState) {
+                    window.history.pushState(null, '', '/login');
+                }
+                setFormData(prev => ({
+                    ...prev,
+                    email: resetEmail,
+                    password: newPassword,
+                    confirmPassword: newPassword
+                }));
+                localStorage.removeItem('allowed_reset_email');
+            });
+        } catch (error) {
+            console.error("Reset Password Error:", error);
+            const errMsg = typeof error.response?.data === 'string'
+                ? error.response.data
+                : (error.response?.data?.message || "Failed to reset password. Please check your details and try again.");
+            showToastMessage(errMsg, 'error', 4000);
+        }
+    };
+
     //Handles Form submissions
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        if (loginView === 'login') {
-            if (formData.password !== formData.confirmPassword) {
-                setToastMessage("Password and Confirm Password do not match!");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-                return;
-            }
-
-            try {
-
-                // Determine role from email in a robust way
-                const emailLower = formData.email.trim().toLowerCase();
-                const isAdmin = emailLower === 'saurabh@gmail.com' ||
-                    emailLower.startsWith('admin') ||
-                    emailLower.includes('@admin.') ||
-                    emailLower.includes('.admin');
-
-                // Call the correct API endpoint with the fields each expects
-                let response;
-                if (isAdmin) {
-                    // Admin login API requires: email, password, confirmPassword, rememberMe
-                    response = await loginAdmin({
-                        email: formData.email.trim(),
-                        password: formData.password,
-                        confirmPassword: formData.confirmPassword,
-                        rememberMe: formData.rememberMe
-                    });
-                } else {
-                    // Student login API requires: email, password, confirmPassword
-                    response = await loginStudent({
-                        email: formData.email.trim(),
-                        password: formData.password,
-                        confirmPassword: formData.confirmPassword
-                    });
-                }
-
-
-                // Save token to localStorage
-                if (response.data && response.data.token) {
-                    const token = response.data.token;
-                    localStorage.setItem("token", token);
-                    localStorage.setItem("role", isAdmin ? "admin" : "student");
-
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
-                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-
-                        if (isAdmin) {
-                            // Admin: store ONLY in "admin_user" — never read from registered_profiles
-                            localStorage.setItem("admin_user", JSON.stringify({
-                                fullName: payload.fullName || payload.name || payload.adminName || "Admin",
-                                email: payload.email || formData.email,
-                                role: 'System Administrator'
-                            }));
-                        } else {
-                            // Student: read from registered_profiles as before
-                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                            if (matchedProfile) {
-                                localStorage.setItem("user", JSON.stringify(matchedProfile));
-                            } else {
-                                localStorage.setItem("user", JSON.stringify({
-                                    fullName: payload.fullName || payload.name || payload.studentName || fallbackName,
-                                    email: payload.email || formData.email
-                                }));
-                            }
-                        }
-                    } catch {
-                        const nameFromEmail = formData.email.split('@')[0];
-                        const cleanPrefix = nameFromEmail.replace(/[0-9]/g, '');
-                        const fallbackName = cleanPrefix.charAt(0).toUpperCase() + cleanPrefix.slice(1);
-
-                        if (isAdmin) {
-                            localStorage.setItem("admin_user", JSON.stringify({
-                                fullName: "Admin",
-                                email: formData.email,
-                                role: 'System Administrator'
-                            }));
-                        } else {
-                            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-                            const matchedProfile = registeredProfiles.find(p => p.email.trim().toLowerCase() === formData.email.trim().toLowerCase());
-
-                            if (matchedProfile) {
-                                localStorage.setItem("user", JSON.stringify(matchedProfile));
-                            } else {
-                                localStorage.setItem("user", JSON.stringify({
-                                    fullName: fallbackName,
-                                    email: formData.email
-                                }));
-                            }
-                        }
-                    }
-
-                    setToastMessage("Login successful!");
-                    setToastType('success');
-                    setShowToast(true);
-
-                    setTimeout(() => {
-                        setShowToast(false);
-                        onNavigate(isAdmin ? 'admin' : 'student');
-                    }, 1500);
-
-                } else {
-                    // Backend returned 200 OK but no token (e.g. user not registered)
-                    throw new Error(response.data?.message || "Invalid credentials or unregistered user.");
-                }
-            } catch (error) {
-                console.error("Login Error:", error);
-                const errorMsg = error.response?.data?.message || "Invalid email or password";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
-
-
-        else if (loginView === 'forgot') {
-            try {
-                // Call the backend forgot-password API
-                const response = await forgotPassword(formData.email);
-                console.log("Forgot Password Response:", response.data);
-
-                // Store the requested email to prevent URL manipulation on reset
-                localStorage.setItem('allowed_reset_email', formData.email.trim().toLowerCase());
-
-                setToastMessage("Reset link sent successfully! Check your email.");
-                setToastType('success');
-                setShowToast(true);
-                setTimeout(() => {
-                    setShowToast(false);
-                    // Return to login instead of auto-showing the reset view
-                    setLoginView('login');
-                }, 2500);
-            } catch (error) {
-                console.error("Forgot Password Error:", error);
-                const errorMsg = error.response?.data?.message || "Failed to send reset link";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
-
-        else if (loginView === 'reset') {
-            if (formData.password
-                !== formData.confirmPassword) {
-                setToastMessage("Passwords do not match!");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-
-                return;
-            }
-
-            // Check if this device/browser was the one that actually requested the reset
-            const allowedEmail = localStorage.getItem('allowed_reset_email');
-            if (!allowedEmail || allowedEmail !== formData.email.trim().toLowerCase()) {
-                setToastMessage("Unauthorized request. Please request a new reset link from this device.");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 4000);
-                return;
-            }
-
-            try {
-                // Call the backend reset-password API
-                const response = await resetPassword({
-                    email: formData.email,
-                    newPassword: formData.password,
-                    confirmPassword: formData.confirmPassword
-                });
-                console.log("Reset Password Response:", response.data);
-
-                setToastMessage('Password reset successfully!');
-                setToastType('success');
-                setShowToast(true);
-                setTimeout(() => {
-                    setShowToast(false);
-                    setLoginView('login');
-                    setFormData(prev => ({ ...prev, password: '', confirmPassword: "" }));
-                    localStorage.removeItem('allowed_reset_email');
-                }, 2000);
-            } catch (error) {
-                console.error("Reset Password Error:", error);
-                const errorMsg = error.response?.data?.message || "Failed to reset password";
-                setToastMessage(errorMsg);
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
-            }
-        }
+        if (loginView === 'login') return handleLoginSubmit();
+        if (loginView === 'forgot') return handleForgotSubmit();
+        if (loginView === 'reset') return handleResetSubmit();
     };
 
     return (
@@ -294,7 +436,10 @@ function Login({ onNavigate, initialView }) {
             {/* MAIN PORTAL CONTAINER CARD */}
             <div className="login-container">
                 {/* LEFT COLUMN: Branding & Recent Placements */}
-                <div className="login-left">
+                <motion.div className="login-left"
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, ease: easeOut }}>
                     <div className="login-logo-section">
                         <GraduationCap className="logo-icon" size={28} style={{ color: '#2563eb' }} />
                         <span className="college-name" style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
@@ -361,12 +506,15 @@ function Login({ onNavigate, initialView }) {
                         <p>"The portal made the entire placement process transparent and stress-free. I always knew exactly where I stood."</p>
                         <span className="author">— Sneha Kulkarni, ENTC - Placed at Infosys</span>
                     </div>
-                </div>
+                </motion.div>
 
                 {/* RIGHT COLUMN: Interactive Login/Forgot/Reset Forms */}
-                <div className="login-right">
+                <motion.div className="login-right"
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}>
                     {/* Back to Home Action Button */}
-                    <button className="btn-back-home" onClick={() => onNavigate('landing')}>
+                    <button type="button" className="btn-back-home" onClick={() => onNavigate('landing')}>
                         <ArrowLeft size={16} />
                         Back to Home
                     </button>
@@ -375,8 +523,8 @@ function Login({ onNavigate, initialView }) {
                         {/* Header titles swap depending on view */}
                         {loginView === 'login' && (
                             <div className="form-header">
-                                <h2>Welcome Back</h2>
-                                <p>Sign in to your PlacePort account</p>
+                                <h2>Welcome Back🚀</h2>
+                                <p>Sign in to your Campus_Hire account</p>
                             </div>
                         )}
                         {loginView === 'forgot' && (
@@ -396,10 +544,11 @@ function Login({ onNavigate, initialView }) {
                             {/* EMAIL INPUT (Login & Forgot views) */}
                             {loginView !== 'reset' && (
                                 <div className="input-group full-width">
-                                    <label>Email Address</label>
+                                    <label htmlFor="email">Email Address</label>
                                     <div className="input-wrapper">
                                         <Mail size={16} />
                                         <input
+                                            id="email"
                                             type="email"
                                             name="email"
                                             placeholder="priya@college.edu.in"
@@ -415,14 +564,19 @@ function Login({ onNavigate, initialView }) {
                             {loginView === 'login' && (
                                 <div className="input-group full-width">
                                     <div className="label-row">
-                                        <label>Password</label>
-                                        <span className="link-span-forgot" onClick={() => setLoginView('forgot')}>
+                                        <label htmlFor="password">Password</label>
+                                        <button
+                                            type="button"
+                                            className="link-span-forgot"
+                                            onClick={() => setLoginView('forgot')}
+                                        >
                                             Forgot password?
-                                        </span>
+                                        </button>
                                     </div>
                                     <div className="input-wrapper">
                                         <Lock size={16} />
                                         <input
+                                            id="password"
                                             type={showPassword ? "text" : "password"}
                                             name="password"
                                             placeholder="Enter your password"
@@ -444,10 +598,11 @@ function Login({ onNavigate, initialView }) {
                             {/* CONFIRM PASSWORD INPUT (Login view) */}
                             {loginView === 'login' && (
                                 <div className="input-group full-width">
-                                    <label>Confirm Password</label>
+                                    <label htmlFor="confirmPassword">Confirm Password</label>
                                     <div className="input-wrapper">
                                         <Lock size={16} />
                                         <input
+                                            id="confirmPassword"
                                             type={showConfirmPassword ? "text" : "password"}
                                             name="confirmPassword"
                                             placeholder="Confirm your password"
@@ -469,17 +624,19 @@ function Login({ onNavigate, initialView }) {
                             {/* RESET PASSWORD INPUTS (Reset view) */}
                             {loginView === 'reset' && (
                                 <>
+
                                     <div className="input-group full-width">
-                                        <label>New Password</label>
+                                        <label htmlFor="resetPassword">New Password</label>
                                         <div className="input-wrapper">
                                             <Lock size={16} />
                                             <input
+                                                id="resetPassword"
                                                 type={showPassword ? "text" : "password"}
                                                 name="password"
                                                 placeholder="Enter new password"
                                                 value={formData.password}
                                                 onChange={handleChange}
-                                                autoComplete="new-password"
+                                                autoComplete="off"
                                                 required
                                             />
                                             <button
@@ -493,16 +650,17 @@ function Login({ onNavigate, initialView }) {
                                     </div>
 
                                     <div className="input-group full-width">
-                                        <label>Confirm Password</label>
+                                        <label htmlFor="resetConfirmPassword">Confirm Password</label>
                                         <div className="input-wrapper">
                                             <Lock size={16} />
                                             <input
+                                                id="resetConfirmPassword"
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 name="confirmPassword"
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
-                                                autoComplete="new-password"
+                                                autoComplete="off"
                                                 required
                                             />
                                             <button
@@ -566,9 +724,13 @@ function Login({ onNavigate, initialView }) {
                         {loginView === 'login' && (
                             <div className="form-bottom-link-login">
                                 New to Campus_Hire?{' '}
-                                <span className="link-span-register" onClick={() => onNavigate('register')}>
+                                <button
+                                    type="button"
+                                    className="link-span-register"
+                                    onClick={() => onNavigate('register')}
+                                >
                                     Create Student Account
-                                </span>
+                                </button>
                             </div>
                         )}
                     </div>
@@ -576,24 +738,26 @@ function Login({ onNavigate, initialView }) {
                     <div className="form-footer-copyright">
                         © 2026  · Campus_Hire
                     </div>
-                </div>
+                </motion.div>
             </div>
 
             {/* TOAST NOTIFICATION COMPONENT */}
-            {showToast && (
-                <div className={`toast-notification ${toastType}`}>
-                    <div className="toast-content">
-                        {toastType === 'success' ? (
-                            <CheckCircle2 className="toast-icon" size={18} />
-                        ) : (
-                            <XCircle className="toast-icon" size={18} />
-                        )}
-                        <span>{toastMessage}</span>
+            {
+                showToast && (
+                    <div className={`toast-notification ${toastType}`}>
+                        <div className="toast-content">
+                            {toastType === 'success' ? (
+                                <CheckCircle2 className="toast-icon" size={18} />
+                            ) : (
+                                <XCircle className="toast-icon" size={18} />
+                            )}
+                            <span>{toastMessage}</span>
+                        </div>
+                        <div className="toast-progress-bar"></div>
                     </div>
-                    <div className="toast-progress-bar"></div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 

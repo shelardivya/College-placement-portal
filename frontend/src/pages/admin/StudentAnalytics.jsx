@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent } from '../../auth/authService';
+import { motion } from 'framer-motion';
+
+import { useState, useEffect, useCallback } from 'react';
+
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent, deleteTopPlacedStudent, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -10,7 +13,12 @@ import {
     Plus,
     X,
     ChevronDown,
-    Check
+    Check,
+    Building2,
+    Trash2,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
 } from 'lucide-react';
 import './StudentAnalytics.css';
 import bannerIcons from '../../assets/banner_icons.png';
@@ -36,7 +44,90 @@ const COMPANY_LOGOS = {
             <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.34.13-9.13-1.9-14.36-6.07-2.73-2.22-6.49-6.67-11.28-13.37-5.61-7.8-10.28-16.73-13.98-26.8-3.7-10.07-5.56-19.82-5.56-29.24 0-14.6 3.63-26.6 10.89-35.97 7.26-9.37 16.57-14.06 27.93-14.06 4.96 0 10.59 1.45 16.89 4.36 6.3 2.9 10.84 4.36 13.62 4.36 2.03 0 6.38-1.39 13.06-4.16 6.68-2.78 12.21-4.04 16.58-3.78 15.34.88 26.9 6.64 34.66 17.27-12.28 7.5-18.29 17.72-18.02 30.65.3 10.15 4.14 18.57 11.53 25.26 7.39 6.69 16.14 10.35 26.27 10.99-2.3 6.64-5.34 13.06-9.13 19.26zm-20.28-94.88c0-9.92 3.5-18.51 10.5-25.76 7-7.25 15.31-11.02 24.93-11.3 0.28 9.92-3.3 18.56-10.74 25.92-7.44 7.36-15.72 11.08-24.69 11.14z" />
         </svg>
     ),
+    Zepto: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#7e22ce" />
+            <path d="M7 7h10l-6 10h6" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+    ),
+    Revdau: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#059669" />
+            <text x="12" y="16.5" fontSize="13" fontWeight="bold" fill="#ffffff" textAnchor="middle" fontFamily="system-ui, -apple-system, sans-serif">R</text>
+        </svg>
+    ),
+    Meesho: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#be185d" />
+            <path d="M6 17V7l6 6 6-6v10" stroke="#ffffff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+    ),
+    Infosys: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <rect width="24" height="24" rx="6" fill="#0284c7" />
+            <text x="12" y="16" fontSize="12" fontWeight="bold" fill="#ffffff" textAnchor="middle" fontFamily="sans-serif">i</text>
+        </svg>
+    ),
+    Google: (
+        <svg viewBox="0 0 24 24" width="16" height="16" style={{ marginRight: '8px', flexShrink: 0 }}>
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+        </svg>
+    )
 };
+
+function getCompanyBadgeColor(name) {
+    if (!name) return '#2563eb';
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0284c7', '#be185d', '#4f46e5'];
+    return colors[Math.abs(hash) % colors.length];
+}
+
+function CompanyLogo({ companyName }) {
+    const [imgError, setImgError] = useState(false);
+
+    if (!companyName) {
+        return <Building2 size={16} color="#2563eb" style={{ marginRight: '8px', flexShrink: 0 }} />;
+    }
+
+    const trimmed = String(companyName).trim();
+    const normalized = trimmed.toLowerCase();
+    const svgKey = Object.keys(COMPANY_LOGOS).find(k => k.toLowerCase() === normalized);
+
+    // 1. Predefined brand SVG logo
+    if (svgKey && COMPANY_LOGOS[svgKey]) {
+        return COMPANY_LOGOS[svgKey];
+    }
+
+    const initialLetter = trimmed.charAt(0).toUpperCase() || '?';
+    const badgeColor = getCompanyBadgeColor(trimmed);
+
+    // 2. Initial letter badge fallback if image fails to load
+    if (imgError) {
+        return (
+            <div style={{ width: 22, height: 22, borderRadius: 6, backgroundColor: badgeColor, color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: '700', marginRight: 8, flexShrink: 0, fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {initialLetter}
+            </div>
+        );
+    }
+
+    const domainName = normalized.replace(/[^a-z0-9]/g, '');
+    const logoUrl = `https://www.google.com/s2/favicons?domain=${domainName}.com&sz=64`;
+
+    return (
+        <img
+            src={logoUrl}
+            alt={trimmed}
+            onError={() => setImgError(true)}
+            style={{ width: 18, height: 18, marginRight: 8, borderRadius: 4, objectFit: 'contain', flexShrink: 0 }}
+        />
+    );
+}
 
 // calculates the SVG arc path for each segment of the donut chart
 function getDonutSegments(data, cx = 50, cy = 50, r = 38, innerR = 24) {
@@ -89,120 +180,6 @@ export default function StudentAnalytics() {
     const [cgpaData, setCgpaData] = useState([]);
     const [maxStudents, setMaxStudents] = useState(40);
     const [skillsData, setSkillsData] = useState([]);
-
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await getAdminStudentAnalyticsDashboard();
-                if (response.data) {
-                    setAnalyticsStats(response.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch admin student analytics:", error);
-            }
-        };
-
-        const fetchDepartmentData = async () => {
-            try {
-                const res = await getDepartmentAnalytics();
-                if (res.data) {
-                    setTotalStudents(res.data.totalStudents || 0);
-                    const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
-                    if (res.data.departments && Array.isArray(res.data.departments)) {
-                        const mapped = res.data.departments.map((d, index) => ({
-                            label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
-                            count: d.count,
-                            percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
-                            color: colors[index % colors.length]
-                        }));
-                        setDepartmentData(mapped);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to fetch department analytics", e);
-            }
-        };
-
-        const fetchCgpaData = async () => {
-            try {
-                const res = await getPlacementCgpaAnalytics();
-                if (res.data && Array.isArray(res.data)) {
-                    const mapped = res.data.map(c => ({
-                        range: c.range,
-                        students: c.count
-                    }));
-                    setCgpaData(mapped);
-                    const maxCount = Math.max(...mapped.map(d => d.students), 0);
-                    setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
-                }
-            } catch (e) {
-                console.error("Failed to fetch CGPA analytics", e);
-            }
-        };
-
-        const fetchSkillsData = async () => {
-            try {
-                const res = await getTopSkillsAnalytics();
-                if (res.data && Array.isArray(res.data)) {
-                    const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
-                    
-                    // Assuming 'count' is the percentage or we can just use count as a rough percentage for the UI bar width
-                    const mapped = res.data.map((s, index) => ({
-                        skill: s.skill,
-                        percentage: s.count,
-                        color: colors[index % colors.length]
-                    }));
-                    setSkillsData(mapped);
-                }
-            } catch (e) {
-                console.error("Failed to fetch skills analytics", e);
-            }
-        };
-
-        fetchStats();
-        fetchDepartmentData();
-        fetchCgpaData();
-        fetchSkillsData();
-
-        const fetchTopStudents = async () => {
-            try {
-                const response = await getAllTopPlacedStudents();
-                if (response.data && Array.isArray(response.data)) {
-                    const mapped = response.data.map((s, index) => {
-                        const nameParts = (s.studentName || '').trim().split(' ');
-                        let initials = 'ST';
-                        if (nameParts.length >= 2) {
-                            initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                        } else if (nameParts[0]) {
-                            initials = nameParts[0].substring(0, 2).toUpperCase();
-                        }
-                        return {
-                            id: s.id,
-                            rank: index + 1,
-                            name: s.studentName,
-                            initials: initials,
-                            branch: 'CS', // Hardcoded fallback if not in API
-                            passingYear: '2026', // Hardcoded fallback if not in API
-                            cgpa: s.cgpa || '9.0',
-                            lpa: s.packageLpa || '12',
-                            skill: s.skills || 'Full Stack',
-                            skillColor: '#f3e8ff',
-                            skillTextColor: '#a855f7',
-                            company: s.companyName,
-                            companyColor: '#c2410c'
-                        };
-                    });
-                    setStudentsList(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch top placed students", error);
-            }
-        };
-        fetchTopStudents();
-    }, []);
-
-    const segments = getDonutSegments(departmentData);
-
     const [studentsList, setStudentsList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -210,7 +187,7 @@ export default function StudentAnalytics() {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
-
+    const [currentPage, setCurrentPage] = useState(1);
     const [formData, setFormData] = useState({
         name: '',
         branch: 'CS',
@@ -221,6 +198,224 @@ export default function StudentAnalytics() {
         company: ''
     });
 
+
+
+
+    const fetchStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response.data) {
+                setAnalyticsStats(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin student analytics:", error);
+        }
+    };
+
+    const fetchDepartmentData = async () => {
+        try {
+            const res = await getDepartmentAnalytics();
+            if (res.data) {
+                setTotalStudents(res.data.totalStudents || 0);
+                const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
+                if (res.data.departments && Array.isArray(res.data.departments)) {
+                    const mapped = res.data.departments.map((d, index) => ({
+                        label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
+                        count: d.count,
+                        percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
+                        color: colors[index % colors.length]
+                    }));
+                    setDepartmentData(mapped);
+                }
+            }
+        } catch (e) {
+            console.error("Failed to fetch department analytics", e);
+        }
+    };
+
+    const fetchCgpaData = async () => {
+        try {
+            const res = await getPlacementCgpaAnalytics();
+            if (res.data && Array.isArray(res.data)) {
+                const mapped = res.data.map(c => ({
+                    range: c.range,
+                    students: c.count
+                }));
+                setCgpaData(mapped);
+                const maxCount = Math.max(...mapped.map(d => d.students), 0);
+                setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
+            }
+        } catch (e) {
+            console.error("Failed to fetch CGPA analytics", e);
+        }
+    };
+
+    const fetchSkillsData = async () => {
+        try {
+            const res = await getTopSkillsAnalytics();
+            if (res.data && Array.isArray(res.data)) {
+                const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
+
+                const mapped = res.data.map((s, index) => ({
+                    skill: s.skill,
+                    percentage: s.count,
+                    color: colors[index % colors.length]
+                }));
+                setSkillsData(mapped);
+            }
+        } catch (e) {
+            console.error("Failed to fetch skills analytics", e);
+        }
+    };
+
+    useEffect(() => {
+        fetchStats();
+        fetchDepartmentData();
+        fetchCgpaData();
+        fetchSkillsData();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
+    }, []);
+
+    const fetchTopStudents = useCallback(async (newStudentName = null) => {
+        try {
+            let apiData = [];
+            try {
+                const response = await getAllTopPlacedStudents();
+                if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+                    apiData = response.data;
+                    localStorage.setItem("top_placed_students_local", JSON.stringify(response.data));
+                }
+            } catch (apiErr) {
+                console.warn("API fetch for top placed students failed, using local storage fallback", apiErr);
+            }
+
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+
+            const combined = [...apiData];
+            for (const locItem of localList) {
+                const locName = (locItem.studentName || locItem.name || '').trim().toLowerCase();
+                const exists = combined.some(item => (item.studentName || item.name || '').trim().toLowerCase() === locName);
+                if (!exists) {
+                    combined.push(locItem);
+                }
+            }
+
+            const sorted = combined.sort((a, b) => {
+                const lpaA = Number.parseFloat(a.packageLpa || a.lpa) || 0;
+                const lpaB = Number.parseFloat(b.packageLpa || b.lpa) || 0;
+                if (lpaB !== lpaA) return lpaB - lpaA;
+                const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                return cgpaB - cgpaA;
+            });
+
+            const mapped = sorted.map((s, index) => {
+                const sName = s.studentName || s.name || 'Student';
+                const nameParts = sName.trim().split(' ');
+                let initials = 'ST';
+                if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
+                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                } else if (nameParts[0] && nameParts[0].length >= 2) {
+                    initials = nameParts[0].substring(0, 2).toUpperCase();
+                } else if (nameParts[0]) {
+                    initials = nameParts[0].toUpperCase();
+                }
+
+                const studentNameKey = sName.trim().toLowerCase();
+                const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
+                const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
+                const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
+                const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
+
+                const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
+                const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
+
+                return {
+                    id: studentId,
+                    rank: index + 1,
+                    name: sName,
+                    initials: initials,
+                    branch: branch,
+                    passingYear: String(passingYear),
+                    cgpa: s.cgpa || '9.0',
+                    lpa: s.packageLpa || s.lpa || '12',
+                    skill: s.skills || s.skill || 'Full Stack',
+                    skillColor: '#f3e8ff',
+                    skillTextColor: '#a855f7',
+                    company: s.companyName || s.company,
+                    companyColor: '#2563eb'
+                };
+            });
+            setStudentsList(mapped);
+
+            // If a new student was just added, calculate and set their correct target page
+            if (newStudentName) {
+                const newIndex = mapped.findIndex(s => s.name?.toLowerCase() === newStudentName.toLowerCase());
+                if (newIndex !== -1) {
+                    setCurrentPage(Math.floor(newIndex / 5) + 1);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch top placed students", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTopStudents();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchTopStudents();
+            }, 15000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchTopStudents();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+        };
+    }, [fetchTopStudents]);
+
+    const segments = getDonutSegments(departmentData);
+
+
     const handleAddStudent = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.cgpa || !formData.lpa || !formData.company) return;
@@ -229,44 +424,55 @@ export default function StudentAnalytics() {
             const payload = {
                 studentName: formData.name,
                 companyName: formData.company,
-                packageLpa: parseFloat(formData.lpa) || 12,
-                cgpa: parseFloat(formData.cgpa) || 9.0,
-                skills: formData.skill || 'Full Stack'
+                packageLpa: Number.parseFloat(formData.lpa) || 12,
+                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
+                skills: formData.skill || 'Full Stack',
+                branch: formData.branch || 'CS',
+                department: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026',
+                year: formData.passingYear || '2026'
             };
 
-            const response = await addTopPlacedStudent(payload);
-            const savedStudent = response.data || payload;
-
-            const nameParts = (savedStudent.studentName || '').trim().split(' ');
-            let initials = 'ST';
-            if (nameParts.length >= 2) {
-                initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-            } else if (nameParts[0]) {
-                initials = nameParts[0].substring(0, 2).toUpperCase();
-            }
-
-            const newStudent = {
-                id: savedStudent.id || Date.now(),
-                rank: studentsList.length + 1,
-                name: savedStudent.studentName,
-                initials: initials,
+            // Save branch and passingYear in localStorage extras so it is retained if backend response drops it
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            storedExtras[(formData.name || '').trim().toLowerCase()] = {
                 branch: formData.branch || 'CS',
                 passingYear: formData.passingYear || '2026',
-                cgpa: savedStudent.cgpa,
-                lpa: savedStudent.packageLpa,
-                skill: savedStudent.skills || 'Full Stack',
-                skillColor: '#f3e8ff',
-                skillTextColor: '#a855f7',
-                company: savedStudent.companyName,
-                companyColor: '#2563eb'
+                skill: formData.skill || 'Full Stack'
             };
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
 
-            setStudentsList([newStudent, ...studentsList.map((s, idx) => ({ ...s, rank: idx + 2 }))]);
+            // Also save to top_placed_students_local so student side and fallback store syncs seamlessly
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const newStudentObj = {
+                id: `local-${Date.now()}`,
+                studentName: formData.name,
+                companyName: formData.company,
+                packageLpa: Number.parseFloat(formData.lpa) || 12,
+                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
+                skills: formData.skill || 'Full Stack',
+                branch: formData.branch || 'CS',
+                passingYear: formData.passingYear || '2026'
+            };
+            const filteredLocal = localList.filter(s => (s.studentName || s.name || '').trim().toLowerCase() !== (formData.name || '').trim().toLowerCase());
+            filteredLocal.push(newStudentObj);
+            localStorage.setItem("top_placed_students_local", JSON.stringify(filteredLocal));
+            window.dispatchEvent(new Event('storage'));
+
+            try {
+                await addTopPlacedStudent(payload);
+            } catch (apiErr) {
+                console.warn("API add top student failed, using local storage fallback", apiErr);
+            }
+
+            // Fetch fresh canonical list & jump to newly added student page
+            await fetchTopStudents(formData.name);
+
             setIsModalOpen(false);
             setFormData({
                 name: '',
-                branch: 'CS',
-                passingYear: '2026',
+                branch: '',
+                passingYear: '',
                 cgpa: '',
                 lpa: '',
                 skill: '',
@@ -285,25 +491,140 @@ export default function StudentAnalytics() {
         }, 4000);
     };
 
-    const filteredStudents = studentsList.filter(student =>
-        student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.skill.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (student.branch && student.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (student.passingYear && student.passingYear.toString().includes(searchQuery))
-    );
+    const [deleteModalState, setDeleteModalState] = useState({
+        isOpen: false,
+        studentId: null,
+        studentName: ''
+    });
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const handleOpenDeleteModal = (studentId, studentName) => {
+        if (!studentId) return;
+        setDeleteModalState({
+            isOpen: true,
+            studentId,
+            studentName
+        });
+    };
 
-    // Reset to page 1 whenever search query changes
+    const handleConfirmDeleteStudent = async () => {
+        if (!deleteModalState.studentId && !deleteModalState.studentName) return;
+        const { studentId, studentName } = deleteModalState;
+        setDeleteModalState({ isOpen: false, studentId: null, studentName: '' });
+
+        const studentNameKey = (studentName || '').trim().toLowerCase();
+
+        try {
+            const isRealApiId = studentId && !String(studentId).startsWith('local-');
+            if (isRealApiId) {
+                try {
+                    await deleteTopPlacedStudent(studentId);
+                } catch (delErr) {
+                    console.warn("API delete top student failed", delErr);
+                }
+            }
+
+            // Remove from local storage extra overrides and local list
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            if (storedExtras[studentNameKey]) delete storedExtras[studentNameKey];
+            if (studentId && storedExtras[studentId]) delete storedExtras[studentId];
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const updatedLocal = localList.filter(s => s.id !== studentId && (s.studentName || s.name || '').trim().toLowerCase() !== studentNameKey);
+            localStorage.setItem("top_placed_students_local", JSON.stringify(updatedLocal));
+            window.dispatchEvent(new Event('storage'));
+
+            // Optimistically update list in state
+            setStudentsList(prev => prev.filter(s => s.id !== studentId && (s.name || '').trim().toLowerCase() !== studentNameKey));
+
+            // Sync fresh backend list
+            try {
+                await fetchTopStudents();
+            } catch (refetchErr) {
+                console.warn("Refetch warning:", refetchErr);
+            }
+
+            setToastMessage(`Deleted ${studentName || 'student'} successfully!`);
+            setToastType('success');
+        } catch (error) {
+            console.error("Failed to delete top placed student via API, applying local cleanup fallback:", error);
+
+            // Fallback: Remove from state & localStorage so UI stays responsive
+            setStudentsList(prev => prev.filter(s => s.id !== studentId && (s.name || '').trim().toLowerCase() !== studentNameKey));
+
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            if (storedExtras[studentNameKey]) delete storedExtras[studentNameKey];
+            if (studentId && storedExtras[studentId]) delete storedExtras[studentId];
+            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+            setToastMessage(`Deleted ${studentName || 'student'} successfully!`);
+            setToastType('success');
+        }
+        setShowToast(true);
+        setTimeout(() => {
+            setShowToast(false);
+        }, 4000);
+    };
+
+    const [sortConfig, setSortConfig] = useState({ key: 'lpa', direction: 'desc' });
+
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key === key) {
+                return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+            }
+            return { key, direction: key === 'name' || key === 'branch' ? 'asc' : 'desc' };
+        });
+    };
+
+    const filteredStudents = studentsList.filter(student => {
+        if (!student) return false;
+        const name = (student.name || '').toLowerCase();
+        const company = (student.company || '').toLowerCase();
+        const skill = (student.skill || '').toLowerCase();
+        const branch = (student.branch || '').toLowerCase();
+        const year = String(student.passingYear || '');
+        const query = (searchQuery || '').toLowerCase();
+
+        return (
+            name.includes(query) ||
+            company.includes(query) ||
+            skill.includes(query) ||
+            branch.includes(query) ||
+            year.includes(query)
+        );
+    });
+
+    const sortedStudents = [...filteredStudents].sort((a, b) => {
+        const { key, direction } = sortConfig;
+        let aVal = a[key];
+        let bVal = b[key];
+
+        if (key === 'lpa' || key === 'cgpa' || key === 'passingYear' || key === 'rank') {
+            aVal = Number.parseFloat(aVal) || 0;
+            bVal = Number.parseFloat(bVal) || 0;
+        } else {
+            aVal = String(aVal || '').toLowerCase();
+            bVal = String(bVal || '').toLowerCase();
+        }
+
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+
+    const [itemsPerPage, setItemsPerPage] = useState(5);
+
+    // Reset to page 1 whenever search query, itemsPerPage, or sort changes
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchQuery]);
+        const timer = setTimeout(() => setCurrentPage(1), 0);
+        return () => clearTimeout(timer);
+    }, [searchQuery, sortConfig, itemsPerPage]);
 
-    const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const paginatedStudents = filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+    const numericItemsPerPage = itemsPerPage === 'all' ? Math.max(sortedStudents.length, 1) : Number(itemsPerPage);
+    const totalPages = Math.ceil(sortedStudents.length / numericItemsPerPage) || 1;
+    const startIndex = (currentPage - 1) * numericItemsPerPage;
+    const paginatedStudents = sortedStudents.slice(startIndex, startIndex + numericItemsPerPage);
 
     return (
         <div className="analytics-page-wrapper">
@@ -326,7 +647,10 @@ export default function StudentAnalytics() {
 
             {/* stat cards section */}
             <section className="stats-grid">
-                <div className="stat-card theme-blue">
+                <motion.div className="stat-card theme-blue"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Placed Students</span>
                         <h3 className="stat-value">{analyticsStats.placedStudents}</h3>
@@ -335,9 +659,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-blue">
                         <Users size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-green">
+                <motion.div className="stat-card theme-green"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Placement Rate</span>
                         <h3 className="stat-value">{analyticsStats.placementRate}%</h3>
@@ -346,9 +673,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-green">
                         <TrendingUp size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-orange">
+                <motion.div className="stat-card theme-orange"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Highest Package</span>
                         <h3 className="stat-value">{analyticsStats.highestPackage.toLocaleString()}</h3>
@@ -357,9 +687,12 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-orange">
                         <Trophy size={22} />
                     </div>
-                </div>
+                </motion.div>
 
-                <div className="stat-card theme-purple">
+                <motion.div className="stat-card theme-purple"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}>
                     <div className="stat-text-group">
                         <span className="stat-label">Average Package</span>
                         <h3 className="stat-value">{analyticsStats.averagePackage.toLocaleString()}</h3>
@@ -368,12 +701,15 @@ export default function StudentAnalytics() {
                     <div className="stat-icon-container bg-light-purple">
                         <Wallet size={22} />
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* department wise distribution section */}
             <section className="charts-row">
-                <div className="chart-card">
+                <motion.div className="chart-card"
+                    initial={{ opacity: 0, }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.4 }}>
                     <div className="chart-card-header">
                         <h3 className="chart-title">Department Wise Distribution</h3>
                     </div>
@@ -385,7 +721,7 @@ export default function StudentAnalytics() {
                             <svg viewBox="0 0 100 100" className="donut-svg">
                                 {segments.map((seg, i) => (
                                     <path
-                                        key={i}
+                                        key={seg.label || seg.color || i}
                                         d={seg.d}
                                         fill={seg.color}
                                         className="donut-segment"
@@ -404,7 +740,7 @@ export default function StudentAnalytics() {
                         {/* Legend */}
                         <div className="dept-legend">
                             {departmentData.map((dept, i) => (
-                                <div key={i} className="legend-item">
+                                <div key={dept.label || dept.color || i} className="legend-item">
                                     <span
                                         className="legend-dot"
                                         style={{ backgroundColor: dept.color }}
@@ -418,10 +754,13 @@ export default function StudentAnalytics() {
                         </div>
 
                     </div>
-                </div>
+                </motion.div>
 
                 {/*Placement by cgpa bar chart card*/}
-                <div className='chart-card'>
+                <motion.div className='chart-card'
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.5 }} >
                     <div className='chart-card-header'>
                         <h3 className='chart-title'>
                             Placement by CGPA
@@ -431,16 +770,11 @@ export default function StudentAnalytics() {
                     <div className='bar-chart-wrapper'>
                         <svg viewBox="0 0 280 180" className="bar-chart-svg">
 
-                            {/* y-axis grid lines and labels */}
+                            {/* y-axis labels */}
                             {Array.from({ length: Math.floor(maxStudents / 10) + 1 }, (_, i) => i * 10).map((val) => {
                                 const y = 20 + ((maxStudents - val) / (maxStudents || 1)) * 120;
                                 return (
                                     <g key={val}>
-                                        <line
-                                            x1="36" y1={y}
-                                            x2="270" y2={y}
-                                            stroke="#f1f5f9" strokeWidth="1"
-                                        />
                                         <text x="30" y={y + 4} textAnchor="end" className="bar-axis-text">
                                             {val}
                                         </text>
@@ -456,7 +790,7 @@ export default function StudentAnalytics() {
                                 const barHeight = (item.students / maxStudents) * 120;
                                 const y = 20 + (120 - barHeight);
                                 return (
-                                    <g key={i}>
+                                    <g key={item.range || i}>
                                         <rect
                                             x={x} y="20"
                                             width={barWidth} height="120"
@@ -506,10 +840,13 @@ export default function StudentAnalytics() {
 
                     </div>
 
-                </div>
+                </motion.div>
 
                 {/* top skills in demand card */}
-                <div className="chart-card">
+                <motion.div className="chart-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.6 }}>
                     <div className="chart-card-header">
                         <h3 className="chart-title">Top Skills in Demand</h3>
                     </div>
@@ -519,7 +856,7 @@ export default function StudentAnalytics() {
                         {/* skill rows */}
                         <div className="skills-rows">
                             {skillsData.slice(0, 10).map((item, i) => (
-                                <div key={i} className="skill-row">
+                                <div key={item.skill || i} className="skill-row">
                                     <span className="skill-name">{item.skill}</span>
                                     <div className="skill-bar-track">
                                         <div
@@ -545,7 +882,7 @@ export default function StudentAnalytics() {
                         <p className="skills-x-title">Demand Percentage</p>
 
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* Top Placed Students Section */}
@@ -558,6 +895,7 @@ export default function StudentAnalytics() {
                     <div className="table-header-actions">
                         {!isSearchOpen ? (
                             <button
+                                type="button"
                                 className="table-search-toggle-btn"
                                 onClick={() => setIsSearchOpen(true)}
                                 title="Search"
@@ -571,11 +909,24 @@ export default function StudentAnalytics() {
                                     type="text"
                                     placeholder="Search student..."
                                     className="table-search-input-expanded"
+                                    style={{
+                                        border: 'none',
+                                        outline: 'none',
+                                        background: 'transparent',
+                                        backgroundColor: 'transparent',
+                                        boxShadow: 'none',
+                                        borderRadius: '0px',
+                                        padding: '0px',
+                                        margin: '0px',
+                                        WebkitAppearance: 'none',
+                                        appearance: 'none'
+                                    }}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     autoFocus
                                 />
                                 <button
+                                    type="button"
                                     className="search-clear-btn"
                                     onClick={() => {
                                         setSearchQuery('');
@@ -587,6 +938,7 @@ export default function StudentAnalytics() {
                             </div>
                         )}
                         <button
+                            type="button"
                             className="add-student-btn"
                             onClick={() => setIsModalOpen(true)}
                         >
@@ -599,24 +951,40 @@ export default function StudentAnalytics() {
                     <table className="students-table">
                         <thead>
                             <tr>
-                                <th>#</th>
                                 <th>STUDENT NAME</th>
                                 <th>BRANCH</th>
-                                <th>PASSING YEAR</th>
-                                <th>CGPA</th>
-                                <th>LPA</th>
+                                <th onClick={() => handleSort('passingYear')} className={`sortable-th${sortConfig.key === 'passingYear' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>PASSING YEAR</span>
+                                        <span className={sortConfig.key === 'passingYear' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'passingYear' ? (sortConfig.direction === 'asc' ? '↑ Old→New' : '↓ New→Old') : '↕'}
+                                        </span>
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('cgpa')} className={`sortable-th${sortConfig.key === 'cgpa' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>CGPA</span>
+                                        <span className={sortConfig.key === 'cgpa' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'cgpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                        </span>
+                                    </div>
+                                </th>
+                                <th onClick={() => handleSort('lpa')} className={`sortable-th${sortConfig.key === 'lpa' ? ' th-sorted' : ''}`} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                                    <div className="th-sort-wrapper">
+                                        <span>LPA</span>
+                                        <span className={sortConfig.key === 'lpa' ? 'sort-arrow-active' : 'sort-arrow-idle'}>
+                                            {sortConfig.key === 'lpa' ? (sortConfig.direction === 'asc' ? '↑ Low→High' : '↓ High→Low') : '↕'}
+                                        </span>
+                                    </div>
+                                </th>
                                 <th>SKILLS</th>
                                 <th>COMPANY</th>
+                                <th>ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {paginatedStudents.map((student) => (
-                                <tr key={student.rank}>
-                                    <td>
-                                        <span className={`rank-badge rank-${student.rank}`}>
-                                            {student.rank}
-                                        </span>
-                                    </td>
+                                <tr key={student.id || student.rank}>
                                     <td>
                                         <div className="student-profile-cell">
                                             <div className="student-avatar">{student.initials}</div>
@@ -631,7 +999,7 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <span className="cgpa-text">
-                                            {!isNaN(student.cgpa) && Number.isInteger(Number(student.cgpa))
+                                            {!Number.isNaN(Number(student.cgpa)) && Number.isInteger(Number(student.cgpa))
                                                 ? Number(student.cgpa).toFixed(1)
                                                 : student.cgpa}
                                         </span>
@@ -653,7 +1021,7 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <div className="company-logo-cell">
-                                            {COMPANY_LOGOS[student.company] || <Coffee size={16} color="#86efac" style={{ marginRight: '8px', fill: '#86efac', flexShrink: 0 }} />}
+                                            <CompanyLogo companyName={student.company} />
                                             <span
                                                 className="company-text"
                                                 style={{ color: student.companyColor || '#1e293b' }}
@@ -661,6 +1029,17 @@ export default function StudentAnalytics() {
                                                 {student.company}
                                             </span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <button
+                                            type="button"
+                                            className="delete-student-btn"
+                                            onClick={() => handleOpenDeleteModal(student.id, student.name)}
+                                            title="Delete Top Placed Student"
+                                            aria-label={`Delete ${student.name}`}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -671,24 +1050,27 @@ export default function StudentAnalytics() {
                 <div className="table-card-footer">
                     {totalPages > 1 && (
                         <div className="table-pagination">
-                            <button 
-                                className="pagination-btn arrow-btn" 
+                            <button
+                                type="button"
+                                className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
                             >
                                 &larr;
                             </button>
-                            {[...Array(totalPages)].map((_, i) => (
-                                <button 
-                                    key={i + 1} 
+                            {new Array(totalPages).fill(0).map((_, i) => (
+                                <button
+                                    key={`page-${i + 1}`}
+                                    type="button"
                                     className={`pagination-btn num-btn ${currentPage === i + 1 ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(i + 1)}
                                 >
                                     {i + 1}
                                 </button>
                             ))}
-                            <button 
-                                className="pagination-btn arrow-btn" 
+                            <button
+                                type="button"
+                                className="pagination-btn arrow-btn"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
                             >
@@ -701,40 +1083,45 @@ export default function StudentAnalytics() {
 
             {/* Add Top Placed Student Modal */}
             {isModalOpen && (
-                <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-                    <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-overlay" aria-label="Close add student modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}>
+                    <div className="modal-container">
                         <div className="modal-header">
                             <div>
                                 <h3 className="modal-title">Add Top Placed Student</h3>
                                 <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
                             </div>
-                            <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+                            <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
                                 <X size={20} />
                             </button>
                         </div>
 
                         <form onSubmit={handleAddStudent} className="modal-form">
                             <div className="form-group">
-                                <label className="form-label">
+                                <label htmlFor="add-student-name" className="form-label">
                                     Student Full Name <span className="required-star">*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. Priya Sharma"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
+                                <div className="name-input-wrapper">
+                                    <input
+                                        id="add-student-name"
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Priya Sharma"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                        autoComplete="off"
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-branch" className="form-label">
                                         Branch <span className="required-star">*</span>
                                     </label>
                                     <div className="select-wrapper">
                                         <select
+                                            id="add-student-branch"
                                             className="form-select"
                                             value={formData.branch}
                                             onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
@@ -750,11 +1137,12 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-passing-year" className="form-label">
                                         Passing Year <span className="required-star">*</span>
                                     </label>
                                     <div className="select-wrapper">
                                         <select
+                                            id="add-student-passing-year"
                                             className="form-select"
                                             value={formData.passingYear}
                                             onChange={(e) => setFormData({ ...formData, passingYear: e.target.value })}
@@ -771,10 +1159,11 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-cgpa" className="form-label">
                                         CGPA (out of 10) <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-cgpa"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. 9.4"
@@ -785,10 +1174,11 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-lpa" className="form-label">
                                         Package (LPA) <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-lpa"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. 28"
@@ -801,8 +1191,9 @@ export default function StudentAnalytics() {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label">Primary Skill</label>
+                                    <label htmlFor="add-student-skill" className="form-label">Primary Skill</label>
                                     <input
+                                        id="add-student-skill"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. Full Stack, Data Science, Back"
@@ -812,10 +1203,11 @@ export default function StudentAnalytics() {
                                 </div>
 
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="add-student-company" className="form-label">
                                         Company Name <span className="required-star">*</span>
                                     </label>
                                     <input
+                                        id="add-student-company"
                                         type="text"
                                         className="form-input"
                                         placeholder="e.g. Amazon, Microsoft, Apple"
@@ -846,6 +1238,37 @@ export default function StudentAnalytics() {
                 </div>
             )}
 
+            {/* Custom Delete Confirmation Modal */}
+            {deleteModalState.isOpen && (
+                <div className="modal-overlay" onClick={() => setDeleteModalState({ isOpen: false, studentId: null, studentName: '' })}>
+                    <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-modal-icon-bg">
+                            <Trash2 size={22} />
+                        </div>
+                        <h4 className="delete-modal-title">Delete Top Placed Student</h4>
+                        <p className="delete-modal-desc">
+                            Are you sure you want to delete the entry for <strong>{deleteModalState.studentName || 'this student'}</strong>? This action cannot be undone.
+                        </p>
+                        <div className="delete-modal-actions">
+                            <button
+                                type="button"
+                                className="btn-delete-cancel"
+                                onClick={() => setDeleteModalState({ isOpen: false, studentId: null, studentName: '' })}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-delete-confirm"
+                                onClick={handleConfirmDeleteStudent}
+                            >
+                                Yes, Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Toast */}
             {showToast && (
                 <div className={`toast-notification ${toastType}`}>
@@ -853,7 +1276,7 @@ export default function StudentAnalytics() {
                         {toastType === 'error' ? <X size={16} /> : <Check size={16} />}
                     </div>
                     <span className="toast-text">{toastMessage}</span>
-                    <button className="toast-close-btn" onClick={() => setShowToast(false)}>
+                    <button type="button" className="toast-close-btn" onClick={() => setShowToast(false)}>
                         <X size={14} />
                     </button>
                 </div>
