@@ -784,7 +784,7 @@ function Registration({ onNavigate }) {
                             {/* Password */}
                             <div className="input-group password-input-group" ref={passwordWrapperRef}>
                                 <label htmlFor="passwordInput">Password</label>
-                                <div className={`input-wrapper ${errors.password ? 'has-error' : ''}`}>
+                                <div className={`input-wrapper ${errors.password && !isPasswordFocused ? 'has-error' : ''}`}>
                                     <Lock size={16} />
                                     <input
                                         id="passwordInput"
@@ -807,9 +807,9 @@ function Registration({ onNavigate }) {
                                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                     </button>
                                 </div>
-                                {errors.password && <span className="error-message">{errors.password}</span>}
+                                {errors.password && !isPasswordFocused && <span className="error-message">{errors.password}</span>}
 
-                                {/* Proton-style Password Strength Popover Checklist */}
+                                {/* Password Strength Popover Checklist */}
                                 {isPasswordFocused && (
                                     <div className="password-strength-popover">
                                         <div className="strength-header">
