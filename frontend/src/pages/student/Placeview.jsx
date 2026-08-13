@@ -157,24 +157,22 @@ const defaultSkillsData = [
     { skill: 'Python', percentage: 6, color: '#06b6d4' },
     { skill: 'Spring boot', percentage: 4, color: '#f59e0b' },
     { skill: 'Css', percentage: 2, color: '#10b981' },
-    { skill: 'Php', percentage: 2, color: '#f43f5e' },
-    { skill: 'Node.js', percentage: 1, color: '#3b82f6' },
-    { skill: 'React', percentage: 1, color: '#6366f1' }
+    { skill: 'Php', percentage: 2, color: '#f43f5e' }
 ];
 
 export default function Placeview() {
     const [analyticsStats, setAnalyticsStats] = useState({
-        placedStudents: 14,
-        placementRate: 58.33,
-        highestPackage: 98,
-        averagePackage: 60.57
+        placedStudents: 0,
+        placementRate: 0,
+        highestPackage: 0,
+        averagePackage: 0
     });
 
-    const [departmentData, setDepartmentData] = useState(defaultDeptData);
-    const [totalStudents, setTotalStudents] = useState(24);
-    const [cgpaData, setCgpaData] = useState(defaultCgpaData);
+    const [departmentData, setDepartmentData] = useState([]);
+    const [totalStudents, setTotalStudents] = useState(0);
+    const [cgpaData, setCgpaData] = useState([]);
     const [maxStudents, setMaxStudents] = useState(20);
-    const [skillsData, setSkillsData] = useState(defaultSkillsData);
+    const [skillsData, setSkillsData] = useState([]);
 
     const [studentsList, setStudentsList] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -185,12 +183,7 @@ export default function Placeview() {
         try {
             const response = await getStudentPlaceviewDashboard();
             if (response && response.data) {
-                setAnalyticsStats(prev => ({
-                    placedStudents: response.data.placedStudents ?? prev.placedStudents,
-                    placementRate: response.data.placementRate ?? prev.placementRate,
-                    highestPackage: response.data.highestPackage ?? prev.highestPackage,
-                    averagePackage: response.data.averagePackage ?? prev.averagePackage
-                }));
+                setAnalyticsStats(response.data);
             }
         } catch (error) {
             console.error("Failed to fetch student placeview stats:", error);
@@ -201,7 +194,7 @@ export default function Placeview() {
         try {
             const res = await getStudentPlaceviewDepartment();
             if (res && res.data && res.data.departments && res.data.departments.length > 0) {
-                setTotalStudents(res.data.totalStudents || 24);
+                setTotalStudents(res.data.totalStudents || 0);
                 const colors = ['#1e3a6e', '#4a7ff7', '#06b6d4', '#a5b4fc', '#cbd5e1', '#f59e0b', '#10b981'];
                 const mapped = res.data.departments.map((d, index) => ({
                     label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
@@ -329,37 +322,21 @@ export default function Placeview() {
         }
     };
 
-    const isUserAdmin = () => {
-        const userStr = localStorage.getItem("user");
-        if (!userStr) return false;
-        try {
-            const u = JSON.parse(userStr);
-            return Boolean(u && (u.role === 'ROLE_ADMIN' || u.role === 'ADMIN' || u.isAdmin || (u.email && u.email.toLowerCase().includes('admin'))));
-        } catch {
-            return false;
-        }
-    };
-
     useEffect(() => {
-        const isAdmin = isUserAdmin();
-        if (isAdmin) {
-            fetchStats();
-            fetchDepartmentData();
-            fetchCgpaData();
-            fetchSkillsData();
-        }
+        fetchStats();
+        fetchDepartmentData();
+        fetchCgpaData();
+        fetchSkillsData();
         fetchTopStudents();
 
         let pollInterval;
         if (import.meta.env.MODE !== 'test') {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
-                if (isAdmin) {
-                    fetchStats();
-                    fetchDepartmentData();
-                    fetchCgpaData();
-                    fetchSkillsData();
-                }
+                fetchStats();
+                fetchDepartmentData();
+                fetchCgpaData();
+                fetchSkillsData();
                 fetchTopStudents();
             }, 10000);
         }
