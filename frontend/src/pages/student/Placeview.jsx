@@ -2,11 +2,11 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Users, TrendingUp, Trophy, Wallet, Search, X, Building2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
-    getAdminStudentAnalyticsDashboard,
-    getDepartmentAnalytics,
-    getPlacementCgpaAnalytics,
-    getTopSkillsAnalytics,
-    getAllTopPlacedStudents
+    getStudentPlaceviewDashboard,
+    getStudentPlaceviewDepartment,
+    getStudentPlaceviewPlacementCgpa,
+    getStudentPlaceviewTopSkills,
+    getStudentPlaceviewTopPlaced
 } from '../../auth/authService';
 import './Placeview.css';
 import placeviewBannerImg from '../../assets/placeview_banner.png';
@@ -183,7 +183,7 @@ export default function Placeview() {
 
     const fetchStats = async () => {
         try {
-            const response = await getAdminStudentAnalyticsDashboard();
+            const response = await getStudentPlaceviewDashboard();
             if (response && response.data) {
                 setAnalyticsStats(prev => ({
                     placedStudents: response.data.placedStudents ?? prev.placedStudents,
@@ -193,16 +193,13 @@ export default function Placeview() {
                 }));
             }
         } catch (error) {
-            // Admin-only endpoint returns 403 for student role - silent fallback to default stats
-            if (error.response?.status !== 403 && error.response?.status !== 401) {
-                console.error("Failed to fetch placement analytics stats:", error);
-            }
+            console.error("Failed to fetch student placeview stats:", error);
         }
     };
 
     const fetchDepartmentData = async () => {
         try {
-            const res = await getDepartmentAnalytics();
+            const res = await getStudentPlaceviewDepartment();
             if (res && res.data && res.data.departments && res.data.departments.length > 0) {
                 setTotalStudents(res.data.totalStudents || 24);
                 const colors = ['#1e3a6e', '#4a7ff7', '#06b6d4', '#a5b4fc', '#cbd5e1', '#f59e0b', '#10b981'];
@@ -215,15 +212,13 @@ export default function Placeview() {
                 setDepartmentData(mapped);
             }
         } catch (e) {
-            if (e.response?.status !== 403 && e.response?.status !== 401) {
-                console.error("Failed to fetch department analytics", e);
-            }
+            console.error("Failed to fetch department analytics", e);
         }
     };
 
     const fetchCgpaData = async () => {
         try {
-            const res = await getPlacementCgpaAnalytics();
+            const res = await getStudentPlaceviewPlacementCgpa();
             if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
                 const mapped = res.data.map(c => ({
                     range: c.range,
@@ -234,15 +229,13 @@ export default function Placeview() {
                 setMaxStudents(Math.max(20, Math.ceil((maxCount + 10) / 10) * 10));
             }
         } catch (e) {
-            if (e.response?.status !== 403 && e.response?.status !== 401) {
-                console.error("Failed to fetch CGPA analytics", e);
-            }
+            console.error("Failed to fetch CGPA analytics", e);
         }
     };
 
     const fetchSkillsData = async () => {
         try {
-            const res = await getTopSkillsAnalytics();
+            const res = await getStudentPlaceviewTopSkills();
             if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
                 const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e', '#3b82f6', '#6366f1'];
                 const mapped = res.data.map((s, index) => ({
@@ -253,9 +246,7 @@ export default function Placeview() {
                 setSkillsData(mapped);
             }
         } catch (e) {
-            if (e.response?.status !== 403 && e.response?.status !== 401) {
-                console.error("Failed to fetch skills analytics", e);
-            }
+            console.error("Failed to fetch skills analytics", e);
         }
     };
 
@@ -263,12 +254,12 @@ export default function Placeview() {
         try {
             let apiData = [];
             try {
-                const response = await getAllTopPlacedStudents();
+                const response = await getStudentPlaceviewTopPlaced();
                 if (response && response.data && Array.isArray(response.data)) {
                     apiData = response.data;
                 }
             } catch (apiErr) {
-                console.warn("API fetch for top placed students failed/forbidden for student role, using local storage fallback", apiErr);
+                console.warn("API fetch for top placed students fallback to local storage", apiErr);
             }
 
             const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");

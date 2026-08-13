@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import Placeview from './Placeview';
 
 vi.mock('../../auth/authService', () => ({
-    getAdminStudentAnalyticsDashboard: vi.fn().mockResolvedValue({
+    getStudentPlaceviewDashboard: vi.fn().mockResolvedValue({
         data: {
             placedStudents: 14,
             placementRate: 58.33,
@@ -11,7 +11,7 @@ vi.mock('../../auth/authService', () => ({
             averagePackage: 60.57
         }
     }),
-    getDepartmentAnalytics: vi.fn().mockResolvedValue({
+    getStudentPlaceviewDepartment: vi.fn().mockResolvedValue({
         data: {
             totalStudents: 24,
             departments: [
@@ -19,17 +19,17 @@ vi.mock('../../auth/authService', () => ({
             ]
         }
     }),
-    getPlacementCgpaAnalytics: vi.fn().mockResolvedValue({
+    getStudentPlaceviewPlacementCgpa: vi.fn().mockResolvedValue({
         data: [
             { range: '9-10', count: 10 }
         ]
     }),
-    getTopSkillsAnalytics: vi.fn().mockResolvedValue({
+    getStudentPlaceviewTopSkills: vi.fn().mockResolvedValue({
         data: [
             { skill: 'Java', count: 21 }
         ]
     }),
-    getAllTopPlacedStudents: vi.fn().mockResolvedValue({
+    getStudentPlaceviewTopPlaced: vi.fn().mockResolvedValue({
         data: [
             { id: '1', studentName: 'Shreyas Iyer', branch: 'CS', passingYear: '2028', cgpa: '9.9', packageLpa: 98, skill: 'Software Engineer', companyName: 'Instagram' }
         ]
