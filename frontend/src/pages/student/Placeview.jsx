@@ -181,183 +181,211 @@ export default function Placeview() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await getAdminStudentAnalyticsDashboard();
-                if (response && response.data) {
-                    setAnalyticsStats(prev => ({
-                        placedStudents: response.data.placedStudents ?? prev.placedStudents,
-                        placementRate: response.data.placementRate ?? prev.placementRate,
-                        highestPackage: response.data.highestPackage ?? prev.highestPackage,
-                        averagePackage: response.data.averagePackage ?? prev.averagePackage
-                    }));
-                }
-            } catch (error) {
+    const fetchStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response && response.data) {
+                setAnalyticsStats(prev => ({
+                    placedStudents: response.data.placedStudents ?? prev.placedStudents,
+                    placementRate: response.data.placementRate ?? prev.placementRate,
+                    highestPackage: response.data.highestPackage ?? prev.highestPackage,
+                    averagePackage: response.data.averagePackage ?? prev.averagePackage
+                }));
+            }
+        } catch (error) {
+            // Admin-only endpoint returns 403 for student role - silent fallback to default stats
+            if (error.response?.status !== 403 && error.response?.status !== 401) {
                 console.error("Failed to fetch placement analytics stats:", error);
             }
-        };
+        }
+    };
 
-        const fetchDepartmentData = async () => {
-            try {
-                const res = await getDepartmentAnalytics();
-                if (res && res.data && res.data.departments && res.data.departments.length > 0) {
-                    setTotalStudents(res.data.totalStudents || 24);
-                    const colors = ['#1e3a6e', '#4a7ff7', '#06b6d4', '#a5b4fc', '#cbd5e1', '#f59e0b', '#10b981'];
-                    const mapped = res.data.departments.map((d, index) => ({
-                        label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
-                        count: d.count,
-                        percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
-                        color: colors[index % colors.length]
-                    }));
-                    setDepartmentData(mapped);
-                }
-            } catch (e) {
+    const fetchDepartmentData = async () => {
+        try {
+            const res = await getDepartmentAnalytics();
+            if (res && res.data && res.data.departments && res.data.departments.length > 0) {
+                setTotalStudents(res.data.totalStudents || 24);
+                const colors = ['#1e3a6e', '#4a7ff7', '#06b6d4', '#a5b4fc', '#cbd5e1', '#f59e0b', '#10b981'];
+                const mapped = res.data.departments.map((d, index) => ({
+                    label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
+                    count: d.count,
+                    percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
+                    color: colors[index % colors.length]
+                }));
+                setDepartmentData(mapped);
+            }
+        } catch (e) {
+            if (e.response?.status !== 403 && e.response?.status !== 401) {
                 console.error("Failed to fetch department analytics", e);
             }
-        };
+        }
+    };
 
-        const fetchCgpaData = async () => {
-            try {
-                const res = await getPlacementCgpaAnalytics();
-                if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-                    const mapped = res.data.map(c => ({
-                        range: c.range,
-                        students: c.count
-                    }));
-                    setCgpaData(mapped);
-                    const maxCount = Math.max(...mapped.map(d => d.students), 0);
-                    setMaxStudents(Math.max(20, Math.ceil((maxCount + 10) / 10) * 10));
-                }
-            } catch (e) {
+    const fetchCgpaData = async () => {
+        try {
+            const res = await getPlacementCgpaAnalytics();
+            if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                const mapped = res.data.map(c => ({
+                    range: c.range,
+                    students: c.count
+                }));
+                setCgpaData(mapped);
+                const maxCount = Math.max(...mapped.map(d => d.students), 0);
+                setMaxStudents(Math.max(20, Math.ceil((maxCount + 10) / 10) * 10));
+            }
+        } catch (e) {
+            if (e.response?.status !== 403 && e.response?.status !== 401) {
                 console.error("Failed to fetch CGPA analytics", e);
             }
-        };
+        }
+    };
 
-        const fetchSkillsData = async () => {
-            try {
-                const res = await getTopSkillsAnalytics();
-                if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-                    const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e', '#3b82f6', '#6366f1'];
-                    const mapped = res.data.map((s, index) => ({
-                        skill: s.skill,
-                        percentage: s.count,
-                        color: colors[index % colors.length]
-                    }));
-                    setSkillsData(mapped);
-                }
-            } catch (e) {
+    const fetchSkillsData = async () => {
+        try {
+            const res = await getTopSkillsAnalytics();
+            if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e', '#3b82f6', '#6366f1'];
+                const mapped = res.data.map((s, index) => ({
+                    skill: s.skill,
+                    percentage: s.count,
+                    color: colors[index % colors.length]
+                }));
+                setSkillsData(mapped);
+            }
+        } catch (e) {
+            if (e.response?.status !== 403 && e.response?.status !== 401) {
                 console.error("Failed to fetch skills analytics", e);
             }
-        };
+        }
+    };
 
-        const fetchTopStudents = async () => {
+    const fetchTopStudents = async () => {
+        try {
+            let apiData = [];
             try {
-                let apiData = [];
-                try {
-                    const response = await getAllTopPlacedStudents();
-                    if (response && response.data && Array.isArray(response.data)) {
-                        apiData = response.data;
-                    }
-                } catch (apiErr) {
-                    console.warn("API fetch for top placed students failed/forbidden for student role, using local storage fallback", apiErr);
+                const response = await getAllTopPlacedStudents();
+                if (response && response.data && Array.isArray(response.data)) {
+                    apiData = response.data;
                 }
-
-                const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
-                const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
-                const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
-
-                const combined = [...apiData];
-                for (const locItem of localList) {
-                    const locName = (locItem.studentName || locItem.name || '').trim().toLowerCase();
-                    const exists = combined.some(item => (item.studentName || item.name || '').trim().toLowerCase() === locName);
-                    if (!exists) {
-                        combined.push(locItem);
-                    }
-                }
-
-                const sorted = combined.sort((a, b) => {
-                    const lpaA = Number.parseFloat(a.packageLpa || a.lpa) || 0;
-                    const lpaB = Number.parseFloat(b.packageLpa || b.lpa) || 0;
-                    if (lpaB !== lpaA) return lpaB - lpaA;
-                    const cgpaA = Number.parseFloat(a.cgpa) || 0;
-                    const cgpaB = Number.parseFloat(b.cgpa) || 0;
-                    return cgpaB - cgpaA;
-                });
-
-                const mapped = sorted.map((s, index) => {
-                    const sName = s.studentName || s.name || 'Student';
-                    const nameParts = sName.trim().split(' ');
-                    let initials = 'ST';
-                    if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
-                        initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                    } else if (nameParts[0] && nameParts[0].length >= 2) {
-                        initials = nameParts[0].substring(0, 2).toUpperCase();
-                    } else if (nameParts[0]) {
-                        initials = nameParts[0].toUpperCase();
-                    }
-
-                    const studentNameKey = sName.trim().toLowerCase();
-                    const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
-                    const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
-                    const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
-                    const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
-
-                    const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
-                    const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
-                    const skillName = s.skills || s.skill || storedExtra.skill || 'Software Engineer';
-                    const companyName = s.companyName || s.company || 'Company';
-
-                    return {
-                        id: studentId,
-                        rank: index + 1,
-                        name: sName,
-                        initials: initials,
-                        branch: branch,
-                        passingYear: String(passingYear),
-                        cgpa: s.cgpa || '9.0',
-                        lpa: s.packageLpa || s.lpa || 0,
-                        skill: skillName,
-                        skillColor: '#fae8ff',
-                        skillTextColor: '#c026d3',
-                        company: companyName
-                    };
-                });
-                setStudentsList(mapped);
-            } catch (e) {
-                console.error("Failed to fetch top placed students:", e);
-                setStudentsList([]);
+            } catch (apiErr) {
+                console.warn("API fetch for top placed students failed/forbidden for student role, using local storage fallback", apiErr);
             }
-        };
 
-        fetchStats();
-        fetchDepartmentData();
-        fetchCgpaData();
-        fetchSkillsData();
+            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+            const registeredProfiles = JSON.parse(localStorage.getItem("registered_profiles") || "[]");
+
+            const combined = [...apiData];
+            for (const locItem of localList) {
+                const locName = (locItem.studentName || locItem.name || '').trim().toLowerCase();
+                const exists = combined.some(item => (item.studentName || item.name || '').trim().toLowerCase() === locName);
+                if (!exists) {
+                    combined.push(locItem);
+                }
+            }
+
+            const sorted = combined.sort((a, b) => {
+                const lpaA = Number.parseFloat(a.packageLpa || a.lpa) || 0;
+                const lpaB = Number.parseFloat(b.packageLpa || b.lpa) || 0;
+                if (lpaB !== lpaA) return lpaB - lpaA;
+                const cgpaA = Number.parseFloat(a.cgpa) || 0;
+                const cgpaB = Number.parseFloat(b.cgpa) || 0;
+                return cgpaB - cgpaA;
+            });
+
+            const mapped = sorted.map((s, index) => {
+                const sName = s.studentName || s.name || 'Student';
+                const nameParts = sName.trim().split(' ');
+                let initials = 'ST';
+                if (nameParts.length >= 2 && nameParts[0][0] && nameParts[1][0]) {
+                    initials = (nameParts[0][0] + nameParts[1][0]).toUpperCase();
+                } else if (nameParts[0] && nameParts[0].length >= 2) {
+                    initials = nameParts[0].substring(0, 2).toUpperCase();
+                } else if (nameParts[0]) {
+                    initials = nameParts[0].toUpperCase();
+                }
+
+                const studentNameKey = sName.trim().toLowerCase();
+                const rawId = s.id ?? s.studentId ?? s.topStudentId ?? s.topPlacedStudentId ?? s._id ?? null;
+                const studentId = rawId !== null ? rawId : `local-${index}-${studentNameKey.replace(/\s+/g, '-')}`;
+                const storedExtra = storedExtras[studentNameKey] || storedExtras[studentId] || storedExtras[s.id] || {};
+                const regProfile = registeredProfiles.find(p => (p.fullName || p.name || '').trim().toLowerCase() === studentNameKey) || {};
+
+                const branch = s.branch || s.department || s.course || storedExtra.branch || regProfile.department || regProfile.branch || regProfile.course || 'CS';
+                const passingYear = s.passingYear || s.year || storedExtra.passingYear || regProfile.currentYear || regProfile.passingYear || '2026';
+                const skillName = s.skills || s.skill || storedExtra.skill || 'Software Engineer';
+                const companyName = s.companyName || s.company || 'Company';
+
+                return {
+                    id: studentId,
+                    rank: index + 1,
+                    name: sName,
+                    initials: initials,
+                    branch: branch,
+                    passingYear: String(passingYear),
+                    cgpa: s.cgpa || '9.0',
+                    lpa: s.packageLpa || s.lpa || 0,
+                    skill: skillName,
+                    skillColor: '#fae8ff',
+                    skillTextColor: '#c026d3',
+                    company: companyName
+                };
+            });
+            setStudentsList(mapped);
+        } catch (e) {
+            console.error("Failed to fetch top placed students:", e);
+            setStudentsList([]);
+        }
+    };
+
+    const isUserAdmin = () => {
+        const userStr = localStorage.getItem("user");
+        if (!userStr) return false;
+        try {
+            const u = JSON.parse(userStr);
+            return Boolean(u && (u.role === 'ROLE_ADMIN' || u.role === 'ADMIN' || u.isAdmin || (u.email && u.email.toLowerCase().includes('admin'))));
+        } catch {
+            return false;
+        }
+    };
+
+    useEffect(() => {
+        const isAdmin = isUserAdmin();
+        if (isAdmin) {
+            fetchStats();
+            fetchDepartmentData();
+            fetchCgpaData();
+            fetchSkillsData();
+        }
         fetchTopStudents();
 
         let pollInterval;
         if (import.meta.env.MODE !== 'test') {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
-                fetchStats();
-                fetchDepartmentData();
-                fetchCgpaData();
-                fetchSkillsData();
+                if (isAdmin) {
+                    fetchStats();
+                    fetchDepartmentData();
+                    fetchCgpaData();
+                    fetchSkillsData();
+                }
                 fetchTopStudents();
-            }, 15000);
+            }, 10000);
         }
 
         const handleVisibility = () => {
             if (document.visibilityState === 'visible') {
-                fetchStats();
-                fetchDepartmentData();
-                fetchCgpaData();
-                fetchSkillsData();
+                if (isAdmin) {
+                    fetchStats();
+                    fetchDepartmentData();
+                    fetchCgpaData();
+                    fetchSkillsData();
+                }
                 fetchTopStudents();
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         const handleStorageChange = () => {
             fetchTopStudents();
@@ -366,6 +394,7 @@ export default function Placeview() {
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
             window.removeEventListener('storage', handleStorageChange);
         };
     }, []);

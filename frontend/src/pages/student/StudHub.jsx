@@ -661,19 +661,46 @@ function useStudHubData() {
         return stored && JSON.parse(stored).length > 0 ? JSON.parse(stored) : initialStudentQueries;
     });
 
-    useEffect(() => {
-        const fetchQueries = async () => {
-            try {
-                const response = await getStudentQueries();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedQueries = response.data.map(mapQueryData);
-                    mappedQueries.sort((a, b) => b.id - a.id);
-                    setQueries(mappedQueries);
-                }
-            } catch (error) {
-                console.error("Failed to fetch student queries:", error);
+    const fetchQueries = async () => {
+        try {
+            const response = await getStudentQueries();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedQueries = response.data.map(mapQueryData);
+                mappedQueries.sort((a, b) => b.id - a.id);
+                setQueries(mappedQueries);
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch student queries:", error);
+        }
+    };
+
+    const fetchStories = async () => {
+        try {
+            const response = await getStudentPlacementStories();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedStories = response.data.map(mapStoryData);
+                mappedStories.sort((a, b) => b.id - a.id);
+                setStories(mappedStories);
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement stories:", error);
+        }
+    };
+
+    const fetchDrives = async () => {
+        try {
+            const response = await getStudentPlacementDrives();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedDrives = response.data.map(mapDriveData);
+                mappedDrives.sort((a, b) => b.id - a.id);
+                setDrives(mappedDrives);
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement drives:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchQueries();
 
         let pollInterval;
@@ -681,7 +708,7 @@ function useStudHubData() {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchQueries();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -690,40 +717,16 @@ function useStudHubData() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
     useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await getStudentPlacementStories();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(mapStoryData);
-                    mappedStories.sort((a, b) => b.id - a.id);
-                    setStories(mappedStories);
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement stories:", error);
-            }
-        };
-
-        const fetchDrives = async () => {
-            try {
-                const response = await getStudentPlacementDrives();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrives = response.data.map(mapDriveData);
-                    mappedDrives.sort((a, b) => b.id - a.id);
-                    setDrives(mappedDrives);
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement drives:", error);
-            }
-        };
-
         fetchStories();
         fetchDrives();
 
@@ -733,7 +736,7 @@ function useStudHubData() {
                 if (document.hidden) return;
                 fetchStories();
                 fetchDrives();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -743,10 +746,12 @@ function useStudHubData() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -803,6 +808,7 @@ function useQueriesPanel(queries, setQueries) {
             setQuerySubject("");
             setQueryMessage("");
             triggerToast("Query submitted successfully! Admin will respond shortly.", "success");
+            try { await fetchQueries(); } catch (err) { console.error(err); }
         } catch (error) {
             console.error("Failed to submit query:", error);
             triggerToast("Failed to submit query. Please try again.", "error");
@@ -814,6 +820,7 @@ function useQueriesPanel(queries, setQueries) {
             await resolveStudentQuery(queryId);
             setQueries(prev => prev.map(q => q.id === queryId ? { ...q, status: 'resolved' } : q));
             triggerToast("Query marked as resolved!", "success");
+            try { await fetchQueries(); } catch (err) { console.error(err); }
         } catch (error) {
             console.error("Failed to resolve query:", error);
             triggerToast("Failed to resolve query.", "error");

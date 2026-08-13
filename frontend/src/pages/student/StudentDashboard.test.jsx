@@ -51,5 +51,10 @@ describe('StudentDashboard Component', () => {
     expect(await screen.findByText('Student notification test')).toBeInTheDocument();
     expect(screen.getByText('12/08/2026 at 06:40 PM')).toBeInTheDocument();
   });
+
+  it('renders applied job list correctly without throwing reference errors', async () => {
+    render(<StudentDashboard onNavigate={() => {}} />);
+    expect(await screen.findByText('Latest Job Opportunities')).toBeInTheDocument();
+  });
 });
 
