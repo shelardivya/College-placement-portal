@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 
 import { useState, useEffect, useCallback } from 'react';
 
-import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent, deleteTopPlacedStudent } from '../../auth/authService';
+import { getAdminStudentAnalyticsDashboard, getTopSkillsAnalytics, getPlacementCgpaAnalytics, getDepartmentAnalytics, getAllTopPlacedStudents, addTopPlacedStudent, deleteTopPlacedStudent, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Users,
     TrendingUp,
@@ -199,75 +199,76 @@ export default function StudentAnalytics() {
     });
 
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const response = await getAdminStudentAnalyticsDashboard();
-                if (response.data) {
-                    setAnalyticsStats(response.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch admin student analytics:", error);
+
+
+    const fetchStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response.data) {
+                setAnalyticsStats(response.data);
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch admin student analytics:", error);
+        }
+    };
 
-        const fetchDepartmentData = async () => {
-            try {
-                const res = await getDepartmentAnalytics();
-                if (res.data) {
-                    setTotalStudents(res.data.totalStudents || 0);
-                    const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
-                    if (res.data.departments && Array.isArray(res.data.departments)) {
-                        const mapped = res.data.departments.map((d, index) => ({
-                            label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
-                            count: d.count,
-                            percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
-                            color: colors[index % colors.length]
-                        }));
-                        setDepartmentData(mapped);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to fetch department analytics", e);
-            }
-        };
-
-        const fetchCgpaData = async () => {
-            try {
-                const res = await getPlacementCgpaAnalytics();
-                if (res.data && Array.isArray(res.data)) {
-                    const mapped = res.data.map(c => ({
-                        range: c.range,
-                        students: c.count
-                    }));
-                    setCgpaData(mapped);
-                    const maxCount = Math.max(...mapped.map(d => d.students), 0);
-                    setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
-                }
-            } catch (e) {
-                console.error("Failed to fetch CGPA analytics", e);
-            }
-        };
-
-        const fetchSkillsData = async () => {
-            try {
-                const res = await getTopSkillsAnalytics();
-                if (res.data && Array.isArray(res.data)) {
-                    const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
-
-                    // Assuming 'count' is the percentage or we can just use count as a rough percentage for the UI bar width
-                    const mapped = res.data.map((s, index) => ({
-                        skill: s.skill,
-                        percentage: s.count,
+    const fetchDepartmentData = async () => {
+        try {
+            const res = await getDepartmentAnalytics();
+            if (res.data) {
+                setTotalStudents(res.data.totalStudents || 0);
+                const colors = ['#1e3a6e', '#6c8dd6', '#06b6d4', '#a5b4fc', '#e2e8f0', '#f59e0b', '#10b981'];
+                if (res.data.departments && Array.isArray(res.data.departments)) {
+                    const mapped = res.data.departments.map((d, index) => ({
+                        label: d.department && d.department.trim() !== '' ? d.department : 'Unspecified',
+                        count: d.count,
+                        percentage: res.data.totalStudents ? (d.count / res.data.totalStudents) * 100 : 0,
                         color: colors[index % colors.length]
                     }));
-                    setSkillsData(mapped);
+                    setDepartmentData(mapped);
                 }
-            } catch (e) {
-                console.error("Failed to fetch skills analytics", e);
             }
-        };
+        } catch (e) {
+            console.error("Failed to fetch department analytics", e);
+        }
+    };
 
+    const fetchCgpaData = async () => {
+        try {
+            const res = await getPlacementCgpaAnalytics();
+            if (res.data && Array.isArray(res.data)) {
+                const mapped = res.data.map(c => ({
+                    range: c.range,
+                    students: c.count
+                }));
+                setCgpaData(mapped);
+                const maxCount = Math.max(...mapped.map(d => d.students), 0);
+                setMaxStudents(Math.ceil((maxCount + 10) / 10) * 10); // round up to nearest 10
+            }
+        } catch (e) {
+            console.error("Failed to fetch CGPA analytics", e);
+        }
+    };
+
+    const fetchSkillsData = async () => {
+        try {
+            const res = await getTopSkillsAnalytics();
+            if (res.data && Array.isArray(res.data)) {
+                const colors = ['#1e3a6e', '#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f43f5e'];
+
+                const mapped = res.data.map((s, index) => ({
+                    skill: s.skill,
+                    percentage: s.count,
+                    color: colors[index % colors.length]
+                }));
+                setSkillsData(mapped);
+            }
+        } catch (e) {
+            console.error("Failed to fetch skills analytics", e);
+        }
+    };
+
+    useEffect(() => {
         fetchStats();
         fetchDepartmentData();
         fetchCgpaData();
@@ -281,7 +282,7 @@ export default function StudentAnalytics() {
                 fetchDepartmentData();
                 fetchCgpaData();
                 fetchSkillsData();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -293,10 +294,12 @@ export default function StudentAnalytics() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -1097,15 +1100,18 @@ export default function StudentAnalytics() {
                                 <label htmlFor="add-student-name" className="form-label">
                                     Student Full Name <span className="required-star">*</span>
                                 </label>
-                                <input
-                                    id="add-student-name"
-                                    type="text"
-                                    className="form-input"
-                                    placeholder="e.g. Priya Sharma"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    required
-                                />
+                                <div className="name-input-wrapper">
+                                    <input
+                                        id="add-student-name"
+                                        type="text"
+                                        className="form-input"
+                                        placeholder="e.g. Priya Sharma"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        required
+                                        autoComplete="off"
+                                    />
+                                </div>
                             </div>
 
                             <div className="form-row">

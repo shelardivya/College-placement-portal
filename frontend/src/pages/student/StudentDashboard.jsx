@@ -494,9 +494,9 @@ function StudentLatestJobs({ jobs, jobsPage, setJobsPage, appliedJobs, handleApp
                         .slice((jobsPage - 1) * JOBS_PER_PAGE, jobsPage * JOBS_PER_PAGE)
                         .map((job) => {
                             const jobId = job.id || job._id;
-                            const isApplied = Array.isArray(appliedJobs)
+                            const isApplied = Boolean(job.isApplied) || (Array.isArray(appliedJobs)
                                 ? appliedJobs.some(id => String(id) === String(jobId))
-                                : Boolean(appliedJobs[jobId]);
+                                : Boolean(appliedJobs[jobId]));
                             return (
                                 <motion.div className="job-card" key={job.id || job._id || job.title}
                                     initial={{ opacity: 0, y: 15 }}
@@ -884,7 +884,19 @@ export default function
 
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 
-                const localizedData = sorted.map(notif => localizeStudentNotif(notif));
+                const uniqueMap = new Map();
+                sorted.forEach(notif => {
+                    const msgKey = `${(notif.message || notif.text || '').trim()}-${notif.createdDate || notif.createdAt || ''}-${notif.createdTime || ''}`;
+                    const idKey = notif.id ? `id-${notif.id}` : null;
+                    if (idKey && uniqueMap.has(idKey)) return;
+                    if (uniqueMap.has(msgKey)) return;
+
+                    if (idKey) uniqueMap.set(idKey, notif);
+                    uniqueMap.set(msgKey, notif);
+                });
+                const deduplicated = Array.from(new Set(uniqueMap.values()));
+
+                const localizedData = deduplicated.map(notif => localizeStudentNotif(notif));
                 setNotifications(localizedData);
             }
 
@@ -947,6 +959,17 @@ export default function
 
     const [dashboardStats, setDashboardStats] = useState(null);
 
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await getStudentDashboardStats();
+            if (response && response.data) {
+                setDashboardStats(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching dashboard stats:", error);
+        }
+    };
+
     useEffect(() => {
         const fetchStudentProfile = async () => {
             try {
@@ -999,17 +1022,6 @@ export default function
             }
         };
 
-        const fetchDashboardStats = async () => {
-            try {
-                const response = await getStudentDashboardStats();
-                if (response.data) {
-                    setDashboardStats(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching dashboard stats:", error);
-            }
-        };
-
         fetchStudentProfile();
         fetchDashboardStats();
 
@@ -1019,7 +1031,7 @@ export default function
                 if (document.hidden) return;
                 fetchDashboardStats();
                 fetchNotifications();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -1029,10 +1041,12 @@ export default function
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -1266,22 +1280,34 @@ export default function
                     }
                     return prevArr;
                 });
-                setToastMessage(`Successfully applied for the ${selectedJob.role} role at ${selectedJob.company}!`);
+                const roleTitle = selectedJob.role || selectedJob.jobRole || selectedJob.title || 'selected';
+                const compName = selectedJob.company || selectedJob.companyName || 'the company';
+                setToastMessage(`Successfully applied for the ${roleTitle} role at ${compName}!`);
                 setToastType('success');
                 setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
 
                 setSelectedJob(null);
                 setResumeFile(null);
                 setResumeFileName("");
 
-                fetchDashboardStats();
+                try {
+                    await Promise.allSettled([
+                        fetchDashboardStats(),
+                        fetchJobs(),
+                        fetchMatches(),
+                        fetchNotifications()
+                    ]);
+                } catch (statsErr) {
+                    console.error("Error updating stats after application:", statsErr);
+                }
 
             } catch (error) {
                 console.error("Failed to apply for job:", error);
                 const targetJobId = selectedJob?.id || selectedJob?._id;
                 if (error.response?.status === 409) {
                     setToastMessage(error.response.data?.message || "You have already applied for this job.");
-                    setToastType('error');
+                    setToastType('info');
                     if (targetJobId) {
                         setAppliedJobs(prev => {
                             const prevArr = Array.isArray(prev) ? prev : [];
@@ -1301,7 +1327,7 @@ export default function
                     setResumeFile(null);
                     setResumeFileName("");
                 } else {
-                    setToastMessage("Failed to apply for the job. Please try again.");
+                    setToastMessage(error.response?.data?.message || "Failed to apply for the job. Please try again.");
                     setToastType('error');
                 }
                 setShowToast(true);
@@ -1368,30 +1394,30 @@ export default function
 
     const [jobs, setJobs] = useState([]);
 
-    useEffect(() => {
-        const fetchJobs = async () => {
-            try {
-                const response = await getLatestJobs();
-                let jobList = [];
-                if (response.data) {
-                    if (Array.isArray(response.data)) {
-                        jobList = response.data;
-                    } else if (response.data.content && Array.isArray(response.data.content)) {
-                        jobList = response.data.content;
-                    } else if (response.data.jobs && Array.isArray(response.data.jobs)) {
-                        jobList = response.data.jobs;
-                    }
+    const fetchJobs = async () => {
+        try {
+            const response = await getLatestJobs();
+            let jobList = [];
+            if (response.data) {
+                if (Array.isArray(response.data)) {
+                    jobList = response.data;
+                } else if (response.data.content && Array.isArray(response.data.content)) {
+                    jobList = response.data.content;
+                } else if (response.data.jobs && Array.isArray(response.data.jobs)) {
+                    jobList = response.data.jobs;
                 }
-
-                if (jobList.length > 0) {
-                    const mappedJobs = jobList.map(mapJobData);
-
-                    setJobs(mappedJobs);
-                }
-            } catch (error) {
-                console.error("Error fetching latest jobs:", error);
             }
-        };
+
+            if (jobList.length > 0) {
+                const mappedJobs = jobList.map(mapJobData);
+                setJobs(mappedJobs);
+            }
+        } catch (error) {
+            console.error("Error fetching latest jobs:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchJobs();
 
         let pollInterval;
@@ -1399,7 +1425,7 @@ export default function
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchJobs();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -1408,39 +1434,41 @@ export default function
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
     const [resumeMatches, setResumeMatches] = useState([]);
 
-    useEffect(() => {
-        const fetchMatches = async () => {
-            try {
-                const response = await getStudentResumeMatch();
-                if (response.data && Array.isArray(response.data)) {
-                    // Assuming data might have companyName, role, matchScore, etc.
-                    const mapped = response.data.map(m => {
-                        const firstLetter = m.companyName ? m.companyName.charAt(0).toUpperCase() : 'C';
-                        return {
-                            company: m.companyName || 'Company',
-                            role: m.jobRole || m.role || 'Job Role',
-                            location: m.location || 'Location',
-                            deadline: m.deadline || 'Upcoming',
-                            score: m.matchPercentage ?? m.matchScore ?? 0,
-                            logoLetter: firstLetter,
-                            logoColor: '#ea4335' // Default
-                        };
-                    });
-                    setResumeMatches(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch resume matches:", error);
+    const fetchMatches = async () => {
+        try {
+            const response = await getStudentResumeMatch();
+            if (response.data && Array.isArray(response.data)) {
+                const mapped = response.data.map(m => {
+                    const firstLetter = m.companyName ? m.companyName.charAt(0).toUpperCase() : 'C';
+                    return {
+                        company: m.companyName || 'Company',
+                        role: m.jobRole || m.role || 'Job Role',
+                        location: m.location || 'Location',
+                        deadline: m.deadline || 'Upcoming',
+                        score: m.matchPercentage ?? m.matchScore ?? 0,
+                        logoLetter: firstLetter,
+                        logoColor: '#ea4335' // Default
+                    };
+                });
+                setResumeMatches(mapped);
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch resume matches:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchMatches();
 
         let pollInterval;
@@ -1448,7 +1476,7 @@ export default function
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchMatches();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -1457,10 +1485,12 @@ export default function
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 

@@ -205,21 +205,29 @@ export const deletePlacementDrive = (id) => {
 export const getAllTopPlacedStudents = async () => {
     const token = localStorage.getItem("token");
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+        try {
+            const u = JSON.parse(userStr);
+            // If explicitly logged in as student, return empty array safely without making unauthorized admin API calls
+            if (u && u.role && !u.role.includes('ADMIN') && !u.isAdmin && !(u.email && u.email.toLowerCase().includes('admin'))) {
+                return Promise.resolve({ data: [] });
+            }
+        } catch { }
+    }
+
     try {
         return await api.get("/admin/top-placed-student/all", { headers });
     } catch (err) {
         if (err.response && (err.response.status === 403 || err.response.status === 401 || err.response.status === 404)) {
             try {
-                return await api.get("/admin/top-placed-student/all", { headers: {} });
+                return await api.get("/student/top-placed-student/all", { headers });
             } catch {
-                try {
-                    return await api.get("/student/top-placed-student/all", { headers });
-                } catch {
-                    throw err;
-                }
+                return { data: [] };
             }
         }
-        throw err;
+        return { data: [] };
     }
 };
 

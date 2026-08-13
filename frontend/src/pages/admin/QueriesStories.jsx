@@ -301,32 +301,33 @@ export default function QueriesStories() {
     // React States for student queries and pagination
     const [queries, setQueries] = useState(loadInitialStudentQueries);
 
-    useEffect(() => {
-        const fetchQueries = async () => {
-            try {
-                const response = await getAllQueries();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedQueries = response.data.map(q => {
-                        return {
-                            ...q,
-                            id: q.id,
-                            name: q.studentName,
-                            course: q.department,
-                            avatar: buildQueryAvatar(q.studentName || q.name),
-                            colorClass: 'blue',
-                            title: q.subject,
-                            message: q.description,
-                            status: (q.status || 'pending').toLowerCase(),
-                            reply: q.adminReply,
-                            date: parseCreatedAt(q.createdAt)
-                        };
-                    });
-                    setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch queries:", error);
+    const fetchQueries = async () => {
+        try {
+            const response = await getAllQueries();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedQueries = response.data.map(q => {
+                    return {
+                        ...q,
+                        id: q.id,
+                        name: q.studentName,
+                        course: q.department,
+                        avatar: buildQueryAvatar(q.studentName || q.name),
+                        colorClass: 'blue',
+                        title: q.subject,
+                        message: q.description,
+                        status: (q.status || 'pending').toLowerCase(),
+                        reply: q.adminReply,
+                        date: parseCreatedAt(q.createdAt)
+                    };
+                });
+                setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch queries:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchQueries();
 
         let pollInterval;
@@ -334,7 +335,7 @@ export default function QueriesStories() {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchQueries();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -343,10 +344,12 @@ export default function QueriesStories() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -477,18 +480,19 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialDrives;
     });
 
-    useEffect(() => {
-        const fetchDrives = async () => {
-            try {
-                const response = await getAllPlacementDrives();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrives = response.data.map(mapApiDriveToUi);
-                    setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement drives:", error);
+    const fetchDrives = async () => {
+        try {
+            const response = await getAllPlacementDrives();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedDrives = response.data.map(mapApiDriveToUi);
+                setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch placement drives:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchDrives();
 
         let pollInterval;
@@ -496,7 +500,7 @@ export default function QueriesStories() {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchDrives();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -505,10 +509,12 @@ export default function QueriesStories() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -681,18 +687,19 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialStories;
     });
 
-    useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await getAllPlacementStories();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(mapApiStoryToUi);
-                    setStories(mappedStories.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement stories:", error);
+    const fetchStories = async () => {
+        try {
+            const response = await getAllPlacementStories();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedStories = response.data.map(mapApiStoryToUi);
+                setStories(mappedStories.toSorted((a, b) => b.id - a.id));
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch placement stories:", error);
+        }
+    };
+
+    useEffect(() => {
         fetchStories();
 
         let pollInterval;
@@ -700,7 +707,7 @@ export default function QueriesStories() {
             pollInterval = setInterval(() => {
                 if (document.hidden) return;
                 fetchStories();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -709,10 +716,12 @@ export default function QueriesStories() {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 

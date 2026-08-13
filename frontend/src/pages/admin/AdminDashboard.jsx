@@ -1638,7 +1638,19 @@ function AdminDashboard({ onNavigate }) {
                 const data = Array.isArray(response.data) ? response.data : fallback;
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 
-                const localizedData = sorted.map(notif => localizeNotification(notif));
+                const uniqueMap = new Map();
+                sorted.forEach(notif => {
+                    const msgKey = `${(notif.message || notif.text || '').trim()}-${notif.createdDate || notif.createdAt || ''}-${notif.createdTime || ''}`;
+                    const idKey = notif.id ? `id-${notif.id}` : null;
+                    if (idKey && uniqueMap.has(idKey)) return;
+                    if (uniqueMap.has(msgKey)) return;
+
+                    if (idKey) uniqueMap.set(idKey, notif);
+                    uniqueMap.set(msgKey, notif);
+                });
+                const deduplicated = Array.from(new Set(uniqueMap.values()));
+
+                const localizedData = deduplicated.map(notif => localizeNotification(notif));
                 setNotifications(localizedData);
             }
 
@@ -1691,6 +1703,84 @@ function AdminDashboard({ onNavigate }) {
 
     const [recentPosts, setRecentPosts] = useState([]);
 
+    const fetchRecentPosts = async () => {
+        try {
+            const response = await getAdminRecentPosts();
+            if (response && response.data) {
+                setRecentPosts(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching recent posts:", error);
+        }
+    };
+
+    const fetchDraftsData = async () => {
+        try {
+            const response = await getDrafts();
+            const rawData = response ? response.data : null;
+            let draftsData = [];
+            if (Array.isArray(rawData)) {
+                draftsData = rawData;
+            } else if (rawData && Array.isArray(rawData.drafts)) {
+                draftsData = rawData.drafts;
+            } else if (rawData && Array.isArray(rawData.content)) {
+                draftsData = rawData.content;
+            }
+
+            const mappedDrafts = draftsData.map(d => ({
+                id: d.id,
+                title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
+                company: d.companyName || d.company || 'Unknown Company',
+                location: d.location || "Remote",
+                requirements: d.jobRequirements || "",
+                degree: d.degree || "",
+                branch: d.branch || "",
+                cgpa: d.minCgpa || "",
+                year: d.passingYear || "",
+                experience: d.experience || "",
+                deadline: d.deadline || "",
+                lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
+            }));
+            setDrafts(mappedDrafts);
+        } catch (error) {
+            console.error("Failed to fetch drafts", error);
+        }
+    };
+
+    const fetchApplicantsMatching = async () => {
+        try {
+            const response = await getAdminApplicantsMatching();
+            if (response.data && Array.isArray(response.data)) {
+                const mapped = response.data.map(app => ({
+                    id: app.id || crypto.randomUUID(),
+                    name: app.studentName || '',
+                    company: app.companyName || app.jobRole || '',
+                    degree: app.course || app.degree || '',
+                    branch: app.department || app.branch || '',
+                    cgpa: app.cgpa ?? '',
+                    year: app.passingYear || '',
+                    match: app.matchPercentage ?? app.matchScore ?? '',
+                    date: app.appliedAt || app.appliedDate || ''
+                }));
+                setApplicants(mapped);
+                setFilteredApplicants(mapped);
+            }
+        } catch (error) {
+            console.error("Failed to fetch matching applicants", error);
+        }
+    };
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response && response.data) {
+                setDashboardStats(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin dashboard stats:", error);
+        }
+    };
+
     useEffect(() => {
         const fetchAdminProfile = async () => {
             try {
@@ -1705,84 +1795,6 @@ function AdminDashboard({ onNavigate }) {
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
-            }
-        };
-
-        const fetchRecentPosts = async () => {
-            try {
-                const response = await getAdminRecentPosts();
-                if (response.data) {
-                    setRecentPosts(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching recent posts:", error);
-            }
-        };
-
-        const fetchApplicantsMatching = async () => {
-            try {
-                const response = await getAdminApplicantsMatching();
-                if (response.data && Array.isArray(response.data)) {
-                    const mapped = response.data.map(app => ({
-                        id: app.id || crypto.randomUUID(),
-                        name: app.studentName || '',
-                        company: app.companyName || app.jobRole || '',
-                        degree: app.course || app.degree || '',
-                        branch: app.department || app.branch || '',
-                        cgpa: app.cgpa ?? '',
-                        year: app.passingYear || '',
-                        match: app.matchPercentage ?? app.matchScore ?? '',
-                        date: app.appliedAt || app.appliedDate || ''
-                    }));
-                    setApplicants(mapped);
-                    setFilteredApplicants(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch matching applicants", error);
-            }
-        };
-
-        const fetchDraftsData = async () => {
-            try {
-                const response = await getDrafts();
-                const rawData = response ? response.data : null;
-                let draftsData = [];
-                if (Array.isArray(rawData)) {
-                    draftsData = rawData;
-                } else if (rawData && Array.isArray(rawData.drafts)) {
-                    draftsData = rawData.drafts;
-                } else if (rawData && Array.isArray(rawData.content)) {
-                    draftsData = rawData.content;
-                }
-
-                const mappedDrafts = draftsData.map(d => ({
-                    id: d.id,
-                    title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
-                    company: d.companyName || d.company || 'Unknown Company',
-                    location: d.location || "Remote",
-                    requirements: d.jobRequirements || "",
-                    degree: d.degree || "",
-                    branch: d.branch || "",
-                    cgpa: d.minCgpa || "",
-                    year: d.passingYear || "",
-                    experience: d.experience || "",
-                    deadline: d.deadline || "",
-                    lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
-                }));
-                setDrafts(mappedDrafts);
-            } catch (error) {
-                console.error("Failed to fetch drafts", error);
-            }
-        };
-
-        const fetchDashboardStats = async () => {
-            try {
-                const response = await getAdminStudentAnalyticsDashboard();
-                if (response.data) {
-                    setDashboardStats(response.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch admin dashboard stats:", error);
             }
         };
 
@@ -1801,7 +1813,7 @@ function AdminDashboard({ onNavigate }) {
                 fetchDraftsData();
                 fetchDashboardStats();
                 fetchNotifications();
-            }, 15000);
+            }, 5000);
         }
 
         const handleVisibility = () => {
@@ -1814,10 +1826,12 @@ function AdminDashboard({ onNavigate }) {
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
 
         return () => {
             if (pollInterval) clearInterval(pollInterval);
             document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
         };
     }, []);
 
@@ -1907,41 +1921,7 @@ function AdminDashboard({ onNavigate }) {
         return () => clearTimeout(timer);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
 
-    useEffect(() => {
-        const fetchDraftsData = async () => {
-            try {
-                const response = await getDrafts();
-                const rawData = response ? response.data : null;
-                let draftsData = [];
-                if (Array.isArray(rawData)) {
-                    draftsData = rawData;
-                } else if (rawData && Array.isArray(rawData.drafts)) {
-                    draftsData = rawData.drafts;
-                } else if (rawData && Array.isArray(rawData.content)) {
-                    draftsData = rawData.content;
-                }
 
-                const formattedDrafts = draftsData.map(d => ({
-                    id: d.id,
-                    title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
-                    company: d.companyName || d.company || 'Unknown Company',
-                    location: d.location || "Remote",
-                    requirements: d.jobRequirements || "",
-                    degree: d.degree || "",
-                    branch: d.branch || "",
-                    cgpa: d.minCgpa || "",
-                    year: d.passingYear || "",
-                    experience: d.experience || "",
-                    deadline: d.deadline || "",
-                    lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
-                }));
-                setDrafts(formattedDrafts);
-            } catch (error) {
-                console.error("Error fetching drafts:", error);
-            }
-        };
-        fetchDraftsData();
-    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -2030,8 +2010,15 @@ function AdminDashboard({ onNavigate }) {
 
             triggerToast(`Job posted successfully for ${createdJob.company}!`, 'success');
             setIsSidebarOpen(false);
-            fetchRecentPosts();
-            fetchDraftsData();
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats(),
+                    fetchNotifications()
+                ]);
+            } catch (err) { console.error("Error refreshing data:", err); }
         } catch (error) {
             console.error("Failed to post job:", error);
             const serverMsg = error.response?.data?.message;
@@ -2100,7 +2087,13 @@ function AdminDashboard({ onNavigate }) {
 
             triggerToast(`Draft saved for ${newDraft.company}!`, 'success');
             setIsSidebarOpen(false);
-            fetchDraftsData();
+            try {
+                await Promise.allSettled([
+                    fetchDraftsData(),
+                    fetchRecentPosts(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing drafts:", err); }
         } catch (error) {
             console.error("Failed to save draft:", error);
             const serverMsg = error.response?.data?.message;
@@ -2136,8 +2129,14 @@ function AdminDashboard({ onNavigate }) {
             setJobs([newPublishedJob, ...jobs]);
             setDrafts(drafts.filter(d => d.id !== draftId));
             triggerToast(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`, 'success');
-            fetchRecentPosts();
-            fetchDraftsData();
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing data after publish:", err); }
         } catch (error) {
             console.error("Failed to publish draft:", error);
             triggerToast("Failed to publish draft. Please try again.", 'error');
