@@ -207,28 +207,26 @@ export const getAllTopPlacedStudents = async () => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     const userStr = localStorage.getItem("user");
+    let isAdmin = true;
     if (userStr) {
         try {
             const u = JSON.parse(userStr);
-            // If explicitly logged in as student, return empty array safely without making unauthorized admin API calls
-            if (u && u.role && !u.role.includes('ADMIN') && !u.isAdmin && !(u.email && u.email.toLowerCase().includes('admin'))) {
-                return Promise.resolve({ data: [] });
+            const roleStr = String(u.role || u.userRole || u.roleName || u.type || '').toUpperCase();
+            if (roleStr.includes('STUDENT') && !roleStr.includes('ADMIN') && !u.isAdmin && !(u.email && String(u.email).toLowerCase().includes('admin'))) {
+                isAdmin = false;
             }
         } catch { }
     }
 
-    try {
-        return await api.get("/admin/top-placed-student/all", { headers });
-    } catch (err) {
-        if (err.response && (err.response.status === 403 || err.response.status === 401 || err.response.status === 404)) {
-            try {
-                return await api.get("/student/top-placed-student/all", { headers });
-            } catch {
-                return { data: [] };
-            }
+    if (isAdmin) {
+        try {
+            return await api.get("/admin/top-placed-student/all", { headers });
+        } catch {
+            return { data: [] };
         }
-        return { data: [] };
     }
+
+    return Promise.resolve({ data: [] });
 };
 
 export const addTopPlacedStudent = (studentData) => {

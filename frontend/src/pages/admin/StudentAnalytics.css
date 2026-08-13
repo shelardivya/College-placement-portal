@@ -1252,7 +1252,7 @@
     cursor: pointer;
     box-sizing: border-box;
     transition: all 0.2s ease;
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .form-select:hover {
