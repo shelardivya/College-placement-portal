@@ -49,10 +49,7 @@ public class PlacementStoryService {
             throws IOException {
 
         RegisterEntity student =
-                registerRepository.findByFullName(
-                        request.getStudentName()
-                ).orElseThrow(() ->
-                        new IllegalArgumentException("Student not found."));
+                findStudentByName(request.getStudentName());
 
         PlacementStoryEntity story =
                 new PlacementStoryEntity();
@@ -306,10 +303,7 @@ public class PlacementStoryService {
                                 new IllegalArgumentException("Placement Story not found."));
 
         RegisterEntity student =
-                registerRepository.findByFullName(
-                        request.getStudentName()
-                ).orElseThrow(() ->
-                        new IllegalArgumentException("Student not found."));
+                findStudentByName(request.getStudentName());
 
         story.setStudent(student);
 
@@ -474,6 +468,169 @@ public class PlacementStoryService {
 
         return "Placement Story Deleted Successfully.";
 
+    }
+    // ==========================================
+// Find Student By Name
+// Handles:
+// - Extra spaces
+// - Uppercase / lowercase differences
+// - Exact matching
+// ==========================================
+    private RegisterEntity findStudentByName(String inputName) {
+
+        if (inputName == null || inputName.trim().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "Student name is required."
+            );
+        }
+
+        // ==========================================
+        // Normalize Input
+        // ==========================================
+
+        String normalizedName =
+                inputName.trim().replaceAll("\\s+", " ");
+
+        // ==========================================
+        // Exact Name Match - Case Insensitive
+        // ==========================================
+
+        java.util.List<RegisterEntity> students =
+                registerRepository.findByFullNameIgnoreCase(
+                        normalizedName
+                );
+
+        // ==========================================
+        // Exact Match Found
+        // ==========================================
+
+        if (students.size() == 1) {
+
+            return students.get(0);
+
+        }
+
+        // ==========================================
+        // No Exact Match
+        // ==========================================
+
+        java.util.List<RegisterEntity> allStudents =
+                registerRepository.findAllByRole(Role.STUDENT);
+
+        RegisterEntity suggestedStudent = null;
+
+        int bestDistance = Integer.MAX_VALUE;
+
+        for (RegisterEntity student : allStudents) {
+
+            String registeredName =
+                    student.getFullName()
+                            .trim()
+                            .replaceAll("\\s+", " ");
+
+            int distance =
+                    calculateLevenshteinDistance(
+                            normalizedName.toLowerCase(),
+                            registeredName.toLowerCase()
+                    );
+
+            if (distance < bestDistance) {
+
+                bestDistance = distance;
+                suggestedStudent = student;
+
+            }
+
+        }
+
+        // ==========================================
+        // Similar Name Found
+        // ==========================================
+
+        if (suggestedStudent != null &&
+                bestDistance <= 2) {
+
+            throw new IllegalArgumentException(
+                    "Student name seems incorrect. " +
+                            "Did you mean \"" +
+                            suggestedStudent.getFullName() +
+                            "\"?"
+            );
+
+        }
+
+        // ==========================================
+        // No Similar Name Found
+        // ==========================================
+
+        throw new IllegalArgumentException(
+                "Student not found. " +
+                        "Please enter the registered student's full name."
+        );
+    }
+    private int calculateLevenshteinDistance(
+            String first,
+            String second
+    ) {
+
+        int[][] dp =
+                new int[first.length() + 1]
+                        [second.length() + 1];
+
+        // ==========================================
+        // Initialize First Row
+        // ==========================================
+
+        for (int i = 0; i <= first.length(); i++) {
+
+            dp[i][0] = i;
+
+        }
+
+        // ==========================================
+        // Initialize First Column
+        // ==========================================
+
+        for (int j = 0; j <= second.length(); j++) {
+
+            dp[0][j] = j;
+
+        }
+
+        // ==========================================
+        // Calculate Distance
+        // ==========================================
+
+        for (int i = 1; i <= first.length(); i++) {
+
+            for (int j = 1; j <= second.length(); j++) {
+
+                int cost;
+
+                if (first.charAt(i - 1)
+                        == second.charAt(j - 1)) {
+
+                    cost = 0;
+
+                } else {
+
+                    cost = 1;
+
+                }
+
+                dp[i][j] =
+                        Math.min(
+                                Math.min(
+                                        dp[i - 1][j] + 1,
+                                        dp[i][j - 1] + 1
+                                ),
+                                dp[i - 1][j - 1] + cost
+                        );
+            }
+        }
+
+        return dp[first.length()][second.length()];
     }
 
 }

@@ -22,6 +22,7 @@ public interface RegisterRepository extends JpaRepository<RegisterEntity, Long> 
     Optional<RegisterEntity> findById(Long id);
 
     Optional<RegisterEntity> findByFullName(String fullName);
+    List<RegisterEntity> findByFullNameIgnoreCase(String fullName);
     List<RegisterEntity> findAllByRole(Role role);
 
     // ==========================================
@@ -61,4 +62,5 @@ public interface RegisterRepository extends JpaRepository<RegisterEntity, Long> 
        ORDER BY r.fullName ASC
        """)
     List<PlacementDriveSpecificStudentDto> getPlacementDriveSpecificStudents();
+
 }

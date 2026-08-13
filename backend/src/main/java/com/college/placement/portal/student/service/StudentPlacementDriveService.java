@@ -5,7 +5,7 @@ import com.college.placement.portal.admin.repository.PlacementDriveRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
-import com.college.placement.portal.student.Dto.StudentPlacementDriveResponseDto;
+import com.college.placement.portal.student.dto.StudentPlacementDriveResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
@@ -58,7 +58,8 @@ public class StudentPlacementDriveService {
         for (PlacementDriveEntity drive : drives) {
 
             // Only ACTIVE drives
-            if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
+            if (!"OPEN".equalsIgnoreCase(drive.getStatus())
+                    && !"UPCOMING".equalsIgnoreCase(drive.getStatus())) {
                 continue;
             }
 
@@ -68,20 +69,27 @@ public class StudentPlacementDriveService {
             }
 
             // Target Student Logic
+// ==========================================
+// Target Student Logic
+// ==========================================
 
-            if ("ALL".equalsIgnoreCase(drive.getTargetStudent())) {
+            if (drive.getTargetStudent() != null
+                    && drive.getTargetStudent().contains("ALL")) {
 
                 response.add(convertToDto(drive));
 
-            } else if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+            }
+            else if (drive.getTargetStudent() != null
+                    && drive.getTargetStudent().contains(student.getFullName())) {
 
-                if (student.getFullName().equalsIgnoreCase(
-                        drive.getSpecificStudentName()
-                )) {
+                response.add(convertToDto(drive));
 
-                    response.add(convertToDto(drive));
+            }
+            else if (drive.getSpecificStudentName() != null
+                    && student.getFullName().equalsIgnoreCase(
+                    drive.getSpecificStudentName())) {
 
-                }
+                response.add(convertToDto(drive));
 
             }
 
@@ -115,26 +123,41 @@ public class StudentPlacementDriveService {
                 placementDriveRepository.findById(id)
                         .orElseThrow(() ->
                                 new IllegalArgumentException("Placement Drive Not Found."));
+        if (!"OPEN".equalsIgnoreCase(drive.getStatus())
+                && !"UPCOMING".equalsIgnoreCase(drive.getStatus())) {
 
-        if (!"OPEN".equalsIgnoreCase(drive.getStatus())) {
             throw new IllegalArgumentException("Placement Drive Not Available.");
+
         }
 
         if (drive.getDriveDate().isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Placement Drive Expired.");
         }
 
-        if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+        if (drive.getTargetStudent() != null
+                && drive.getTargetStudent().contains("ALL")) {
 
-            if (!student.getFullName().equalsIgnoreCase(
-                    drive.getSpecificStudentName()
-            )) {
+            // Everyone can access
 
-                throw new IllegalArgumentException(
-                        "You are not eligible to view this placement drive."
-                );
+        }
+        else if (drive.getTargetStudent() != null
+                && drive.getTargetStudent().contains(student.getFullName())) {
 
-            }
+            // Selected student can access
+
+        }
+        else if (drive.getSpecificStudentName() != null
+                && student.getFullName().equalsIgnoreCase(
+                drive.getSpecificStudentName())) {
+
+            // Specific student can access
+
+        }
+        else {
+
+            throw new IllegalArgumentException(
+                    "You are not eligible to view this placement drive."
+            );
 
         }
 

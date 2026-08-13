@@ -1,7 +1,7 @@
 package com.college.placement.portal.student.controller;
 
-import com.college.placement.portal.student.Dto.JobDetailsDto;
-import com.college.placement.portal.student.Dto.LatestJobDto;
+import com.college.placement.portal.student.dto.JobDetailsDto;
+import com.college.placement.portal.student.dto.LatestJobDto;
 import com.college.placement.portal.student.service.JobApplyService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestPart;

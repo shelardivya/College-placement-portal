@@ -1,4 +1,4 @@
-package com.college.placement.portal.student.Dto;
+package com.college.placement.portal.student.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -9,6 +9,8 @@ public class JobDetailsDto {
     private Long id;
 
     private String companyName;
+
+    private Boolean isApplied;
 
     private String location;
 
@@ -46,6 +48,13 @@ public class JobDetailsDto {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+    public Boolean getIsApplied() {
+        return isApplied;
+    }
+
+    public void setIsApplied(Boolean isApplied) {
+        this.isApplied = isApplied;
     }
 
     public String getLocation() {

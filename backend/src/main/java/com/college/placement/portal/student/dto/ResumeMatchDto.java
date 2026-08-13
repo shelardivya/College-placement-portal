@@ -1,28 +1,27 @@
-package com.college.placement.portal.student.Dto;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
+package com.college.placement.portal.student.dto;
 
 import java.time.LocalDate;
 
-public class LatestJobDto {
+public class ResumeMatchDto {
 
-    private Long id;
+    private Long jobId;
 
     private String companyName;
 
     private String location;
 
-    private String jobRoleOverview;
+    private String jobRole;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private LocalDate deadline;
 
-    public Long getId() {
-        return id;
+    private int matchPercentage;
+
+    public Long getJobId() {
+        return jobId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setJobId(Long jobId) {
+        this.jobId = jobId;
     }
 
     public String getCompanyName() {
@@ -41,12 +40,12 @@ public class LatestJobDto {
         this.location = location;
     }
 
-    public String getJobRoleOverview() {
-        return jobRoleOverview;
+    public String getJobRole() {
+        return jobRole;
     }
 
-    public void setJobRoleOverview(String jobRoleOverview) {
-        this.jobRoleOverview = jobRoleOverview;
+    public void setJobRole(String jobRole) {
+        this.jobRole = jobRole;
     }
 
     public LocalDate getDeadline() {
@@ -55,5 +54,13 @@ public class LatestJobDto {
 
     public void setDeadline(LocalDate deadline) {
         this.deadline = deadline;
+    }
+
+    public int getMatchPercentage() {
+        return matchPercentage;
+    }
+
+    public void setMatchPercentage(int matchPercentage) {
+        this.matchPercentage = matchPercentage;
     }
 }

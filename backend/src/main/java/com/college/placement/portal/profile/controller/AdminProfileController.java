@@ -1,7 +1,7 @@
 package com.college.placement.portal.profile.controller;
 
-import com.college.placement.portal.profile.Dto.AdminProfileUpdateDto;
-import com.college.placement.portal.profile.Dto.AdminProfileViewDto;
+import com.college.placement.portal.profile.dto.AdminProfileUpdateDto;
+import com.college.placement.portal.profile.dto.AdminProfileViewDto;
 import com.college.placement.portal.profile.service.AdminProfileService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

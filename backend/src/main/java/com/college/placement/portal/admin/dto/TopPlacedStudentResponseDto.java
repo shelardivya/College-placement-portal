@@ -14,6 +14,10 @@ public class TopPlacedStudentResponseDto {
 
     private String skills;
 
+    private String branch;
+
+    private String passingYear;
+
     // ==========================
     // Getters & Setters
     // ==========================
@@ -63,5 +67,20 @@ public class TopPlacedStudentResponseDto {
 
     public void setSkills(String skills) {
         this.skills = skills;
+    }
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getPassingYear() {
+        return passingYear;
+    }
+
+    public void setPassingYear(String passingYear) {
+        this.passingYear = passingYear;
     }
 }

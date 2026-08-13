@@ -9,4 +9,7 @@ public interface ForgetPasswordRepository extends JpaRepository<ForgetPasswordEn
 
     Optional<ForgetPasswordEntity>
     findTopByEmailOrderByRequestTimeDesc(String email);
+
+    Optional<ForgetPasswordEntity> findByToken(String token);
+
 }

@@ -27,4 +27,6 @@ public interface TopPlacedStudentRepository
     @Query("SELECT COALESCE(AVG(t.packageLpa), 0) FROM TopPlacedStudentEntity t")
     Double getAveragePackage();
 
+    List<TopPlacedStudentEntity> findAll();
+
 }
