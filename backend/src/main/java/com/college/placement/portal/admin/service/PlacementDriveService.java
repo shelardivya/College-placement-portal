@@ -9,7 +9,6 @@ import com.college.placement.portal.auth.entity.Role;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -81,19 +80,47 @@ public class PlacementDriveService {
                 request.getVenue()
         );
 
-        drive.setTargetStudent(
-                request.getTargetStudent()
-        );
+        // ==========================================
+// Target Student Logic
+// ==========================================
+        if (request.getTargetStudent() != null
+                && request.getTargetStudent().contains("ALL")) {
 
-        drive.setSpecificStudentName(
-                request.getSpecificStudentName()
-        );
+            drive.setTargetStudent(new ArrayList<>(List.of("ALL")));
+            drive.setSpecificStudentName(null);
+
+        }
+        else if (request.getTargetStudent() != null
+                && !request.getTargetStudent().isEmpty()) {
+
+            drive.setTargetStudent(
+                    new ArrayList<>(request.getTargetStudent())
+            );
+            drive.setSpecificStudentName(null);
+
+        }
+        else if (request.getSpecificStudentName() != null
+                && !request.getSpecificStudentName().isBlank()) {
+
+            drive.setTargetStudent(null);
+            drive.setSpecificStudentName(request.getSpecificStudentName());
+
+        }
+        else {
+
+            throw new IllegalArgumentException(
+                    "Please select target student."
+            );
+
+        }
+
         placementDriveRepository.save(drive);
         // ==========================================
 // Placement Drive Notification
 // ==========================================
 
-        if ("ALL".equalsIgnoreCase(drive.getTargetStudent())) {
+        if (drive.getTargetStudent() != null
+                && drive.getTargetStudent().contains("ALL")) {
 
             List<RegisterEntity> students =
                     registerRepository.findAllByRole(Role.STUDENT);
@@ -119,7 +146,49 @@ public class PlacementDriveService {
             }
 
         }
-        else if ("SPECIFIC".equalsIgnoreCase(drive.getTargetStudent())) {
+// ==========================================
+// Multiple Students
+// ==========================================
+
+        else if (drive.getTargetStudent() != null
+                && !drive.getTargetStudent().isEmpty()) {
+
+            for (String studentName : drive.getTargetStudent()) {
+
+                RegisterEntity student =
+                        registerRepository.findByFullName(studentName)
+                                .orElseThrow(() ->
+                                        new IllegalArgumentException("Student not found.")
+                                );
+
+                notificationHelper.createNotification(
+                        student,
+                        "STUDENT",
+                        "Placement Drive Invitation",
+                        "You have been invited for "
+                                + drive.getCompanyName()
+                                + " Placement Drive.\n"
+                                + "Role : "
+                                + drive.getJobRole()
+                                + "\nDate : "
+                                + drive.getDriveDate().format(
+                                DateTimeFormatter.ofPattern(
+                                        "dd MMM yyyy",
+                                        Locale.ENGLISH
+                                )
+                        )
+                );
+
+            }
+
+        }
+
+// ==========================================
+// Single Student
+// ==========================================
+
+        else if (drive.getSpecificStudentName() != null
+                && !drive.getSpecificStudentName().isBlank()) {
 
             RegisterEntity student =
                     registerRepository.findByFullName(
@@ -165,6 +234,13 @@ public class PlacementDriveService {
                 new ArrayList<>();
 
         for (PlacementDriveEntity drive : drives) {
+            if (drive.getDriveDate().isBefore(LocalDate.now())
+                    && !"CLOSED".equalsIgnoreCase(drive.getStatus())) {
+
+                drive.setStatus("CLOSED");
+                placementDriveRepository.save(drive);
+
+            }
 
             PlacementDriveResponseDto dto =
                     new PlacementDriveResponseDto();
@@ -184,6 +260,7 @@ public class PlacementDriveService {
             dto.setLocation(
                     drive.getLocation()
             );
+            dto.setVenue(drive.getVenue());
 
             dto.setDriveDate(
                     drive.getDriveDate().format(
@@ -235,6 +312,7 @@ public class PlacementDriveService {
         dto.setCompanyName(drive.getCompanyName());
         dto.setJobRole(drive.getJobRole());
         dto.setLocation(drive.getLocation());
+        dto.setVenue(drive.getVenue());
         dto.setDriveDate(
                 drive.getDriveDate().format(
                         DateTimeFormatter.ofPattern(
@@ -283,6 +361,7 @@ public class PlacementDriveService {
         drive.setLocation(
                 request.getLocation()
         );
+        drive.setVenue(request.getVenue());
 
         DateTimeFormatter dateFormatter =
                 DateTimeFormatter.ofPattern("dd MMM yyyy", java.util.Locale.ENGLISH);
@@ -307,10 +386,39 @@ public class PlacementDriveService {
         drive.setStatus(
                 request.getStatus()
         );
-        drive.setTargetStudent(request.getTargetStudent());
+// ==========================================
+// Target Student Logic
+// ==========================================
+        if (request.getTargetStudent() != null
+                && request.getTargetStudent().contains("ALL")) {
 
-        drive.setSpecificStudentName(request.getSpecificStudentName());
+            drive.setTargetStudent(new ArrayList<>(List.of("ALL")));
+            drive.setSpecificStudentName(null);
 
+        }
+        else if (request.getTargetStudent() != null
+                && !request.getTargetStudent().isEmpty()) {
+
+            drive.setTargetStudent(
+                    new ArrayList<>(request.getTargetStudent())
+            );
+            drive.setSpecificStudentName(null);
+
+        }
+        else if (request.getSpecificStudentName() != null
+                && !request.getSpecificStudentName().isBlank()) {
+
+            drive.setTargetStudent(null);
+            drive.setSpecificStudentName(request.getSpecificStudentName());
+
+        }
+        else {
+
+            throw new IllegalArgumentException(
+                    "Please select target student."
+            );
+
+        }
         placementDriveRepository.save(drive);
 
         return "Placement Drive Updated Successfully.";

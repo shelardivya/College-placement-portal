@@ -1,4 +1,4 @@
-package com.college.placement.portal.student.Dto;
+package com.college.placement.portal.student.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

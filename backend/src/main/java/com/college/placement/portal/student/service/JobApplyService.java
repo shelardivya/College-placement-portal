@@ -6,8 +6,8 @@ import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.exception.DuplicateResourceException;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import com.college.placement.portal.notification.util.NotificationHelper;
-import com.college.placement.portal.student.Dto.JobDetailsDto;
-import com.college.placement.portal.student.Dto.LatestJobDto;
+import com.college.placement.portal.student.dto.JobDetailsDto;
+import com.college.placement.portal.student.dto.LatestJobDto;
 import com.college.placement.portal.student.entity.JobApplyEntity;
 import com.college.placement.portal.student.repository.JobApplyRepository;
 import com.college.placement.portal.student.util.ResumeMatcher;
@@ -61,7 +61,15 @@ public class JobApplyService {
                 );
 
         List<LatestJobDto> response = new ArrayList<>();
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
+        String email = authentication.getName();
+
+        RegisterEntity student =
+                registerRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Student not found."));
         for (AddJobEntity job : jobs) {
 
             LatestJobDto dto = new LatestJobDto();
@@ -71,7 +79,9 @@ public class JobApplyService {
             dto.setLocation(job.getLocation());
             dto.setJobRoleOverview(job.getJobRoleOverview());
             dto.setDeadline(job.getDeadline());
-
+            dto.setIsApplied(
+                    jobApplyRepository.existsByStudentAndJob(student, job)
+            );
             response.add(dto);
         }
 

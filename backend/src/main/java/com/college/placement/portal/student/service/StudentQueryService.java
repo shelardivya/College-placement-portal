@@ -6,8 +6,8 @@ import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import com.college.placement.portal.notification.util.NotificationHelper;
-import com.college.placement.portal.student.Dto.StudentQueryResponseDto;
-import com.college.placement.portal.student.Dto.SubmitQueryRequestDto;
+import com.college.placement.portal.student.dto.StudentQueryResponseDto;
+import com.college.placement.portal.student.dto.SubmitQueryRequestDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
@@ -100,8 +100,9 @@ public class StudentQueryService {
 
         List<StudentQueryEntity> queries =
                 studentQueryRepository
-                        .findByStudentIdOrderByCreatedAtDesc(
-                                student.getId()
+                        .findByStudentIdAndStatusNotOrderByCreatedAtDesc(
+                                student.getId(),
+                                "DISCARDED"
                         );
 
         List<StudentQueryResponseDto> response =
@@ -169,6 +170,59 @@ public class StudentQueryService {
         dto.setResolvedAt(query.getResolvedAt());
 
         return dto;
+
+    }
+
+    // ==========================================
+// Student Resolve Query
+// ==========================================
+
+    public String resolveQuery(
+            Long id,
+            HttpServletRequest httpRequest
+    ) {
+
+        String header = httpRequest.getHeader("Authorization");
+
+        String token = header.substring(7);
+
+        String email = registerJWT.extractEmail(token);
+
+        RegisterEntity student =
+                registerRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Student not found."));
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Query not found."));
+
+        // Security Check
+        if (!query.getStudent().getId().equals(student.getId())) {
+            throw new IllegalArgumentException("Unauthorized access.");
+        }
+
+        query.setStatus("RESOLVED");
+
+        query.setResolvedAt(LocalDateTime.now());
+
+        studentQueryRepository.save(query);
+        // ==========================================
+// Notify Admin
+// ==========================================
+
+        notificationHelper.createNotification(
+                null,
+                "ADMIN",
+                "Query Resolved",
+                student.getFullName()
+                        + " marked query \""
+                        + query.getSubject()
+                        + "\" as resolved."
+        );
+
+        return "Query marked as resolved.";
 
     }
 

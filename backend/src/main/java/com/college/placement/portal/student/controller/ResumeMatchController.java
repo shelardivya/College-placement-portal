@@ -1,6 +1,6 @@
 package com.college.placement.portal.student.controller;
 
-import com.college.placement.portal.student.Dto.ResumeMatchDto;
+import com.college.placement.portal.student.dto.ResumeMatchDto;
 import com.college.placement.portal.student.service.ResumeMatchService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

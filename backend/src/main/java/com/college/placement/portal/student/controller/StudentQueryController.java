@@ -1,7 +1,7 @@
 package com.college.placement.portal.student.controller;
 
-import com.college.placement.portal.student.Dto.StudentQueryResponseDto;
-import com.college.placement.portal.student.Dto.SubmitQueryRequestDto;
+import com.college.placement.portal.student.dto.StudentQueryResponseDto;
+import com.college.placement.portal.student.dto.SubmitQueryRequestDto;
 import com.college.placement.portal.student.service.StudentQueryService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -75,6 +75,21 @@ public class StudentQueryController {
                         id,
                         httpRequest
                 )
+        );
+
+    }
+    // ==========================================
+// Mark Query Resolved
+// ==========================================
+
+    @PutMapping("/resolve/{id}")
+    public ResponseEntity<String> resolveQuery(
+            @PathVariable Long id,
+            HttpServletRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                studentQueryService.resolveQuery(id, request)
         );
 
     }

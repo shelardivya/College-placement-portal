@@ -25,6 +25,12 @@ public class AddTopPlacedStudentRequestDto {
     @NotBlank(message = "Skills are required.")
     private String skills;
 
+    @NotBlank(message = "Branch is required.")
+    private String branch;
+
+    @NotBlank(message = "Passing Year is required.")
+    private String passingYear;
+
     // ==========================
     // Getters & Setters
     // ==========================
@@ -67,5 +73,20 @@ public class AddTopPlacedStudentRequestDto {
 
     public void setSkills(String skills) {
         this.skills = skills;
+    }
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getPassingYear() {
+        return passingYear;
+    }
+
+    public void setPassingYear(String passingYear) {
+        this.passingYear = passingYear;
     }
 }

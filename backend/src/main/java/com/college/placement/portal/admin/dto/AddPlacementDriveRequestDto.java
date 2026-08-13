@@ -1,9 +1,5 @@
 package com.college.placement.portal.admin.dto;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.util.List;
 
 public class AddPlacementDriveRequestDto {
 
@@ -21,7 +17,7 @@ public class AddPlacementDriveRequestDto {
 
     private String status;
 
-    private String targetStudent;
+    private List<String> targetStudent;
 
     private String specificStudentName;
 
@@ -84,11 +80,11 @@ public class AddPlacementDriveRequestDto {
         this.status = status;
     }
 
-    public String getTargetStudent() {
+    public List<String> getTargetStudent() {
         return targetStudent;
     }
 
-    public void setTargetStudent(String targetStudent) {
+    public void setTargetStudent(List<String> targetStudent) {
         this.targetStudent = targetStudent;
     }
 

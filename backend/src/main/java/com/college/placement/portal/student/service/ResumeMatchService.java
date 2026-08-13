@@ -4,7 +4,7 @@ import com.college.placement.portal.admin.entity.AddJobEntity;
 import com.college.placement.portal.admin.repository.AddJobRepository;
 import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.repository.RegisterRepository;
-import com.college.placement.portal.student.Dto.ResumeMatchDto;
+import com.college.placement.portal.student.dto.ResumeMatchDto;
 import com.college.placement.portal.student.entity.JobApplyEntity;
 import com.college.placement.portal.student.repository.JobApplyRepository;
 import com.college.placement.portal.student.util.ResumeMatcher;

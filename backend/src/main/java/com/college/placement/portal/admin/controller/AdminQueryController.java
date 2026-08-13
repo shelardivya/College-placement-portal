@@ -96,4 +96,19 @@ public class AdminQueryController {
 
     }
 
+    // ==========================================
+// Discard Student Query
+// ==========================================
+
+    @PutMapping("/{id}/discard")
+    public ResponseEntity<String> discardQuery(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                adminQueryService.discardQuery(id)
+        );
+
+    }
+
 }
