@@ -23,7 +23,8 @@ import {
     CheckCircle2,
     XCircle,
     Briefcase,
-    FileText
+    FileText,
+    Circle
 } from "lucide-react";
 
 
@@ -96,11 +97,38 @@ function Registration({ onNavigate }) {
     const dobTotalDays = new Date(dobCalDate.getFullYear(), dobCalDate.getMonth() + 1, 0).getDate();
     const dobFirstDayIndex = new Date(dobCalDate.getFullYear(), dobCalDate.getMonth(), 1).getDay();
 
-    // Click away to close calendar picker
+    // Password strength card popover state & ref
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+    const passwordWrapperRef = useRef(null);
+
+    // Password validation rules & real-time strength scoring
+    const currentPassword = formData.password || "";
+    const pwdRules = {
+        length: currentPassword.length >= 8,
+        hasUpperLower: /[a-z]/.test(currentPassword) && /[A-Z]/.test(currentPassword),
+        hasNumber: /\d/.test(currentPassword),
+        hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(currentPassword)
+    };
+    const pwdScore = Object.values(pwdRules).filter(Boolean).length;
+
+    let strengthLabel = "Weak password";
+    let strengthTheme = "weak";
+    if (pwdScore >= 4) {
+        strengthLabel = "Strong password";
+        strengthTheme = "strong";
+    } else if (pwdScore >= 2) {
+        strengthLabel = "Medium password";
+        strengthTheme = "medium";
+    }
+
+    // Click away to close calendar picker and password strength card
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dobDatePickerRef.current && !dobDatePickerRef.current.contains(event.target)) {
                 setIsDobPickerOpen(false);
+            }
+            if (passwordWrapperRef.current && !passwordWrapperRef.current.contains(event.target)) {
+                setIsPasswordFocused(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -754,7 +782,7 @@ function Registration({ onNavigate }) {
                             </div>
 
                             {/* Password */}
-                            <div className="input-group">
+                            <div className="input-group password-input-group" ref={passwordWrapperRef}>
                                 <label htmlFor="passwordInput">Password</label>
                                 <div className={`input-wrapper ${errors.password ? 'has-error' : ''}`}>
                                     <Lock size={16} />
@@ -765,6 +793,7 @@ function Registration({ onNavigate }) {
                                         placeholder="Min. 8 characters"
                                         value={formData.password}
                                         onChange={handleChange}
+                                        onFocus={() => setIsPasswordFocused(true)}
                                         style={{ paddingRight: '38px' }}
                                         required
                                     />
@@ -779,6 +808,39 @@ function Registration({ onNavigate }) {
                                     </button>
                                 </div>
                                 {errors.password && <span className="error-message">{errors.password}</span>}
+
+                                {/* Proton-style Password Strength Popover Checklist */}
+                                {isPasswordFocused && (
+                                    <div className="password-strength-popover">
+                                        <div className="strength-header">
+                                            <span className={`strength-title ${strengthTheme}`}>{strengthLabel}</span>
+                                            <div className="strength-meter-bars">
+                                                <div className={`meter-segment ${pwdScore >= 1 ? strengthTheme : ''}`}></div>
+                                                <div className={`meter-segment ${pwdScore >= 2 ? strengthTheme : ''}`}></div>
+                                                <div className={`meter-segment ${pwdScore >= 4 ? strengthTheme : ''}`}></div>
+                                            </div>
+                                        </div>
+                                        <p className="strength-subtitle">It's better to have:</p>
+                                        <ul className="strength-checklist">
+                                            <li className={pwdRules.length ? 'rule-satisfied' : ''}>
+                                                {pwdRules.length ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                <span>At least 8 characters</span>
+                                            </li>
+                                            <li className={pwdRules.hasUpperLower ? 'rule-satisfied' : ''}>
+                                                {pwdRules.hasUpperLower ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                <span>Uppercase and lowercase letters</span>
+                                            </li>
+                                            <li className={pwdRules.hasNumber ? 'rule-satisfied' : ''}>
+                                                {pwdRules.hasNumber ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                <span>Numbers</span>
+                                            </li>
+                                            <li className={pwdRules.hasSymbol ? 'rule-satisfied' : ''}>
+                                                {pwdRules.hasSymbol ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                <span>Symbols (#$&)</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Confirm Password */}
