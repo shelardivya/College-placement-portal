@@ -291,4 +291,37 @@ public class StudentAnalyticsService {
         return response;
 
     }
+    // ==========================================
+    // Top Placed Students - Student Placeview
+    // ==========================================
+
+    public List<com.college.placement.portal.admin.dto.TopPlacedStudentResponseDto>
+    getTopPlacedStudentsForStudentView() {
+
+        List<TopPlacedStudentEntity> students =
+                topPlacedStudentRepository
+                        .findAllByOrderByPackageLpaDesc();
+
+        List<com.college.placement.portal.admin.dto.TopPlacedStudentResponseDto>
+                response = new ArrayList<>();
+
+        for (TopPlacedStudentEntity student : students) {
+
+            com.college.placement.portal.admin.dto.TopPlacedStudentResponseDto dto =
+                    new com.college.placement.portal.admin.dto.TopPlacedStudentResponseDto();
+
+            dto.setId(student.getId());
+            dto.setStudentName(student.getStudentName());
+            dto.setCompanyName(student.getCompanyName());
+            dto.setPackageLpa(student.getPackageLpa());
+            dto.setCgpa(student.getCgpa());
+            dto.setSkills(student.getSkills());
+            dto.setBranch(student.getBranch());
+            dto.setPassingYear(student.getPassingYear());
+
+            response.add(dto);
+        }
+
+        return response;
+    }
 }
