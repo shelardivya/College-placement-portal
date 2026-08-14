@@ -1133,3 +1133,21 @@
 .strength-checklist li.rule-satisfied svg {
     color: #7c3aed; /* Proton purple check mark */
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .registration-container,
+    .reg-container {
+        flex-direction: column;
+        padding: 16px 12px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        padding: 14px;
+    }
+
+    .form-grid .full-width {
+        grid-column: span 1;
+    }
+}

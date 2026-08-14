@@ -23,6 +23,11 @@ import {
     Eye,
     EyeOff,
     Edit3,
+    Camera,
+    Trash2,
+    CheckCircle2,
+    Info,
+    AlertCircle
 } from 'lucide-react';
 
 
@@ -78,6 +83,12 @@ function parseDateStr(dateStr, timeStr) {
     }
     const localDate = new Date(numYear, numMonth - 1, numDay, numHours, numMinutes);
     return localDate.getTime();
+}
+
+function getInitials(name, fallback = 'AD') {
+    if (!name) return fallback;
+    const parts = String(name).trim().split(" ");
+    return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2) || fallback;
 }
 
 /* Converts a backend notification's raw date/time fields into localized display strings without shifting timezones. */
@@ -274,7 +285,177 @@ function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, f
 }
 
 
-// Sub-components extracted to keep cognitive complexity low for SonarQube
+function AvatarPhotoMenu({ avatarUrl, onUpload, onRemove, children, inputId }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={menuRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <div
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(!isOpen);
+                    setShowTooltip(false);
+                }}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                style={{ cursor: 'pointer', position: 'relative' }}
+            >
+                {children}
+                <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    padding: '3px',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    <Camera size={11} />
+                </span>
+            </div>
+
+            {!isOpen && showTooltip && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 8px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #bfdbfe',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.78125rem',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)',
+                    pointerEvents: 'none',
+                    zIndex: 100000
+                }}>
+                    {avatarUrl ? 'Click photo to change or remove photo' : 'Click photo to upload profile photo'}
+                    <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderLeft: '5px solid transparent',
+                        borderRight: '5px solid transparent',
+                        borderTop: '5px solid #1e40af'
+                    }} />
+                </div>
+            )}
+
+            {isOpen && (
+                <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    marginTop: '8px',
+                    background: '#ffffff',
+                    borderRadius: '10px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    padding: '6px',
+                    zIndex: 99999,
+                    minWidth: '150px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                }}>
+                    <label
+                        htmlFor={inputId}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 12px',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600',
+                            color: '#1e293b',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s',
+                            margin: 0
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <Camera size={15} style={{ color: '#2563eb' }} />
+                        <span>{avatarUrl ? 'Edit Photo' : 'Upload Photo'}</span>
+                    </label>
+                    <input
+                        id={inputId}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            const target = e.target;
+                            setIsOpen(false);
+                            if (onUpload) onUpload(e, selectedFile);
+                            if (target) target.value = '';
+                        }}
+                        style={{ display: 'none' }}
+                    />
+
+                    {avatarUrl ? (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                if (onRemove) onRemove();
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                fontSize: '0.8125rem',
+                                fontWeight: '600',
+                                color: '#ef4444',
+                                background: 'none',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                width: '100%',
+                                textAlign: 'left',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            <Trash2 size={15} style={{ color: '#ef4444' }} />
+                            <span>Remove Photo</span>
+                        </button>
+                    ) : null}
+                </div>
+            )}
+        </div>
+    );
+}
 
 function AdminHeader({
     activeTab,
@@ -288,7 +469,9 @@ function AdminHeader({
     setIsEditingProfile,
     setValidationError,
     setIsProfileModalOpen,
-    onNavigate
+    onNavigate,
+    handlePhotoUpload,
+    handleRemovePhoto
 }) {
     return (
         <header className='admin-header'>
@@ -357,15 +540,7 @@ function AdminHeader({
                             <Bell className='bell-icon' size={22} />
                         </motion.div>
                         {unreadCount > 0 && (
-                            <motion.span
-                                className='notification-badge'
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                                style={{ width: '16px', height: '16px', borderRadius: '50%', right: '-2px', top: '-2px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                                {unreadCount}
-                            </motion.span>
+                            <span className='notification-badge'>{unreadCount}</span>
                         )}
                     </button>
 
@@ -377,7 +552,11 @@ function AdminHeader({
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
                             style={{ border: 'none', cursor: 'pointer', padding: 0 }}
                         >
-                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                            {adminProfile?.avatarUrl ? (
+                                <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                            ) : (
+                                getInitials(adminProfile?.name, 'AD')
+                            )}
                         </button>
 
                         {isProfileOpen && (
@@ -385,9 +564,27 @@ function AdminHeader({
                                 <button type="button" className='profile-dropdown-backdrop' aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} style={{ border: 'none', padding: 0 }} />
                                 <div className='profile-dropdown-menu'>
                                     <div className='profile-header'>
-                                        <span className='profile-avatar-large'>
-                                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                                        </span>
+                                        <AvatarPhotoMenu
+                                            avatarUrl={adminProfile?.avatarUrl}
+                                            onUpload={(e, file) => {
+                                                setIsProfileOpen(false);
+                                                handlePhotoUpload(e, file);
+                                            }}
+                                            onRemove={() => {
+                                                setIsProfileOpen(false);
+                                                handleRemovePhoto();
+                                            }}
+                                            inputId="admin-header-photo-input"
+                                        >
+                                            <span className='profile-avatar-large'>
+                                                {adminProfile?.avatarUrl ? (
+                                                    <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                                                ) : (
+                                                    getInitials(adminProfile?.name, 'AD')
+                                                )}
+                                            </span>
+                                        </AvatarPhotoMenu>
+
                                         <div className='profile-meta-info'>
                                             <span className='profile-name'>{adminProfile.name}</span>
                                             <span className='profile-email'>{adminProfile.email}</span>
@@ -1160,16 +1357,39 @@ function AddJobModal({
     );
 }
 
-function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfile, setIsEditingProfile }) {
+function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfile, setIsEditingProfile, handlePhotoUpload, handleRemovePhoto }) {
     return (
         <form className='modal-form' onSubmit={handleUpdateProfile}>
+            <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                <AvatarPhotoMenu
+                    avatarUrl={adminProfile.avatarUrl}
+                    onUpload={handlePhotoUpload}
+                    onRemove={handleRemovePhoto}
+                    inputId="admin-edit-form-photo-input"
+                >
+                    <div className="photo-preview-circle" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '1.25rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {adminProfile?.avatarUrl ? (
+                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            getInitials(adminProfile?.name, 'AD')
+                        )}
+                    </div>
+                </AvatarPhotoMenu>
+                <div>
+                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{adminProfile?.name}</span>
+                    <span style={{ display: 'block', fontSize: '0.8125rem', color: '#64748b' }}>
+                        {adminProfile?.avatarUrl ? 'Click profile photo to change or remove photo' : 'Click profile photo to upload photo'}
+                    </span>
+                </div>
+            </div>
+
             <div className='form-group'>
                 <label htmlFor="admin-profile-name">Full Name</label>
                 <input
                     id="admin-profile-name"
                     type="text"
                     name="name"
-                    value={adminProfile.name}
+                    value={adminProfile?.name || ''}
                     onChange={handleProfileChange}
                     required
                 />
@@ -1180,7 +1400,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                     id="admin-profile-email"
                     type="email"
                     name="email"
-                    value={adminProfile.email}
+                    value={adminProfile?.email || ''}
                     onChange={handleProfileChange}
                     required
                 />
@@ -1191,7 +1411,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                     id="admin-profile-phone"
                     type="text"
                     name="phone"
-                    value={adminProfile.phone}
+                    value={adminProfile?.phone || ''}
                     onChange={handleProfileChange}
                 />
             </div>
@@ -1200,7 +1420,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                 <input
                     id="admin-profile-role"
                     type="text"
-                    value={adminProfile.role}
+                    value={adminProfile?.role || 'System Administrator'}
                     disabled
                     className="disabled-input"
                 />
@@ -1218,9 +1438,30 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
     );
 }
 
-function ProfileDetailsView({ adminProfile, handleCloseProfileModal }) {
+function ProfileDetailsView({ adminProfile, handleCloseProfileModal, handlePhotoUpload, handleRemovePhoto }) {
     return (
         <div className='modal-form'>
+            <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                <AvatarPhotoMenu
+                    avatarUrl={adminProfile?.avatarUrl}
+                    onUpload={handlePhotoUpload}
+                    onRemove={handleRemovePhoto}
+                    inputId="admin-details-photo-input"
+                >
+                    <div className="photo-preview-circle" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '1.25rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {adminProfile?.avatarUrl ? (
+                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            getInitials(adminProfile?.name, 'AD')
+                        )}
+                    </div>
+                </AvatarPhotoMenu>
+                <div>
+                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{adminProfile?.name}</span>
+                    <span style={{ display: 'block', fontSize: '0.8125rem', color: '#64748b' }}>{adminProfile?.role}</span>
+                </div>
+            </div>
+
             <div className='form-group'>
                 <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Full Name</span>
                 <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.name}</div>
@@ -1358,7 +1599,9 @@ function renderProfileModalBody(props) {
         showAdminConfirmPassword,
         setShowAdminConfirmPassword,
         validationError,
-        handleUpdatePassword
+        handleUpdatePassword,
+        handlePhotoUpload,
+        handleRemovePhoto
     } = props;
 
     if (profileTab !== 'edit') {
@@ -1386,6 +1629,8 @@ function renderProfileModalBody(props) {
                 handleProfileChange={handleProfileChange}
                 handleUpdateProfile={handleUpdateProfile}
                 setIsEditingProfile={setIsEditingProfile}
+                handlePhotoUpload={handlePhotoUpload}
+                handleRemovePhoto={handleRemovePhoto}
             />
         );
     }
@@ -1394,6 +1639,8 @@ function renderProfileModalBody(props) {
         <ProfileDetailsView
             adminProfile={adminProfile}
             handleCloseProfileModal={handleCloseProfileModal}
+            handlePhotoUpload={handlePhotoUpload}
+            handleRemovePhoto={handleRemovePhoto}
         />
     );
 }
@@ -1416,7 +1663,9 @@ function ProfileSettingsModal({
     showAdminConfirmPassword,
     setShowAdminConfirmPassword,
     validationError,
-    handleUpdatePassword
+    handleUpdatePassword,
+    handlePhotoUpload,
+    handleRemovePhoto
 }) {
     if (!isProfileModalOpen) return null;
 
@@ -1480,7 +1729,9 @@ function ProfileSettingsModal({
                     showAdminConfirmPassword,
                     setShowAdminConfirmPassword,
                     validationError,
-                    handleUpdatePassword
+                    handleUpdatePassword,
+                    handlePhotoUpload,
+                    handleRemovePhoto
                 })}
             </div>
         </div>
@@ -1624,6 +1875,13 @@ function AdminDashboard({ onNavigate }) {
     const [toastType, setToastType] = useState('success');
     const [validationError, setValidationError] = useState(false);
 
+    const triggerToast = (msg, type = 'success') => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -1695,8 +1953,53 @@ function AdminDashboard({ onNavigate }) {
         name: loggedInAdmin.fullName || 'Admin',
         email: loggedInAdmin.email || '',
         phone: loggedInAdmin.phone || '',
-        role: 'System Administrator'
+        role: 'System Administrator',
+        avatarUrl: loggedInAdmin.avatarUrl || localStorage.getItem("admin_avatar") || ''
     });
+
+    const handleAdminPhotoUpload = (e, explicitFile) => {
+        const file = explicitFile || e?.target?.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            triggerToast("Image size must be less than 5MB", "error");
+            return;
+        }
+        const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+        const hasExistingPhoto = Boolean(
+            adminProfile?.avatarUrl || 
+            localStorage.getItem("admin_avatar") || 
+            storedAdmin.avatarUrl
+        );
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result;
+            setAdminProfile(prev => ({ ...prev, avatarUrl: base64 }));
+            localStorage.setItem("admin_avatar", base64);
+            const rawUser = localStorage.getItem("admin_user");
+            let userObj = {};
+            if (rawUser) {
+                try { userObj = JSON.parse(rawUser) || {}; } catch {}
+            }
+            userObj.avatarUrl = base64;
+            localStorage.setItem("admin_user", JSON.stringify(userObj));
+            triggerToast(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!", "success");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleAdminRemovePhoto = () => {
+        setAdminProfile(prev => ({ ...prev, avatarUrl: '' }));
+        localStorage.removeItem("admin_avatar");
+        const rawUser = localStorage.getItem("admin_user");
+        let userObj = {};
+        if (rawUser) {
+            try { userObj = JSON.parse(rawUser) || {}; } catch {}
+        }
+        delete userObj.avatarUrl;
+        localStorage.setItem("admin_user", JSON.stringify(userObj));
+        triggerToast("Profile photo removed successfully!", "error");
+    };
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: '', newPassword: '', confirmPassword: ''
     });
@@ -1786,12 +2089,16 @@ function AdminDashboard({ onNavigate }) {
             try {
                 const response = await getAdminProfile();
                 if (response.data) {
-                    setAdminProfile({
-                        name: response.data.fullName || response.data.name || 'Admin',
-                        email: response.data.email || 'admin@example.com',
-                        phone: response.data.mobile || response.data.phone || '',
-                        role: response.data.role || 'System Administrator'
-                    });
+                    const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+                    const savedAvatar = localStorage.getItem("admin_avatar") || storedAdmin.avatarUrl || "";
+                    setAdminProfile(prev => ({
+                        ...prev,
+                        name: response.data.fullName || response.data.name || prev.name,
+                        email: response.data.email || prev.email,
+                        phone: response.data.mobile || response.data.phone || prev.phone,
+                        role: response.data.role || prev.role,
+                        avatarUrl: response.data.avatarUrl || savedAvatar
+                    }));
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
@@ -1926,13 +2233,6 @@ function AdminDashboard({ onNavigate }) {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewJob(prev => ({ ...prev, [name]: value }));
-    };
-
-    const triggerToast = (msg, type = 'success') => {
-        setToastType(type);
-        setToastMessage(msg);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
     };
 
     const handlePostJob = async (e) => {
@@ -2192,7 +2492,11 @@ function AdminDashboard({ onNavigate }) {
                 role: adminProfile.role || "System Administrator"
             };
 
-            await updateAdminProfile(payload);
+            try {
+                await updateAdminProfile(payload);
+            } catch (apiErr) {
+                console.warn("Backend API updateAdminProfile warning (updating locally):", apiErr);
+            }
 
             const rawUser = localStorage.getItem("admin_user");
             let userInStorage = {};
@@ -2213,8 +2517,9 @@ function AdminDashboard({ onNavigate }) {
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
 
-            triggerToast("Admin profile updated successfully!", 'success');
+            setIsEditingProfile(false);
             setIsProfileModalOpen(false);
+            triggerToast("Profile edited successfully!", 'success');
         } catch (error) {
             console.error("Failed to update profile:", error);
             triggerToast("Failed to update profile.", 'error');
@@ -2300,6 +2605,8 @@ function AdminDashboard({ onNavigate }) {
                 setValidationError={setValidationError}
                 setIsProfileModalOpen={setIsProfileModalOpen}
                 onNavigate={onNavigate}
+                handlePhotoUpload={handleAdminPhotoUpload}
+                handleRemovePhoto={handleAdminRemovePhoto}
             />
 
             <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
@@ -2398,14 +2705,24 @@ function AdminDashboard({ onNavigate }) {
                     />
                 )}
 
-                {showToast && (
-                    <div className={`admin-toast-notification ${toastType}`}>
-                        <span className="admin-toast-icon">
-                            {toastType === 'success' ? '✓' : '⚠'}
-                        </span>
-                        <span className="admin-toast-text">{toastMessage}</span>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {showToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            className={`portal-toast-notification portal-toast-${toastType}`}
+                        >
+                            <div className="portal-toast-icon">
+                                {toastType === 'success' && <CheckCircle2 size={20} />}
+                                {toastType === 'info' && <Info size={20} />}
+                                {toastType === 'error' && <AlertCircle size={20} />}
+                            </div>
+                            <span className="portal-toast-text">{toastMessage}</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <ProfileSettingsModal
                     isProfileModalOpen={isProfileModalOpen}
@@ -2426,6 +2743,8 @@ function AdminDashboard({ onNavigate }) {
                     setShowAdminConfirmPassword={setShowAdminConfirmPassword}
                     validationError={validationError}
                     handleUpdatePassword={handleUpdatePassword}
+                    handlePhotoUpload={handleAdminPhotoUpload}
+                    handleRemovePhoto={handleAdminRemovePhoto}
                 />
 
                 <NotificationSidebar

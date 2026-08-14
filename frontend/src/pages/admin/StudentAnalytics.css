@@ -1560,3 +1560,22 @@
     border-radius: 4px;
     white-space: nowrap;
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .analytics-container,
+    .analytics-layout {
+        padding: 12px;
+    }
+
+    .analytics-stats-grid,
+    .analytics-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .analytics-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
