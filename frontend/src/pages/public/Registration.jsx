@@ -733,6 +733,7 @@ function Registration({ onNavigate }) {
                                         <option value="MCA">MCA</option>
                                         <option value="Bsc Cs">Bsc Cs</option>
                                         <option value="Bsc IT">Bsc IT</option>
+                                        <option value="MSc">MSc</option>
                                     </select>
                                 </div>
                                 {errors.course && <span className="error-message">{errors.course}</span>}

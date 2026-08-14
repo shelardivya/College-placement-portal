@@ -274,7 +274,7 @@ function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, f
 }
 
 
-// --- Sub-components extracted to keep cognitive complexity low for SonarQube ---  
+// Sub-components extracted to keep cognitive complexity low for SonarQube
 
 function AdminHeader({
     activeTab,
