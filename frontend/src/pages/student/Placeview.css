@@ -988,3 +988,28 @@
     border-radius: 4px;
     white-space: nowrap;
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .placeview-container,
+    .placeview-layout {
+        padding: 12px;
+    }
+
+    .placeview-stats-grid,
+    .placeview-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .placeview-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .placeview-table-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}

@@ -22,7 +22,7 @@ describe('LandingPage Component', () => {
   it('triggers onNavigate when register button is clicked', () => {
     const onNavigateMock = vi.fn();
     render(<LandingPage onNavigate={onNavigateMock} />);
-    const regBtn = screen.getByText(/Register Now/i);
+    const regBtn = screen.getAllByText(/Register Now/i)[0];
     fireEvent.click(regBtn);
     expect(onNavigateMock).toHaveBeenCalledWith('register');
   });

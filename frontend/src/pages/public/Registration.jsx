@@ -80,6 +80,19 @@ function Registration({ onNavigate }) {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const toastTimeoutRef = useRef(null);
+
+    const triggerToast = (message, type = 'error', duration = 4000) => {
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
+        }
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+        toastTimeoutRef.current = setTimeout(() => {
+            setShowToast(false);
+        }, duration);
+    };
 
     // DOB Custom Calendar states
     const [isDobPickerOpen, setIsDobPickerOpen] = useState(false);
@@ -134,6 +147,9 @@ function Registration({ onNavigate }) {
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
+            if (toastTimeoutRef.current) {
+                clearTimeout(toastTimeoutRef.current);
+            }
         };
     }, []);
 
@@ -237,10 +253,7 @@ function Registration({ onNavigate }) {
         if (Object.keys(tempErrors).length > 0) {
             // Trigger toast if password and confirm password fields are not identical
             if (formData.password !== formData.confirmPassword) {
-                setToastMessage("Passwords do not match");
-                setToastType('error');
-                setShowToast(true);
-                setTimeout(() => setShowToast(false), 3000);
+                triggerToast("Passwords do not match", 'error', 3000);
             }
             const firstErrorField = Object.keys(tempErrors)[0];
             const inputElement = document.getElementsByName(firstErrorField)[0];
@@ -250,6 +263,66 @@ function Registration({ onNavigate }) {
             return;
         }
 
+        // Check for existing/already registered email and mobile number in local registry
+        const rawProfiles = localStorage.getItem("registered_profiles");
+        let existingProfiles = [];
+        if (rawProfiles) {
+            try {
+                const parsed = JSON.parse(rawProfiles);
+                if (Array.isArray(parsed)) existingProfiles = parsed;
+            } catch {
+                existingProfiles = [];
+            }
+        }
+        const rawUser = localStorage.getItem("user");
+        if (rawUser) {
+            try {
+                const parsedUser = JSON.parse(rawUser);
+                if (parsedUser && parsedUser.email) {
+                    const alreadyInList = existingProfiles.some(
+                        p => getStorageString(p.email).toLowerCase() === getStorageString(parsedUser.email).toLowerCase()
+                    );
+                    if (!alreadyInList) existingProfiles.push(parsedUser);
+                }
+            } catch { }
+        }
+
+        const inputEmail = sanitizeStorageString(formData.email).toLowerCase().trim();
+        const inputMobile = sanitizeStorageString(formData.mobile).trim();
+
+        const isEmailUsed = inputEmail && existingProfiles.some(p => {
+            const e = getStorageString(p.email || p.userEmail).toLowerCase().trim();
+            return e === inputEmail;
+        });
+
+        const isPhoneUsed = inputMobile && existingProfiles.some(p => {
+            const ph = getStorageString(p.phone || p.mobile || p.userMobile).trim();
+            return ph === inputMobile;
+        });
+
+        if (isEmailUsed && isPhoneUsed) {
+            setErrors(prev => ({
+                ...prev,
+                email: "Email address is already registered",
+                mobile: "Mobile number is already registered"
+            }));
+            triggerToast("Email and Phone number are already registered", "error");
+            return;
+        } else if (isEmailUsed) {
+            setErrors(prev => ({
+                ...prev,
+                email: "Email address is already registered"
+            }));
+            triggerToast("Email address is already registered", "error");
+            return;
+        } else if (isPhoneUsed) {
+            setErrors(prev => ({
+                ...prev,
+                mobile: "Mobile number is already registered"
+            }));
+            triggerToast("Phone number is already registered", "error");
+            return;
+        }
 
         // Reformat stored yyyy-mm-dd date into dd-mm-yyyy for the backend API
         let apiFormattedDob = "";
@@ -262,7 +335,7 @@ function Registration({ onNavigate }) {
             fullName: formData.fullname,
             email: formData.email,
             mobile: formData.mobile,
-            dob: apiFormattedDob, //  Replaced with the formatted date
+            dob: apiFormattedDob,
             department: formData.department,
             course: formData.course,
             currentYear: Number(formData.year),
@@ -270,8 +343,6 @@ function Registration({ onNavigate }) {
             password: formData.password,
             confirmPassword: formData.confirmPassword
         };
-
-
 
         try {
             const response = await registerStudent(requestBody);
@@ -306,17 +377,7 @@ function Registration({ onNavigate }) {
             };
             localStorage.setItem("user", JSON.stringify(newProfile));
 
-            const rawProfiles = localStorage.getItem("registered_profiles");
-            let registeredProfiles = [];
-            if (rawProfiles) {
-                try {
-                    const parsed = JSON.parse(rawProfiles);
-                    if (Array.isArray(parsed)) registeredProfiles = parsed;
-                } catch {
-                    registeredProfiles = [];
-                }
-            }
-            const updatedProfiles = registeredProfiles
+            const updatedProfiles = existingProfiles
                 .filter(p => getStorageString(p.email).toLowerCase() !== getStorageString(cleanEmail).toLowerCase())
                 .map(p => ({
                     fullName: sanitizeStorageString(p.fullName),
@@ -335,32 +396,59 @@ function Registration({ onNavigate }) {
             updatedProfiles.push(newProfile);
             localStorage.setItem("registered_profiles", JSON.stringify(updatedProfiles));
 
-
-
-            setToastMessage("Registration completed successfully!");
-            setToastType("success");
-            setShowToast(true);
+            triggerToast("Registration completed successfully!", "success", 2000);
 
             // 2. Redirect directly to the Student Dashboard after 2 seconds
             setTimeout(() => {
-                setShowToast(false);
                 onNavigate("student");
             }, 2000);
 
+        } catch (err) {
+            const errData = err?.response?.data;
+            let serverMsg = "";
 
+            if (typeof errData === "string") {
+                serverMsg = errData;
+            } else if (errData && typeof errData === "object") {
+                serverMsg = errData.message || errData.error || errData.details || "";
+                if (!serverMsg && errData.errors) {
+                    if (typeof errData.errors === "string") {
+                        serverMsg = errData.errors;
+                    } else if (typeof errData.errors === "object") {
+                        serverMsg = Object.values(errData.errors).flat().join(", ");
+                    }
+                }
+            }
 
+            const lowerMsg = serverMsg.toLowerCase();
+            const isEmailError = lowerMsg.includes("email");
+            const isPhoneError = lowerMsg.includes("phone") || lowerMsg.includes("mobile");
 
-
-        } catch {
-
-            setToastMessage("Registration failed");
-            setToastType("error");
-            setShowToast(true);
-
+            if (isEmailError && isPhoneError) {
+                setErrors(prev => ({
+                    ...prev,
+                    email: "Email address is already registered",
+                    mobile: "Mobile number is already registered"
+                }));
+                triggerToast("Email and Phone number are already registered", "error");
+            } else if (isEmailError) {
+                setErrors(prev => ({
+                    ...prev,
+                    email: "Email address is already registered"
+                }));
+                triggerToast("Email address is already registered", "error");
+            } else if (isPhoneError) {
+                setErrors(prev => ({
+                    ...prev,
+                    mobile: "Mobile number is already registered"
+                }));
+                triggerToast("Phone number is already registered", "error");
+            } else if (serverMsg) {
+                triggerToast(serverMsg, "error");
+            } else {
+                triggerToast("Registration failed. Please try again.", "error");
+            }
         }
-
-
-
     };
 
     return (
@@ -594,6 +682,7 @@ function Registration({ onNavigate }) {
                             <div className="input-group">
                                 <label htmlFor="dobPickerBtn">Date of Birth (DOB)</label>
                                 <div className={`input-wrapper ${errors.dob ? 'has-error' : ''}`} ref={dobDatePickerRef} style={{ position: 'relative', overflow: 'visible', border: 'none', padding: 0 }}>
+                                    <input id="dobInput" type="text" name="dob" value={formData.dob} onChange={handleChange} style={{ position: 'absolute', opacity: 0, width: '1px', height: '1px', pointerEvents: 'none' }} tabIndex={-1} />
                                     <div className="custom-date-picker-container" style={{ width: '100%' }}>
                                         <button
                                             id="dobPickerBtn"

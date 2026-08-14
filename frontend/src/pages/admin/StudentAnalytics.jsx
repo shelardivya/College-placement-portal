@@ -951,7 +951,7 @@ export default function StudentAnalytics() {
                             className="add-student-btn"
                             onClick={() => setIsModalOpen(true)}
                         >
-                            <Plus size={16} /> Add Top Placed Student
+                            <Plus size={16} /> Add Placed Student
                         </button>
                     </div>
                 </div>
@@ -1096,7 +1096,7 @@ export default function StudentAnalytics() {
                     <div className="modal-container">
                         <div className="modal-header">
                             <div>
-                                <h3 className="modal-title">Add Top Placed Student</h3>
+                                <h3 className="modal-title">Add Placed Student</h3>
                                 <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
                             </div>
                             <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>

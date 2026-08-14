@@ -1244,3 +1244,31 @@
 .btn-delete-confirm:hover {
     background-color: #991b1b;
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .qs-container,
+    .qs-layout {
+        padding: 12px;
+        flex-direction: column;
+    }
+
+    .qs-grid,
+    .qs-content-split {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .qs-card,
+    .qs-panel-card {
+        padding: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-grid-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}

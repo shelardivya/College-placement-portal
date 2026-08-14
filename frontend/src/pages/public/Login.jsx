@@ -194,7 +194,7 @@ function Login({ onNavigate, initialView }) {
         const cleanEmail = sanitizeStorageString(email).toLowerCase();
         const nameFromEmail = cleanEmail.split('@')[0] || 'student';
         const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
-        
+
         const rawReg = localStorage.getItem("registered_profiles");
         let registeredProfiles = [];
         if (rawReg) {
@@ -206,7 +206,7 @@ function Login({ onNavigate, initialView }) {
             }
         }
         const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
-        
+
         if (matchedProfile) {
             const sanitizedUser = {
                 fullName: sanitizeStorageString(matchedProfile.fullName),
@@ -246,7 +246,7 @@ function Login({ onNavigate, initialView }) {
         try {
             const emailLower = formData.email.trim().toLowerCase();
             const isAdmin = emailLower === 'saurabh@gmail.com' || emailLower.startsWith('admin') || emailLower.includes('@admin.') || emailLower.includes('.admin');
-            
+
             const apiCall = isAdmin ? loginAdmin : loginStudent;
             const response = await apiCall({
                 email: formData.email.trim(),
@@ -258,7 +258,7 @@ function Login({ onNavigate, initialView }) {
             if (response.data?.token) {
                 saveAuthToken(response.data.token);
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
-                
+
                 const payload = parseTokenPayload(response.data.token);
 
                 if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);
@@ -729,7 +729,7 @@ function Login({ onNavigate, initialView }) {
                                     className="link-span-register"
                                     onClick={() => onNavigate('register')}
                                 >
-                                    Create Student Account
+                                    Register Student Account
                                 </button>
                             </div>
                         )}

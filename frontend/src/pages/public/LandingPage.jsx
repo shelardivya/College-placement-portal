@@ -353,7 +353,7 @@ function LandingPage({ onNavigate }) {
                     <div className="cta-buttons">
                         <button type="button" className="btn-create-account" onClick={() => onNavigate('register')}>
                             <UserPlus size={16} />
-                            Create Account
+                            Register Now
                         </button>
                         <button type="button" className="btn-sign-in" onClick={() => onNavigate('login')}>
                             <LogIn size={16} />
