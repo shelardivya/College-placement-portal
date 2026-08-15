@@ -364,7 +364,7 @@ table tr:nth-child(even) td {
 /* Global Mobile Responsive Utilities */
 html, #root {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 @media (max-width: 768px) {
