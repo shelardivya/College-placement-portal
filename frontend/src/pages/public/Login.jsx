@@ -284,10 +284,6 @@ function Login({ onNavigate, initialView }) {
     };
 
     const handleResetSubmit = async () => {
-        if (formData.password !== formData.confirmPassword) {
-            showToastMessage("Passwords do not match!", 'error', 3000);
-            return;
-        }
 
         const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&^#()_+\-=]).{8,}$/;
         if (!passwordPattern.test(formData.password)) {
@@ -620,29 +616,7 @@ function Login({ onNavigate, initialView }) {
                                         </div>
                                     </div>
 
-                                    <div className="input-group full-width">
-                                        <label htmlFor="resetConfirmPassword">Confirm Password</label>
-                                        <div className="input-wrapper">
-                                            <Lock size={16} />
-                                            <input
-                                                id="resetConfirmPassword"
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                name="confirmPassword"
-                                                placeholder="Confirm your password"
-                                                value={formData.confirmPassword}
-                                                onChange={handleChange}
-                                                autoComplete="off"
-                                                required
-                                            />
-                                            <button
-                                                type="button"
-                                                className="btn-toggle-eye"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            >
-                                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
+
                                 </>
                             )}
 

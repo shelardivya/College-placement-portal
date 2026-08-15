@@ -175,7 +175,8 @@ function Registration({ onNavigate }) {
         },
         mobile: (value) => {
             if (!value) return 'Mobile number is required';
-            if (!/^\d{10}$/.test(value)) return 'Mobile number must be exactly 10 digits';
+            if (/\D/.test(value)) return 'Only numbers are allowed in mobile number';
+            if (value.length !== 10) return 'Mobile number must be exactly 10 digits';
             return '';
         },
         dob: (value) => {
@@ -186,7 +187,7 @@ function Registration({ onNavigate }) {
             const m = today.getMonth() - dobDate.getMonth();
             if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) age--;
             if (dobDate > today) return 'Date of Birth cannot be in the future';
-            if (age < 15) return 'You must be at least 15 years old to register';
+            if (age < 18) return 'You must be at least 18 years old to register';
             return '';
         },
         department: (value) => !value ? 'Please select your department' : '',
@@ -767,16 +768,8 @@ function Registration({ onNavigate }) {
                                                         );
                                                     })}
                                                 </div>
-                                                <div className="calendar-footer">
+                                                <div className="calendar-footer" style={{ justifyContent: 'flex-end' }}>
                                                     <button type="button" className="calendar-clear-btn" onClick={() => { setFormData(prev => ({ ...prev, dob: '' })); const fieldError = validateField('dob', ''); setErrors(prev => ({ ...prev, dob: fieldError })); setIsDobPickerOpen(false); }}>Clear</button>
-                                                    <button type="button" className="calendar-today-btn" onClick={() => {
-                                                        const today = new Date();
-                                                        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                                                        setFormData(prev => ({ ...prev, dob: todayStr }));
-                                                        const fieldError = validateField('dob', todayStr);
-                                                        setErrors(prev => ({ ...prev, dob: fieldError }));
-                                                        setIsDobPickerOpen(false);
-                                                    }}>Today</button>
                                                 </div>
                                             </div>
                                         )}
