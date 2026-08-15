@@ -993,7 +993,35 @@
 @media screen and (max-width: 768px) {
     .placeview-container,
     .placeview-layout {
-        padding: 12px;
+        padding: 0 12px;
+    }
+
+    .placeview-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 16px;
+        min-height: auto;
+        gap: 12px;
+    }
+
+    .placeview-banner-text {
+        max-width: 100%;
+        position: relative;
+        z-index: 2;
+    }
+
+    .placeview-banner-icons {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        margin-top: 4px;
+        align-self: center;
+    }
+
+    .placeview-banner-illustration {
+        width: 120px;
+        height: auto;
     }
 
     .placeview-stats-grid,
@@ -1002,10 +1030,41 @@
         gap: 12px;
     }
 
-    .placeview-table-wrapper {
+    .placeview-charts-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .placeview-chart-card {
+        height: auto;
+        padding: 16px;
+    }
+
+    .placeview-dept-chart-body {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .placeview-dept-legend {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .placeview-legend-label {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .placeview-table-wrapper,
+    .placeview-table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         width: 100%;
+    }
+
+    .placeview-students-table {
+        min-width: 600px;
     }
 
     .placeview-table-card-header {
@@ -1029,12 +1088,14 @@
 }
 
 @media screen and (max-width: 480px) {
+    .placeview-page-title,
     .placeview-page-header h1 {
-        font-size: 1.4rem;
+        font-size: 1.25rem;
     }
 
     .placeview-stat-card {
         padding: 14px;
     }
 }
+
 
