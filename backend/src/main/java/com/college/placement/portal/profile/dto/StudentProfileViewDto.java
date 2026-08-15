@@ -15,6 +15,7 @@ public class StudentProfileViewDto {
     private String skills;
     private String linkedinUrl;
     private String githubUrl;
+    private String profilePhotoPath;
 
     public String getFullName() {
         return fullName;
@@ -102,5 +103,11 @@ public class StudentProfileViewDto {
 
     public void setGithubUrl(String githubUrl) {
         this.githubUrl = githubUrl;
+    }
+    public String getProfilePhotoPath() {
+        return profilePhotoPath;
+    }
+    public void setProfilePhotoPath(String profilePhotoPath) {
+        this.profilePhotoPath = profilePhotoPath;
     }
 }
