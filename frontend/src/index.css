@@ -388,9 +388,10 @@ html, #root {
   .modal-content,
   .requirements-modal,
   .change-password-modal {
-    max-width: calc(100vw - 32px) !important;
-    width: 100% !important;
-    margin: 16px auto !important;
+    max-width: calc(100vw - 32px);
+    width: 100%;
+    margin: 16px auto;
   }
 }
+
 

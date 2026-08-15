@@ -3678,13 +3678,14 @@
 
     .job-opportunities-grid,
     .applied-jobs-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
     }
 
     .notification-dropdown,
     .profile-dropdown {
-        width: calc(100vw - 24px) !important;
-        right: 12px !important;
-        left: 12px !important;
+        width: calc(100vw - 24px);
+        right: 12px;
+        left: 12px;
     }
-}
+}
+

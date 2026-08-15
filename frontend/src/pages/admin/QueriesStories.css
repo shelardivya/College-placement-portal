@@ -375,8 +375,9 @@
 
 .text-action-btn.disabled {
     opacity: 0.4;
-    cursor: not-allowed !important;
+    cursor: not-allowed;
 }
+
 
 .text-action-btn:disabled,
 .text-action-btn.disabled,

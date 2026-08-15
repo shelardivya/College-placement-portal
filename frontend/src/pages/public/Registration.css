@@ -944,10 +944,11 @@
     filter: blur(0.4px);
     background-color: #f1f5f9;
     color: #94a3b8;
-    cursor: not-allowed !important;
+    cursor: not-allowed;
     pointer-events: none;
     text-decoration: line-through;
 }
+
 
 .empty-day {
     height: 28px;
@@ -1175,12 +1176,13 @@
     }
 
     .custom-calendar-popup {
-        width: calc(100vw - 48px) !important;
-        max-width: 300px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
+        width: calc(100vw - 48px);
+        max-width: 300px;
+        left: 50%;
+        transform: translateX(-50%);
         box-sizing: border-box;
     }
+
 
     .calendar-header select.calendar-select {
         font-size: 0.75rem;
