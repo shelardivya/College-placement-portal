@@ -3516,7 +3516,7 @@
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    zIndex: 999999;
+    z-Index: 999999;
 }
 
 .portal-toast-icon {
@@ -3688,4 +3688,4 @@
         left: 12px;
     }
 }
-
+
