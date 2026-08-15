@@ -1577,5 +1577,29 @@
     .analytics-table-wrapper {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .analytics-filter-bar,
+    .analytics-controls-bar {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .analytics-filter-bar input,
+    .analytics-filter-bar select,
+    .analytics-filter-bar button {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .analytics-title {
+        font-size: 1.35rem;
+    }
+
+    .analytics-card {
+        padding: 14px;
     }
 }

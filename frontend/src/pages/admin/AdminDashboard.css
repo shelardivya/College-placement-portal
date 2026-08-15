@@ -2396,4 +2396,24 @@ textarea.error-input,
     .admin-welcome-card {
         padding: 20px 16px;
     }
-}
+
+    .admin-filter-bar,
+    .admin-controls-row {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .admin-filter-bar input,
+    .admin-filter-bar select,
+    .admin-filter-bar button {
+        width: 100%;
+    }
+
+    .admin-table-container,
+    .admin-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+}

@@ -478,6 +478,29 @@
     }
 }
 
+@media (max-width: 480px) {
+    .login-wrapper {
+        padding: 12px 8px;
+    }
+
+    .login-card,
+    .login-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        border-radius: 14px;
+    }
+
+    .login-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .login-form-group {
+        gap: 6px;
+    }
+}
+
+
 /* toast notification - appears at top center of page */
 .login-page .toast-notification {
     position: fixed;

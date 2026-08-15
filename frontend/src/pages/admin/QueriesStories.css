@@ -1271,4 +1271,28 @@
         grid-template-columns: 1fr;
         gap: 12px;
     }
+
+    .qs-filter-bar,
+    .qs-tabs-bar {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .qs-filter-bar input,
+    .qs-filter-bar select,
+    .qs-filter-bar button {
+        width: 100%;
+    }
 }
+
+@media screen and (max-width: 480px) {
+    .qs-header-title {
+        font-size: 1.35rem;
+    }
+
+    .qs-query-item,
+    .qs-story-item {
+        padding: 14px;
+    }
+}
