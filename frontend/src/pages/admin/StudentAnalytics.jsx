@@ -1008,8 +1008,8 @@ export default function StudentAnalytics() {
                                     </td>
                                     <td>
                                         <span className="cgpa-text">
-                                            {!Number.isNaN(Number(student.cgpa)) && Number.isInteger(Number(student.cgpa))
-                                                ? Number(student.cgpa).toFixed(1)
+                                            {!Number.isNaN(Number(student.cgpa))
+                                                ? parseFloat(student.cgpa).toFixed(2)
                                                 : student.cgpa}
                                         </span>
                                         <span className="cgpa-max">/10</span>
