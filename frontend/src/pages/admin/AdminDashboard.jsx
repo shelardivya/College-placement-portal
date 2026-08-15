@@ -1215,6 +1215,7 @@ function AddJobModal({
                                 <option value="MCA">MCA</option>
                                 <option value="BSC Cs">BSc CS</option>
                                 <option value="IT">IT</option>
+                                <option value="MSc">MSc</option>
                             </select>
                         </div>
 

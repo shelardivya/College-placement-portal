@@ -898,7 +898,7 @@ export default function StudentAnalytics() {
             <div className="students-table-card">
                 <div className="table-card-header">
                     <div className="table-title-group">
-                        <h3 className="table-card-title">Top Placed Students</h3>
+                        <h3 className="table-card-title">All Placed Students</h3>
                         <span className="table-title-badge">Leaderboard</span>
                     </div>
                     <div className="table-header-actions">
