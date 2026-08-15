@@ -32,11 +32,6 @@ public class AdminAuthService {
             throw new IllegalArgumentException("Not an admin account");
         }
 
-        // ✅ Password & Confirm Password must match (First Login + Normal Login)
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new IllegalArgumentException("Password and Confirm Password do not match");
-        }
-
         // 🔴 FIRST TIME LOGIN
         if (admin.getPassword() == null) {
 

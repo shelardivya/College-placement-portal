@@ -15,10 +15,6 @@ public class AdminFirstLoginRequest {
     )
     private String password;
 
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
-
-    // ✅ ADD THIS
     private boolean rememberMe;
 
     // getters
@@ -31,11 +27,6 @@ public class AdminFirstLoginRequest {
         return password;
     }
 
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    // ✅ ADD THIS
     public boolean isRememberMe() {
         return rememberMe;
     }
@@ -49,12 +40,7 @@ public class AdminFirstLoginRequest {
     public void setPassword(String password) {
         this.password = password;
     }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
-    }
-
-    // ✅ ADD THIS
+    
     public void setRememberMe(boolean rememberMe) {
         this.rememberMe = rememberMe;
     }

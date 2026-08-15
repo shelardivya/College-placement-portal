@@ -17,9 +17,6 @@ public class LoginRequest {
     )
     private String password;
 
-    @NotBlank(message = "Confirm password is required")
-    private String confirmPassword;
-
     private boolean rememberMe;
 
     // getters & setters
@@ -37,14 +34,6 @@ public class LoginRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
     }
 
     public boolean isRememberMe() {
