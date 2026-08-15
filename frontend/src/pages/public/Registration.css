@@ -944,10 +944,11 @@
     filter: blur(0.4px);
     background-color: #f1f5f9;
     color: #94a3b8;
-    cursor: not-allowed !important;
+    cursor: not-allowed;
     pointer-events: none;
     text-decoration: line-through;
 }
+
 
 .empty-day {
     height: 28px;
@@ -1149,5 +1150,43 @@
 
     .form-grid .full-width {
         grid-column: span 1;
+    }
+
+    .stepper-wrapper {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .stepper-item {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+
+    .reg-actions,
+    .form-navigation-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .reg-actions button,
+    .form-navigation-actions button {
+        width: 100%;
+    }
+
+    .custom-calendar-popup {
+        width: calc(100vw - 48px);
+        max-width: 300px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-sizing: border-box;
+    }
+
+
+    .calendar-header select.calendar-select {
+        font-size: 0.75rem;
+        padding: 4px 6px;
+        max-width: 100px;
     }
 }

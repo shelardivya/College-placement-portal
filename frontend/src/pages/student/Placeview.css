@@ -1005,6 +1005,7 @@
     .placeview-table-wrapper {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        width: 100%;
     }
 
     .placeview-table-card-header {
@@ -1012,4 +1013,28 @@
         align-items: flex-start;
         gap: 12px;
     }
+
+    .placeview-filter-bar,
+    .placeview-controls-wrapper {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .placeview-filter-bar input,
+    .placeview-filter-bar select,
+    .placeview-filter-bar button {
+        width: 100%;
+    }
 }
+
+@media screen and (max-width: 480px) {
+    .placeview-page-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .placeview-stat-card {
+        padding: 14px;
+    }
+}
+

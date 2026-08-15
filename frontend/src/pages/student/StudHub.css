@@ -706,9 +706,34 @@
         box-sizing: border-box;
     }
 
-    .query-card-header-line {
+    .query-card-header-line,
+    .sh-header-row {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
+
+    .sh-filter-toolbar {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .sh-filter-toolbar input,
+    .sh-filter-toolbar select,
+    .sh-filter-toolbar button {
+        width: 100%;
+    }
 }
+
+@media screen and (max-width: 480px) {
+    .stud-hub-title {
+        font-size: 1.35rem;
+    }
+
+    .sh-query-card,
+    .sh-story-card {
+        padding: 14px;
+    }
+}
+
