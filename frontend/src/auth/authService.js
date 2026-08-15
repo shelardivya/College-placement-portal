@@ -539,3 +539,39 @@ export const getAdminDashboardStats = () => {
         }
     });
 };
+
+// Official Student Placeview Controller APIs (GET /api/student/placeview/...)
+export const getStudentPlaceviewDashboard = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/dashboard", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewTopSkills = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/top-skills", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewPlacementCgpa = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/placement-cgpa", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewDepartment = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/department", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewTopPlaced = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/top-placed", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};

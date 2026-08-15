@@ -420,75 +420,84 @@ export default function StudentAnalytics() {
         e.preventDefault();
         if (!formData.name || !formData.cgpa || !formData.lpa || !formData.company) return;
 
+        const payload = {
+            studentName: formData.name,
+            companyName: formData.company,
+            packageLpa: Number.parseFloat(formData.lpa) || 12,
+            cgpa: Number.parseFloat(formData.cgpa) || 9.0,
+            skills: formData.skill || 'Full Stack',
+            branch: formData.branch || 'CS',
+            department: formData.branch || 'CS',
+            passingYear: formData.passingYear || '2026',
+            year: formData.passingYear || '2026'
+        };
+
+        let errorMessage = "Failed to add student. Please enter a valid registered student name.";
+
         try {
-            const payload = {
-                studentName: formData.name,
-                companyName: formData.company,
-                packageLpa: Number.parseFloat(formData.lpa) || 12,
-                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
-                skills: formData.skill || 'Full Stack',
-                branch: formData.branch || 'CS',
-                department: formData.branch || 'CS',
-                passingYear: formData.passingYear || '2026',
-                year: formData.passingYear || '2026'
-            };
-
-            // Save branch and passingYear in localStorage extras so it is retained if backend response drops it
-            const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
-            storedExtras[(formData.name || '').trim().toLowerCase()] = {
-                branch: formData.branch || 'CS',
-                passingYear: formData.passingYear || '2026',
-                skill: formData.skill || 'Full Stack'
-            };
-            localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
-
-            // Also save to top_placed_students_local so student side and fallback store syncs seamlessly
-            const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
-            const newStudentObj = {
-                id: `local-${Date.now()}`,
-                studentName: formData.name,
-                companyName: formData.company,
-                packageLpa: Number.parseFloat(formData.lpa) || 12,
-                cgpa: Number.parseFloat(formData.cgpa) || 9.0,
-                skills: formData.skill || 'Full Stack',
-                branch: formData.branch || 'CS',
-                passingYear: formData.passingYear || '2026'
-            };
-            const filteredLocal = localList.filter(s => (s.studentName || s.name || '').trim().toLowerCase() !== (formData.name || '').trim().toLowerCase());
-            filteredLocal.push(newStudentObj);
-            localStorage.setItem("top_placed_students_local", JSON.stringify(filteredLocal));
-            window.dispatchEvent(new Event('storage'));
-
-            try {
-                await addTopPlacedStudent(payload);
-            } catch (apiErr) {
-                console.warn("API add top student failed, using local storage fallback", apiErr);
+            await addTopPlacedStudent(payload);
+        } catch (apiErr) {
+            console.error("API add top student failed:", apiErr);
+            const serverMsg = apiErr.response?.data?.message || (typeof apiErr.response?.data === 'string' ? apiErr.response.data : null);
+            if (serverMsg) {
+                errorMessage = serverMsg;
             }
 
-            // Fetch fresh canonical list & jump to newly added student page
-            await fetchTopStudents(formData.name);
-
-            setIsModalOpen(false);
-            setFormData({
-                name: '',
-                branch: '',
-                passingYear: '',
-                cgpa: '',
-                lpa: '',
-                skill: '',
-                company: ''
-            });
-            setToastMessage('Student added successfully!');
-            setToastType('success');
-        } catch (error) {
-            console.error("Failed to add top placed student", error);
-            setToastMessage('Failed to add student. Please try again.');
-            setToastType('error');
+            // If server explicitly responded with an error (e.g. 400 Bad Request, 404 Not Found), stop and show red error toast!
+            if (apiErr.response && (apiErr.response.status === 400 || apiErr.response.status === 404 || apiErr.response.status === 409)) {
+                setToastMessage(errorMessage);
+                setToastType('error');
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 4000);
+                return; // Stop execution! Do not save to local storage or close modal!
+            }
         }
+
+        // Save branch and passingYear in localStorage extras so it is retained if backend response drops it
+        const storedExtras = JSON.parse(localStorage.getItem("top_placed_students_extra") || "{}");
+        storedExtras[(formData.name || '').trim().toLowerCase()] = {
+            branch: formData.branch || 'CS',
+            passingYear: formData.passingYear || '2026',
+            skill: formData.skill || 'Full Stack'
+        };
+        localStorage.setItem("top_placed_students_extra", JSON.stringify(storedExtras));
+
+        // Also save to top_placed_students_local so student side and fallback store syncs seamlessly
+        const localList = JSON.parse(localStorage.getItem("top_placed_students_local") || "[]");
+        const newStudentObj = {
+            id: `local-${Date.now()}`,
+            studentName: formData.name,
+            companyName: formData.company,
+            packageLpa: Number.parseFloat(formData.lpa) || 12,
+            cgpa: Number.parseFloat(formData.cgpa) || 9.0,
+            skills: formData.skill || 'Full Stack',
+            branch: formData.branch || 'CS',
+            passingYear: formData.passingYear || '2026'
+        };
+        const filteredLocal = localList.filter(s => (s.studentName || s.name || '').trim().toLowerCase() !== (formData.name || '').trim().toLowerCase());
+        filteredLocal.push(newStudentObj);
+        localStorage.setItem("top_placed_students_local", JSON.stringify(filteredLocal));
+        window.dispatchEvent(new Event('storage'));
+
+        // Fetch fresh canonical list & jump to newly added student page
+        await fetchTopStudents(formData.name);
+
+        setIsModalOpen(false);
+        setFormData({
+            name: '',
+            branch: '',
+            passingYear: '',
+            cgpa: '',
+            lpa: '',
+            skill: '',
+            company: ''
+        });
+        setToastMessage('Student added successfully!');
+        setToastType('success');
         setShowToast(true);
         setTimeout(() => {
             setShowToast(false);
-        }, 4000);
+        }, 3000);
     };
 
     const [deleteModalState, setDeleteModalState] = useState({
@@ -942,7 +951,7 @@ export default function StudentAnalytics() {
                             className="add-student-btn"
                             onClick={() => setIsModalOpen(true)}
                         >
-                            <Plus size={16} /> Add Top Placed Student
+                            <Plus size={16} /> Add Placed Student
                         </button>
                     </div>
                 </div>
@@ -1087,7 +1096,7 @@ export default function StudentAnalytics() {
                     <div className="modal-container">
                         <div className="modal-header">
                             <div>
-                                <h3 className="modal-title">Add Top Placed Student</h3>
+                                <h3 className="modal-title">Add Placed Student</h3>
                                 <p className="modal-subtitle">Enter details to feature student on the Leaderboard</p>
                             </div>
                             <button type="button" className="modal-close-btn" onClick={() => setIsModalOpen(false)}>

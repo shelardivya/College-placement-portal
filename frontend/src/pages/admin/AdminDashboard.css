@@ -876,9 +876,13 @@
         padding: 16px;
     }
 
+    .dashboard-grid-lower,
     .dashbaord-grid-lower {
+        display: flex;
+        flex-direction: column;
         grid-template-columns: 1fr;
         gap: 24px;
+        width: 100%;
     }
 }
 
@@ -886,10 +890,12 @@
 @media (max-width: 768px) {
     .header-container {
         padding: 12px 16px;
+        flex-wrap: wrap;
     }
 
     .college-name {
-        display: none;
+        display: inline-block;
+        font-size: 1.1rem;
     }
 
     .stats-grid {
@@ -897,6 +903,7 @@
         gap: 16px;
     }
 }
+
 
 /* Pop up Modal Style for add job postings */
 
@@ -1828,7 +1835,7 @@
     filter: blur(0.4px);
     background-color: #f1f5f9;
     color: #94a3b8;
-    cursor: not-allowed !important;
+    cursor: not-allowed;
     pointer-events: none;
     text-decoration: line-through;
 }
@@ -1879,10 +1886,11 @@
 select.error-input,
 textarea.error-input,
 .date-picker-trigger.error-input {
-    border: 1.5px solid #ef4444 !important;
-    background-color: #fef2f2 !important;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+    border: 1.5px solid #ef4444;
+    background-color: #fef2f2;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 }
+
 
 /* Expired Status Badge */
 .badge-expired {
@@ -2223,3 +2231,390 @@ textarea.error-input,
     opacity: 0.8;
     margin-top: 2px;
 }
+
+/* Profile Avatar Image Styles */
+.user-avatar img,
+.profile-avatar-large img,
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.user-avatar {
+    overflow: hidden;
+}
+
+/* Premium Glassmorphic Toast Notifications */
+.portal-toast-notification {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 999999;
+}
+
+.portal-toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.portal-toast-text {
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.portal-toast-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.portal-toast-success .portal-toast-icon {
+    color: #059669;
+}
+
+.portal-toast-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.portal-toast-info .portal-toast-icon {
+    color: #2563eb;
+}
+
+.portal-toast-error {
+    background: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #fecdd3;
+}
+
+.portal-toast-error .portal-toast-icon {
+    color: #e11d48;
+}
+
+/* Greeting Hero Section */
+.greeting-section {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    border-radius: 16px;
+    padding: 24px 28px;
+    color: #ffffff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.greeting-content h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    color: #ffffff;
+}
+
+.greeting-content p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.greeting-date-badge {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .admin-header,
+    .header-container,
+    .analytics-header-container {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .greeting-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 20px 18px;
+    }
+
+    .greeting-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .greeting-date-badge {
+        align-self: flex-start;
+        font-size: 0.78rem;
+        padding: 6px 12px;
+        white-space: normal;
+    }
+
+    .navbar-menu-list {
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        justify-content: flex-start;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+        gap: 16px;
+    }
+
+    .stats-cards-row,
+    .dashboard-stats-grid,
+    .analytics-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .dashboard-content-layout,
+    .analytics-content-layout {
+        flex-direction: column;
+        padding: 16px 12px;
+        gap: 16px;
+    }
+
+    .admin-card,
+    .drafts-section,
+    .recent-posts-section,
+    .matching-applicants-section,
+    .card-box,
+    .applicants-card,
+    .lower-right-column {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 16px;
+    }
+
+    .card-box-header,
+    .search-filter-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .card-box-header button,
+    .search-filter-header button,
+    .card-box-header .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .search-filter-row {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .search-box-wrapper,
+    .custom-dropdown-container,
+    .date-picker-trigger {
+        width: 100%;
+    }
+
+    .search-box-wrapper input {
+        width: 100%;
+    }
+
+    .dropdown-btn {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .posting-card-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .posting-card-body {
+        width: 100%;
+    }
+
+    .posting-card-status {
+        align-self: flex-start;
+    }
+
+    .posting-info-row {
+        flex-wrap: wrap;
+        font-size: 0.8rem;
+    }
+
+    .draft-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .draft-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .applicant-top {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .match-status {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .progress-bar-bg {
+        width: 100%;
+    }
+
+    .applicant-tags {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .add-job-modal,
+    .profile-settings-modal {
+        width: 94%;
+        max-height: 90vh;
+        margin: 0 auto;
+        padding: 18px;
+        border-radius: 16px;
+        overflow-y: auto;
+    }
+
+    .modal-form-grid,
+    .form-row-2col {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .sd-notification-sidebar {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 0;
+    }
+
+    .user-profile-container {
+        position: relative;
+    }
+
+    .profile-dropdown-menu {
+        position: absolute;
+        top: 50px;
+        right: 0;
+        left: auto;
+        width: 250px;
+        max-width: calc(100vw - 32px);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+        z-index: 9999;
+    }
+
+    .avatar-photo-popover {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: auto;
+        transform: none;
+        max-width: 200px;
+        z-index: 10000;
+    }
+
+    .portal-toast-notification {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 20px;
+        width: 90%;
+        max-width: 400px;
+        justify-content: center;
+    }
+
+    .btn-post,
+    .btn-cancel,
+    .btn-confirm-apply,
+    .navbar-menu-btn {
+        min-height: 42px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .college-name {
+        display: inline-block;
+        font-size: 1.1rem;
+    }
+
+    .profile-dropdown-menu {
+        position: fixed;
+        top: 60px;
+        right: 16px;
+        left: 16px;
+        width: auto;
+        max-width: calc(100vw - 32px);
+        box-shadow: 0 12px 36px rgba(15, 23, 42, 0.22);
+        z-index: 99999;
+    }
+
+    .admin-welcome-card {
+        padding: 20px 16px;
+    }
+
+    .admin-filter-bar,
+    .admin-controls-row {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .admin-filter-bar input,
+    .admin-filter-bar select,
+    .admin-filter-bar button {
+        width: 100%;
+    }
+
+    .admin-table-container,
+    .admin-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .stat-card {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+

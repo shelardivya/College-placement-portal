@@ -1560,3 +1560,179 @@
     border-radius: 4px;
     white-space: nowrap;
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .analytics-content-layout {
+        padding: 16px 12px;
+    }
+
+    .analytics-container,
+    .analytics-layout,
+    .analytics-page-wrapper {
+        padding: 0;
+        gap: 16px;
+    }
+
+    .analytics-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 16px;
+        min-height: auto;
+        gap: 12px;
+    }
+
+    .analytics-banner-text {
+        max-width: 100%;
+        position: relative;
+        z-index: 2;
+    }
+
+    .analytics-banner-icons {
+        position: relative;
+        right: auto;
+        top: auto;
+        transform: none;
+        margin-top: 4px;
+        align-self: center;
+    }
+
+    .banner-illustration {
+        width: 120px;
+        max-width: 100%;
+    }
+
+    .analytics-banner:hover .analytics-banner-icons {
+        transform: none;
+    }
+
+    .analytics-page-wrapper .stats-grid,
+    .analytics-stats-grid,
+    .analytics-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .analytics-page-wrapper .stat-card {
+        padding: 16px;
+    }
+
+    .charts-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .chart-card {
+        height: auto;
+        padding: 16px;
+    }
+
+    .dept-chart-body {
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .donut-wrapper {
+        width: 140px;
+        height: 140px;
+    }
+
+    .dept-legend {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .legend-label {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .bar-chart-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .bar-chart-svg {
+        min-width: 280px;
+    }
+
+    .skills-x-axis {
+        padding-left: 54px;
+    }
+
+    .students-table-card {
+        padding: 16px 12px;
+    }
+
+    .table-card-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .table-title-group {
+        width: 100%;
+    }
+
+    .table-header-actions {
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .table-search-expanded {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .add-student-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .table-responsive,
+    .analytics-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .students-table {
+        min-width: 620px;
+    }
+
+    .analytics-filter-bar,
+    .analytics-controls-bar {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .analytics-filter-bar input,
+    .analytics-filter-bar select,
+    .analytics-filter-bar button {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .analytics-page-title,
+    .analytics-title {
+        font-size: 1.25rem;
+    }
+
+    .table-card-title {
+        font-size: 1rem;
+    }
+
+    .table-title-badge {
+        margin-left: 0;
+        margin-top: 4px;
+    }
+
+    .analytics-card {
+        padding: 14px;
+    }
+}

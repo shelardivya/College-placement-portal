@@ -684,3 +684,104 @@
     font-weight: 600;
     color: #64748b;
 }
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .studhub-container,
+    .stud-hub-container,
+    .stud-hub-layout {
+        padding: 16px 12px 32px;
+        flex-direction: column;
+    }
+
+    .studhub-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 18px;
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .studhub-banner-text h2 {
+        font-size: 1.3rem;
+    }
+
+    .welcome-date-badge {
+        align-self: flex-start;
+    }
+
+    .studhub-grid,
+    .stud-hub-grid,
+    .hub-content-split {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .studhub-left,
+    .studhub-right {
+        gap: 16px;
+        width: 100%;
+    }
+
+    .sh-panel,
+    .sh-panel-card {
+        padding: 20px 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .sh-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .query-card-header-line,
+    .sh-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .sh-filter-toolbar {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .sh-filter-toolbar input,
+    .sh-filter-toolbar select,
+    .sh-filter-toolbar button {
+        width: 100%;
+    }
+
+    .sh-story-card {
+        padding: 14px 12px;
+    }
+
+    .sh-query-card {
+        padding: 14px 12px;
+    }
+
+    .sh-form-group input,
+    .sh-form-group textarea,
+    .sh-submit-btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .sh-panel-title,
+    .stud-hub-title {
+        font-size: 1.15rem;
+    }
+
+    .sh-query-card,
+    .sh-story-card {
+        padding: 12px;
+    }
+}
+
+

@@ -10,6 +10,8 @@ import {
     CheckCircle2,
     Clock,
     XCircle,
+    Info,
+    AlertCircle,
     MapPin,
     Briefcase,
     Calendar,
@@ -22,6 +24,8 @@ import {
     FileText,
     Search,
     Upload,
+    Camera,
+    Trash2
 } from "lucide-react";
 import "./StudentDashboard.css";
 import StudHub from "./StudHub";
@@ -57,6 +61,13 @@ function decodeStorageString(val) {
         // Fallback
     }
     return str;
+}
+
+/** Generates initial letters from user full name. */
+function getInitials(name) {
+    if (!name || name === "Student") return "ST";
+    const parts = String(name).trim().split(" ");
+    return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
 }
 
 
@@ -175,12 +186,186 @@ function ModalBackdrop({ onClose }) {
     );
 }
 
-function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profile, isEditingProfile, setIsEditingProfile, handleEditProfileClick, handleCancelEdit, handleSaveProfile, tempProfile, setTempProfile }) {
+function AvatarPhotoMenu({ avatarUrl, onUpload, onRemove, children, inputId }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={menuRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <div
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(!isOpen);
+                    setShowTooltip(false);
+                }}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                style={{ cursor: 'pointer', position: 'relative' }}
+            >
+                {children}
+                <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    padding: '3px',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    <Camera size={11} />
+                </span>
+            </div>
+
+            {!isOpen && showTooltip && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 8px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #bfdbfe',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.78125rem',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)',
+                    pointerEvents: 'none',
+                    zIndex: 100000
+                }}>
+                    {avatarUrl ? 'Click photo to change or remove photo' : 'Click photo to upload profile photo'}
+                    <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderLeft: '5px solid transparent',
+                        borderRight: '5px solid transparent',
+                        borderTop: '5px solid #1e40af'
+                    }} />
+                </div>
+            )}
+
+            {isOpen && (
+                <div className="avatar-photo-popover" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    marginTop: '8px',
+                    background: '#ffffff',
+                    borderRadius: '10px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    padding: '6px',
+                    zIndex: 99999,
+                    minWidth: '150px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                }}>
+                    <label
+                        htmlFor={inputId}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 12px',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600',
+                            color: '#1e293b',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s',
+                            margin: 0
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <Camera size={15} style={{ color: '#2563eb' }} />
+                        <span>{avatarUrl ? 'Edit Photo' : 'Upload Photo'}</span>
+                    </label>
+                    <input
+                        id={inputId}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            const target = e.target;
+                            setIsOpen(false);
+                            if (onUpload) onUpload(e, selectedFile);
+                            if (target) target.value = '';
+                        }}
+                        style={{ display: 'none' }}
+                    />
+
+                    {avatarUrl ? (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                onRemove();
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                fontSize: '0.8125rem',
+                                fontWeight: '600',
+                                color: '#ef4444',
+                                background: 'none',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                width: '100%',
+                                textAlign: 'left',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            <Trash2 size={15} style={{ color: '#ef4444' }} />
+                            <span>Remove Photo</span>
+                        </button>
+                    ) : null}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profile, isEditingProfile, setIsEditingProfile, handleEditProfileClick, handleCancelEdit, handleSaveProfile, tempProfile, setTempProfile, handlePhotoUpload, handleRemovePhoto }) {
     if (!isProfileModalOpen) return null;
     const closeProfileModal = () => {
         setIsProfileModalOpen(false);
         setIsEditingProfile(false);
     };
+    const activePhoto = isEditingProfile ? tempProfile.avatarUrl : profile.avatarUrl;
+    const activeName = isEditingProfile ? tempProfile.fullName : profile.fullName;
+
     return (
         <div className="modal-overlay">
             <ModalBackdrop onClose={closeProfileModal} />
@@ -195,6 +380,29 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
 
 
                 <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
+                    <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                        <AvatarPhotoMenu
+                            avatarUrl={activePhoto}
+                            onUpload={handlePhotoUpload}
+                            onRemove={handleRemovePhoto}
+                            inputId="student-modal-photo-input"
+                        >
+                            <div className="photo-preview-circle" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '1.25rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                {activePhoto ? (
+                                    <img src={activePhoto} alt={activeName} className="avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                                ) : (
+                                    getInitials(activeName || 'Student')
+                                )}
+                            </div>
+                        </AvatarPhotoMenu>
+                        <div>
+                            <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{activeName}</span>
+                            <span style={{ display: 'block', fontSize: '0.8125rem', color: '#64748b' }}>
+                                {activePhoto ? 'Click profile photo to change or remove photo' : 'Click profile photo to upload photo'}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="form-row">
                         <ProfileInputField label="Full Name" isEditing={isEditingProfile} profileValue={profile.fullName} tempValue={tempProfile.fullName} onChange={(e) => setTempProfile({ ...tempProfile, fullName: e.target.value })} />
                         <ProfileInputField label="Email Address" type="email" isEditing={isEditingProfile} profileValue={profile.email} tempValue={tempProfile.email} onChange={(e) => setTempProfile({ ...tempProfile, email: e.target.value })} />
@@ -673,12 +881,6 @@ export default function
     const loggedInUser = JSON.parse(localStorage.getItem("user") || "{}");
     const studentName = decodeStorageString(loggedInUser.fullName || loggedInUser.name) || "Student";
 
-    const getInitials = (name) => {
-        if (!name || name === "Student") return "ST";
-        const parts = name.trim().split(" ");
-        return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
-    };
-
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'studhub', or 'placeview'
 
 
@@ -942,6 +1144,8 @@ export default function
     // Gather profile information from localStorage, with clean default fallbacks
     const getInitialProfile = () => {
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const userEmailKey = (storedUser.email || "").toLowerCase();
+        const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
         return {
             fullName: decodeStorageString(storedUser.fullName) || "Student Name",
             email: decodeStorageString(storedUser.email) || "student@portal.edu",
@@ -951,7 +1155,8 @@ export default function
             cgpa: decodeStorageString(storedUser.cgpa) || "",
             skills: decodeStorageString(storedUser.skills) || "",
             linkedinUrl: decodeStorageString(storedUser.linkedinUrl) || "",
-            githubUrl: decodeStorageString(storedUser.githubUrl) || ""
+            githubUrl: decodeStorageString(storedUser.githubUrl) || "",
+            avatarUrl: storedUser.avatarUrl || localStorage.getItem(avatarKey) || ""
         };
     };
 
@@ -975,6 +1180,11 @@ export default function
             try {
                 const response = await getStudentProfile();
                 if (response.data) {
+                    const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+                    const userEmailKey = (response.data.email || storedUser.email || "").toLowerCase();
+                    const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
+                    const savedAvatar = localStorage.getItem(avatarKey) || storedUser.avatarUrl || "";
+
                     const freshData = {
                         fullName: response.data.fullName || response.data.name || "",
                         email: response.data.email || "",
@@ -984,7 +1194,8 @@ export default function
                         cgpa: response.data.cgpa || "0.0",
                         skills: response.data.skills || "",
                         linkedinUrl: response.data.linkedinUrl || "",
-                        githubUrl: response.data.githubUrl || ""
+                        githubUrl: response.data.githubUrl || "",
+                        avatarUrl: response.data.avatarUrl || savedAvatar
                     };
 
                     setProfile(prev => ({
@@ -1067,6 +1278,63 @@ export default function
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Handlers for profile editing
+    const handleStudentPhotoUpload = (e, explicitFile) => {
+        const file = explicitFile || e?.target?.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            setToastMessage("Image size must be less than 5MB");
+            setToastType('error');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+            return;
+        }
+        const userEmailKey = (profile.email || "").toLowerCase();
+        const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
+        const hasExistingPhoto = Boolean(profile.avatarUrl || localStorage.getItem(avatarKey) || localStorage.getItem("student_avatar"));
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const base64 = reader.result;
+            setTempProfile(prev => ({ ...prev, avatarUrl: base64 }));
+            setProfile(prev => ({ ...prev, avatarUrl: base64 }));
+            localStorage.setItem(avatarKey, base64);
+
+            const rawUser = localStorage.getItem("user");
+            let userObj = {};
+            if (rawUser) {
+                try { userObj = JSON.parse(rawUser) || {}; } catch {}
+            }
+            userObj.avatarUrl = base64;
+            localStorage.setItem("user", JSON.stringify(userObj));
+
+            setToastMessage(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!");
+            setToastType('success');
+            setShowToast(true);
+            setTimeout(() => setShowToast(false), 3000);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleStudentRemovePhoto = () => {
+        setTempProfile(prev => ({ ...prev, avatarUrl: '' }));
+        setProfile(prev => ({ ...prev, avatarUrl: '' }));
+        const userEmailKey = (profile.email || "").toLowerCase();
+        const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
+        localStorage.removeItem(avatarKey);
+
+        const rawUser = localStorage.getItem("user");
+        let userObj = {};
+        if (rawUser) {
+            try { userObj = JSON.parse(rawUser) || {}; } catch {}
+        }
+        delete userObj.avatarUrl;
+        localStorage.setItem("user", JSON.stringify(userObj));
+
+        setToastMessage("Profile photo removed successfully!");
+        setToastType('error');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
     const handleEditProfileClick = () => {
         setTempProfile({ ...profile });
         setIsEditingProfile(true);
@@ -1089,7 +1357,11 @@ export default function
                 role: "Student" // Optional default
             };
 
-            await updateStudentProfile(payload);
+            try {
+                await updateStudentProfile(payload);
+            } catch (apiErr) {
+                console.warn("Backend API updateStudentProfile warning (updating locally):", apiErr);
+            }
 
             setProfile({ ...tempProfile });
             const rawUserObj = localStorage.getItem("user");
@@ -1117,7 +1389,7 @@ export default function
             setIsEditingProfile(false);
 
             // Show Toast Notification
-            setToastMessage("Profile updated successfully!");
+            setToastMessage("Profile edited successfully!");
             setToastType("success");
             setShowToast(true);
             setTimeout(() => {
@@ -1577,16 +1849,43 @@ export default function
                             setIsProfileDropdownOpen(!isProfileDropdownOpen);
                             setIsNotificationSidebarOpen(false);
                         }}>
-                            <span className="avatar-placeholder">{getInitials(studentName)}</span>
+                            {profile.avatarUrl ? (
+                                <img src={profile.avatarUrl} alt={studentName} className="avatar-img" />
+                            ) : (
+                                <span className="avatar-placeholder">{getInitials(studentName)}</span>
+                            )}
                         </button>
 
                         {isProfileDropdownOpen && (
                             <div className="profile-dropdown">
-                                <div className="dropdown-user-info">
-                                    <h4>{studentName}</h4>
-                                    <p>{profile.email}</p>
+                                <div className="dropdown-user-info" style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '12px' }}>
+                                    <AvatarPhotoMenu
+                                        avatarUrl={profile.avatarUrl}
+                                        onUpload={(e) => {
+                                            setIsProfileDropdownOpen(false);
+                                            handleStudentPhotoUpload(e);
+                                        }}
+                                        onRemove={() => {
+                                            setIsProfileDropdownOpen(false);
+                                            handleStudentRemovePhoto();
+                                        }}
+                                        inputId="student-header-photo-input"
+                                    >
+                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '0.875rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                            {profile.avatarUrl ? (
+                                                <img src={profile.avatarUrl} alt={studentName} className="avatar-img" />
+                                            ) : (
+                                                getInitials(studentName)
+                                            )}
+                                        </div>
+                                    </AvatarPhotoMenu>
+                                    <div>
+                                        <h4 style={{ margin: 0, fontSize: '0.9375rem', fontWeight: '700' }}>{studentName}</h4>
+                                        <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>{profile.email}</p>
+                                    </div>
                                 </div>
                                 <hr className="dropdown-divider" />
+
                                 <button type="button" className="dropdown-item" onClick={() => {
                                     setIsProfileModalOpen(true);
                                     setIsProfileDropdownOpen(false);
@@ -1844,7 +2143,7 @@ export default function
 
 
 
-            <StudentProfileModal isProfileModalOpen={isProfileModalOpen} setIsProfileModalOpen={setIsProfileModalOpen} profile={profile} isEditingProfile={isEditingProfile} setIsEditingProfile={setIsEditingProfile} handleEditProfileClick={handleEditProfileClick} handleCancelEdit={handleCancelEdit} handleSaveProfile={handleSaveProfile} tempProfile={tempProfile} setTempProfile={setTempProfile} />
+            <StudentProfileModal isProfileModalOpen={isProfileModalOpen} setIsProfileModalOpen={setIsProfileModalOpen} profile={profile} isEditingProfile={isEditingProfile} setIsEditingProfile={setIsEditingProfile} handleEditProfileClick={handleEditProfileClick} handleCancelEdit={handleCancelEdit} handleSaveProfile={handleSaveProfile} tempProfile={tempProfile} setTempProfile={setTempProfile} handlePhotoUpload={handleStudentPhotoUpload} handleRemovePhoto={handleStudentRemovePhoto} />
 
 
             <StudentChangePasswordModal isChangePasswordOpen={isChangePasswordOpen} setIsChangePasswordOpen={setIsChangePasswordOpen} passwordForm={passwordForm} setPasswordForm={setPasswordForm} showCurrentPassword={showCurrentPassword} setShowCurrentPassword={setShowCurrentPassword} showNewPassword={showNewPassword} setShowNewPassword={setShowNewPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} handlePasswordSubmit={handlePasswordSubmit} />
@@ -1854,18 +2153,24 @@ export default function
 
 
 
-            {showToast && (
-                <div className={`sd-toast-notification ${toastType}`}>
-                    <div className="sd-toast-icon">
-                        {toastType === 'success' ? (
-                            <CheckCircle2 size={18} />
-                        ) : (
-                            <XCircle size={18} />
-                        )}
-                    </div>
-                    <span className="sd-toast-text">{toastMessage}</span>
-                </div>
-            )}
+            <AnimatePresence>
+                {showToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        className={`portal-toast-notification portal-toast-${toastType}`}
+                    >
+                        <div className="portal-toast-icon">
+                            {toastType === 'success' && <CheckCircle2 size={20} />}
+                            {toastType === 'info' && <Info size={20} />}
+                            {toastType === 'error' && <AlertCircle size={20} />}
+                        </div>
+                        <span className="portal-toast-text">{toastMessage}</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 

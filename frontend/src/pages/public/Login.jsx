@@ -194,7 +194,7 @@ function Login({ onNavigate, initialView }) {
         const cleanEmail = sanitizeStorageString(email).toLowerCase();
         const nameFromEmail = cleanEmail.split('@')[0] || 'student';
         const fallbackName = nameFromEmail.replace(/\d/g, '').charAt(0).toUpperCase() + nameFromEmail.replace(/\d/g, '').slice(1);
-        
+
         const rawReg = localStorage.getItem("registered_profiles");
         let registeredProfiles = [];
         if (rawReg) {
@@ -206,7 +206,7 @@ function Login({ onNavigate, initialView }) {
             }
         }
         const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
-        
+
         if (matchedProfile) {
             const sanitizedUser = {
                 fullName: sanitizeStorageString(matchedProfile.fullName),
@@ -239,26 +239,22 @@ function Login({ onNavigate, initialView }) {
     };
 
     const handleLoginSubmit = async () => {
-        if (formData.password !== formData.confirmPassword) {
-            showToastMessage("Password and Confirm Password do not match!", 'error', 3000);
-            return;
-        }
         try {
             const emailLower = formData.email.trim().toLowerCase();
             const isAdmin = emailLower === 'saurabh@gmail.com' || emailLower.startsWith('admin') || emailLower.includes('@admin.') || emailLower.includes('.admin');
-            
+
             const apiCall = isAdmin ? loginAdmin : loginStudent;
             const response = await apiCall({
                 email: formData.email.trim(),
                 password: getStorageString(formData.password),
-                confirmPassword: getStorageString(formData.confirmPassword),
                 ...(isAdmin && { rememberMe: formData.rememberMe })
             });
+
 
             if (response.data?.token) {
                 saveAuthToken(response.data.token);
                 localStorage.setItem("role", sanitizeStorageString(isAdmin ? "admin" : "student"));
-                
+
                 const payload = parseTokenPayload(response.data.token);
 
                 if (isAdmin) saveAdminProfile(formData.email, formData.password, payload);
@@ -595,31 +591,6 @@ function Login({ onNavigate, initialView }) {
                                 </div>
                             )}
 
-                            {/* CONFIRM PASSWORD INPUT (Login view) */}
-                            {loginView === 'login' && (
-                                <div className="input-group full-width">
-                                    <label htmlFor="confirmPassword">Confirm Password</label>
-                                    <div className="input-wrapper">
-                                        <Lock size={16} />
-                                        <input
-                                            id="confirmPassword"
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            name="confirmPassword"
-                                            placeholder="Confirm your password"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn-toggle-eye"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        >
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* RESET PASSWORD INPUTS (Reset view) */}
                             {loginView === 'reset' && (
@@ -672,6 +643,7 @@ function Login({ onNavigate, initialView }) {
                                             </button>
                                         </div>
                                     </div>
+
                                 </>
                             )}
 
@@ -729,7 +701,7 @@ function Login({ onNavigate, initialView }) {
                                     className="link-span-register"
                                     onClick={() => onNavigate('register')}
                                 >
-                                    Create Student Account
+                                    Register Student Account
                                 </button>
                             </div>
                         )}
