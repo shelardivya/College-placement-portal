@@ -714,7 +714,7 @@ export default function Placeview() {
                 >
                     <div className="placeview-table-card-header">
                         <div className="placeview-table-title-group">
-                            <h3 className="placeview-table-card-title">Top Placed Students</h3>
+                            <h3 className="placeview-table-card-title">All Placed Students</h3>
                             <span className="placeview-table-title-badge">Leaderboard</span>
                         </div>
                         <div className="placeview-table-header-actions">
@@ -817,8 +817,8 @@ export default function Placeview() {
                                             </td>
                                             <td>
                                                 <span className="placeview-cgpa-text">
-                                                    {!Number.isNaN(Number(student.cgpa)) && Number.isInteger(Number(student.cgpa))
-                                                        ? Number(student.cgpa).toFixed(1)
+                                                    {!Number.isNaN(Number(student.cgpa))
+                                                        ? parseFloat(student.cgpa).toFixed(2)
                                                         : student.cgpa}
                                                 </span>
                                                 <span className="placeview-cgpa-max">/10</span>
