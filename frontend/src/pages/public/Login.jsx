@@ -239,10 +239,6 @@ function Login({ onNavigate, initialView }) {
     };
 
     const handleLoginSubmit = async () => {
-        if (formData.password !== formData.confirmPassword) {
-            showToastMessage("Password and Confirm Password do not match!", 'error', 3000);
-            return;
-        }
         try {
             const emailLower = formData.email.trim().toLowerCase();
             const isAdmin = emailLower === 'saurabh@gmail.com' || emailLower.startsWith('admin') || emailLower.includes('@admin.') || emailLower.includes('.admin');
@@ -251,9 +247,9 @@ function Login({ onNavigate, initialView }) {
             const response = await apiCall({
                 email: formData.email.trim(),
                 password: getStorageString(formData.password),
-                confirmPassword: getStorageString(formData.confirmPassword),
                 ...(isAdmin && { rememberMe: formData.rememberMe })
             });
+
 
             if (response.data?.token) {
                 saveAuthToken(response.data.token);
@@ -595,31 +591,6 @@ function Login({ onNavigate, initialView }) {
                                 </div>
                             )}
 
-                            {/* CONFIRM PASSWORD INPUT (Login view) */}
-                            {loginView === 'login' && (
-                                <div className="input-group full-width">
-                                    <label htmlFor="confirmPassword">Confirm Password</label>
-                                    <div className="input-wrapper">
-                                        <Lock size={16} />
-                                        <input
-                                            id="confirmPassword"
-                                            type={showConfirmPassword ? "text" : "password"}
-                                            name="confirmPassword"
-                                            placeholder="Confirm your password"
-                                            value={formData.confirmPassword}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn-toggle-eye"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                        >
-                                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* RESET PASSWORD INPUTS (Reset view) */}
                             {loginView === 'reset' && (

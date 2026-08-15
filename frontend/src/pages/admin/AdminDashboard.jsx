@@ -368,11 +368,10 @@ function AvatarPhotoMenu({ avatarUrl, onUpload, onRemove, children, inputId }) {
             )}
 
             {isOpen && (
-                <div style={{
+                <div className="avatar-photo-popover" style={{
                     position: 'absolute',
                     top: '100%',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
+                    left: 0,
                     marginTop: '8px',
                     background: '#ffffff',
                     borderRadius: '10px',

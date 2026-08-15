@@ -3563,6 +3563,7 @@
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
+    .dashboard-header,
     .sd-header-container,
     .student-header,
     .header-container {
@@ -3571,6 +3572,7 @@
         gap: 12px;
     }
 
+    .student-nav-tabs,
     .navbar-menu-list,
     .sd-navbar {
         width: 100%;
@@ -3582,9 +3584,30 @@
         padding-bottom: 6px;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
-        gap: 12px;
+        gap: 16px;
+        display: flex;
     }
 
+    .welcome-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 20px 18px;
+        margin: 12px 16px 20px 16px;
+    }
+
+    .welcome-content h2 {
+        font-size: 1.3rem;
+    }
+
+    .welcome-date-badge {
+        align-self: flex-start;
+    }
+
+    .welcome-date-badge span {
+        font-size: 0.78rem;
+        padding: 6px 12px;
+    }
 
     .overview-grid,
     .sd-stats-grid,
@@ -3626,9 +3649,12 @@
     }
 
     .avatar-photo-popover {
-        right: 0;
-        left: auto;
-        max-width: 90vw;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: auto;
+        transform: none;
+        max-width: 200px;
     }
 
     .portal-toast-notification {
@@ -3651,6 +3677,7 @@
 
 @media screen and (max-width: 480px) {
     .college-name {
+        display: inline-block;
         font-size: 1.1rem;
     }
 
@@ -3683,9 +3710,13 @@
 
     .notification-dropdown,
     .profile-dropdown {
-        width: calc(100vw - 24px);
-        right: 12px;
-        left: 12px;
+        position: fixed;
+        top: 60px;
+        right: 16px;
+        left: 16px;
+        width: auto;
+        max-width: calc(100vw - 32px);
     }
 }
+
 

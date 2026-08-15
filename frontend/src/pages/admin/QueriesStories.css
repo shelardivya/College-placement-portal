@@ -1248,12 +1248,16 @@
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
+    .queries-stories-container,
     .qs-container,
     .qs-layout {
-        padding: 12px;
+        padding: 0;
         flex-direction: column;
+        gap: 16px;
     }
 
+    .qs-row,
+    .qs-row-bottom,
     .qs-grid,
     .qs-content-split {
         grid-template-columns: 1fr;
@@ -1261,16 +1265,99 @@
         gap: 16px;
     }
 
+    .qs-panel,
     .qs-card,
-    .qs-panel-card {
+    .qs-panel-card,
+    .placement-stories-card,
+    .queries-card-full {
+        padding: 18px 16px;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: auto;
+    }
+
+    .qs-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .header-controls {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .qs-search-bar-wrapper,
+    .qs-search-bar-wrapper .search-input-box,
+    .status-select-dropdown {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .query-item-card {
+        padding: 14px;
+    }
+
+    .query-meta-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .action-links-group {
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .form-upper-row,
+    .form-grid-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .upload-photo-zone {
         padding: 16px;
         width: 100%;
         box-sizing: border-box;
     }
 
-    .form-grid-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
+    .form-submit-row,
+    .header-actions-group {
+        width: 100%;
+    }
+
+    .btn-primary-purple,
+    .btn-add-drive {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .qs-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+    }
+
+    .qs-drives-table {
+        min-width: 580px;
+    }
+
+    .story-quote-card {
+        padding: 12px 14px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .story-card-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .story-package-badge {
+        align-self: flex-start;
     }
 
     .qs-filter-bar,
@@ -1288,12 +1375,15 @@
 }
 
 @media screen and (max-width: 480px) {
+    .panel-title,
     .qs-header-title {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
     }
 
     .qs-query-item,
-    .qs-story-item {
+    .qs-story-item,
+    .story-card-item {
         padding: 14px;
     }
-}
+}
+
