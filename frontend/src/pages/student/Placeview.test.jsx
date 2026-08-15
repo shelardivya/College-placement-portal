@@ -42,7 +42,7 @@ describe('Placeview Component', () => {
         expect(screen.getByText('Students Placeview')).toBeInTheDocument();
         expect(screen.getByText('Placed Students')).toBeInTheDocument();
         expect(screen.getByText('Department Wise Distribution')).toBeInTheDocument();
-        expect(screen.getByText('Top Placed Students')).toBeInTheDocument();
+        expect(screen.getByText('All Placed Students')).toBeInTheDocument();
         expect(screen.queryByText('Add Top Placed Student')).not.toBeInTheDocument();
     });
 });
