@@ -35,7 +35,7 @@
 
 
 
-/* analytics banner - Microsoft Fluent UI / Azure inspired styling */
+/* analytics banner */
 .analytics-banner {
     background: linear-gradient(90deg, #f9fbff 0%, #eef5ff 45%, #dfe9ff 100%);
     border-radius: 24px;
@@ -50,7 +50,7 @@
     min-height: 100px;
 }
 
-/* Pseudo-element 1: Subtle radial blue glow on the right side behind the illustration */
+/* banner before pseudo-element */
 .analytics-banner::before {
     content: '';
     position: absolute;
@@ -65,7 +65,7 @@
     pointer-events: none;
 }
 
-/* Pseudo-element 2: Larger blurred blue radial gradient for banner depth */
+/* banner after pseudo-element */
 .analytics-banner::after {
     content: '';
     position: absolute;
@@ -85,7 +85,7 @@
     max-width: 65%;
 }
 
-/* premium modern badge */
+/* badge */
 .banner-badge {
     background-color: #eef2ff;
     color: #1e3a8a;
@@ -116,7 +116,7 @@
     line-height: 1.4;
 }
 
-/* right illustration container - absolute layout, transparent & weightless */
+/* illustration container */
 .analytics-banner-icons {
     position: absolute;
     right: 40px;
@@ -134,14 +134,14 @@
     transition: transform 0.35s ease;
 }
 
-/* illustration - sized, floating, blends with multiply mode */
+/* illustration image */
 .banner-illustration {
     width: 155px;
     height: auto;
     object-fit: contain;
     display: block;
     mix-blend-mode: multiply;
-    /* Blends the pure white background of the illustration PNG into the gradient */
+
     animation: floating 5s ease-in-out infinite;
 }
 
@@ -150,7 +150,7 @@
     transform: translateY(calc(-50% - 6px)) scale(1.03);
 }
 
-/* subtle weightless floating animation keyframes */
+/* floating keyframes */
 @keyframes floating {
     0% {
         transform: translateY(0px);

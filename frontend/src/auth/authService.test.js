@@ -14,7 +14,11 @@ import {
   getAdminProfile,
   getStudentProfile,
   updateAdminProfile,
+  uploadAdminProfilePhoto,
+  deleteAdminProfilePhoto,
   updateStudentProfile,
+  uploadStudentProfilePhoto,
+  deleteStudentProfilePhoto,
   getStudentDashboardStats,
   getAdminStudentAnalyticsDashboard,
   getAdminRecentPosts,
@@ -170,6 +174,46 @@ describe('authService API Methods', () => {
     api.put.mockResolvedValue({ data: {} });
     await updateStudentProfile({ name: 'Student' });
     expect(api.put).toHaveBeenCalledWith('/student/profile', { name: 'Student' }, {
+      headers: { Authorization: 'Bearer test-jwt-token' }
+    });
+  });
+
+  it('uploadStudentProfilePhoto calls api.post with FormData', async () => {
+    api.post.mockResolvedValue({ data: { photoUrl: '/uploads/profile/test.png' } });
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    await uploadStudentProfilePhoto(fakeFile);
+    expect(api.post).toHaveBeenCalledWith('/student/profile/photo', expect.any(FormData), {
+      headers: {
+        Authorization: 'Bearer test-jwt-token',
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  });
+
+  it('deleteStudentProfilePhoto calls api.delete', async () => {
+    api.delete.mockResolvedValue({ data: 'Profile photo deleted successfully.' });
+    await deleteStudentProfilePhoto();
+    expect(api.delete).toHaveBeenCalledWith('/student/profile/photo', {
+      headers: { Authorization: 'Bearer test-jwt-token' }
+    });
+  });
+
+  it('uploadAdminProfilePhoto calls api.post with FormData', async () => {
+    api.post.mockResolvedValue({ data: { photoUrl: '/uploads/profile/admin.png' } });
+    const fakeFile = new File(['dummy'], 'photo.png', { type: 'image/png' });
+    await uploadAdminProfilePhoto(fakeFile);
+    expect(api.post).toHaveBeenCalledWith('/admin/profile/photo', expect.any(FormData), {
+      headers: {
+        Authorization: 'Bearer test-jwt-token',
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  });
+
+  it('deleteAdminProfilePhoto calls api.delete', async () => {
+    api.delete.mockResolvedValue({ data: 'Admin profile photo deleted successfully.' });
+    await deleteAdminProfilePhoto();
+    expect(api.delete).toHaveBeenCalledWith('/admin/profile/photo', {
       headers: { Authorization: 'Bearer test-jwt-token' }
     });
   });
