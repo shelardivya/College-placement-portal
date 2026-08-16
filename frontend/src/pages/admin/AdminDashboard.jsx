@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, uploadAdminProfilePhoto, deleteAdminProfilePhoto, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
 import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
@@ -1957,7 +1957,7 @@ function AdminDashboard({ onNavigate }) {
         avatarUrl: loggedInAdmin.avatarUrl || localStorage.getItem("admin_avatar") || ''
     });
 
-    const handleAdminPhotoUpload = (e, explicitFile) => {
+    const handleAdminPhotoUpload = async (e, explicitFile) => {
         const file = explicitFile || e?.target?.files?.[0];
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
@@ -1971,7 +1971,7 @@ function AdminDashboard({ onNavigate }) {
             storedAdmin.avatarUrl
         );
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
             const base64 = reader.result;
             setAdminProfile(prev => ({ ...prev, avatarUrl: base64 }));
             localStorage.setItem("admin_avatar", base64);
@@ -1982,12 +1982,30 @@ function AdminDashboard({ onNavigate }) {
             }
             userObj.avatarUrl = base64;
             localStorage.setItem("admin_user", JSON.stringify(userObj));
+
+            // Call backend API (POST /admin/profile/photo)
+            try {
+                const res = await uploadAdminProfilePhoto(file);
+                const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
+                if (serverPhotoPath && typeof serverPhotoPath === 'string') {
+                    const finalPhotoUrl = serverPhotoPath.startsWith("http") || serverPhotoPath.startsWith("data:")
+                        ? serverPhotoPath
+                        : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/${serverPhotoPath.replace(/^\/+/, '')}`;
+                    setAdminProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
+                    localStorage.setItem("admin_avatar", finalPhotoUrl);
+                    userObj.avatarUrl = finalPhotoUrl;
+                    localStorage.setItem("admin_user", JSON.stringify(userObj));
+                }
+            } catch (apiErr) {
+                console.warn("Backend admin photo upload warning:", apiErr);
+            }
+
             triggerToast(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!", "success");
         };
         reader.readAsDataURL(file);
     };
 
-    const handleAdminRemovePhoto = () => {
+    const handleAdminRemovePhoto = async () => {
         setAdminProfile(prev => ({ ...prev, avatarUrl: '' }));
         localStorage.removeItem("admin_avatar");
         const rawUser = localStorage.getItem("admin_user");
@@ -1997,7 +2015,15 @@ function AdminDashboard({ onNavigate }) {
         }
         delete userObj.avatarUrl;
         localStorage.setItem("admin_user", JSON.stringify(userObj));
-        triggerToast("Profile photo removed successfully!", "error");
+
+        // Call backend API (DELETE /admin/profile/photo)
+        try {
+            await deleteAdminProfilePhoto();
+        } catch (apiErr) {
+            console.warn("Backend admin photo delete warning:", apiErr);
+        }
+
+        triggerToast("Profile photo removed successfully!", "success");
     };
 
     const [passwordData, setPasswordData] = useState({

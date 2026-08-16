@@ -121,9 +121,51 @@ export const updateAdminProfile = (profileData) => {
     });
 };
 
+export const uploadAdminProfilePhoto = (file) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("photo", file);
+    return api.post("/admin/profile/photo", formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const deleteAdminProfilePhoto = () => {
+    const token = localStorage.getItem("token");
+    return api.delete("/admin/profile/photo", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const updateStudentProfile = (profileData) => {
     const token = localStorage.getItem("token");
     return api.put("/student/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const uploadStudentProfilePhoto = (file) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("photo", file);
+    return api.post("/student/profile/photo", formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const deleteStudentProfilePhoto = () => {
+    const token = localStorage.getItem("token");
+    return api.delete("/student/profile/photo", {
         headers: {
             Authorization: `Bearer ${token}`
         }

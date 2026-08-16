@@ -6,10 +6,10 @@
     --text-dark: var(--text-primary);
     --text-light: var(--text-secondary);
 
-    /* SaaS Multi-layered Shadows (Stripe Style) */
+    /* shadow */
     --shadow-saas: var(--shadow-md);
 
-    /* Large modern rounded corners */
+    /* border radius */
     --border-radius: var(--radius-lg);
     --border-radius-lg: var(--radius-xl);
     --font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -32,7 +32,7 @@
     padding: 24px;
 }
 
-/* Conditionally stretch layouts on Student Analytics tab */
+/* wide layout for analytics tab */
 .dashboard-content-layout.wide-layout {
     max-width: 100%;
     padding-left: 40px;
@@ -276,7 +276,7 @@
     border: 1px solid var(--border-light);
     box-shadow: var(--shadow-saas);
     padding: 32px;
-    /* Generous spacing */
+
 }
 
 .card-box-header {

@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useState, useEffect, useRef } from "react";
-import { getStudentProfile, updateStudentProfile, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
+import { getStudentProfile, updateStudentProfile, uploadStudentProfilePhoto, deleteStudentProfilePhoto, changePassword, getStudentDashboardStats, getLatestJobs, getJobDetails, applyForJob, getStudentResumeMatch, getStudentNotifications, markAllStudentNotificationsAsRead, getStudentUnreadCount } from '../../auth/authService';
 import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
@@ -1278,7 +1278,7 @@ export default function
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Handlers for profile editing
-    const handleStudentPhotoUpload = (e, explicitFile) => {
+    const handleStudentPhotoUpload = async (e, explicitFile) => {
         const file = explicitFile || e?.target?.files?.[0];
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
@@ -1291,8 +1291,9 @@ export default function
         const userEmailKey = (profile.email || "").toLowerCase();
         const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
         const hasExistingPhoto = Boolean(profile.avatarUrl || localStorage.getItem(avatarKey) || localStorage.getItem("student_avatar"));
+
         const reader = new FileReader();
-        reader.onloadend = () => {
+        reader.onloadend = async () => {
             const base64 = reader.result;
             setTempProfile(prev => ({ ...prev, avatarUrl: base64 }));
             setProfile(prev => ({ ...prev, avatarUrl: base64 }));
@@ -1306,6 +1307,24 @@ export default function
             userObj.avatarUrl = base64;
             localStorage.setItem("user", JSON.stringify(userObj));
 
+            // Call backend API (POST /student/profile/photo)
+            try {
+                const res = await uploadStudentProfilePhoto(file);
+                const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
+                if (serverPhotoPath && typeof serverPhotoPath === 'string') {
+                    const finalPhotoUrl = serverPhotoPath.startsWith("http") || serverPhotoPath.startsWith("data:")
+                        ? serverPhotoPath
+                        : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/${serverPhotoPath.replace(/^\/+/, '')}`;
+                    setTempProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
+                    setProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
+                    localStorage.setItem(avatarKey, finalPhotoUrl);
+                    userObj.avatarUrl = finalPhotoUrl;
+                    localStorage.setItem("user", JSON.stringify(userObj));
+                }
+            } catch (apiErr) {
+                console.warn("Backend photo upload warning:", apiErr);
+            }
+
             setToastMessage(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!");
             setToastType('success');
             setShowToast(true);
@@ -1314,7 +1333,7 @@ export default function
         reader.readAsDataURL(file);
     };
 
-    const handleStudentRemovePhoto = () => {
+    const handleStudentRemovePhoto = async () => {
         setTempProfile(prev => ({ ...prev, avatarUrl: '' }));
         setProfile(prev => ({ ...prev, avatarUrl: '' }));
         const userEmailKey = (profile.email || "").toLowerCase();
@@ -1329,8 +1348,15 @@ export default function
         delete userObj.avatarUrl;
         localStorage.setItem("user", JSON.stringify(userObj));
 
+        // Call backend API (DELETE /student/profile/photo)
+        try {
+            await deleteStudentProfilePhoto();
+        } catch (apiErr) {
+            console.warn("Backend photo delete warning:", apiErr);
+        }
+
         setToastMessage("Profile photo removed successfully!");
-        setToastType('error');
+        setToastType('success');
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
     };
