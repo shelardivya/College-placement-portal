@@ -49,6 +49,19 @@ function sanitizeStorageString(val) {
     return cleanStr;
 }
 
+/** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
+function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
+    if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
+    const uploadsIdx = serverPath.indexOf("/uploads/");
+    if (uploadsIdx !== -1) {
+        const relPath = serverPath.substring(uploadsIdx);
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+        return `${baseUrl}${relPath}`;
+    }
+    return fallbackUrl;
+}
+
 /** Safely decodes URL-encoded strings from storage. */
 function decodeStorageString(val) {
     if (val === null || val === undefined) return '';
@@ -1185,6 +1198,9 @@ export default function
                     const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
                     const savedAvatar = localStorage.getItem(avatarKey) || storedUser.avatarUrl || "";
 
+                    const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
+                    const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
+
                     const freshData = {
                         fullName: response.data.fullName || response.data.name || "",
                         email: response.data.email || "",
@@ -1195,7 +1211,7 @@ export default function
                         skills: response.data.skills || "",
                         linkedinUrl: response.data.linkedinUrl || "",
                         githubUrl: response.data.githubUrl || "",
-                        avatarUrl: response.data.avatarUrl || savedAvatar
+                        avatarUrl: resolvedPhoto
                     };
 
                     setProfile(prev => ({
@@ -1224,7 +1240,8 @@ export default function
                         cgpa: sanitizeStorageString(freshData.cgpa || existingUser.cgpa),
                         skills: sanitizeStorageString(freshData.skills || existingUser.skills),
                         linkedinUrl: sanitizeStorageString(freshData.linkedinUrl || existingUser.linkedinUrl),
-                        githubUrl: sanitizeStorageString(freshData.githubUrl || existingUser.githubUrl)
+                        githubUrl: sanitizeStorageString(freshData.githubUrl || existingUser.githubUrl),
+                        avatarUrl: freshData.avatarUrl || existingUser.avatarUrl || ""
                     }));
 
                 }
@@ -1311,10 +1328,8 @@ export default function
             try {
                 const res = await uploadStudentProfilePhoto(file);
                 const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
-                if (serverPhotoPath && typeof serverPhotoPath === 'string') {
-                    const finalPhotoUrl = serverPhotoPath.startsWith("http") || serverPhotoPath.startsWith("data:")
-                        ? serverPhotoPath
-                        : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/${serverPhotoPath.replace(/^\/+/, '')}`;
+                const finalPhotoUrl = resolvePhotoUrl(serverPhotoPath, base64);
+                if (finalPhotoUrl) {
                     setTempProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
                     setProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
                     localStorage.setItem(avatarKey, finalPhotoUrl);

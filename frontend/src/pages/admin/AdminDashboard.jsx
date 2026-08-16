@@ -189,6 +189,19 @@ function sanitizeStorageString(val) {
     return cleanStr;
 }
 
+/** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
+function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
+    if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
+    const uploadsIdx = serverPath.indexOf("/uploads/");
+    if (uploadsIdx !== -1) {
+        const relPath = serverPath.substring(uploadsIdx);
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+        return `${baseUrl}${relPath}`;
+    }
+    return fallbackUrl;
+}
+
 
 
 /** Updates the admin_profiles list in localStorage so that the password autofill stays in sync. */
@@ -1987,10 +2000,8 @@ function AdminDashboard({ onNavigate }) {
             try {
                 const res = await uploadAdminProfilePhoto(file);
                 const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
-                if (serverPhotoPath && typeof serverPhotoPath === 'string') {
-                    const finalPhotoUrl = serverPhotoPath.startsWith("http") || serverPhotoPath.startsWith("data:")
-                        ? serverPhotoPath
-                        : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/${serverPhotoPath.replace(/^\/+/, '')}`;
+                const finalPhotoUrl = resolvePhotoUrl(serverPhotoPath, base64);
+                if (finalPhotoUrl) {
                     setAdminProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
                     localStorage.setItem("admin_avatar", finalPhotoUrl);
                     userObj.avatarUrl = finalPhotoUrl;
@@ -2046,8 +2057,8 @@ function AdminDashboard({ onNavigate }) {
     const fetchDraftsData = async () => {
         try {
             const response = await getDrafts();
-            const rawData = response ? response.data : null;
             let draftsData = [];
+            const rawData = response.data;
             if (Array.isArray(rawData)) {
                 draftsData = rawData;
             } else if (rawData && Array.isArray(rawData.drafts)) {
@@ -2117,13 +2128,15 @@ function AdminDashboard({ onNavigate }) {
                 if (response.data) {
                     const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
                     const savedAvatar = localStorage.getItem("admin_avatar") || storedAdmin.avatarUrl || "";
+                    const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
+                    const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
                     setAdminProfile(prev => ({
                         ...prev,
                         name: response.data.fullName || response.data.name || prev.name,
                         email: response.data.email || prev.email,
                         phone: response.data.mobile || response.data.phone || prev.phone,
                         role: response.data.role || prev.role,
-                        avatarUrl: response.data.avatarUrl || savedAvatar
+                        avatarUrl: resolvedPhoto
                     }));
                 }
             } catch (error) {
