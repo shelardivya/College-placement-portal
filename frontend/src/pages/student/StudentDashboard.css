@@ -1188,7 +1188,7 @@
     pointer-events: none;
 }
 
-/* Premium Top Hero Banner Section */
+/* profile header */
 .profile-header-avatar {
     display: flex;
     flex-direction: column;
@@ -1221,7 +1221,7 @@
     animation: avatarFloat 4s ease-in-out infinite;
 }
 
-/* Online Glow Effect */
+/* online glow */
 .avatar-glow-effect {
     position: absolute;
     top: -8px;
@@ -1234,7 +1234,7 @@
     animation: avatarPulse 2s ease-in-out infinite;
 }
 
-/* Online Green Indicator Dot */
+/* online dot */
 .online-indicator-dot {
     position: absolute;
     bottom: 8px;
@@ -1317,7 +1317,7 @@
     border: 1px solid rgba(244, 63, 94, 0.15);
 }
 
-/* Premium Close Button inside Circular Glass */
+/* close button */
 .profile-modal .btn-close-modal {
     position: absolute;
     right: 24px;
@@ -1344,7 +1344,7 @@
     transform: scale(1.05);
 }
 
-/* Glass Divider Line */
+/* divider */
 .glass-divider {
     height: 1px;
     background: linear-gradient(90deg, rgba(229, 234, 243, 0) 0%, rgba(229, 234, 243, 1) 50%, rgba(229, 234, 243, 0) 100%);
@@ -1373,7 +1373,7 @@
     grid-column: span 2;
 }
 
-/* Premium Labels styling */
+/* labels */
 .detail-label {
     display: flex;
     align-items: center;
@@ -1389,7 +1389,7 @@
     color: rgba(37, 99, 235, 0.85);
 }
 
-/* Elegant Value Card Styling - Stripe/Linear Inspired */
+/* value cards */
 .detail-value {
     font-size: 16px;
     font-weight: 500;
@@ -1691,7 +1691,7 @@
     }
 }
 
-/* Edit Profile Action Button */
+/* edit button */
 .modal-header-actions {
     display: flex;
     align-items: center;
@@ -1736,7 +1736,7 @@
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
-/* Password Input Eye Toggle absolute positioning */
+/* password eye toggle */
 .password-input-wrapper {
     position: relative;
     display: flex;
@@ -1774,7 +1774,7 @@
     padding: 16px 32px;
 }
 
-/* Premium Pagination Styling */
+/* pagination */
 .sd-pagination {
     display: flex;
     align-items: center;
@@ -1827,7 +1827,7 @@
     text-align: center;
 }
 
-/* Student Apply Job Modal (Styled like Admin Add Job Posting) */
+/* apply job modal */
 .student-apply-modal {
     background-color: #ffffff;
     border-radius: 16px;
@@ -1995,7 +1995,7 @@
     border-color: #1d4ed8;
 }
 
-/* Premium refines for read-only fields inside student Apply Modal */
+/* read-only fields */
 .student-apply-modal .form-group input.read-only-input,
 .student-apply-modal .form-group textarea.read-only-textarea {
     background-color: #f8fafc;
@@ -2029,7 +2029,7 @@
     }
 }
 
-/* Styling for premium read-only requirements list block */
+/* requirements list */
 .student-apply-modal .read-only-requirements-list {
     background-color: #f8fafc;
     border: 1.5px solid #e2e8f0;
@@ -2063,7 +2063,7 @@
     text-align: left;
 }
 
-/* Premium Search Bar Widget */
+/* search bar */
 .search-bar-wrapper {
     position: relative;
     display: flex;
@@ -2111,7 +2111,7 @@
     color: #94a3b8;
 }
 
-/* Resume Upload Zone styling inside apply modal */
+/* resume upload */
 .student-apply-modal .full-width-resume {
     grid-column: span 2;
     width: 100%;
@@ -2171,7 +2171,7 @@
     margin-bottom: 2px;
 }
 
-/* File Uploaded success display state */
+/* file uploaded state */
 .student-apply-modal .file-uploaded-info {
     display: flex;
     align-items: center;
@@ -2232,7 +2232,7 @@
     margin-left: 2px;
 }
 
-/* Profile Modal Quick Stats Row */
+/* quick stats row */
 .profile-modal .profile-quick-stats {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -2298,7 +2298,7 @@
     grid-template-columns: repeat(2, 1fr);
 }
 
-/* Link display styles inside the modal */
+/* links */
 .link-display-wrapper {
     display: flex;
     flex-direction: column;
@@ -2504,7 +2504,7 @@
 .sd-notification-sidebar .notification-item {
     background-color: #ffffff;
     border: 1px solid rgba(226, 232, 240, 0.9);
-    /* Premium Theme Blue Accent Indicator */
+    /* blue accent indicator */
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -3057,7 +3057,7 @@
     }
 }
 
-/* Next Campus Event Card Mockup Styles */
+/* next campus event card */
 .campus-event-panel {
     background: #ffffff;
     border-radius: 20px;
@@ -3501,7 +3501,7 @@
     overflow: hidden;
 }
 
-/* Premium Glassmorphic Toast Notifications */
+/* toast */
 .portal-toast-notification {
     position: fixed;
     bottom: 28px;
