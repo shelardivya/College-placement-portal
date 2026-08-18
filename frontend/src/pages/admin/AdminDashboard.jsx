@@ -27,7 +27,11 @@ import {
     Trash2,
     CheckCircle2,
     Info,
-    AlertCircle
+    AlertCircle,
+    Menu,
+    LayoutDashboard,
+    BarChart3,
+    MessageSquareQuote
 } from 'lucide-react';
 
 
@@ -187,6 +191,19 @@ function sanitizeStorageString(val) {
     }
     const cleanStr = str.replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
     return cleanStr;
+}
+
+/** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
+function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
+    if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
+    const uploadsIdx = serverPath.indexOf("/uploads/");
+    if (uploadsIdx !== -1) {
+        const relPath = serverPath.substring(uploadsIdx);
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+        return `${baseUrl}${relPath}`;
+    }
+    return fallbackUrl;
 }
 
 
@@ -470,17 +487,30 @@ function AdminHeader({
     setIsProfileModalOpen,
     onNavigate,
     handlePhotoUpload,
-    handleRemovePhoto
+    handleRemovePhoto,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen
 }) {
     return (
         <header className='admin-header'>
-            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
-                <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
-                    <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+            <div className={`header-container ${activeTab === 'analytics' || activeTab === 'queries' ? 'wide-layout' : ''}`}>
+                <div className='header-left-group'>
+                    <button
+                        type="button"
+                        className="header-mobile-toggle"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle navigation menu"
+                    >
+                        <Menu className="mobile-menu-icon" size={22} />
+                    </button>
+
+                    <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                        <span className='college-name' style={{ fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+                    </div>
                 </div>
 
-                <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                <nav className='navbar-menu-list admin-nav-desktop' style={{ gap: '24px', alignItems: 'center', margin: '0 auto' }}>
                     {[
                         { id: 'dashboard', label: 'Dashboard' },
                         { id: 'analytics', label: 'Student Analytics' },
@@ -622,6 +652,143 @@ function AdminHeader({
                     </div>
                 </div>
             </div>
+
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            className="admin-mobile-drawer-overlay"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.aside
+                            className="admin-mobile-drawer"
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                        >
+                            <div className="drawer-header">
+                                <div className="drawer-logo">
+                                    <GraduationCap className="drawer-logo-icon" size={26} />
+                                    <span>Campus_Hire</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="drawer-close-btn"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    aria-label="Close menu"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="drawer-nav">
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('dashboard');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <LayoutDashboard className="drawer-item-icon" size={18} />
+                                    <span>Dashboard</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('analytics');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <BarChart3 className="drawer-item-icon" size={18} />
+                                    <span>Student Analytics</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'queries' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('queries');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <MessageSquareQuote className="drawer-item-icon" size={18} />
+                                    <span>Queries & Stories</span>
+                                </button>
+                            </div>
+
+                            <hr className="drawer-divider" />
+
+                            <div className="drawer-profile-section">
+                                <div className="drawer-user-info">
+                                    <div className="drawer-avatar">
+                                        {adminProfile?.avatarUrl ? (
+                                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                                        ) : (
+                                            getInitials(adminProfile?.name, 'AD')
+                                        )}
+                                    </div>
+                                    <div className="drawer-user-details">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span className="drawer-user-name">{adminProfile?.name || 'Admin'}</span>
+                                            <span className="role-badge drawer-role-badge">Admin</span>
+                                        </div>
+                                        <span className="drawer-user-email">{adminProfile?.email || ''}</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setProfileTab('edit');
+                                        setIsEditingProfile(false);
+                                        setValidationError(false);
+                                        setIsProfileModalOpen(true);
+                                    }}
+                                >
+                                    <User className="drawer-item-icon" size={18} />
+                                    <span>My Profile</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setProfileTab('password');
+                                        setValidationError(false);
+                                        setIsProfileModalOpen(true);
+                                    }}
+                                >
+                                    <Lock className="drawer-item-icon" size={18} />
+                                    <span>Change Password</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item drawer-logout-btn"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        if (onNavigate) onNavigate("landing");
+                                    }}
+                                >
+                                    <LogOut className="drawer-item-icon" size={18} />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
         </header>
     );
 }
@@ -1239,6 +1406,7 @@ function AddJobModal({
                                 placeholder="Enter minimum CGPA"
                                 value={newJob.minCgpa}
                                 onChange={handleInputChange}
+                                autoComplete="off"
                                 className={validationError && !newJob.minCgpa?.toString().trim() ? 'error-input' : ''}
                                 required
                             />
@@ -1268,7 +1436,7 @@ function AddJobModal({
 
                         <div className='form-group half-width'>
                             <label htmlFor="job-deadline-btn">Deadline <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
-                            <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
+                            <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%', position: 'relative' }}>
                                 <button
                                     type="button"
                                     id="job-deadline-btn"
@@ -1281,7 +1449,7 @@ function AddJobModal({
                                 </button>
 
                                 {isModalDatePickerOpen && (
-                                    <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
+                                    <div className="custom-calendar-popup">
                                         <div className="calendar-header">
                                             <button type="button" onClick={handleModalPrevMonth}>&lt;</button>
                                             <span>{modalCalDate.toLocaleString('default', { month: 'long' })} {modalCalDate.getFullYear()}</span>
@@ -1824,6 +1992,7 @@ function AdminDashboard({ onNavigate }) {
 
     // Active menu tab state
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     //2. Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -1987,10 +2156,8 @@ function AdminDashboard({ onNavigate }) {
             try {
                 const res = await uploadAdminProfilePhoto(file);
                 const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
-                if (serverPhotoPath && typeof serverPhotoPath === 'string') {
-                    const finalPhotoUrl = serverPhotoPath.startsWith("http") || serverPhotoPath.startsWith("data:")
-                        ? serverPhotoPath
-                        : `${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/${serverPhotoPath.replace(/^\/+/, '')}`;
+                const finalPhotoUrl = resolvePhotoUrl(serverPhotoPath, base64);
+                if (finalPhotoUrl) {
                     setAdminProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
                     localStorage.setItem("admin_avatar", finalPhotoUrl);
                     userObj.avatarUrl = finalPhotoUrl;
@@ -2046,8 +2213,8 @@ function AdminDashboard({ onNavigate }) {
     const fetchDraftsData = async () => {
         try {
             const response = await getDrafts();
-            const rawData = response ? response.data : null;
             let draftsData = [];
+            const rawData = response.data;
             if (Array.isArray(rawData)) {
                 draftsData = rawData;
             } else if (rawData && Array.isArray(rawData.drafts)) {
@@ -2117,13 +2284,15 @@ function AdminDashboard({ onNavigate }) {
                 if (response.data) {
                     const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
                     const savedAvatar = localStorage.getItem("admin_avatar") || storedAdmin.avatarUrl || "";
+                    const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
+                    const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
                     setAdminProfile(prev => ({
                         ...prev,
                         name: response.data.fullName || response.data.name || prev.name,
                         email: response.data.email || prev.email,
                         phone: response.data.mobile || response.data.phone || prev.phone,
                         role: response.data.role || prev.role,
-                        avatarUrl: response.data.avatarUrl || savedAvatar
+                        avatarUrl: resolvedPhoto
                     }));
                 }
             } catch (error) {
@@ -2633,9 +2802,11 @@ function AdminDashboard({ onNavigate }) {
                 onNavigate={onNavigate}
                 handlePhotoUpload={handleAdminPhotoUpload}
                 handleRemovePhoto={handleAdminRemovePhoto}
+                isMobileMenuOpen={isMobileMenuOpen}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
             />
 
-            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
+            <div className={`dashboard-content-layout ${activeTab === 'analytics' || activeTab === 'queries' ? 'wide-layout' : ''}`}>
                 <main className='dashboard-main'>
                     <AnimatePresence mode="wait">
                         <motion.div

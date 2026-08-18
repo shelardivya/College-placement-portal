@@ -1438,7 +1438,7 @@ export default function QueriesStories() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                    <div className="story-top-actions-col">
                                         <span className="story-package-badge">{story.packageAmt}</span>
                                         <div className="actions-button-row" style={{ display: 'flex', gap: '6px' }}>
                                             <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
@@ -1666,7 +1666,7 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                 </div>
-                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <div className="qs-modal-actions">
                                     <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
                                         Cancel
                                     </button>
