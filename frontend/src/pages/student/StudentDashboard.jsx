@@ -25,7 +25,11 @@ import {
     Search,
     Upload,
     Camera,
-    Trash2
+    Trash2,
+    Menu,
+    LayoutDashboard,
+    Sparkles,
+    TrendingUp
 } from "lucide-react";
 import "./StudentDashboard.css";
 import StudHub from "./StudHub";
@@ -392,8 +396,8 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
                 </div>
 
 
-                <div className="modal-form" style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
-                    <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                <div className="modal-form">
+                    <div className="photo-upload-wrapper">
                         <AvatarPhotoMenu
                             avatarUrl={activePhoto}
                             onUpload={handlePhotoUpload}
@@ -438,7 +442,7 @@ function StudentProfileModal({ isProfileModalOpen, setIsProfileModalOpen, profil
                         <ProfileLinkField label="GitHub URL" isEditing={isEditingProfile} profileValue={profile.githubUrl} tempValue={tempProfile.githubUrl} onChange={(e) => setTempProfile({ ...tempProfile, githubUrl: e.target.value })} linkText="GitHub" />
                     </div>
 
-                    <div className="form-actions" style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                    <div className="form-actions">
                         {isEditingProfile ? (
                             <>
                                 <button type="button" className="btn-cancel" onClick={handleCancelEdit}>
@@ -895,6 +899,7 @@ export default function
     const studentName = decodeStorageString(loggedInUser.fullName || loggedInUser.name) || "Student";
 
     const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'studhub', or 'placeview'
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
 
     // Sync states from localStorage (with mock fallbacks)
@@ -1829,9 +1834,20 @@ export default function
 
             <header className="dashboard-header">
 
-                <div className="header-logo">
-                    <GraduationCap className="logo-icon" />
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</h1>
+                <div className="header-left-group">
+                    <button
+                        type="button"
+                        className="header-mobile-toggle"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle navigation menu"
+                    >
+                        <Menu className="mobile-menu-icon" size={22} />
+                    </button>
+                    
+                    <div className="header-logo">
+                        <GraduationCap className="logo-icon" />
+                        <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</h1>
+                    </div>
                 </div>
 
                 <div className="student-nav-tabs">
@@ -2210,6 +2226,137 @@ export default function
                         </div>
                         <span className="portal-toast-text">{toastMessage}</span>
                     </motion.div>
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            className="student-mobile-drawer-overlay"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.aside
+                            className="student-mobile-drawer"
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                        >
+                            <div className="drawer-header">
+                                <div className="drawer-logo">
+                                    <GraduationCap className="drawer-logo-icon" />
+                                    <span>Campus_Hire</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="drawer-close-btn"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    aria-label="Close menu"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="drawer-nav">
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('dashboard');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <LayoutDashboard className="drawer-item-icon" size={18} />
+                                    <span>Dashboard</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'studhub' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('studhub');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <Sparkles className="drawer-item-icon" size={18} />
+                                    <span>Stud Hub</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'placeview' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('placeview');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <TrendingUp className="drawer-item-icon" size={18} />
+                                    <span>Placeview</span>
+                                </button>
+                            </div>
+
+                            <hr className="drawer-divider" />
+
+                            <div className="drawer-profile-section">
+                                <div className="drawer-user-info">
+                                    <div className="drawer-avatar">
+                                        {profile.avatarUrl ? (
+                                            <img src={profile.avatarUrl} alt={studentName} className="avatar-img" />
+                                        ) : (
+                                            getInitials(studentName)
+                                        )}
+                                    </div>
+                                    <div className="drawer-user-details">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span className="drawer-user-name">{studentName}</span>
+                                            <span className="role-badge drawer-role-badge">Student</span>
+                                        </div>
+                                        <span className="drawer-user-email">{profile.email}</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsProfileModalOpen(true);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <User className="drawer-item-icon" size={18} />
+                                    <span>My Profile</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsChangePasswordOpen(true);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <Lock className="drawer-item-icon" size={18} />
+                                    <span>Change Password</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item drawer-logout-btn"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        handleLogout();
+                                    }}
+                                >
+                                    <LogOut className="drawer-item-icon" size={18} />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </>
                 )}
             </AnimatePresence>
         </div>
