@@ -17,166 +17,251 @@ public class AiScopeService {
 
         String q = question.toLowerCase().trim();
 
-        String[] studentAllowedKeywords = {
+        // =====================================================
+        // CAMPUSHIRE PORTAL
+        // =====================================================
 
-                // =====================================================
-                // ACCOUNT / AUTHENTICATION
-                // =====================================================
+        if (containsAny(q,
+                "campus hire",
+                "campushire",
+                "placement portal",
+                "college placement portal",
+                "this portal"
+        )) {
+            return true;
+        }
 
-                "student registration",
-                "student signup",
-                "student sign up",
-                "student login",
+        // =====================================================
+        // ACCOUNT / AUTHENTICATION
+        // =====================================================
 
-                // =====================================================
-                // PROFILE
-                // =====================================================
+        if (containsAny(q,
+                "registration",
+                "register",
+                "signup",
+                "sign up",
+                "login",
+                "log in"
+        )) {
+            return true;
+        }
 
-                "student profile",
-                "my profile",
+        // =====================================================
+        // PROFILE
+        // =====================================================
+
+        if (containsAny(q,
                 "profile",
                 "profile photo",
                 "profile picture",
                 "update profile",
                 "edit profile",
-
+                "my skills",
                 "skills",
                 "cgpa",
                 "course",
                 "department",
-                "branch",
+                "branch"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // STUDENT DASHBOARD
-                // =====================================================
+        // =====================================================
+        // STUDENT DASHBOARD
+        // =====================================================
 
-                "student dashboard",
-                "my dashboard",
+        if (containsAny(q,
+                "dashboard",
+                "my dashboard"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // JOBS
-                // =====================================================
+        // =====================================================
+        // JOBS
+        // =====================================================
 
-                "available jobs",
-                "jobs for students",
-                "student jobs",
-                "job listing",
-                "job listings",
-                "job posting",
-                "job postings",
-                "job details",
-                "job eligibility",
-                "eligible for job",
+        if (containsAny(q,
+                "job",
+                "jobs",
+                "job opening",
+                "job openings",
+                "opening",
+                "openings",
+                "vacancy",
+                "vacancies",
+                "hiring",
+                "hiring companies",
+                "position",
+                "positions",
+                "job opportunity",
+                "job opportunities",
+                "career opportunity",
+                "career opportunities"
+        )) {
+            return true;
+        }
+
+        // =====================================================
+        // JOB ELIGIBILITY / APPLY
+        // =====================================================
+
+        if (containsAny(q,
+                "eligible",
                 "eligibility",
-                "apply for job",
-                "how to apply",
-
-                // =====================================================
-                // APPLICATIONS
-                // =====================================================
-
-                "job application",
-                "job applications",
-                "application status",
-                "my applications",
+                "can i apply",
+                "apply",
                 "application",
+                "applications",
+                "how to apply",
+                "apply for",
+                "qualify"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // COMPANIES / RECRUITERS
-                // =====================================================
+        // =====================================================
+        // COMPANIES / RECRUITERS
+        // =====================================================
 
+        if (containsAny(q,
                 "company",
                 "companies",
                 "recruiter",
                 "recruiters",
+                "employer",
+                "employers"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // PLACEMENT RECORDS
-                // =====================================================
+        // =====================================================
+        // PLACEMENT
+        // =====================================================
 
+        if (containsAny(q,
                 "placement",
                 "placements",
+                "placed",
                 "placement record",
                 "placement records",
-                "placed student",
-                "placed students",
+                "placement process",
+                "placement statistics",
+                "placement analytics",
+                "placement preparation",
                 "top placed student",
                 "top placed students",
+                "highest placed student",
+                "highest placed students",
+                "best placed student",
+                "best placed students"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // PLACEMENT STORIES
-                // =====================================================
+        // =====================================================
+        // PLACEMENT DRIVES
+        // =====================================================
 
+        if (containsAny(q,
+                "placement drive",
+                "placement drives",
+                "drive",
+                "drives",
+                "drive details",
+                "drive eligibility"
+        )) {
+            return true;
+        }
+
+        // =====================================================
+        // PLACEMENT STORIES
+        // =====================================================
+
+        if (containsAny(q,
                 "placement story",
                 "placement stories",
                 "success story",
-                "success stories",
+                "success stories"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // PLACEMENT DRIVES
-                // =====================================================
+        // =====================================================
+        // PACKAGE / SALARY
+        // =====================================================
 
-                "placement drive",
-                "placement drives",
-                "drive details",
-                "drive eligibility",
-
-                // =====================================================
-                // PLACEMENT INFORMATION / STATISTICS
-                // =====================================================
-
-                "placement process",
-                "placement analytics",
-                "placement statistics",
-                "placement preparation",
-
+        if (containsAny(q,
                 "package",
                 "packages",
                 "salary",
+                "ctc",
+                "compensation"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // NOTIFICATIONS
-                // =====================================================
+        // =====================================================
+        // NOTIFICATIONS
+        // =====================================================
 
-                "student notification",
-                "my notifications",
+        if (containsAny(q,
+                "notification",
                 "notifications",
+                "my notifications"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // RESUME
-                // =====================================================
+        // =====================================================
+        // RESUME / CV
+        // =====================================================
 
+        if (containsAny(q,
                 "resume",
                 "cv",
                 "resume upload",
-                "resume update",
+                "upload resume",
+                "update resume",
+                "resume update"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // PREPARATION
-                // =====================================================
+        // =====================================================
+        // PLACEMENT PREPARATION
+        // =====================================================
 
-                "placement preparation tips",
-                "interview preparation",
+        if (containsAny(q,
+                "interview",
                 "technical interview",
                 "hr interview",
+                "aptitude",
                 "aptitude preparation",
+                "interview preparation",
+                "placement preparation",
+                "prepare for placement",
+                "prepare for interview"
+        )) {
+            return true;
+        }
 
-                // =====================================================
-                // CAREER GUIDANCE
-                // =====================================================
+        // =====================================================
+        // CAREER
+        // =====================================================
 
+        if (containsAny(q,
+                "career",
                 "career guidance",
                 "career preparation",
-                "placement career",
                 "job preparation"
-        };
-
-        for (String keyword : studentAllowedKeywords) {
-
-            if (q.contains(keyword)) {
-                return true;
-            }
+        )) {
+            return true;
         }
+
+        // =====================================================
+        // NOTHING MATCHED
+        // =====================================================
 
         return false;
     }
@@ -193,14 +278,32 @@ public class AiScopeService {
         }
 
         /*
-         * Admin can ask complete CampusHire portal questions.
+         * AiPortalScopeService checks whether the question
+         * belongs to CampusHire.
          *
-         * AiPortalScopeService already checks whether the
-         * question belongs to the CampusHire portal.
+         * AiPrivacyService handles sensitive information.
          *
-         * AiPrivacyService separately blocks sensitive data.
+         * Therefore admin can ask any non-sensitive
+         * CampusHire-related question.
          */
 
         return true;
+    }
+
+
+    // =====================================================
+    // HELPER METHOD
+    // =====================================================
+
+    private boolean containsAny(String question, String... keywords) {
+
+        for (String keyword : keywords) {
+
+            if (question.contains(keyword)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
