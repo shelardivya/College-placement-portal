@@ -28,6 +28,7 @@ jobs:
           java-version: "17"
           distribution: temurin
           cache: maven
+          overwrite-settings: false
 
       - name: Build Backend
         working-directory: backend
