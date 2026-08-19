@@ -22,7 +22,35 @@
     z-index: 100;
 }
 
-/*Logo Group (Graduation Cap + Text)*/
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Mobile toggle button - hidden on desktop */
+.header-mobile-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-mobile-toggle:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+/* Logo Group (Graduation Cap + Text)*/
 .header-logo {
     display: flex;
     align-items: center;
@@ -881,12 +909,18 @@
 }
 
 .requirements-modal .modal-body,
-.profile-modal .modal-body,
-.change-password-modal .modal-body {
+.profile-modal .modal-body {
     padding: 24px;
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.change-password-modal .modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .requirements-modal .modal-body ul {
@@ -1633,16 +1667,16 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 16px;
-    padding: 0 24px;
+    margin-bottom: 0;
+    padding: 0;
 }
 
 .form-group-custom:first-of-type {
-    margin-top: 24px;
+    margin-top: 0;
 }
 
 .form-group-custom:last-of-type {
-    margin-bottom: 24px;
+    margin-bottom: 0;
 }
 
 .form-group-custom label {
@@ -1942,6 +1976,17 @@
     height: 14px;
     background-color: #2563eb;
     border-radius: 2px;
+}
+
+.student-apply-modal .photo-upload-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin-bottom: 20px;
 }
 
 .student-apply-modal .form-row {
@@ -3567,25 +3612,54 @@
     .sd-header-container,
     .student-header,
     .header-container {
-        padding: 12px 16px;
-        flex-wrap: wrap;
-        gap: 12px;
+        padding: 0 12px;
+        height: 62px;
+        flex-wrap: nowrap;
+        gap: 8px;
+        justify-content: space-between;
+    }
+
+    .header-left-group {
+        gap: 8px;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .header-logo h1 {
+        font-size: 1.05rem;
+        white-space: nowrap;
+    }
+
+    .header-actions {
+        gap: 10px;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .header-actions .role-badge {
+        display: none;
+    }
+
+    .profile-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .profile-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+    }
+
+    .header-mobile-toggle {
+        display: flex;
     }
 
     .student-nav-tabs,
     .navbar-menu-list,
     .sd-navbar {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        overflow-x: auto;
-        white-space: nowrap;
-        justify-content: flex-start;
-        padding-bottom: 6px;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-        gap: 16px;
-        display: flex;
+        display: none;
     }
 
     .welcome-section {
@@ -3673,6 +3747,88 @@
     .navbar-menu-btn {
         min-height: 42px;
     }
+
+    /* Student Profile Modal mobile vertical layout adjustments */
+    .modal-overlay {
+        padding: 12px;
+    }
+
+    .student-apply-modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 14px;
+        margin: auto;
+    }
+
+    .student-apply-modal .modal-header {
+        padding: 16px;
+    }
+
+    .student-apply-modal .modal-form {
+        padding: 16px;
+        gap: 16px;
+        max-height: calc(90vh - 70px);
+    }
+
+    .student-apply-modal .form-row {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .student-apply-modal .half-width {
+        width: 100%;
+        flex: none;
+    }
+
+    .student-apply-modal .photo-upload-wrapper {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 12px;
+        gap: 10px;
+    }
+
+    .student-apply-modal .photo-upload-wrapper > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .student-apply-modal .form-actions {
+        flex-direction: column;
+        gap: 10px;
+        padding-top: 14px;
+        margin-top: 10px;
+    }
+
+    .student-apply-modal .form-actions .btn-cancel,
+    .student-apply-modal .form-actions .btn-post {
+        width: 100%;
+    }
+
+    .change-password-modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 14px;
+        margin: auto;
+    }
+
+    .change-password-modal .modal-header {
+        padding: 16px 18px;
+    }
+
+    .change-password-modal .modal-body {
+        padding: 16px 18px;
+        gap: 14px;
+    }
+
+    .change-password-modal .modal-footer {
+        padding: 14px 18px;
+        gap: 10px;
+    }
 }
 
 @media screen and (max-width: 480px) {
@@ -3719,4 +3875,195 @@
     }
 }
 
+/* Mobile Navigation Drawer Overlay & Panel */
+.student-mobile-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
+    z-index: 9998;
+}
+
+.student-mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    max-width: 82vw;
+    background: #ffffff;
+    z-index: 9999;
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.drawer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #2563eb;
+}
+
+.drawer-logo-icon {
+    width: 26px;
+    height: 26px;
+    color: #2563eb;
+}
+
+.drawer-close-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: #f1f5f9;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.drawer-close-btn:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.drawer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.drawer-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+}
+
+.drawer-nav-item:hover {
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+.drawer-nav-item.active {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.drawer-item-icon {
+    color: inherit;
+}
+
+/* Mobile Drawer Profile Section */
+.drawer-divider {
+    border: none;
+    border-top: 1px solid #f1f5f9;
+    margin: 8px 0;
+}
+
+.drawer-profile-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.drawer-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 6px;
+}
+
+.drawer-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.drawer-user-details {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.drawer-user-name {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-user-email {
+    font-size: 0.75rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.drawer-logout-btn {
+    color: #ef4444;
+}
+
+.drawer-logout-btn:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.drawer-role-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+}
 

@@ -73,6 +73,34 @@
     padding-right: 40px;
 }
 
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Mobile toggle button - hidden on desktop */
+.header-mobile-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 8px;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.header-mobile-toggle:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
 .logo-section {
     display: flex;
     align-items: center;
@@ -888,11 +916,6 @@
 
 /* Mobile Devices (Under 768px) */
 @media (max-width: 768px) {
-    .header-container {
-        padding: 12px 16px;
-        flex-wrap: wrap;
-    }
-
     .college-name {
         display: inline-block;
         font-size: 1.1rem;
@@ -2353,12 +2376,46 @@ textarea.error-input,
 
 /* Mobile styles */
 @media screen and (max-width: 768px) {
-    .admin-header,
+    .admin-header {
+        height: 64px;
+        display: flex;
+        align-items: center;
+    }
+
     .header-container,
-    .analytics-header-container {
-        padding: 12px 16px;
-        flex-wrap: wrap;
+    .analytics-header-container,
+    .header-container.wide-layout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        height: 64px;
+        flex-wrap: nowrap;
         gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .header-left-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .logo-section {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .logo-section .college-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #2563eb;
+        white-space: nowrap;
     }
 
     .greeting-section {
@@ -2379,14 +2436,35 @@ textarea.error-input,
         white-space: normal;
     }
 
+    .header-mobile-toggle {
+        display: flex;
+    }
+
+    .admin-nav-desktop,
     .navbar-menu-list {
-        width: 100%;
-        overflow-x: auto;
-        white-space: nowrap;
-        justify-content: flex-start;
-        padding-bottom: 6px;
-        -webkit-overflow-scrolling: touch;
-        gap: 16px;
+        display: none;
+    }
+
+    .header-right {
+        gap: 12px;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .header-right .role-badge {
+        display: none;
+    }
+
+    .user-profile-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
     }
 
     .stats-cards-row,
@@ -2397,22 +2475,47 @@ textarea.error-input,
     }
 
     .dashboard-content-layout,
-    .analytics-content-layout {
+    .analytics-content-layout,
+    .dashboard-content-layout.wide-layout {
         flex-direction: column;
         padding: 16px 12px;
         gap: 16px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
+    .dashboard-main,
+    .dashboard-grid-lower,
+    .lower-left-column,
+    .lower-right-column,
     .admin-card,
     .drafts-section,
     .recent-posts-section,
+    .recent-postings-card,
     .matching-applicants-section,
     .card-box,
-    .applicants-card,
-    .lower-right-column {
+    .applicants-card {
         width: 100%;
+        max-width: 100%;
         box-sizing: border-box;
-        padding: 16px;
+    }
+
+    .dashboard-grid-lower {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .lower-left-column,
+    .lower-right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .card-box {
+        padding: 20px 16px;
     }
 
     .card-box-header,
@@ -2422,38 +2525,112 @@ textarea.error-input,
         gap: 12px;
     }
 
-    .card-box-header button,
-    .search-filter-header button,
+    .card-box-header > button:not(.search-btn),
     .card-box-header .btn-primary {
         width: 100%;
         justify-content: center;
     }
 
     .search-filter-row {
+        display: flex;
         flex-direction: column;
         width: 100%;
-        gap: 10px;
+        gap: 12px;
     }
 
-    .search-box-wrapper,
-    .custom-dropdown-container,
-    .date-picker-trigger {
+    .search-box-wrapper {
+        display: flex;
+        align-items: center;
         width: 100%;
+        box-sizing: border-box;
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        background-color: white;
     }
 
     .search-box-wrapper input {
+        flex: 1;
         width: 100%;
+        border: none;
+        outline: none;
+        padding: 10px 14px;
+        font-size: 0.875rem;
+        color: var(--text-dark);
+        background-color: white;
+        box-sizing: border-box;
     }
 
-    .dropdown-btn {
+    .search-box-wrapper .search-btn {
+        width: auto;
+        padding: 10px 16px;
+        border: none;
+        border-left: 1.5px solid var(--border-color);
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-light);
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .custom-dropdown-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         width: 100%;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .custom-dropdown-container .filter-label {
+        white-space: nowrap;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        font-weight: 500;
+        flex-shrink: 0;
+    }
+
+    .custom-dropdown-container .dropdown-btn {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        align-items: center;
         justify-content: space-between;
+        padding: 10px 14px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        background-color: white;
+        font-size: 0.875rem;
+        box-sizing: border-box;
+    }
+
+    .custom-date-picker-container {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .date-picker-trigger {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border: 1.5px solid var(--border-color);
+        border-radius: 10px;
+        background-color: white;
+        font-size: 0.875rem;
+        box-sizing: border-box;
     }
 
     .posting-card-item {
         flex-direction: column;
         align-items: stretch;
         gap: 12px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .posting-card-body {
@@ -2466,7 +2643,7 @@ textarea.error-input,
 
     .posting-info-row {
         flex-wrap: wrap;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
 
     .draft-item {
@@ -2503,12 +2680,117 @@ textarea.error-input,
 
     .add-job-modal,
     .profile-settings-modal {
+        position: relative;
         width: 94%;
+        max-width: 500px;
         max-height: 90vh;
-        margin: 0 auto;
-        padding: 18px;
+        margin: auto;
         border-radius: 16px;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .modal-form {
+        position: relative;
         overflow-y: auto;
+        overflow-x: hidden;
+        padding: 18px 16px;
+        gap: 16px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .modal-header {
+        padding: 16px 18px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-group,
+    .half-width {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+        box-sizing: border-box;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 1rem;
+        padding: 12px 14px;
+        text-overflow: ellipsis;
+    }
+
+    .custom-date-picker-container {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .custom-calendar-popup {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+        z-index: 10000;
+        padding: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+    }
+
+    .custom-calendar-popup .calendar-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+    }
+
+    .custom-calendar-popup .calendar-day-btn {
+        padding: 2px;
+        font-size: 0.75rem;
+        height: 28px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-actions button,
+    .form-actions .btn-cancel,
+    .form-actions .btn-save-draft-form,
+    .form-actions .btn-post {
+        width: 100%;
+        justify-content: center;
     }
 
     .modal-form-grid,
@@ -2617,4 +2899,32 @@ textarea.error-input,
     }
 }
 
+/* Admin Mobile Navigation Drawer Overlay & Panel */
+.admin-mobile-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
+    z-index: 9998;
+}
+
+.admin-mobile-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 270px;
+    max-width: 82vw;
+    background: #ffffff;
+    z-index: 9999;
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    gap: 20px;
+    overflow-y: auto;
+}
 

@@ -1317,6 +1317,63 @@
         gap: 12px;
     }
 
+    .qs-modal-content,
+    .drive-form-modal {
+        width: 96%;
+        max-width: 96%;
+        max-height: 90vh;
+        margin: auto;
+        border-radius: 16px;
+        box-sizing: border-box;
+    }
+
+    .qs-modal-form {
+        padding: 18px 16px;
+        gap: 14px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .qs-form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .qs-form-group,
+    .qs-form-group.full-width {
+        grid-column: span 1;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .form-input-control {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        font-size: 1rem;
+    }
+
+    .qs-modal-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 16px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .qs-modal-actions button,
+    .qs-modal-actions .qs-cancel-btn,
+    .qs-modal-actions .btn-primary-purple {
+        width: 100%;
+        justify-content: center;
+    }
+
     .upload-photo-zone {
         padding: 16px;
         width: 100%;
@@ -1335,29 +1392,171 @@
     }
 
     .qs-table-wrapper {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin-top: 12px;
+    }
+
+    .qs-drives-table,
+    .qs-drives-table tbody,
+    .qs-drives-table tr,
+    .qs-drives-table td {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .qs-drives-table thead {
+        display: none;
+    }
+
+    .qs-drives-table tr {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
+    }
+
+    .qs-drives-table td {
+        padding: 6px 0;
+        border: none;
+        font-size: 0.85rem;
+    }
+
+    .qs-drives-table td:nth-child(1) {
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 10px;
+        margin-bottom: 8px;
+    }
+
+    .qs-drives-table td:nth-child(2) {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .qs-drives-table td:last-child {
+        border-top: 1px solid #f1f5f9;
+        padding-top: 10px;
+        margin-top: 8px;
+    }
+
+    .qs-drives-table .actions-button-row {
+        justify-content: flex-end;
+    }
+
+    .stories-vertical-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .story-card-item {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 14px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
+    }
+
+    .story-card-header-row {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .story-student-profile {
+        display: flex;
+        align-items: center;
+        gap: 12px;
         width: 100%;
     }
 
-    .qs-drives-table {
-        min-width: 580px;
+    .story-avatar-img {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .story-student-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .name-company-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .story-student-fullname {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin: 0;
+        color: #0f172a;
+    }
+
+    .story-company-pill {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .story-role-title {
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .story-top-actions-col {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        padding-top: 8px;
+        border-top: 1px solid #f1f5f9;
+        margin-top: 2px;
+    }
+
+    .story-package-badge {
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 8px;
     }
 
     .story-quote-card {
         padding: 12px 14px;
+        font-size: 0.875rem;
+        line-height: 1.45;
+        background: #f8fafc;
+        border-radius: 10px;
+        border-left: 3px solid #8b5cf6;
         word-break: break-word;
         overflow-wrap: break-word;
-    }
-
-    .story-card-header-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-    }
-
-    .story-package-badge {
-        align-self: flex-start;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .qs-filter-bar,
