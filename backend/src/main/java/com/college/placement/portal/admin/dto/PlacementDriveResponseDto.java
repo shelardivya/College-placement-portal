@@ -1,9 +1,5 @@
 package com.college.placement.portal.admin.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 public class PlacementDriveResponseDto {
@@ -15,6 +11,8 @@ public class PlacementDriveResponseDto {
     private String jobRole;
 
     private String location;
+
+    private String venue;
 
     private String driveDate;
 
@@ -56,6 +54,13 @@ public class PlacementDriveResponseDto {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
     }
 
     public String getDriveDate() {

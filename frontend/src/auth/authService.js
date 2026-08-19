@@ -12,12 +12,23 @@ export const loginAdmin = (adminData) => {
     return api.post("/auth/admin/login", adminData);
 };
 
+export const saveAuthToken = (rawToken) => {
+    if (!rawToken) return;
+    const str = String(rawToken);
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const safeToken = encodeURIComponent(cleanText.replace(/[^A-Za-z0-9._-]/g, '').trim());
+    localStorage.setItem("token", safeToken);
+};
+
 export const forgotPassword = (email) => {
     return api.post("/auth/forgot-password", { email });
 };
 
 export const resetPassword = (resetData) => {
-    return api.post("/auth/reset-password", resetData);
+    const token = resetData?.token || resetData?.resetToken || '';
+    const query = token ? `?token=${encodeURIComponent(token)}` : '';
+    return api.post(`/auth/reset-password${query}`, resetData);
 };
 
 export const createJobPosting = (jobData) => {
@@ -40,7 +51,7 @@ export const getDrafts = () => {
     });
 };
 
-/* Sanitizes and validates path parameters against URL path injection (SonarCloud S8476/S5144). */
+/** Sanitizes and validates path parameters to prevent invalid characters in API endpoints. */
 function sanitizePath(prefix, id, suffix = '') {
     if (id === null || id === undefined || id === '') {
         throw new TypeError('ID parameter is required and cannot be empty.');
@@ -50,9 +61,7 @@ function sanitizePath(prefix, id, suffix = '') {
         throw new TypeError('Invalid ID format: contains non-alphanumeric characters.');
     }
     const cleanId = encodeURIComponent(strId);
-    const fullPath = `${prefix}${cleanId}${suffix}`;
-    const validatedUrl = new URL(fullPath, api.defaults.baseURL || 'http://localhost');
-    return validatedUrl.pathname + validatedUrl.search;
+    return `${prefix}${cleanId}${suffix}`;
 }
 
 export const getDraftById = (id) => {
@@ -64,6 +73,15 @@ export const getDraftById = (id) => {
     });
 };
 
+
+export const updateDraft = (id, draftData) => {
+    const token = localStorage.getItem("token");
+    return api.put(sanitizePath('/admin/draft/', id), draftData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
 
 export const publishDraft = (id) => {
     const token = localStorage.getItem("token");
@@ -103,9 +121,51 @@ export const updateAdminProfile = (profileData) => {
     });
 };
 
+export const uploadAdminProfilePhoto = (file) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("photo", file);
+    return api.post("/admin/profile/photo", formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const deleteAdminProfilePhoto = () => {
+    const token = localStorage.getItem("token");
+    return api.delete("/admin/profile/photo", {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
 export const updateStudentProfile = (profileData) => {
     const token = localStorage.getItem("token");
     return api.put("/student/profile", profileData, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const uploadStudentProfilePhoto = (file) => {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
+    formData.append("photo", file);
+    return api.post("/student/profile/photo", formData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const deleteStudentProfilePhoto = () => {
+    const token = localStorage.getItem("token");
+    return api.delete("/student/profile/photo", {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -184,18 +244,48 @@ export const deletePlacementDrive = (id) => {
     });
 };
 
-export const getAllTopPlacedStudents = () => {
+export const getAllTopPlacedStudents = async () => {
     const token = localStorage.getItem("token");
-    return api.get("/admin/top-placed-student/all", {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const userStr = localStorage.getItem("user");
+    let isAdmin = true;
+    if (userStr) {
+        try {
+            const u = JSON.parse(userStr);
+            const roleStr = String(u.role || u.userRole || u.roleName || u.type || '').toUpperCase();
+            if (roleStr.includes('STUDENT') && !roleStr.includes('ADMIN') && !u.isAdmin && !(u.email && String(u.email).toLowerCase().includes('admin'))) {
+                isAdmin = false;
+            }
+        } catch { }
+    }
+
+    if (isAdmin) {
+        try {
+            return await api.get("/admin/top-placed-student/all", { headers });
+        } catch {
+            return { data: [] };
+        }
+    }
+
+    return Promise.resolve({ data: [] });
+};
+
+export const addTopPlacedStudent = (studentData) => {
+    const token = localStorage.getItem("token");
+    return api.post("/admin/top-placed-student/add", studentData, {
         headers: {
             Authorization: `Bearer ${token}`
         }
     });
 };
 
-export const addTopPlacedStudent = (studentData) => {
+export const deleteTopPlacedStudent = (id) => {
+    if (id === null || id === undefined || id === '') {
+        return Promise.reject(new Error("Student ID is required for deletion."));
+    }
     const token = localStorage.getItem("token");
-    return api.post("/admin/top-placed-student/add", studentData, {
+    return api.delete(sanitizePath('/admin/top-placed-student/delete/', id), {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -217,6 +307,18 @@ export const replyToQuery = (id, replyText) => {
         reply: replyText,
         adminReply: replyText,
         response: replyText
+    }, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+};
+
+export const discardQuery = (id, discardReason) => {
+    const token = localStorage.getItem("token");
+    return api.put(sanitizePath('/admin/query/', id, '/discard'), {
+        discardReason: discardReason || "Query discarded by Admin",
+        status: "DISCARDED"
     }, {
         headers: {
             Authorization: `Bearer ${token}`
@@ -477,5 +579,41 @@ export const getAdminDashboardStats = () => {
         headers: {
             Authorization: `Bearer ${token}`
         }
+    });
+};
+
+// Official Student Placeview Controller APIs (GET /api/student/placeview/...)
+export const getStudentPlaceviewDashboard = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/dashboard", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewTopSkills = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/top-skills", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewPlacementCgpa = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/placement-cgpa", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewDepartment = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/department", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+};
+
+export const getStudentPlaceviewTopPlaced = () => {
+    const token = localStorage.getItem("token");
+    return api.get("/student/placeview/top-placed", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 };

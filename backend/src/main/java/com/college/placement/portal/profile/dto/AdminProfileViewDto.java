@@ -1,4 +1,4 @@
-package com.college.placement.portal.profile.Dto;
+package com.college.placement.portal.profile.dto;
 
 public class AdminProfileViewDto {
 
@@ -6,6 +6,7 @@ public class AdminProfileViewDto {
     private String email;
     private String mobile;
     private String role;
+    private String profilePhotoPath;
 
     public String getFullName() {
         return fullName;
@@ -37,5 +38,13 @@ public class AdminProfileViewDto {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getProfilePhotoPath() {
+        return profilePhotoPath;
+    }
+
+    public void setProfilePhotoPath(String profilePhotoPath) {
+        this.profilePhotoPath = profilePhotoPath;
     }
 }

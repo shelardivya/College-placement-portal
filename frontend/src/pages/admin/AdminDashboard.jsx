@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import './AdminDashboard.css';
 import StudentAnalytics from './StudentAnalytics';
 import QueriesStories from './QueriesStories';
-import { createJobPosting, getDrafts, getDraftById, publishDraft, getAdminProfile, updateAdminProfile, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { createJobPosting, getDrafts, getDraftById, updateDraft, publishDraft, getAdminProfile, updateAdminProfile, uploadAdminProfilePhoto, deleteAdminProfilePhoto, getAdminRecentPosts, changePassword, getAdminApplicantsMatching, getAdminNotifications, markAllAdminNotificationsAsRead, getAdminUnreadCount, getAdminStudentAnalyticsDashboard } from '../../auth/authService';
+import { playNotificationAlert } from '../../utils/notificationSound';
 import {
     GraduationCap,
     Bell,
@@ -22,67 +23,144 @@ import {
     Eye,
     EyeOff,
     Edit3,
+    Camera,
+    Trash2,
+    CheckCircle2,
+    Info,
+    AlertCircle,
+    Menu,
+    LayoutDashboard,
+    BarChart3,
+    MessageSquareQuote
 } from 'lucide-react';
 
 
 
-/** Parses a DD/MM/YYYY date string + 12-hour time string into a timestamp for sorting. */
+/** Parses a DD/MM/YYYY or YYYY-MM-DD date string + 12-hour/24-hour time string into a timestamp for sorting. */
 function parseDateStr(dateStr, timeStr) {
     if (!dateStr) return 0;
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return new Date(dateStr).getTime() || 0;
-    const numDay = Number.parseInt(parts[0], 10);
-    const numMonth = Number.parseInt(parts[1], 10);
-    const numYear = Number.parseInt(parts[2], 10);
-    if (!numDay || !numMonth || !numYear) return 0;
+
+    let numDay, numMonth, numYear;
+    if (dateStr.includes('/')) {
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            numDay = Number.parseInt(parts[0], 10);
+            numMonth = Number.parseInt(parts[1], 10);
+            numYear = Number.parseInt(parts[2], 10);
+        }
+    } else if (dateStr.includes('-')) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                numYear = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numDay = Number.parseInt(parts[2], 10);
+            } else {
+                numDay = Number.parseInt(parts[0], 10);
+                numMonth = Number.parseInt(parts[1], 10);
+                numYear = Number.parseInt(parts[2], 10);
+            }
+        }
+    }
+
+    if (!numDay || !numMonth || !numYear) {
+        return new Date(dateStr).getTime() || 0;
+    }
 
     let numHours = 0;
     let numMinutes = 0;
 
     if (timeStr) {
-        const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(timeStr);
+        const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(timeStr);
         if (match) {
             const [, rawH, rawM, ampm] = match;
             let h = Number.parseInt(rawH, 10);
             const m = Number.parseInt(rawM, 10);
-            const upperAmPm = ampm.toUpperCase();
-            if (upperAmPm === 'PM' && h < 12) h += 12;
-            if (upperAmPm === 'AM' && h === 12) h = 0;
+            if (ampm) {
+                const upperAmPm = ampm.toUpperCase();
+                if (upperAmPm === 'PM' && h < 12) h += 12;
+                if (upperAmPm === 'AM' && h === 12) h = 0;
+            }
             numHours = h;
             numMinutes = m;
         }
     }
-    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHours, numMinutes));
-    return utcDate.getTime();
+    const localDate = new Date(numYear, numMonth - 1, numDay, numHours, numMinutes);
+    return localDate.getTime();
 }
 
-/*Converts a backend notification's raw date/time fields into localised display strings. */
+function getInitials(name, fallback = 'AD') {
+    if (!name) return fallback;
+    const parts = String(name).trim().split(" ");
+    return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2) || fallback;
+}
+
+/* Converts a backend notification's raw date/time fields into localized display strings without shifting timezones. */
 function localizeNotification(notif) {
-    if (!notif.createdDate || !notif.createdTime) return notif;
-    const [day, month, year] = notif.createdDate.split('/');
-    const match = /^(\d{1,2}):(\d{1,2})\s*([AP]M)$/i.exec(notif.createdTime);
-    if (!day || !month || !year || !match) return notif;
-    const [, rawH, rawM, ampm] = match;
-    const numYear = Number.parseInt(year, 10);
-    const numMonth = Number.parseInt(month, 10);
-    const numDay = Number.parseInt(day, 10);
-    let h = Number.parseInt(rawH, 10);
-    const m = Number.parseInt(rawM, 10);
-    const upperAmPm = ampm.toUpperCase();
-    if (upperAmPm === 'PM' && h < 12) h += 12;
-    if (upperAmPm === 'AM' && h === 12) h = 0;
-    const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, h, m));
-    notif.displayDate = utcDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    notif.displayTime = utcDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    if (!notif) return notif;
+
+    if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            notif.displayDate = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            notif.displayTime = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return notif;
+        }
+    }
+
+    if (notif.createdDate) {
+        let displayDate = notif.createdDate;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(displayDate)) {
+            const [y, m, d] = displayDate.split('-');
+            displayDate = `${d}/${m}/${y}`;
+        }
+        notif.displayDate = displayDate;
+
+        if (notif.createdTime) {
+            const match = /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*([AP]M)?$/i.exec(notif.createdTime);
+            if (match) {
+                const [, rawH, rawM, ampm] = match;
+                let h = Number.parseInt(rawH, 10);
+                const m = Number.parseInt(rawM, 10);
+                if (ampm) {
+                    const padH = String(h).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${ampm.toUpperCase()}`;
+                } else {
+                    const period = h >= 12 ? 'PM' : 'AM';
+                    let h12 = h % 12;
+                    if (h12 === 0) h12 = 12;
+                    const padH = String(h12).padStart(2, '0');
+                    const padM = String(m).padStart(2, '0');
+                    notif.displayTime = `${padH}:${padM} ${period}`;
+                }
+            } else {
+                notif.displayTime = notif.createdTime;
+            }
+        }
+    }
+
     return notif;
 }
 
-/*Converts a YYYY-MM-DD deadline from the date-picker into the DD-MM-YYY */
+/*Formats date strings into DD-MM-YYYY format for the backend API. */
 function formatApiDeadline(deadline) {
-    if (!deadline) return '10-07-2026';
+    if (!deadline) return '24-08-2026';
+    if (/^\d{2}-\d{2}-\d{4}$/.test(deadline)) {
+        return deadline;
+    }
     const parts = deadline.split('-');
     if (parts.length === 3) {
-        const [year, month, day] = parts;
+        const [first, month, last] = parts;
+        if (first.length === 4 && last.length === 2) {
+            return `${last.padStart(2, '0')}-${month.padStart(2, '0')}-${first}`;
+        }
+    }
+    const parsedDate = new Date(deadline);
+    if (!isNaN(parsedDate.getTime())) {
+        const year = parsedDate.getFullYear();
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(parsedDate.getDate()).padStart(2, '0');
         return `${day}-${month}-${year}`;
     }
     return deadline;
@@ -100,19 +178,62 @@ function formatDeadline(dateStr) {
     }
 }
 
+/** Sanitizes string input for DOM storage compliance (S8475). */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const cleanStr = str.replace(/<[^>]*>?/g, '').replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+/** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
+function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
+    if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
+    const uploadsIdx = serverPath.indexOf("/uploads/");
+    if (uploadsIdx !== -1) {
+        const relPath = serverPath.substring(uploadsIdx);
+        const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+        return `${baseUrl}${relPath}`;
+    }
+    return fallbackUrl;
+}
+
+
+
 /** Updates the admin_profiles list in localStorage so that the password autofill stays in sync. */
 function updateAdminPasswordInStorage(adminEmail, newPassword) {
-    const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
+    const rawData = localStorage.getItem('admin_profiles');
+    let adminProfiles = [];
+    if (rawData) {
+        try {
+            const parsed = JSON.parse(rawData);
+            if (Array.isArray(parsed)) adminProfiles = parsed;
+        } catch {
+            adminProfiles = [];
+        }
+    }
+    const cleanEmail = sanitizeStorageString(adminEmail).toLowerCase();
+    const cleanPass = sanitizeStorageString(newPassword);
     let adminFound = false;
     const updatedAdmins = adminProfiles.map(p => {
-        if (p.email && p.email.trim().toLowerCase() === adminEmail.trim().toLowerCase()) {
+        const pEmail = sanitizeStorageString(p.email).toLowerCase();
+        const pPass = sanitizeStorageString(p.password);
+        if (pEmail && pEmail === cleanEmail) {
             adminFound = true;
-            return { ...p, password: newPassword };
+            return { email: cleanEmail, password: cleanPass };
         }
-        return p;
+        return { email: pEmail, password: pPass };
     });
-    if (!adminFound) {
-        updatedAdmins.push({ email: adminEmail, password: newPassword });
+    if (!adminFound && cleanEmail) {
+        updatedAdmins.push({ email: cleanEmail, password: cleanPass });
     }
     localStorage.setItem('admin_profiles', JSON.stringify(updatedAdmins));
 }
@@ -181,7 +302,176 @@ function filterAndSortApplicants(applicants, searchTerm, filterBy, filterDate, f
 }
 
 
-// --- Sub-components extracted to keep cognitive complexity low for SonarQube ---  
+function AvatarPhotoMenu({ avatarUrl, onUpload, onRemove, children, inputId }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [showTooltip, setShowTooltip] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={menuRef} style={{ position: 'relative', display: 'inline-block' }}>
+            <div
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsOpen(!isOpen);
+                    setShowTooltip(false);
+                }}
+                onMouseEnter={() => setShowTooltip(true)}
+                onMouseLeave={() => setShowTooltip(false)}
+                style={{ cursor: 'pointer', position: 'relative' }}
+            >
+                {children}
+                <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    background: '#2563eb',
+                    color: '#ffffff',
+                    borderRadius: '50%',
+                    padding: '3px',
+                    width: '20px',
+                    height: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                }}>
+                    <Camera size={11} />
+                </span>
+            </div>
+
+            {!isOpen && showTooltip && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 'calc(100% + 8px)',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    border: '1px solid #bfdbfe',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.78125rem',
+                    fontWeight: '600',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.12)',
+                    pointerEvents: 'none',
+                    zIndex: 100000
+                }}>
+                    {avatarUrl ? 'Click photo to change or remove photo' : 'Click photo to upload profile photo'}
+                    <div style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 0,
+                        height: 0,
+                        borderLeft: '5px solid transparent',
+                        borderRight: '5px solid transparent',
+                        borderTop: '5px solid #1e40af'
+                    }} />
+                </div>
+            )}
+
+            {isOpen && (
+                <div className="avatar-photo-popover" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: 0,
+                    marginTop: '8px',
+                    background: '#ffffff',
+                    borderRadius: '10px',
+                    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.15), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    padding: '6px',
+                    zIndex: 99999,
+                    minWidth: '150px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                }}>
+                    <label
+                        htmlFor={inputId}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '8px 12px',
+                            fontSize: '0.8125rem',
+                            fontWeight: '600',
+                            color: '#1e293b',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'background 0.2s',
+                            margin: 0
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <Camera size={15} style={{ color: '#2563eb' }} />
+                        <span>{avatarUrl ? 'Edit Photo' : 'Upload Photo'}</span>
+                    </label>
+                    <input
+                        id={inputId}
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        onChange={(e) => {
+                            const selectedFile = e.target.files?.[0];
+                            const target = e.target;
+                            setIsOpen(false);
+                            if (onUpload) onUpload(e, selectedFile);
+                            if (target) target.value = '';
+                        }}
+                        style={{ display: 'none' }}
+                    />
+
+                    {avatarUrl ? (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                if (onRemove) onRemove();
+                            }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 12px',
+                                fontSize: '0.8125rem',
+                                fontWeight: '600',
+                                color: '#ef4444',
+                                background: 'none',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                width: '100%',
+                                textAlign: 'left',
+                                transition: 'background 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.background = '#fef2f2'}
+                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                            <Trash2 size={15} style={{ color: '#ef4444' }} />
+                            <span>Remove Photo</span>
+                        </button>
+                    ) : null}
+                </div>
+            )}
+        </div>
+    );
+}
 
 function AdminHeader({
     activeTab,
@@ -195,17 +485,32 @@ function AdminHeader({
     setIsEditingProfile,
     setValidationError,
     setIsProfileModalOpen,
-    onNavigate
+    onNavigate,
+    handlePhotoUpload,
+    handleRemovePhoto,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen
 }) {
     return (
         <header className='admin-header'>
-            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-header-container' : 'header-container'}>
-                <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
-                    <span className='college-name' style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+            <div className={`header-container ${activeTab === 'analytics' || activeTab === 'queries' ? 'wide-layout' : ''}`}>
+                <div className='header-left-group'>
+                    <button
+                        type="button"
+                        className="header-mobile-toggle"
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        aria-label="Toggle navigation menu"
+                    >
+                        <Menu className="mobile-menu-icon" size={22} />
+                    </button>
+
+                    <div className='logo-section' style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <GraduationCap className='logo-icon' size={28} style={{ color: '#2563eb' }} />
+                        <span className='college-name' style={{ fontWeight: '800', color: '#2563eb' }}>Campus_Hire</span>
+                    </div>
                 </div>
 
-                <nav className='navbar-menu-list' style={{ display: 'flex', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                <nav className='navbar-menu-list admin-nav-desktop' style={{ gap: '24px', alignItems: 'center', margin: '0 auto' }}>
                     {[
                         { id: 'dashboard', label: 'Dashboard' },
                         { id: 'analytics', label: 'Student Analytics' },
@@ -264,15 +569,7 @@ function AdminHeader({
                             <Bell className='bell-icon' size={22} />
                         </motion.div>
                         {unreadCount > 0 && (
-                            <motion.span
-                                className='notification-badge'
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                                style={{ width: '16px', height: '16px', borderRadius: '50%', right: '-2px', top: '-2px', fontSize: '0.55rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                            >
-                                {unreadCount}
-                            </motion.span>
+                            <span className='notification-badge'>{unreadCount}</span>
                         )}
                     </button>
 
@@ -282,9 +579,13 @@ function AdminHeader({
                             className={`user-avatar ${isProfileOpen ? 'active' : ''}`}
                             aria-label="User profile menu"
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            style={{ border: 'none', cursor: 'pointer', padding: 0 }}
                         >
-                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
+                            {adminProfile?.avatarUrl ? (
+                                <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                            ) : (
+                                getInitials(adminProfile?.name, 'AD')
+                            )}
                         </button>
 
                         {isProfileOpen && (
@@ -292,9 +593,27 @@ function AdminHeader({
                                 <button type="button" className='profile-dropdown-backdrop' aria-label="Close profile menu" onClick={() => setIsProfileOpen(false)} style={{ border: 'none', padding: 0 }} />
                                 <div className='profile-dropdown-menu'>
                                     <div className='profile-header'>
-                                        <span className='profile-avatar-large'>
-                                            {adminProfile.name ? adminProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'AD'}
-                                        </span>
+                                        <AvatarPhotoMenu
+                                            avatarUrl={adminProfile?.avatarUrl}
+                                            onUpload={(e, file) => {
+                                                setIsProfileOpen(false);
+                                                handlePhotoUpload(e, file);
+                                            }}
+                                            onRemove={() => {
+                                                setIsProfileOpen(false);
+                                                handleRemovePhoto();
+                                            }}
+                                            inputId="admin-header-photo-input"
+                                        >
+                                            <span className='profile-avatar-large'>
+                                                {adminProfile?.avatarUrl ? (
+                                                    <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                                                ) : (
+                                                    getInitials(adminProfile?.name, 'AD')
+                                                )}
+                                            </span>
+                                        </AvatarPhotoMenu>
+
                                         <div className='profile-meta-info'>
                                             <span className='profile-name'>{adminProfile.name}</span>
                                             <span className='profile-email'>{adminProfile.email}</span>
@@ -333,6 +652,143 @@ function AdminHeader({
                     </div>
                 </div>
             </div>
+
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        <motion.div
+                            className="admin-mobile-drawer-overlay"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+                        <motion.aside
+                            className="admin-mobile-drawer"
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+                        >
+                            <div className="drawer-header">
+                                <div className="drawer-logo">
+                                    <GraduationCap className="drawer-logo-icon" size={26} />
+                                    <span>Campus_Hire</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="drawer-close-btn"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    aria-label="Close menu"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="drawer-nav">
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('dashboard');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <LayoutDashboard className="drawer-item-icon" size={18} />
+                                    <span>Dashboard</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('analytics');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <BarChart3 className="drawer-item-icon" size={18} />
+                                    <span>Student Analytics</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className={`drawer-nav-item ${activeTab === 'queries' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveTab('queries');
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <MessageSquareQuote className="drawer-item-icon" size={18} />
+                                    <span>Queries & Stories</span>
+                                </button>
+                            </div>
+
+                            <hr className="drawer-divider" />
+
+                            <div className="drawer-profile-section">
+                                <div className="drawer-user-info">
+                                    <div className="drawer-avatar">
+                                        {adminProfile?.avatarUrl ? (
+                                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" />
+                                        ) : (
+                                            getInitials(adminProfile?.name, 'AD')
+                                        )}
+                                    </div>
+                                    <div className="drawer-user-details">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span className="drawer-user-name">{adminProfile?.name || 'Admin'}</span>
+                                            <span className="role-badge drawer-role-badge">Admin</span>
+                                        </div>
+                                        <span className="drawer-user-email">{adminProfile?.email || ''}</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setProfileTab('edit');
+                                        setIsEditingProfile(false);
+                                        setValidationError(false);
+                                        setIsProfileModalOpen(true);
+                                    }}
+                                >
+                                    <User className="drawer-item-icon" size={18} />
+                                    <span>My Profile</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        setProfileTab('password');
+                                        setValidationError(false);
+                                        setIsProfileModalOpen(true);
+                                    }}
+                                >
+                                    <Lock className="drawer-item-icon" size={18} />
+                                    <span>Change Password</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="drawer-nav-item drawer-logout-btn"
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        if (onNavigate) onNavigate("landing");
+                                    }}
+                                >
+                                    <LogOut className="drawer-item-icon" size={18} />
+                                    <span>Logout</span>
+                                </button>
+                            </div>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
         </header>
     );
 }
@@ -410,6 +866,10 @@ function AdminStatsGrid({ dashboardStats }) {
 
 function RecentPostingsCard({
     drafts,
+    paginatedDrafts,
+    draftsCurrentPage,
+    totalDraftsPages,
+    setDraftsCurrentPage,
     handleEditDraft,
     handlePublishDraft,
     paginatedRecentPosts,
@@ -438,34 +898,73 @@ function RecentPostingsCard({
                         <h5>Saved Drafts ({drafts.length})</h5>
                     </div>
 
-                    {drafts.map(draft => (
-                        <div key={draft.id} className='draft-item'>
-                            <div className='draft-info'>
-                                <span className='badge-draft'>Draft</span>
-                                <div>
-                                    <h6>{draft.title}</h6>
-                                    <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                    {paginatedDrafts && paginatedDrafts.length > 0 ? (
+                        paginatedDrafts.map(draft => (
+                            <div key={draft.id} className='draft-item'>
+                                <div className='draft-info'>
+                                    <span className='badge-draft'>Draft</span>
+                                    <div>
+                                        <h6>{draft.title}</h6>
+                                        <p className='draft-company'>{draft.company} • Saved {draft.lastSaved}</p>
+                                    </div>
+                                </div>
+
+                                <div className='draft-actions'>
+                                    <button
+                                        type="button"
+                                        className='btn-resume-draft'
+                                        onClick={() => handleEditDraft(draft.id)}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className='btn-publish-draft'
+                                        onClick={() => handlePublishDraft(draft.id)}
+                                    >
+                                        Publish
+                                    </button>
                                 </div>
                             </div>
+                        ))
+                    ) : (
+                        <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '12px 0' }}>No drafts saved.</p>
+                    )}
 
-                            <div className='draft-actions'>
+                    {totalDraftsPages > 1 && (
+                        <div className='pagination-controls' style={{ marginTop: '12px', gap: '6px', justifyContent: 'center' }}>
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === 1}
+                                onClick={() => setDraftsCurrentPage(prev => Math.max(prev - 1, 1))}
+                                title="Previous Page"
+                            >
+                                &larr;
+                            </button>
+
+                            {Array.from({ length: totalDraftsPages }, (_, i) => i + 1).map(pageNum => (
                                 <button
+                                    key={pageNum}
                                     type="button"
-                                    className='btn-resume-draft'
-                                    onClick={() => handleEditDraft(draft.id)}
+                                    className={`btn-page-number ${draftsCurrentPage === pageNum ? 'active' : ''}`}
+                                    onClick={() => setDraftsCurrentPage(pageNum)}
                                 >
-                                    Edit
+                                    {pageNum}
                                 </button>
-                                <button
-                                    type="button"
-                                    className='btn-publish-draft'
-                                    onClick={() => handlePublishDraft(draft.id)}
-                                >
-                                    Publish
-                                </button>
-                            </div>
+                            ))}
+
+                            <button
+                                type="button"
+                                className='btn-pagination'
+                                disabled={draftsCurrentPage === totalDraftsPages || totalDraftsPages === 0}
+                                onClick={() => setDraftsCurrentPage(prev => Math.min(prev + 1, totalDraftsPages))}
+                                title="Next Page"
+                            >
+                                &rarr;
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
             </motion.div>
 
@@ -676,12 +1175,19 @@ function ApplicantsMatchingCard({
                                                 const day = i + 1;
                                                 const dateStr = `${calDate.getFullYear()}-${String(calDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                 const isSelected = filterDate === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(calDate.getFullYear(), calDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
                                                 return (
                                                     <button
                                                         key={dateStr}
                                                         type="button"
-                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
                                                         onClick={() => {
+                                                            if (isPast) return;
                                                             setFilterDate(dateStr);
                                                             setIsDatePickerOpen(false);
                                                         }}
@@ -798,12 +1304,10 @@ function AddJobModal({
     modalTotalDays
 }) {
     return (
-        <button
-            type="button"
+        <div
             className='modal-overlay'
             aria-label="Close job modal backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) setIsSidebarOpen(false); }}
-            style={{ border: 'none', padding: 0, textAlign: 'left' }}
         >
             <div className='add-job-modal'>
                 <div className='modal-header'>
@@ -815,42 +1319,46 @@ function AddJobModal({
 
                 <form className='modal-form' onSubmit={handlePostJob}>
                     <div className='form-group'>
-                        <label htmlFor="job-company-name">Company Name</label>
+                        <label htmlFor="job-company-name">Company Name <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <input type="text"
                             id="job-company-name"
                             name='companyName'
                             placeholder='Enter Company Name'
                             value={newJob.companyName}
                             onChange={handleInputChange}
-                            className={validationError && !newJob.companyName ? 'error-input' : ''}
+                            className={validationError && !newJob.companyName?.trim() ? 'error-input' : ''}
                             required />
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-location">Location</label>
+                        <label htmlFor="job-location">Location <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <input type="text"
                             id="job-location"
                             name='location'
                             placeholder='e.g. Bangalore, India (or Remote)'
                             value={newJob.location}
                             onChange={handleInputChange}
+                            className={validationError && !newJob.location?.trim() ? 'error-input' : ''}
+                            required
                         />
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-requirements">Job Requirements</label>
+                        <label htmlFor="job-requirements">Job Requirements <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <textarea
                             id="job-requirements"
                             name='jobRequirements'
                             placeholder='Enter job requirements'
                             value={newJob.jobRequirements}
                             onChange={handleInputChange}
-                            rows={3}>
+                            rows={3}
+                            className={validationError && !newJob.jobRequirements?.trim() ? 'error-input' : ''}
+                            required>
                         </textarea>
                     </div>
 
                     <div className='form-group'>
-                        <label htmlFor="job-role-overview">Job Role Overview</label>
+                        <label htmlFor="job-role-overview">Job Role Overview <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                         <textarea
                             id="job-role-overview"
                             name="jobRoleOverview"
@@ -858,7 +1366,7 @@ function AddJobModal({
                             value={newJob.jobRoleOverview}
                             onChange={handleInputChange}
                             rows={3}
-                            className={validationError && !newJob.jobRoleOverview ? 'error-input' : ''}
+                            className={validationError && !newJob.jobRoleOverview?.trim() ? 'error-input' : ''}
                             required>
                         </textarea>
                     </div>
@@ -867,19 +1375,20 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-degree">Degree</label>
-                            <select id="job-degree" name="degree" value={newJob.degree} onChange={handleInputChange}>
+                            <label htmlFor="job-degree">Degree <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-degree" name="degree" value={newJob.degree} onChange={handleInputChange} className={validationError && !newJob.degree?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select degree</option>
                                 <option value="BCA">BCA</option>
                                 <option value="MCA">MCA</option>
-                                <option value="BSC Cs">BSC Cs</option>
+                                <option value="BSC Cs">BSc CS</option>
                                 <option value="IT">IT</option>
+                                <option value="MSc">MSc</option>
                             </select>
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-branch">Branch</label>
-                            <select id="job-branch" name="branch" value={newJob.branch} onChange={handleInputChange}>
+                            <label htmlFor="job-branch">Branch <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-branch" name="branch" value={newJob.branch} onChange={handleInputChange} className={validationError && !newJob.branch?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select branch</option>
                                 <option value="Computer Science">Computer Science</option>
                                 <option value="Computer Applications">Computer Applications</option>
@@ -889,7 +1398,7 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-min-cgpa">Min CGPA</label>
+                            <label htmlFor="job-min-cgpa">Min CGPA <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
                             <input
                                 type="text"
                                 id="job-min-cgpa"
@@ -897,12 +1406,15 @@ function AddJobModal({
                                 placeholder="Enter minimum CGPA"
                                 value={newJob.minCgpa}
                                 onChange={handleInputChange}
+                                autoComplete="off"
+                                className={validationError && !newJob.minCgpa?.toString().trim() ? 'error-input' : ''}
+                                required
                             />
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-passing-year">Passing Year</label>
-                            <select id="job-passing-year" name="passingYear" value={newJob.passingYear} onChange={handleInputChange}>
+                            <label htmlFor="job-passing-year">Passing Year <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-passing-year" name="passingYear" value={newJob.passingYear} onChange={handleInputChange} className={validationError && !newJob.passingYear?.toString().trim() ? 'error-input' : ''} required>
                                 <option value="">Select Passing Year</option>
                                 <option value="2024">2024</option>
                                 <option value="2025">2025</option>
@@ -913,8 +1425,8 @@ function AddJobModal({
 
                     <div className='form-row'>
                         <div className='form-group half-width'>
-                            <label htmlFor="job-experience">Experience</label>
-                            <select id="job-experience" name="experience" value={newJob.experience} onChange={handleInputChange}>
+                            <label htmlFor="job-experience">Experience <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <select id="job-experience" name="experience" value={newJob.experience} onChange={handleInputChange} className={validationError && !newJob.experience?.trim() ? 'error-input' : ''} required>
                                 <option value="">Select experience</option>
                                 <option value="Fresher">Fresher</option>
                                 <option value="1 Year">1 Year</option>
@@ -923,12 +1435,12 @@ function AddJobModal({
                         </div>
 
                         <div className='form-group half-width'>
-                            <label htmlFor="job-deadline-btn">Deadline</label>
-                            <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%' }}>
+                            <label htmlFor="job-deadline-btn">Deadline <span className="required-star" style={{ color: '#ef4444', marginLeft: '3px' }}>*</span></label>
+                            <div className="custom-date-picker-container" ref={modalDatePickerRef} style={{ width: '100%', position: 'relative' }}>
                                 <button
                                     type="button"
                                     id="job-deadline-btn"
-                                    className="date-picker-trigger"
+                                    className={`date-picker-trigger ${validationError && !newJob.deadline?.trim() ? 'error-input' : ''}`}
                                     onClick={() => setIsModalDatePickerOpen(!isModalDatePickerOpen)}
                                     style={{ width: '100%', justifyContent: 'space-between' }}
                                 >
@@ -937,7 +1449,7 @@ function AddJobModal({
                                 </button>
 
                                 {isModalDatePickerOpen && (
-                                    <div className="custom-calendar-popup" style={{ left: 0, right: 'auto', width: '100%', minWidth: '250px' }}>
+                                    <div className="custom-calendar-popup">
                                         <div className="calendar-header">
                                             <button type="button" onClick={handleModalPrevMonth}>&lt;</button>
                                             <span>{modalCalDate.toLocaleString('default', { month: 'long' })} {modalCalDate.getFullYear()}</span>
@@ -957,12 +1469,19 @@ function AddJobModal({
                                                 const day = i + 1;
                                                 const dateStr = `${modalCalDate.getFullYear()}-${String(modalCalDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                                                 const isSelected = newJob.deadline === dateStr;
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                const thisDate = new Date(modalCalDate.getFullYear(), modalCalDate.getMonth(), day);
+                                                const isPast = thisDate < today;
+
                                                 return (
                                                     <button
                                                         type="button"
                                                         key={dateStr}
-                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''}`}
+                                                        disabled={isPast}
+                                                        className={`calendar-day-btn ${isSelected ? 'selected' : ''} ${isPast ? 'disabled-past-day' : ''}`}
                                                         onClick={() => {
+                                                            if (isPast) return;
                                                             setNewJob(prev => ({ ...prev, deadline: dateStr }));
                                                             setIsModalDatePickerOpen(false);
                                                         }}
@@ -1002,20 +1521,43 @@ function AddJobModal({
                     </div>
                 </form>
             </div>
-        </button>
+        </div>
     );
 }
 
-function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfile, setIsEditingProfile }) {
+function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfile, setIsEditingProfile, handlePhotoUpload, handleRemovePhoto }) {
     return (
         <form className='modal-form' onSubmit={handleUpdateProfile}>
+            <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                <AvatarPhotoMenu
+                    avatarUrl={adminProfile.avatarUrl}
+                    onUpload={handlePhotoUpload}
+                    onRemove={handleRemovePhoto}
+                    inputId="admin-edit-form-photo-input"
+                >
+                    <div className="photo-preview-circle" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '1.25rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {adminProfile?.avatarUrl ? (
+                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            getInitials(adminProfile?.name, 'AD')
+                        )}
+                    </div>
+                </AvatarPhotoMenu>
+                <div>
+                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{adminProfile?.name}</span>
+                    <span style={{ display: 'block', fontSize: '0.8125rem', color: '#64748b' }}>
+                        {adminProfile?.avatarUrl ? 'Click profile photo to change or remove photo' : 'Click profile photo to upload photo'}
+                    </span>
+                </div>
+            </div>
+
             <div className='form-group'>
                 <label htmlFor="admin-profile-name">Full Name</label>
                 <input
                     id="admin-profile-name"
                     type="text"
                     name="name"
-                    value={adminProfile.name}
+                    value={adminProfile?.name || ''}
                     onChange={handleProfileChange}
                     required
                 />
@@ -1026,7 +1568,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                     id="admin-profile-email"
                     type="email"
                     name="email"
-                    value={adminProfile.email}
+                    value={adminProfile?.email || ''}
                     onChange={handleProfileChange}
                     required
                 />
@@ -1037,7 +1579,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                     id="admin-profile-phone"
                     type="text"
                     name="phone"
-                    value={adminProfile.phone}
+                    value={adminProfile?.phone || ''}
                     onChange={handleProfileChange}
                 />
             </div>
@@ -1046,7 +1588,7 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
                 <input
                     id="admin-profile-role"
                     type="text"
-                    value={adminProfile.role}
+                    value={adminProfile?.role || 'System Administrator'}
                     disabled
                     className="disabled-input"
                 />
@@ -1064,9 +1606,30 @@ function ProfileEditForm({ adminProfile, handleProfileChange, handleUpdateProfil
     );
 }
 
-function ProfileDetailsView({ adminProfile, handleCloseProfileModal }) {
+function ProfileDetailsView({ adminProfile, handleCloseProfileModal, handlePhotoUpload, handleRemovePhoto }) {
     return (
         <div className='modal-form'>
+            <div className="photo-upload-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', marginBottom: '20px' }}>
+                <AvatarPhotoMenu
+                    avatarUrl={adminProfile?.avatarUrl}
+                    onUpload={handlePhotoUpload}
+                    onRemove={handleRemovePhoto}
+                    inputId="admin-details-photo-input"
+                >
+                    <div className="photo-preview-circle" style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#2563eb', color: '#ffffff', fontSize: '1.25rem', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                        {adminProfile?.avatarUrl ? (
+                            <img src={adminProfile.avatarUrl} alt={adminProfile?.name || 'Admin'} className="avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            getInitials(adminProfile?.name, 'AD')
+                        )}
+                    </div>
+                </AvatarPhotoMenu>
+                <div>
+                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: '700', color: '#0f172a' }}>{adminProfile?.name}</span>
+                    <span style={{ display: 'block', fontSize: '0.8125rem', color: '#64748b' }}>{adminProfile?.role}</span>
+                </div>
+            </div>
+
             <div className='form-group'>
                 <span style={{ display: 'block', marginBottom: '6px', fontSize: '0.8125rem', fontWeight: '600', color: '#64748b' }}>Full Name</span>
                 <div className="profile-detail-value" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '10px', fontSize: '0.875rem', fontWeight: '600', color: '#0f172a', border: '1px solid #e2e8f0' }}>{adminProfile.name}</div>
@@ -1204,7 +1767,9 @@ function renderProfileModalBody(props) {
         showAdminConfirmPassword,
         setShowAdminConfirmPassword,
         validationError,
-        handleUpdatePassword
+        handleUpdatePassword,
+        handlePhotoUpload,
+        handleRemovePhoto
     } = props;
 
     if (profileTab !== 'edit') {
@@ -1232,6 +1797,8 @@ function renderProfileModalBody(props) {
                 handleProfileChange={handleProfileChange}
                 handleUpdateProfile={handleUpdateProfile}
                 setIsEditingProfile={setIsEditingProfile}
+                handlePhotoUpload={handlePhotoUpload}
+                handleRemovePhoto={handleRemovePhoto}
             />
         );
     }
@@ -1240,6 +1807,8 @@ function renderProfileModalBody(props) {
         <ProfileDetailsView
             adminProfile={adminProfile}
             handleCloseProfileModal={handleCloseProfileModal}
+            handlePhotoUpload={handlePhotoUpload}
+            handleRemovePhoto={handleRemovePhoto}
         />
     );
 }
@@ -1262,7 +1831,9 @@ function ProfileSettingsModal({
     showAdminConfirmPassword,
     setShowAdminConfirmPassword,
     validationError,
-    handleUpdatePassword
+    handleUpdatePassword,
+    handlePhotoUpload,
+    handleRemovePhoto
 }) {
     if (!isProfileModalOpen) return null;
 
@@ -1274,12 +1845,10 @@ function ProfileSettingsModal({
     }
 
     return (
-        <button
-            type="button"
+        <div
             className='modal-overlay'
             aria-label="Close profile settings backdrop"
             onClick={(e) => { if (e.target === e.currentTarget) handleCloseProfileModal(); }}
-            style={{ border: 'none', padding: 0, textAlign: 'left' }}
         >
             <div className='add-job-modal profile-settings-modal'>
                 <div className='modal-header' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1328,23 +1897,31 @@ function ProfileSettingsModal({
                     showAdminConfirmPassword,
                     setShowAdminConfirmPassword,
                     validationError,
-                    handleUpdatePassword
+                    handleUpdatePassword,
+                    handlePhotoUpload,
+                    handleRemovePhoto
                 })}
             </div>
-        </button>
+        </div>
     );
 }
 
 function formatNotificationTimestamp(notif) {
     if (!notif) return '';
     if (notif.displayDate) {
-        return `${notif.displayDate} at ${notif.displayTime || ''}`;
+        return `${notif.displayDate}${notif.displayTime ? ' at ' + notif.displayTime : ''}`;
     }
     if (notif.createdDate) {
         const timePart = notif.createdTime ? ` at ${notif.createdTime}` : '';
         return `${notif.createdDate}${timePart}`;
     }
     if (notif.createdAt) {
+        const d = new Date(notif.createdAt);
+        if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            return `${dateStr} at ${timeStr}`;
+        }
         return new Date(notif.createdAt).toLocaleString();
     }
     return notif.date || '';
@@ -1360,7 +1937,7 @@ function NotificationSidebar({
     if (!isNotificationSidebarOpen) return null;
 
     return (
-        <button type="button" className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={(e) => { if (e.target === e.currentTarget) setIsNotificationSidebarOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+        <div className="sd-notification-sidebar-overlay" aria-label="Close notifications" onClick={(e) => { if (e.target === e.currentTarget) setIsNotificationSidebarOpen(false); }}>
             <div className="sd-notification-sidebar">
                 <div className="sidebar-header">
                     <div className="header-title-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1405,7 +1982,7 @@ function NotificationSidebar({
                     )}
                 </div>
             </div>
-        </button>
+        </div>
     );
 }
 
@@ -1415,6 +1992,7 @@ function AdminDashboard({ onNavigate }) {
 
     // Active menu tab state
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     //2. Search and filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -1450,6 +2028,8 @@ function AdminDashboard({ onNavigate }) {
     ]);
 
     const [drafts, setDrafts] = useState([]);
+    const [draftsCurrentPage, setDraftsCurrentPage] = useState(1);
+    const DRAFTS_PER_PAGE = 3;
     const [dashboardStats, setDashboardStats] = useState(null);
     const [applicants, setApplicants] = useState([]);
     const [filteredApplicants, setFilteredApplicants] = useState([]);
@@ -1464,10 +2044,18 @@ function AdminDashboard({ onNavigate }) {
     const [toastType, setToastType] = useState('success');
     const [validationError, setValidationError] = useState(false);
 
+    const triggerToast = (msg, type = 'success') => {
+        setToastMessage(msg);
+        setToastType(type);
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
+
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isNotificationSidebarOpen, setIsNotificationSidebarOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const prevUnreadCountRef = useRef(null);
 
     const fetchNotifications = async () => {
         try {
@@ -1477,13 +2065,29 @@ function AdminDashboard({ onNavigate }) {
                 const data = Array.isArray(response.data) ? response.data : fallback;
                 const sorted = data.sort((a, b) => parseDateStr(b.createdDate, b.createdTime) - parseDateStr(a.createdDate, a.createdTime));
 
-                const localizedData = sorted.map(notif => localizeNotification(notif));
+                const uniqueMap = new Map();
+                sorted.forEach(notif => {
+                    const msgKey = `${(notif.message || notif.text || '').trim()}-${notif.createdDate || notif.createdAt || ''}-${notif.createdTime || ''}`;
+                    const idKey = notif.id ? `id-${notif.id}` : null;
+                    if (idKey && uniqueMap.has(idKey)) return;
+                    if (uniqueMap.has(msgKey)) return;
+
+                    if (idKey) uniqueMap.set(idKey, notif);
+                    uniqueMap.set(msgKey, notif);
+                });
+                const deduplicated = Array.from(new Set(uniqueMap.values()));
+
+                const localizedData = deduplicated.map(notif => localizeNotification(notif));
                 setNotifications(localizedData);
             }
 
             const countResponse = await getAdminUnreadCount();
             if (countResponse.data !== undefined) {
                 const count = typeof countResponse.data === 'object' ? (countResponse.data.count || countResponse.data.unreadCount || 0) : countResponse.data;
+                if (prevUnreadCountRef.current !== null && count > prevUnreadCountRef.current) {
+                    playNotificationAlert();
+                }
+                prevUnreadCountRef.current = count;
                 setUnreadCount(count);
             }
         } catch (error) {
@@ -1492,6 +2096,7 @@ function AdminDashboard({ onNavigate }) {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchNotifications();
     }, []);
 
@@ -1517,90 +2122,181 @@ function AdminDashboard({ onNavigate }) {
         name: loggedInAdmin.fullName || 'Admin',
         email: loggedInAdmin.email || '',
         phone: loggedInAdmin.phone || '',
-        role: 'System Administrator'
+        role: 'System Administrator',
+        avatarUrl: loggedInAdmin.avatarUrl || localStorage.getItem("admin_avatar") || ''
     });
+
+    const handleAdminPhotoUpload = async (e, explicitFile) => {
+        const file = explicitFile || e?.target?.files?.[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            triggerToast("Image size must be less than 5MB", "error");
+            return;
+        }
+        const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+        const hasExistingPhoto = Boolean(
+            adminProfile?.avatarUrl || 
+            localStorage.getItem("admin_avatar") || 
+            storedAdmin.avatarUrl
+        );
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64 = reader.result;
+            setAdminProfile(prev => ({ ...prev, avatarUrl: base64 }));
+            localStorage.setItem("admin_avatar", base64);
+            const rawUser = localStorage.getItem("admin_user");
+            let userObj = {};
+            if (rawUser) {
+                try { userObj = JSON.parse(rawUser) || {}; } catch {}
+            }
+            userObj.avatarUrl = base64;
+            localStorage.setItem("admin_user", JSON.stringify(userObj));
+
+            // Call backend API (POST /admin/profile/photo)
+            try {
+                const res = await uploadAdminProfilePhoto(file);
+                const serverPhotoPath = res?.data?.photoUrl || res?.data?.avatarUrl || res?.data?.photoPath || res?.data?.url || (typeof res?.data === 'string' ? res.data : null);
+                const finalPhotoUrl = resolvePhotoUrl(serverPhotoPath, base64);
+                if (finalPhotoUrl) {
+                    setAdminProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
+                    localStorage.setItem("admin_avatar", finalPhotoUrl);
+                    userObj.avatarUrl = finalPhotoUrl;
+                    localStorage.setItem("admin_user", JSON.stringify(userObj));
+                }
+            } catch (apiErr) {
+                console.warn("Backend admin photo upload warning:", apiErr);
+            }
+
+            triggerToast(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!", "success");
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleAdminRemovePhoto = async () => {
+        setAdminProfile(prev => ({ ...prev, avatarUrl: '' }));
+        localStorage.removeItem("admin_avatar");
+        const rawUser = localStorage.getItem("admin_user");
+        let userObj = {};
+        if (rawUser) {
+            try { userObj = JSON.parse(rawUser) || {}; } catch {}
+        }
+        delete userObj.avatarUrl;
+        localStorage.setItem("admin_user", JSON.stringify(userObj));
+
+        // Call backend API (DELETE /admin/profile/photo)
+        try {
+            await deleteAdminProfilePhoto();
+        } catch (apiErr) {
+            console.warn("Backend admin photo delete warning:", apiErr);
+        }
+
+        triggerToast("Profile photo removed successfully!", "success");
+    };
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: '', newPassword: '', confirmPassword: ''
     });
 
     const [recentPosts, setRecentPosts] = useState([]);
 
+    const fetchRecentPosts = async () => {
+        try {
+            const response = await getAdminRecentPosts();
+            if (response && response.data) {
+                setRecentPosts(response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching recent posts:", error);
+        }
+    };
+
+    const fetchDraftsData = async () => {
+        try {
+            const response = await getDrafts();
+            let draftsData = [];
+            const rawData = response.data;
+            if (Array.isArray(rawData)) {
+                draftsData = rawData;
+            } else if (rawData && Array.isArray(rawData.drafts)) {
+                draftsData = rawData.drafts;
+            } else if (rawData && Array.isArray(rawData.content)) {
+                draftsData = rawData.content;
+            }
+
+            const mappedDrafts = draftsData.map(d => ({
+                id: d.id,
+                title: d.jobRoleOverview || d.title || d.jobRole || 'Untitled Draft',
+                company: d.companyName || d.company || 'Unknown Company',
+                location: d.location || "Remote",
+                requirements: d.jobRequirements || "",
+                degree: d.degree || "",
+                branch: d.branch || "",
+                cgpa: d.minCgpa || "",
+                year: d.passingYear || "",
+                experience: d.experience || "",
+                deadline: d.deadline || "",
+                lastSaved: d.savedTime || (d.createdAt ? new Date(d.createdAt).toLocaleDateString() : 'Saved')
+            }));
+            setDrafts(mappedDrafts);
+        } catch (error) {
+            console.error("Failed to fetch drafts", error);
+        }
+    };
+
+    const fetchApplicantsMatching = async () => {
+        try {
+            const response = await getAdminApplicantsMatching();
+            if (response.data && Array.isArray(response.data)) {
+                const mapped = response.data.map(app => ({
+                    id: app.id || crypto.randomUUID(),
+                    name: app.studentName || '',
+                    company: app.companyName || app.jobRole || '',
+                    degree: app.course || app.degree || '',
+                    branch: app.department || app.branch || '',
+                    cgpa: app.cgpa ?? '',
+                    year: app.passingYear || '',
+                    match: app.matchPercentage ?? app.matchScore ?? '',
+                    date: app.appliedAt || app.appliedDate || ''
+                }));
+                setApplicants(mapped);
+                setFilteredApplicants(mapped);
+            }
+        } catch (error) {
+            console.error("Failed to fetch matching applicants", error);
+        }
+    };
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await getAdminStudentAnalyticsDashboard();
+            if (response && response.data) {
+                setDashboardStats(response.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin dashboard stats:", error);
+        }
+    };
+
     useEffect(() => {
         const fetchAdminProfile = async () => {
             try {
                 const response = await getAdminProfile();
                 if (response.data) {
-                    setAdminProfile({
-                        name: response.data.fullName || response.data.name || 'Admin',
-                        email: response.data.email || 'admin@example.com',
-                        phone: response.data.mobile || response.data.phone || '',
-                        role: response.data.role || 'System Administrator'
-                    });
+                    const storedAdmin = JSON.parse(localStorage.getItem("admin_user") || "{}");
+                    const savedAvatar = localStorage.getItem("admin_avatar") || storedAdmin.avatarUrl || "";
+                    const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
+                    const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
+                    setAdminProfile(prev => ({
+                        ...prev,
+                        name: response.data.fullName || response.data.name || prev.name,
+                        email: response.data.email || prev.email,
+                        phone: response.data.mobile || response.data.phone || prev.phone,
+                        role: response.data.role || prev.role,
+                        avatarUrl: resolvedPhoto
+                    }));
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
-            }
-        };
-
-        const fetchRecentPosts = async () => {
-            try {
-                const response = await getAdminRecentPosts();
-                if (response.data) {
-                    setRecentPosts(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching recent posts:", error);
-            }
-        };
-
-        const fetchApplicantsMatching = async () => {
-            try {
-                const response = await getAdminApplicantsMatching();
-                if (response.data && Array.isArray(response.data)) {
-                    const mapped = response.data.map(app => ({
-                        id: app.id || crypto.randomUUID(),
-                        name: app.studentName || '',
-                        company: app.companyName || app.jobRole || '',
-                        degree: app.course || app.degree || '',
-                        branch: app.department || app.branch || '',
-                        cgpa: app.cgpa ?? '',
-                        year: app.passingYear || '',
-                        match: app.matchPercentage ?? app.matchScore ?? '',
-                        date: app.appliedAt || app.appliedDate || ''
-                    }));
-                    setApplicants(mapped);
-                    setFilteredApplicants(mapped);
-                }
-            } catch (error) {
-                console.error("Failed to fetch matching applicants", error);
-            }
-        };
-
-        const fetchDraftsData = async () => {
-            try {
-                const response = await getDrafts();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrafts = response.data.map(d => ({
-                        id: d.id,
-                        title: d.jobRoleOverview || d.title || 'Untitled Draft',
-                        company: d.companyName || d.company || 'Unknown Company',
-                        lastSaved: new Date(d.createdAt || Date.now()).toLocaleDateString()
-                    }));
-                    setDrafts(mappedDrafts);
-                }
-            } catch (error) {
-                console.error("Failed to fetch drafts", error);
-            }
-        };
-
-        const fetchDashboardStats = async () => {
-            try {
-                const response = await getAdminStudentAnalyticsDashboard();
-                if (response.data) {
-                    setDashboardStats(response.data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch admin dashboard stats:", error);
             }
         };
 
@@ -1609,6 +2305,36 @@ function AdminDashboard({ onNavigate }) {
         fetchApplicantsMatching();
         fetchDraftsData();
         fetchDashboardStats();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchRecentPosts();
+                fetchApplicantsMatching();
+                fetchDraftsData();
+                fetchDashboardStats();
+                fetchNotifications();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     const [showAdminCurrentPassword, setShowAdminCurrentPassword] = useState(false);
@@ -1619,7 +2345,7 @@ function AdminDashboard({ onNavigate }) {
     const JOBS_PER_PAGE = 3;
 
     const [applicantsCurrentPage, setApplicantsCurrentPage] = useState(1);
-    const APPLICANTS_PER_PAGE = 5;
+    const APPLICANTS_PER_PAGE = 4;
 
     const [filterDate, setFilterDate] = useState('');
     const [filterCompany, setFilterCompany] = useState('');
@@ -1653,6 +2379,7 @@ function AdminDashboard({ onNavigate }) {
 
     const [isModalDatePickerOpen, setIsModalDatePickerOpen] = useState(false);
     const [modalCalDate, setModalCalDate] = useState(new Date());
+    const [editingDraftId, setEditingDraftId] = useState(null);
     const modalDatePickerRef = useRef(null);
 
     const handleModalPrevMonth = () => {
@@ -1696,58 +2423,30 @@ function AdminDashboard({ onNavigate }) {
         return () => clearTimeout(timer);
     }, [searchTerm, filterBy, filterDate, filterCompany, applicants]);
 
-    useEffect(() => {
-        const fetchDraftsData = async () => {
-            try {
-                const response = await getDrafts();
-                const rawData = response ? response.data : null;
-                let draftsData = [];
-                if (Array.isArray(rawData)) {
-                    draftsData = rawData;
-                } else if (rawData && Array.isArray(rawData.content)) {
-                    draftsData = rawData.content;
-                }
 
-                const formattedDrafts = draftsData.map(d => ({
-                    id: d.id,
-                    title: d.jobRoleOverview,
-                    company: d.companyName,
-                    location: d.location || "Remote",
-                    requirements: d.jobRequirements,
-                    degree: d.degree,
-                    branch: d.branch,
-                    cgpa: d.minCgpa,
-                    year: d.passingYear,
-                    experience: d.experience,
-                    deadline: d.deadline,
-                    lastSaved: 'Saved'
-                }));
-                setDrafts(formattedDrafts);
-            } catch (error) {
-                console.error("Error fetching drafts:", error);
-            }
-        };
-        fetchDraftsData();
-    }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setNewJob(prev => ({ ...prev, [name]: value }));
     };
 
-    const triggerToast = (msg, type = 'success') => {
-        setToastType(type);
-        setToastMessage(msg);
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-    };
-
     const handlePostJob = async (e) => {
         e.preventDefault();
 
-        if (!newJob.companyName || !newJob.jobRoleOverview || !newJob.jobRequirements) {
+        if (
+            !newJob.companyName?.trim() ||
+            !newJob.location?.trim() ||
+            !newJob.jobRequirements?.trim() ||
+            !newJob.jobRoleOverview?.trim() ||
+            !newJob.degree?.trim() ||
+            !newJob.branch?.trim() ||
+            !newJob.minCgpa?.toString().trim() ||
+            !newJob.passingYear?.toString().trim() ||
+            !newJob.experience?.trim() ||
+            !newJob.deadline?.trim()
+        ) {
             setValidationError(true);
-            triggerToast("Please fill in Company Name, Job Role Overview, and Job Requirements!", 'error');
+            triggerToast("Please fill out all required fields marked with * before posting!", 'error');
             return;
         }
 
@@ -1756,25 +2455,34 @@ function AdminDashboard({ onNavigate }) {
             const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
-                jobRequirements: newJob.jobRequirements,
-                jobRoleOverview: newJob.jobRoleOverview,
-                degree: newJob.degree || "B.Tech",
+                jobRequirements: newJob.jobRequirements || "Requirements details",
+                jobRoleOverview: newJob.jobRoleOverview || "Role Overview",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "post"
+                action: "POST"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await publishDraft(editingDraftId);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            } else {
+                response = await createJobPosting(payload);
+            }
 
             const createdJob = {
-                id: response.data.id || (jobs.length + 1),
+                id: (response && response.data && response.data.id) || (jobs.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -1788,16 +2496,28 @@ function AdminDashboard({ onNavigate }) {
             };
 
             setJobs([createdJob, ...jobs]);
+            setDrafts(drafts.filter(d => d.id !== editingDraftId));
+            setEditingDraftId(null);
             setNewJob({
                 companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
                 degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
             });
 
-            triggerToast(`Job posted successfully for ${newJob.companyName}!`, 'success');
+            triggerToast(`Job posted successfully for ${createdJob.company}!`, 'success');
             setIsSidebarOpen(false);
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats(),
+                    fetchNotifications()
+                ]);
+            } catch (err) { console.error("Error refreshing data:", err); }
         } catch (error) {
             console.error("Failed to post job:", error);
-            const errorMsg = error.response?.data?.message || "Failed to create job posting. Please try again.";
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to post job. Please try again.";
             triggerToast(errorMsg, 'error');
         }
     };
@@ -1814,25 +2534,34 @@ function AdminDashboard({ onNavigate }) {
             const apiDeadline = formatApiDeadline(newJob.deadline);
 
             const payload = {
-                companyName: newJob.companyName,
+                companyName: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 jobRequirements: newJob.jobRequirements || "None",
                 jobRoleOverview: newJob.jobRoleOverview,
-                degree: newJob.degree || "B.Tech",
+                degree: newJob.degree === "BSC Cs" ? "BSc CS" : (newJob.degree || "B.Tech"),
                 branch: newJob.branch || "Computer Science",
-                minCgpa: Number(newJob.minCgpa) || 0,
+                minCgpa: parseFloat(newJob.minCgpa) || 0.0,
                 passingYear: newJob.passingYear || "2026",
-                experience: newJob.experience || "fresher",
+                experience: newJob.experience || "Fresher",
                 deadline: apiDeadline,
-                action: "draft"
+                action: "DRAFT"
             };
 
-            const response = await createJobPosting(payload);
+            let response;
+            if (editingDraftId) {
+                try {
+                    response = await updateDraft(editingDraftId, payload);
+                } catch {
+                    response = await createJobPosting(payload);
+                }
+            } else {
+                response = await createJobPosting(payload);
+            }
 
             const newDraft = {
-                id: response.data.id || (drafts.length + 1),
+                id: (response && response.data && response.data.id) || editingDraftId || (drafts.length + 1),
                 title: newJob.jobRoleOverview,
-                company: newJob.companyName,
+                company: newJob.companyName || "Company",
                 location: newJob.location || "Remote",
                 requirements: newJob.jobRequirements,
                 degree: newJob.degree,
@@ -1844,7 +2573,8 @@ function AdminDashboard({ onNavigate }) {
                 lastSaved: 'Just now'
             };
 
-            setDrafts([newDraft, ...drafts]);
+            setDrafts([newDraft, ...drafts.filter(d => d.id !== editingDraftId)]);
+            setEditingDraftId(null);
             setNewJob({
                 companyName: '', location: '', jobRequirements: '', jobRoleOverview: '',
                 degree: '', branch: '', minCgpa: '', passingYear: '', experience: '', deadline: ''
@@ -1852,9 +2582,17 @@ function AdminDashboard({ onNavigate }) {
 
             triggerToast(`Draft saved for ${newDraft.company}!`, 'success');
             setIsSidebarOpen(false);
+            try {
+                await Promise.allSettled([
+                    fetchDraftsData(),
+                    fetchRecentPosts(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing drafts:", err); }
         } catch (error) {
             console.error("Failed to save draft:", error);
-            const errorMsg = error.response?.data?.message || "Failed to save draft. Please try again.";
+            const serverMsg = error.response?.data?.message;
+            const errorMsg = (serverMsg && serverMsg !== 'Bad Request') ? serverMsg : "Failed to save draft. Please try again.";
             triggerToast(errorMsg, 'error');
         }
     };
@@ -1886,6 +2624,14 @@ function AdminDashboard({ onNavigate }) {
             setJobs([newPublishedJob, ...jobs]);
             setDrafts(drafts.filter(d => d.id !== draftId));
             triggerToast(`Published draft: ${newPublishedJob.title} at ${newPublishedJob.company}!`, 'success');
+            try {
+                await Promise.allSettled([
+                    fetchRecentPosts(),
+                    fetchDraftsData(),
+                    fetchApplicantsMatching(),
+                    fetchDashboardStats()
+                ]);
+            } catch (err) { console.error("Error refreshing data after publish:", err); }
         } catch (error) {
             console.error("Failed to publish draft:", error);
             triggerToast("Failed to publish draft. Please try again.", 'error');
@@ -1896,6 +2642,8 @@ function AdminDashboard({ onNavigate }) {
         try {
             const response = await getDraftById(draftId);
             const draftToEdit = response.data;
+
+            setEditingDraftId(draftId);
 
             setNewJob({
                 companyName: draftToEdit.companyName,
@@ -1939,19 +2687,34 @@ function AdminDashboard({ onNavigate }) {
                 role: adminProfile.role || "System Administrator"
             };
 
-            await updateAdminProfile(payload);
+            try {
+                await updateAdminProfile(payload);
+            } catch (apiErr) {
+                console.warn("Backend API updateAdminProfile warning (updating locally):", apiErr);
+            }
 
-            const userInStorage = JSON.parse(localStorage.getItem("admin_user") || "{}");
+            const rawUser = localStorage.getItem("admin_user");
+            let userInStorage = {};
+            if (rawUser) {
+                try {
+                    const parsed = JSON.parse(rawUser);
+                    if (parsed && typeof parsed === 'object') userInStorage = parsed;
+                } catch {
+                    userInStorage = {};
+                }
+            }
+
             const updatedUser = {
-                ...userInStorage,
-                fullName: String(adminProfile.name || '').trim(),
-                email: String(adminProfile.email || '').trim(),
-                phone: String(adminProfile.phone || '').trim()
+                fullName: sanitizeStorageString(adminProfile.name),
+                email: sanitizeStorageString(adminProfile.email).toLowerCase(),
+                phone: sanitizeStorageString(adminProfile.phone),
+                role: sanitizeStorageString(adminProfile.role || userInStorage.role || 'System Administrator')
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
 
-            triggerToast("Admin profile updated successfully!", 'success');
+            setIsEditingProfile(false);
             setIsProfileModalOpen(false);
+            triggerToast("Profile edited successfully!", 'success');
         } catch (error) {
             console.error("Failed to update profile:", error);
             triggerToast("Failed to update profile.", 'error');
@@ -2004,6 +2767,12 @@ function AdminDashboard({ onNavigate }) {
         setValidationError(false);
     };
 
+    const totalDraftsPages = Math.ceil(drafts.length / DRAFTS_PER_PAGE);
+    const paginatedDrafts = drafts.slice(
+        (draftsCurrentPage - 1) * DRAFTS_PER_PAGE,
+        draftsCurrentPage * DRAFTS_PER_PAGE
+    );
+
     const totalJobsPages = Math.ceil(recentPosts.length / JOBS_PER_PAGE);
     const paginatedRecentPosts = recentPosts.slice(
         (jobsCurrentPage - 1) * JOBS_PER_PAGE,
@@ -2031,9 +2800,13 @@ function AdminDashboard({ onNavigate }) {
                 setValidationError={setValidationError}
                 setIsProfileModalOpen={setIsProfileModalOpen}
                 onNavigate={onNavigate}
+                handlePhotoUpload={handleAdminPhotoUpload}
+                handleRemovePhoto={handleAdminRemovePhoto}
+                isMobileMenuOpen={isMobileMenuOpen}
+                setIsMobileMenuOpen={setIsMobileMenuOpen}
             />
 
-            <div className={activeTab === 'analytics' || activeTab === 'queries' ? 'analytics-content-layout' : 'dashboard-content-layout'}>
+            <div className={`dashboard-content-layout ${activeTab === 'analytics' || activeTab === 'queries' ? 'wide-layout' : ''}`}>
                 <main className='dashboard-main'>
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -2061,6 +2834,10 @@ function AdminDashboard({ onNavigate }) {
                                     <div className='dashboard-grid-lower'>
                                         <RecentPostingsCard
                                             drafts={drafts}
+                                            paginatedDrafts={paginatedDrafts}
+                                            draftsCurrentPage={draftsCurrentPage}
+                                            totalDraftsPages={totalDraftsPages}
+                                            setDraftsCurrentPage={setDraftsCurrentPage}
                                             handleEditDraft={handleEditDraft}
                                             handlePublishDraft={handlePublishDraft}
                                             paginatedRecentPosts={paginatedRecentPosts}
@@ -2125,14 +2902,24 @@ function AdminDashboard({ onNavigate }) {
                     />
                 )}
 
-                {showToast && (
-                    <div className={`admin-toast-notification ${toastType}`}>
-                        <span className="admin-toast-icon">
-                            {toastType === 'success' ? '✓' : '⚠'}
-                        </span>
-                        <span className="admin-toast-text">{toastMessage}</span>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {showToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            transition={{ duration: 0.25, ease: 'easeOut' }}
+                            className={`portal-toast-notification portal-toast-${toastType}`}
+                        >
+                            <div className="portal-toast-icon">
+                                {toastType === 'success' && <CheckCircle2 size={20} />}
+                                {toastType === 'info' && <Info size={20} />}
+                                {toastType === 'error' && <AlertCircle size={20} />}
+                            </div>
+                            <span className="portal-toast-text">{toastMessage}</span>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <ProfileSettingsModal
                     isProfileModalOpen={isProfileModalOpen}
@@ -2153,6 +2940,8 @@ function AdminDashboard({ onNavigate }) {
                     setShowAdminConfirmPassword={setShowAdminConfirmPassword}
                     validationError={validationError}
                     handleUpdatePassword={handleUpdatePassword}
+                    handlePhotoUpload={handleAdminPhotoUpload}
+                    handleRemovePhoto={handleAdminRemovePhoto}
                 />
 
                 <NotificationSidebar

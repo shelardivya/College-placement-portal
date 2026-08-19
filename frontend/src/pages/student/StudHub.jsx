@@ -24,29 +24,86 @@ const initialStudentQueries = [];
 
 // HELPER FUNCTIONS
 
+/** Cleans and sanitizes user input strings before storing or displaying. */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+/** Safely decodes URL-encoded strings from storage. */
+function decodeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            return decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    return str;
+}
+
+
+
+
 
 const parseAndFormatDate = (dateData) => {
     try {
+        const gbOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
         if (!dateData) {
-            return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+            return new Date().toLocaleString('en-GB', gbOptions).replace(',', '');
         }
         if (Array.isArray(dateData)) {
             if (dateData.length >= 5) {
-                const utcDate = new Date(Date.UTC(dateData[0], dateData[1] - 1, dateData[2], dateData[3], dateData[4]));
-                return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+                const year = String(dateData[0]);
+                const month = String(dateData[1]).padStart(2, '0');
+                const day = String(dateData[2]).padStart(2, '0');
+                const hour = String(dateData[3]).padStart(2, '0');
+                const minute = String(dateData[4]).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${minute}`;
             }
-            return new Date(dateData[0], dateData[1] - 1, dateData[2]).toLocaleDateString();
+            if (dateData.length >= 3) {
+                const day = String(dateData[2]).padStart(2, '0');
+                const month = String(dateData[1]).padStart(2, '0');
+                const year = String(dateData[0]);
+                return `${day}/${month}/${year}`;
+            }
         }
         const dateStr = dateData;
-        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
-            const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-            const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+            return dateStr;
         }
+
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr)) {
+            if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+                const parsed = new Date(dateStr);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+                }
+            } else {
+                const [datePart, timePart] = dateStr.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [hh, mm] = timePart.split(':');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y} ${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
+            }
+        }
+
         const parsed = new Date(dateStr);
-        if (Number.isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-        return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+        if (Number.isNaN(parsed.getTime())) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
+        return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
     } catch {
         return "Recently";
     }
@@ -462,39 +519,71 @@ const QueryResponsesPanel = ({
 
         <div className="query-responses-list">
             {paginatedQueryResponses.length > 0 ? (
-                paginatedQueryResponses.map((query) => (
-                    <div key={query.id} className="query-response-card">
-                        <div className="query-card-header-line">
-                            <h4 className="query-card-title">{query.title || query.subject || 'Student Query'}</h4>
-                            <div className="query-status-action-wrapper">
-                                {query.status !== 'resolved' && (
-                                    <div className="query-click-popup">
-                                        Click to mark resolved &rarr;
-                                    </div>
-                                )}
-                                <button
-                                    type="button"
-                                    className={`query-status-pill-btn ${query.status === 'resolved' ? 'resolved' : 'pending'}`}
-                                    onClick={() => handleResolveQuery(query.id)}
-                                    disabled={query.status === 'resolved'}
-                                    title={query.status === 'resolved' ? 'Resolved' : 'Click to mark query as resolved'}
-                                >
-                                    <CheckCircle2 size={13} />
-                                    {query.status === 'resolved' ? 'Resolved' : 'Query Resolved'}
-                                </button>
-                            </div>
-                        </div>
+                paginatedQueryResponses.map((query) => {
+                    const rawReply = (query.reply || query.adminReply || '').trim();
+                    const hasAdminReply = rawReply !== '' && rawReply !== 'Your query has been submitted. Admin team will respond shortly.';
+                    const isResolved = query.status === 'resolved';
 
-                        {(query.reply || query.adminReply) && (
-                            <div className="admin-reply-box">
-                                <span className="reply-header-label">ADMIN REPLY:</span>
-                                <p className="reply-text-content">
-                                    {query.reply || query.adminReply}
-                                </p>
+                    return (
+                        <div key={query.id} className="query-response-card">
+                            <div className="query-card-header-line">
+                                <div>
+                                    <h4 className="query-card-title" style={{ margin: 0 }}>{query.title || query.subject || 'Student Query'}</h4>
+                                    {query.date && (
+                                        <div className="query-date-text" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <Calendar size={12} /> {query.date}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="query-status-action-wrapper">
+                                    {!isResolved && hasAdminReply && (
+                                        <div className="query-click-popup">
+                                            Click to mark resolved &rarr;
+                                        </div>
+                                    )}
+                                    {isResolved ? (
+                                        <button
+                                            type="button"
+                                            className="query-status-pill-btn resolved"
+                                            disabled
+                                            title="Resolved"
+                                        >
+                                            <CheckCircle2 size={13} />
+                                            Resolved
+                                        </button>
+                                    ) : hasAdminReply ? (
+                                        <button
+                                            type="button"
+                                            className="query-status-pill-btn pending"
+                                            onClick={() => handleResolveQuery(query.id)}
+                                            title="Click to mark query as resolved"
+                                        >
+                                            <CheckCircle2 size={13} />
+                                            Mark Resolved
+                                        </button>
+                                    ) : (
+                                        <span
+                                            className="query-status-pill-btn awaiting"
+                                            title="Awaiting official admin reply"
+                                        >
+                                            <Clock size={13} />
+                                            Awaiting Admin Reply
+                                        </span>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))
+
+                            {hasAdminReply && (
+                                <div className="admin-reply-box">
+                                    <span className="reply-header-label">ADMIN REPLY:</span>
+                                    <p className="reply-text-content">
+                                        {rawReply}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })
             ) : (
                 <div className="sh-empty-state">
                     <p>No {queryResponseTab === 'resolved' ? 'resolved' : ''} queries found.</p>
@@ -539,13 +628,19 @@ const getDriveTarget = (target) => {
     if (!target) return 'All Students';
 
     if (Array.isArray(target)) {
-        if (target.includes('ALL')) return 'All Students';
-        if (target.includes('All')) return 'All Students';
-        return target.join(', ');
+        const specificTargets = target.filter(t => typeof t === 'string' && t.trim() !== '' && t.toLowerCase() !== 'all');
+        if (specificTargets.length > 0) {
+            return specificTargets.join(', ');
+        }
+        return 'All Students';
     }
 
-    if (target === 'All') return 'All Students';
-    return target;
+    if (typeof target === 'string') {
+        if (target.toLowerCase() === 'all') return 'All Students';
+        return target;
+    }
+
+    return 'All Students';
 };
 
 const formatDriveDetails = (currentDrive) => {
@@ -566,63 +661,110 @@ function useStudHubData() {
         return stored && JSON.parse(stored).length > 0 ? JSON.parse(stored) : initialStudentQueries;
     });
 
+    const fetchQueries = async () => {
+        try {
+            const response = await getStudentQueries();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedQueries = response.data.map(mapQueryData);
+                mappedQueries.sort((a, b) => b.id - a.id);
+                setQueries(mappedQueries);
+            }
+        } catch (error) {
+            console.error("Failed to fetch student queries:", error);
+        }
+    };
+
+    const fetchStories = async () => {
+        try {
+            const response = await getStudentPlacementStories();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedStories = response.data.map(mapStoryData);
+                mappedStories.sort((a, b) => b.id - a.id);
+                setStories(mappedStories);
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement stories:", error);
+        }
+    };
+
+    const fetchDrives = async () => {
+        try {
+            const response = await getStudentPlacementDrives();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedDrives = response.data.map(mapDriveData);
+                mappedDrives.sort((a, b) => b.id - a.id);
+                setDrives(mappedDrives);
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement drives:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchQueries = async () => {
-            try {
-                const response = await getStudentQueries();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedQueries = response.data.map(mapQueryData);
-                    mappedQueries.sort((a, b) => b.id - a.id);
-                    setQueries(mappedQueries);
-                }
-            } catch (error) {
-                console.error("Failed to fetch student queries:", error);
+        fetchQueries();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchQueries();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchQueries();
             }
         };
-        fetchQueries();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await getStudentPlacementStories();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(mapStoryData);
-                    mappedStories.sort((a, b) => b.id - a.id);
-                    setStories(mappedStories);
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement stories:", error);
-            }
-        };
-
-        const fetchDrives = async () => {
-            try {
-                const response = await getStudentPlacementDrives();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrives = response.data.map(mapDriveData);
-                    mappedDrives.sort((a, b) => b.id - a.id);
-                    setDrives(mappedDrives);
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement drives:", error);
-            }
-        };
-
         fetchStories();
         fetchDrives();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStories();
+                fetchDrives();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStories();
+                fetchDrives();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
         if (!Array.isArray(queries)) return;
         const sanitizedQueries = queries.map(q => ({
-            id: q.id,
-            studentName: String(q.studentName || '').trim(),
-            subject: String(q.subject || '').trim(),
-            message: String(q.message || '').trim(),
-            date: String(q.date || '').trim(),
-            status: String(q.status || '').trim(),
-            reply: String(q.reply || '').trim()
+            id: typeof q.id === 'number' ? q.id : Number(q.id) || 0,
+            studentName: sanitizeStorageString(q.studentName),
+            subject: sanitizeStorageString(q.subject),
+            message: sanitizeStorageString(q.message),
+            date: sanitizeStorageString(q.date),
+            status: sanitizeStorageString(q.status),
+            reply: sanitizeStorageString(q.reply)
         }));
         localStorage.setItem("student_queries", JSON.stringify(sanitizedQueries));
     }, [queries]);
@@ -658,7 +800,7 @@ function useQueriesPanel(queries, setQueries) {
                 title: createdQuery.subject,
                 message: createdQuery.description,
                 status: 'pending',
-                reply: 'Your query has been submitted. Admin team will respond shortly.',
+                reply: '',
                 date: new Date(createdQuery.createdAt || new Date()).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
             };
 
@@ -666,6 +808,7 @@ function useQueriesPanel(queries, setQueries) {
             setQuerySubject("");
             setQueryMessage("");
             triggerToast("Query submitted successfully! Admin will respond shortly.", "success");
+            try { await fetchQueries(); } catch (err) { console.error(err); }
         } catch (error) {
             console.error("Failed to submit query:", error);
             triggerToast("Failed to submit query. Please try again.", "error");
@@ -677,6 +820,7 @@ function useQueriesPanel(queries, setQueries) {
             await resolveStudentQuery(queryId);
             setQueries(prev => prev.map(q => q.id === queryId ? { ...q, status: 'resolved' } : q));
             triggerToast("Query marked as resolved!", "success");
+            try { await fetchQueries(); } catch (err) { console.error(err); }
         } catch (error) {
             console.error("Failed to resolve query:", error);
             triggerToast("Failed to resolve query.", "error");
@@ -751,8 +895,8 @@ export default function StudHub() {
 
     const { drives, stories, queries, setQueries } = useStudHubData();
 
-    const studentEmail = (loggedInUser.email || "").toLowerCase().trim();
-    const studentName = (loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
+    const studentEmail = decodeStorageString(loggedInUser.email || "").toLowerCase().trim();
+    const studentName = decodeStorageString(loggedInUser.fullName || loggedInUser.name || "").toLowerCase().trim();
 
     const { storiesPage, setStoriesPage, totalStoriesPages, paginatedStories } = useStoriesPagination(stories);
     const { drivesPage, setDrivesPage, totalDrivePages, currentDrive } = useDrivesPagination(drives, studentEmail, studentName);

@@ -6,8 +6,6 @@ import com.college.placement.portal.admin.entity.StudentQueryEntity;
 import com.college.placement.portal.admin.repository.StudentQueryRepository;
 import com.college.placement.portal.notification.util.NotificationHelper;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +28,10 @@ public class AdminQueryService {
     public List<AdminQueryResponseDto> getAllQueries() {
 
         List<StudentQueryEntity> queries =
-                studentQueryRepository.findAllByOrderByCreatedAtDesc();
+                studentQueryRepository
+                        .findByStatusNotOrderByCreatedAtDesc("DISCARDED");
 
         return convertToDtoList(queries);
-
     }
 
     // ==========================================
@@ -164,6 +162,47 @@ public class AdminQueryService {
         dto.setResolvedAt(query.getResolvedAt());
 
         return dto;
+
+    }
+
+    // ==========================================
+// Discard Query
+// ==========================================
+
+    public String discardQuery(Long id) {
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Query not found."
+                                ));
+
+        // Only pending query can be discarded
+        if (!"PENDING".equalsIgnoreCase(query.getStatus())) {
+
+            throw new IllegalArgumentException(
+                    "Only pending queries can be discarded."
+            );
+        }
+
+        // Change status
+        query.setStatus("DISCARDED");
+
+        studentQueryRepository.save(query);
+
+        // ==========================================
+        // Notify Student
+        // ==========================================
+
+        notificationHelper.createNotification(
+                query.getStudent(),
+                "STUDENT",
+                "Query Discarded",
+                "Your query get discarded"
+        );
+
+        return "Query discarded successfully.";
 
     }
 

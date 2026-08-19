@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 import { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, discardQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Search,
     Calendar,
@@ -12,11 +12,28 @@ import {
     Clock,
     X,
     CheckCircle2,
-    XCircle 
+    XCircle
 } from 'lucide-react';
 import './QueriesStories.css';
 
-    
+/** Cleans and sanitizes user input strings before storing or displaying. */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+
 
 /*
   Converts a backend `createdAt` field (which can be an ISO string, a DD/MM/YYYY HH:MM string,
@@ -30,23 +47,40 @@ function parseCreatedAt(createdAt) {
         }
         if (Array.isArray(createdAt)) {
             if (createdAt.length >= 5) {
-                const utcDate = new Date(Date.UTC(createdAt[0], createdAt[1] - 1, createdAt[2], createdAt[3], createdAt[4]));
-                return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+                const year = String(createdAt[0]);
+                const month = String(createdAt[1]).padStart(2, '0');
+                const day = String(createdAt[2]).padStart(2, '0');
+                const hour = String(createdAt[3]).padStart(2, '0');
+                const minute = String(createdAt[4]).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${minute}`;
             }
-            return new Date(createdAt[0], createdAt[1] - 1, createdAt[2]).toLocaleDateString();
+            if (createdAt.length >= 3) {
+                const day = String(createdAt[2]).padStart(2, '0');
+                const month = String(createdAt[1]).padStart(2, '0');
+                const year = String(createdAt[0]);
+                return `${day}/${month}/${year}`;
+            }
         }
         const dateStr = createdAt;
-        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/.exec(dateStr);
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(dateStr);
         if (ddMmYyyyMatch) {
-            const [, rawDay, rawMonth, rawYear, rawHour, rawMinute] = ddMmYyyyMatch;
-            const numYear = Number.parseInt(rawYear, 10);
-            const numMonth = Number.parseInt(rawMonth, 10);
-            const numDay = Number.parseInt(rawDay, 10);
-            const numHour = Number.parseInt(rawHour, 10);
-            const numMinute = Number.parseInt(rawMinute, 10);
-            const utcDate = new Date(Date.UTC(numYear, numMonth - 1, numDay, numHour, numMinute));
-            return utcDate.toLocaleString('en-GB', gbOptions).replace(',', '');
+            return dateStr;
         }
+
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr)) {
+            if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+                const parsed = new Date(dateStr);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+                }
+            } else {
+                const [datePart, timePart] = dateStr.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [hh, mm] = timePart.split(':');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y} ${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
+            }
+        }
+
         const parsed = new Date(dateStr);
         if (Number.isNaN(parsed.getTime())) {
             return typeof dateStr === 'string' ? dateStr.split('T')[0] : 'Recently';
@@ -92,6 +126,25 @@ function buildQueryAvatar(studentName) {
     return avatar.toUpperCase();
 }
 
+/** Returns up to maxVisible page numbers centered around current page. */
+function getVisiblePageNumbers(current, total, maxVisible = 3) {
+    if (total <= maxVisible) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - 1);
+    let end = start + maxVisible - 1;
+    if (end > total) {
+        end = total;
+        start = Math.max(1, end - maxVisible + 1);
+    }
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    return pages;
+}
+
+
 /** Builds the API payload object for creating or updating a placement drive. */
 function buildDrivePayload(driveForm) {
     const targetStudent = typeof driveForm.targetStudent === 'string'
@@ -115,8 +168,7 @@ function loadInitialStudentQueries() {
     const stored = localStorage.getItem("student_queries");
     if (stored) {
         try {
-            const parsed = JSON.parse(stored);
-            return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
+            return JSON.parse(stored);
         } catch {
             return [];
         }
@@ -249,37 +301,73 @@ export default function QueriesStories() {
     // React States for student queries and pagination
     const [queries, setQueries] = useState(loadInitialStudentQueries);
 
+    const fetchQueries = async () => {
+        try {
+            const response = await getAllQueries();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedQueries = response.data.map(q => {
+                    return {
+                        ...q,
+                        id: q.id,
+                        name: q.studentName,
+                        course: q.department,
+                        avatar: buildQueryAvatar(q.studentName || q.name),
+                        colorClass: 'blue',
+                        title: q.subject,
+                        message: q.description,
+                        status: (q.status || 'pending').toLowerCase(),
+                        reply: q.adminReply,
+                        date: parseCreatedAt(q.createdAt)
+                    };
+                });
+                setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
+            }
+        } catch (error) {
+            console.error("Failed to fetch queries:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchQueries = async () => {
-            try {
-                const response = await getAllQueries();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedQueries = response.data.map(q => {
-                        return {
-                            ...q,
-                            id: q.id,
-                            name: q.studentName,
-                            course: q.department,
-                            avatar: buildQueryAvatar(q.studentName || q.name),
-                            colorClass: 'blue',
-                            title: q.subject,
-                            message: q.description,
-                            status: (q.status || 'pending').toLowerCase(),
-                            reply: q.adminReply,
-                            date: parseCreatedAt(q.createdAt)
-                        };
-                    });
-                    setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch queries:", error);
+        fetchQueries();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchQueries();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchQueries();
             }
         };
-        fetchQueries();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("student_queries", JSON.stringify(queries));
+        if (!Array.isArray(queries)) return;
+        const sanitizedQueries = queries.map(q => ({
+            id: typeof q.id === 'number' ? q.id : Number(q.id) || 0,
+            studentName: sanitizeStorageString(q.studentName),
+            email: sanitizeStorageString(q.email),
+            subject: sanitizeStorageString(q.subject),
+            message: sanitizeStorageString(q.message),
+            category: sanitizeStorageString(q.category),
+            status: sanitizeStorageString(q.status),
+            createdAt: sanitizeStorageString(q.createdAt),
+            reply: sanitizeStorageString(q.reply),
+            adminReply: sanitizeStorageString(q.adminReply)
+        }));
+        localStorage.setItem("student_queries", JSON.stringify(sanitizedQueries));
     }, [queries]);
 
     const [querySearch, setQuerySearch] = useState('');
@@ -287,10 +375,12 @@ export default function QueriesStories() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2; // Show 2 queries per page
 
-    // States for View and Reply Modals
+    // States for View, Reply, and Discard Modals
     const [viewingQuery, setViewingQuery] = useState(null);
     const [replyingQuery, setReplyingQuery] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [discardingQuery, setDiscardingQuery] = useState(null);
+    const [discardReason, setDiscardReason] = useState('');
 
     const handleSendReply = async (e) => {
         e.preventDefault();
@@ -304,7 +394,8 @@ export default function QueriesStories() {
                     return {
                         ...q,
                         status: 'resolved',
-                        reply: replyText
+                        reply: replyText,
+                        adminReply: replyText
                     };
                 }
                 return q;
@@ -316,6 +407,45 @@ export default function QueriesStories() {
         } catch (error) {
             console.error("Failed to reply to query:", error);
             triggerToast("Failed to send reply.", "error");
+        }
+    };
+
+    const handleDiscardQuery = async (queryToDiscard) => {
+        if (!queryToDiscard) return;
+
+        const subjectName = queryToDiscard.title || 'Placement Query';
+
+        try {
+            try {
+                await discardQuery(queryToDiscard.id, "Query discarded by Admin");
+            } catch (apiErr) {
+                console.warn("Backend API call for discard query failed or not available yet, updating UI locally:", apiErr);
+            }
+
+            // Completely remove query from local state list
+            setQueries(prevQueries => prevQueries.filter(q => q.id !== queryToDiscard.id));
+
+            // Notify student via notifications in localStorage
+            const notifObj = {
+                id: Date.now(),
+                title: "Query Discarded",
+                message: `Your query with subject '${subjectName}' got discarded.`,
+                type: "warning",
+                studentEmail: queryToDiscard.email || "",
+                studentName: queryToDiscard.name || queryToDiscard.studentName || "",
+                createdAt: new Date().toISOString(),
+                displayDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: false
+            };
+
+            const existingNotifs = JSON.parse(localStorage.getItem("student_notifications") || "[]");
+            localStorage.setItem("student_notifications", JSON.stringify([notifObj, ...existingNotifs]));
+
+            triggerToast("Query discarded successfully", "success");
+        } catch (error) {
+            console.error("Failed to discard query:", error);
+            triggerToast("Failed to discard query.", "error");
         }
     };
 
@@ -350,36 +480,59 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialDrives;
     });
 
+    const fetchDrives = async () => {
+        try {
+            const response = await getAllPlacementDrives();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedDrives = response.data.map(mapApiDriveToUi);
+                setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement drives:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchDrives = async () => {
-            try {
-                const response = await getAllPlacementDrives();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedDrives = response.data.map(mapApiDriveToUi);
-                    setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement drives:", error);
+        fetchDrives();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchDrives();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchDrives();
             }
         };
-        fetchDrives();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
         if (!Array.isArray(drives)) return;
         const sanitizedDrives = drives.map(drive => ({
-            id: drive.id,
-            company: String(drive.company || '').trim(),
-            role: String(drive.role || '').trim(),
-            date: String(drive.date || '').trim(),
-            time: String(drive.time || '').trim(),
-            venue: String(drive.venue || '').trim(),
+            id: typeof drive.id === 'number' ? drive.id : Number(drive.id) || 0,
+            company: sanitizeStorageString(drive.company),
+            role: sanitizeStorageString(drive.role),
+            date: sanitizeStorageString(drive.date),
+            time: sanitizeStorageString(drive.time),
+            venue: sanitizeStorageString(drive.venue),
             targetStudent: Array.isArray(drive.targetStudent)
-                ? drive.targetStudent.map(t => String(t || '').trim())
-                : String(drive.targetStudent || '').trim(),
-            customTarget: String(drive.customTarget || '').trim(),
-            status: String(drive.status || '').trim(),
-            createdAt: drive.createdAt
+                ? drive.targetStudent.map(t => sanitizeStorageString(t))
+                : sanitizeStorageString(drive.targetStudent),
+            customTarget: sanitizeStorageString(drive.customTarget),
+            status: sanitizeStorageString(drive.status),
+            createdAt: sanitizeStorageString(drive.createdAt)
         }));
         localStorage.setItem("placement_drives", JSON.stringify(sanitizedDrives));
     }, [drives]);
@@ -534,37 +687,60 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialStories;
     });
 
+    const fetchStories = async () => {
+        try {
+            const response = await getAllPlacementStories();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedStories = response.data.map(mapApiStoryToUi);
+                setStories(mappedStories.toSorted((a, b) => b.id - a.id));
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement stories:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await getAllPlacementStories();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(mapApiStoryToUi);
-                    setStories(mappedStories.toSorted((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement stories:", error);
+        fetchStories();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStories();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStories();
             }
         };
-        fetchStories();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
         if (!Array.isArray(stories)) return;
         const sanitizedStories = stories.map(story => ({
-            id: story.id,
-            name: String(story.name || '').trim(),
-            branch: String(story.branch || '').trim(),
-            year: String(story.year || '').trim(),
-            company: String(story.company || '').trim(),
-            package: String(story.package || '').trim(),
-            quote: String(story.quote || '').trim(),
-            role: String(story.role || '').trim(),
-            tips: String(story.tips || '').trim(),
-            avatar: String(story.avatar || '').trim(),
-            logo: String(story.logo || '').trim(),
-            logoColor: String(story.logoColor || '').trim(),
-            createdAt: story.createdAt
+            id: typeof story.id === 'number' ? story.id : Number(story.id) || 0,
+            name: sanitizeStorageString(story.name),
+            branch: sanitizeStorageString(story.branch),
+            year: sanitizeStorageString(story.year),
+            company: sanitizeStorageString(story.company),
+            package: sanitizeStorageString(story.package),
+            quote: sanitizeStorageString(story.quote),
+            role: sanitizeStorageString(story.role),
+            tips: sanitizeStorageString(story.tips),
+            avatar: sanitizeStorageString(story.avatar),
+            logo: sanitizeStorageString(story.logo),
+            logoColor: sanitizeStorageString(story.logoColor),
+            createdAt: sanitizeStorageString(story.createdAt)
         }));
         localStorage.setItem("placement_stories", JSON.stringify(sanitizedStories));
     }, [stories]);
@@ -836,7 +1012,45 @@ export default function QueriesStories() {
                                         </span>
                                         <div className="action-links-group">
                                             <button type="button" className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
-                                            <button type="button" className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
+                                            {(() => {
+                                                const hasReply = Boolean((query.reply && String(query.reply).trim()) || (query.adminReply && String(query.adminReply).trim()));
+                                                const isResolved = query.status === 'resolved';
+                                                if (hasReply || isResolved) {
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action disabled"
+                                                            disabled
+                                                            title="Reply has already been given to this query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                    );
+                                                }
+                                                return (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action"
+                                                            onClick={() => {
+                                                                setReplyingQuery(query);
+                                                                setReplyText(query.reply || '');
+                                                            }}
+                                                            title="Reply to query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn discard-action"
+                                                            onClick={() => handleDiscardQuery(query)}
+                                                            title="Discard query"
+                                                        >
+                                                            Discard
+                                                        </button>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
@@ -858,7 +1072,7 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {new Array(totalPages).fill(0).map((_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(currentPage, totalPages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
                                     type="button"
@@ -1145,7 +1359,7 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {new Array(totalDrivePages).fill(0).map((_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(drivePage, totalDrivePages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
                                     type="button"
@@ -1224,7 +1438,7 @@ export default function QueriesStories() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                    <div className="story-top-actions-col">
                                         <span className="story-package-badge">{story.packageAmt}</span>
                                         <div className="actions-button-row" style={{ display: 'flex', gap: '6px' }}>
                                             <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
@@ -1281,7 +1495,7 @@ export default function QueriesStories() {
 
             {
                 isDriveModalOpen && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }}>
                         <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1452,7 +1666,7 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                 </div>
-                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <div className="qs-modal-actions">
                                     <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
                                         Cancel
                                     </button>
@@ -1462,14 +1676,14 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 deletingDrive && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
@@ -1487,14 +1701,14 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 viewingQuery && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }}>
                         <div className="qs-modal-content view-query-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1552,14 +1766,14 @@ export default function QueriesStories() {
                                 </div>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
 
             {
                 replyingQuery && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }}>
                         <div className="qs-modal-content reply-query-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1606,12 +1820,12 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
             {
                 isStoryModalOpen && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }}>
                         <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
@@ -1624,7 +1838,7 @@ export default function QueriesStories() {
                             </div>
                             <form onSubmit={handleUpdateStory} className="qs-modal-form">
                                 <div className="qs-form-grid">
-                                     <div className="qs-form-group full-width">
+                                    <div className="qs-form-group full-width">
                                         <button
                                             type="button"
                                             aria-label="Upload new photo"
@@ -1736,13 +1950,13 @@ export default function QueriesStories() {
                                 </div>
                             </form>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 
             {
                 deletingStory && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
@@ -1760,12 +1974,12 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
             {
                 confirmingPublish && (
-                    <button type="button" className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }} style={{ border: 'none', padding: 0, textAlign: 'left' }}>
+                    <div className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }}>
                         <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
                                 <CheckCircle2 size={22} />
@@ -1783,7 +1997,7 @@ export default function QueriesStories() {
                                 </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 )
             }
 

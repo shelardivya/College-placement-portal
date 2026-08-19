@@ -54,6 +54,9 @@ public class RegisterEntity {
     @Column(name = "github_url")
     private String githubUrl;
 
+    @Column(name = "profile_photo_path")
+    private String profilePhotoPath;
+
     // ===== Created At =====
 
     @Column(name = "created_at", updatable = false)

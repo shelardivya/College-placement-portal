@@ -22,6 +22,14 @@ public interface RegisterRepository extends JpaRepository<RegisterEntity, Long> 
     Optional<RegisterEntity> findById(Long id);
 
     Optional<RegisterEntity> findByFullName(String fullName);
+
+    List<RegisterEntity> findByFullNameIgnoreCase(String fullName);
+
+    List<RegisterEntity> findByFullNameIgnoreCaseAndRole(
+            String fullName,
+            Role role
+    );
+
     List<RegisterEntity> findAllByRole(Role role);
 
     // ==========================================

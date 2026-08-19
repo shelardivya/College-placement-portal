@@ -1,4 +1,4 @@
-package com.college.placement.portal.student.Dto;
+package com.college.placement.portal.student.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
