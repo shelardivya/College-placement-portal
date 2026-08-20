@@ -4,11 +4,11 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 @Service
-public class OllamaAiService {
+public class AiTestService {
 
     private final ChatClient chatClient;
 
-    public OllamaAiService(ChatClient.Builder chatClientBuilder) {
+    public AiTestService(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
     }
 
