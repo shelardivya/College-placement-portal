@@ -1,19 +1,19 @@
 /* ChatbotWidget.css */
 
 /* override global input styles scoped to chatbot */
-.chatbot-wrapper input[type="text"] {
-  border-radius: 12px !important;
-  background-color: #F8FAFC !important;
-  border: 1.5px solid #E2E8F0 !important;
-  padding: 10px 14px !important;
-  font-size: 13.5px !important;
-  font-weight: 450 !important;
+.chatbot-wrapper input[type="text"].chatbot-input {
+  border-radius: 12px;
+  background-color: #F8FAFC;
+  border: 1.5px solid #E2E8F0;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 450;
 }
 
-.chatbot-wrapper input[type="text"]:focus {
-  border-color: #2563EB !important;
-  background-color: #ffffff !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+.chatbot-wrapper input[type="text"].chatbot-input:focus {
+  border-color: #2563EB;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 
@@ -107,6 +107,81 @@
   color: rgba(255, 255, 255, 0.78);
   font-size: 11px;
   font-weight: 500;
+}
+
+.chatbot-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatbot-lang-container {
+  position: relative;
+}
+
+.chatbot-lang-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+  height: 32px;
+}
+
+.chatbot-lang-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.chatbot-lang-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 6px;
+  width: 155px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chatbot-lang-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: #1E293B;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.chatbot-lang-option:hover {
+  background: #F1F5F9;
+  color: #0F172A;
+}
+
+.chatbot-lang-option--selected {
+  background: #EFF6FF;
+  color: #2563EB;
+  font-weight: 600;
 }
 
 .chatbot-header__clear {
