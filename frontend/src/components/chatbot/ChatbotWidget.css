@@ -213,6 +213,39 @@
   border: 1px solid #E2E8F0;
 }
 
+.chatbot-bubble--error {
+  border-color: #fca5a5;
+  background: #fff5f5;
+  color: #991b1b;
+}
+
+.chatbot-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chatbot-retry-btn:hover {
+  background-color: #fca5a5;
+  color: #7f1d1d;
+  transform: translateY(-1px);
+}
+
+.chatbot-retry-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .chatbot-bubble-time {
   font-size: 10px;
   margin-top: 4px;

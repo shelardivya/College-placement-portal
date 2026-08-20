@@ -27,7 +27,7 @@ function RobotIcon({ size = 28 }) {
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChatbot();
+  const { messages, isLoading, sendMessage, retryMessage, clearChat } = useChatbot();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -109,8 +109,18 @@ export default function ChatbotWidget() {
                   {msg.role === "model" && (
                     <div className="chatbot-msg-avatar"><RobotIcon size={28} /></div>
                   )}
-                  <div className={`chatbot-bubble chatbot-bubble--${msg.role}`}>
+                  <div className={`chatbot-bubble chatbot-bubble--${msg.role} ${msg.isError ? 'chatbot-bubble--error' : ''}`}>
                     <div>{msg.text}</div>
+                    {msg.isError && (
+                      <button
+                        type="button"
+                        className="chatbot-retry-btn"
+                        onClick={() => retryMessage(index)}
+                        disabled={isLoading}
+                      >
+                        🔄 Retry
+                      </button>
+                    )}
                     {msg.timestamp && (
                       <div className={`chatbot-bubble-time chatbot-bubble-time--${msg.role}`}>
                         {msg.timestamp}
