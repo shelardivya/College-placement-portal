@@ -307,21 +307,18 @@ function Registration({ onNavigate }) {
                 email: "Email address is already registered",
                 mobile: "Mobile number is already registered"
             }));
-            triggerToast("Email and Phone number are already registered", "error");
             return;
         } else if (isEmailUsed) {
             setErrors(prev => ({
                 ...prev,
                 email: "Email address is already registered"
             }));
-            triggerToast("Email address is already registered", "error");
             return;
         } else if (isPhoneUsed) {
             setErrors(prev => ({
                 ...prev,
-                mobile: "Mobile number is already registered"
+                mobile: "Phone number is already registered"
             }));
-            triggerToast("Phone number is already registered", "error");
             return;
         }
 
@@ -431,19 +428,16 @@ function Registration({ onNavigate }) {
                     email: "Email address is already registered",
                     mobile: "Mobile number is already registered"
                 }));
-                triggerToast("Email and Phone number are already registered", "error");
             } else if (isEmailError) {
                 setErrors(prev => ({
                     ...prev,
                     email: "Email address is already registered"
                 }));
-                triggerToast("Email address is already registered", "error");
             } else if (isPhoneError) {
                 setErrors(prev => ({
                     ...prev,
-                    mobile: "Mobile number is already registered"
+                    mobile: "Phone number is already registered"
                 }));
-                triggerToast("Phone number is already registered", "error");
             } else if (serverMsg) {
                 triggerToast(serverMsg, "error");
             } else {
