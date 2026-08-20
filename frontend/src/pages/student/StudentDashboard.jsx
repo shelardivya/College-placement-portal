@@ -1481,7 +1481,8 @@ export default function
                 cgpa: sanitizeStorageString(tempProfile.cgpa || userObj.cgpa),
                 skills: sanitizeStorageString(tempProfile.skills || userObj.skills),
                 linkedinUrl: sanitizeStorageString(tempProfile.linkedinUrl || userObj.linkedinUrl),
-                githubUrl: sanitizeStorageString(tempProfile.githubUrl || userObj.githubUrl)
+                githubUrl: sanitizeStorageString(tempProfile.githubUrl || userObj.githubUrl),
+                avatarUrl: tempProfile.avatarUrl || profile.avatarUrl || userObj.avatarUrl || ""
             }));
             setIsEditingProfile(false);
 
