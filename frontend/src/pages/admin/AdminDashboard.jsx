@@ -510,7 +510,7 @@ function AdminHeader({
                     </div>
                 </div>
 
-                <nav className='navbar-menu-list admin-nav-desktop' style={{ gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                <nav className='navbar-menu-list admin-nav-desktop' style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
                     {[
                         { id: 'dashboard', label: 'Dashboard' },
                         { id: 'analytics', label: 'Student Analytics' },
@@ -533,7 +533,8 @@ function AdminHeader({
                                 transition: 'color 0.2s ease',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '6px'
+                                gap: '6px',
+                                whiteSpace: 'nowrap'
                             }}
                         >
                             <span>{item.label}</span>
