@@ -92,6 +92,9 @@ function compressImageToBase64(file, maxWidth = 300, maxHeight = 300, quality = 
 
 /** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
 function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (fallbackUrl && typeof fallbackUrl === 'string' && fallbackUrl.startsWith("data:")) {
+        return fallbackUrl;
+    }
     if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
     if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
     
@@ -1210,6 +1213,7 @@ export default function
         const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
         const userEmailKey = (storedUser.email || "").toLowerCase();
         const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
+        const savedAvatar = storedUser.avatarUrl || localStorage.getItem(avatarKey) || localStorage.getItem("student_avatar") || "";
         return {
             fullName: decodeStorageString(storedUser.fullName) || "Student Name",
             email: decodeStorageString(storedUser.email) || "student@portal.edu",
@@ -1220,7 +1224,7 @@ export default function
             skills: decodeStorageString(storedUser.skills) || "",
             linkedinUrl: decodeStorageString(storedUser.linkedinUrl) || "",
             githubUrl: decodeStorageString(storedUser.githubUrl) || "",
-            avatarUrl: storedUser.avatarUrl || localStorage.getItem(avatarKey) || ""
+            avatarUrl: savedAvatar
         };
     };
 
@@ -1247,10 +1251,11 @@ export default function
                     const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
                     const userEmailKey = (response.data.email || storedUser.email || "").toLowerCase();
                     const avatarKey = userEmailKey ? `student_avatar_${userEmailKey}` : 'student_avatar';
-                    const savedAvatar = localStorage.getItem(avatarKey) || storedUser.avatarUrl || "";
+                    const savedAvatar = localStorage.getItem(avatarKey) || storedUser.avatarUrl || localStorage.getItem("student_avatar") || "";
 
                     const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
                     const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
+                    const finalAvatar = resolvedPhoto || savedAvatar || storedUser.avatarUrl || "";
 
                     const freshData = {
                         fullName: response.data.fullName || response.data.name || "",
@@ -1262,13 +1267,21 @@ export default function
                         skills: response.data.skills || "",
                         linkedinUrl: response.data.linkedinUrl || "",
                         githubUrl: response.data.githubUrl || "",
-                        avatarUrl: resolvedPhoto || savedAvatar || ""
+                        avatarUrl: finalAvatar
                     };
 
                     setProfile(prev => ({
                         ...prev,
-                        ...freshData
+                        ...freshData,
+                        avatarUrl: finalAvatar || prev.avatarUrl || ""
                     }));
+
+                    if (finalAvatar) {
+                        try {
+                            localStorage.setItem(avatarKey, finalAvatar);
+                            localStorage.setItem("student_avatar", finalAvatar);
+                        } catch {}
+                    }
 
                     // Update localStorage so next time we refresh or login, it has the fresh data!
                     const rawExisting = localStorage.getItem("user");
@@ -1293,7 +1306,7 @@ export default function
                             skills: sanitizeStorageString(freshData.skills || existingUser.skills),
                             linkedinUrl: sanitizeStorageString(freshData.linkedinUrl || existingUser.linkedinUrl),
                             githubUrl: sanitizeStorageString(freshData.githubUrl || existingUser.githubUrl),
-                            avatarUrl: freshData.avatarUrl || existingUser.avatarUrl || ""
+                            avatarUrl: finalAvatar || existingUser.avatarUrl || ""
                         }));
                     } catch (storageErr) {
                         // ignore quota exceeded if avatar URL string is large
