@@ -193,15 +193,61 @@ function sanitizeStorageString(val) {
     return cleanStr;
 }
 
+/** Compress high-res uploaded photos into lightweight ~20KB Base64 JPEG thumbnails so localStorage quota is never exceeded. */
+function compressImageToBase64(file, maxWidth = 300, maxHeight = 300, quality = 0.8) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL("image/jpeg", quality));
+            };
+            img.onerror = () => resolve(e.target.result || '');
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+    });
+}
+
 /** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
 function resolvePhotoUrl(serverPath, fallbackUrl = '') {
     if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
     if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
-    const uploadsIdx = serverPath.indexOf("/uploads/");
+    
+    const cleanPath = serverPath.replace(/\\/g, '/');
+    const uploadsIdx = cleanPath.indexOf("/uploads/");
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+
     if (uploadsIdx !== -1) {
-        const relPath = serverPath.substring(uploadsIdx);
-        const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
+        const relPath = cleanPath.substring(uploadsIdx);
         return `${baseUrl}${relPath}`;
+    }
+    if (cleanPath.startsWith('/')) {
+        return `${baseUrl}${cleanPath}`;
+    }
+    if (cleanPath.length > 0 && !cleanPath.includes(':')) {
+        return `${baseUrl}/${cleanPath}`;
     }
     return fallbackUrl;
 }
@@ -2140,18 +2186,21 @@ function AdminDashboard({ onNavigate }) {
             localStorage.getItem("admin_avatar") || 
             storedAdmin.avatarUrl
         );
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const base64 = reader.result;
-            setAdminProfile(prev => ({ ...prev, avatarUrl: base64 }));
-            localStorage.setItem("admin_avatar", base64);
-            const rawUser = localStorage.getItem("admin_user");
-            let userObj = {};
-            if (rawUser) {
-                try { userObj = JSON.parse(rawUser) || {}; } catch {}
+        try {
+            const compressedBase64 = await compressImageToBase64(file);
+            const base64 = compressedBase64 || '';
+            if (base64) {
+                setAdminProfile(prev => ({ ...prev, avatarUrl: base64 }));
+                try { localStorage.setItem("admin_avatar", base64); } catch {}
+
+                const rawUser = localStorage.getItem("admin_user");
+                let userObj = {};
+                if (rawUser) {
+                    try { userObj = JSON.parse(rawUser) || {}; } catch {}
+                }
+                userObj.avatarUrl = base64;
+                try { localStorage.setItem("admin_user", JSON.stringify(userObj)); } catch {}
             }
-            userObj.avatarUrl = base64;
-            localStorage.setItem("admin_user", JSON.stringify(userObj));
 
             // Call backend API (POST /admin/profile/photo)
             try {
@@ -2160,17 +2209,16 @@ function AdminDashboard({ onNavigate }) {
                 const finalPhotoUrl = resolvePhotoUrl(serverPhotoPath, base64);
                 if (finalPhotoUrl) {
                     setAdminProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
-                    localStorage.setItem("admin_avatar", finalPhotoUrl);
-                    userObj.avatarUrl = finalPhotoUrl;
-                    localStorage.setItem("admin_user", JSON.stringify(userObj));
+                    try { localStorage.setItem("admin_avatar", finalPhotoUrl); } catch {}
                 }
             } catch (apiErr) {
                 console.warn("Backend admin photo upload warning:", apiErr);
             }
 
-            triggerToast(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!", "success");
-        };
-        reader.readAsDataURL(file);
+            triggerToast(hasExistingPhoto ? "Profile photo edited successfully!" : "Profile photo uploaded successfully!", 'success');
+        } catch (uploadErr) {
+            console.error("Admin photo upload error:", uploadErr);
+        }
     };
 
     const handleAdminRemovePhoto = async () => {
@@ -2709,7 +2757,8 @@ function AdminDashboard({ onNavigate }) {
                 fullName: sanitizeStorageString(adminProfile.name),
                 email: sanitizeStorageString(adminProfile.email).toLowerCase(),
                 phone: sanitizeStorageString(adminProfile.phone),
-                role: sanitizeStorageString(adminProfile.role || userInStorage.role || 'System Administrator')
+                role: sanitizeStorageString(adminProfile.role || userInStorage.role || 'System Administrator'),
+                avatarUrl: adminProfile.avatarUrl || userInStorage.avatarUrl || localStorage.getItem('admin_avatar') || ""
             };
             localStorage.setItem("admin_user", JSON.stringify(updatedUser));
 
