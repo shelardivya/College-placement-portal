@@ -1,16 +1,16 @@
 package com.college.placement.portal.ai.controller;
 
-import com.college.placement.portal.ai.service.OllamaAiService;
+import com.college.placement.portal.ai.service.AiTestService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ai/test")
 public class AiTestController {
 
-    private final OllamaAiService ollamaAiService;
+    private final AiTestService ollamaAiService;
 
-    public AiTestController(OllamaAiService ollamaAiService) {
-        this.ollamaAiService = ollamaAiService;
+    public AiTestController(AiTestService aiTestService) {
+        this.ollamaAiService = aiTestService;
     }
 
     @GetMapping
