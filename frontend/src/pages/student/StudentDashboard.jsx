@@ -1236,18 +1236,22 @@ export default function
                         }
                     }
 
-                    localStorage.setItem("user", JSON.stringify({
-                        fullName: sanitizeStorageString(freshData.fullName || existingUser.fullName),
-                        email: sanitizeStorageString(freshData.email || existingUser.email).toLowerCase(),
-                        phone: sanitizeStorageString(freshData.phone || existingUser.phone),
-                        branch: sanitizeStorageString(freshData.branch || existingUser.branch),
-                        passingYear: sanitizeStorageString(freshData.passingYear || existingUser.passingYear),
-                        cgpa: sanitizeStorageString(freshData.cgpa || existingUser.cgpa),
-                        skills: sanitizeStorageString(freshData.skills || existingUser.skills),
-                        linkedinUrl: sanitizeStorageString(freshData.linkedinUrl || existingUser.linkedinUrl),
-                        githubUrl: sanitizeStorageString(freshData.githubUrl || existingUser.githubUrl),
-                        avatarUrl: freshData.avatarUrl || existingUser.avatarUrl || ""
-                    }));
+                    try {
+                        localStorage.setItem("user", JSON.stringify({
+                            fullName: sanitizeStorageString(freshData.fullName || existingUser.fullName),
+                            email: sanitizeStorageString(freshData.email || existingUser.email).toLowerCase(),
+                            phone: sanitizeStorageString(freshData.phone || existingUser.phone),
+                            branch: sanitizeStorageString(freshData.branch || existingUser.branch),
+                            passingYear: sanitizeStorageString(freshData.passingYear || existingUser.passingYear),
+                            cgpa: sanitizeStorageString(freshData.cgpa || existingUser.cgpa),
+                            skills: sanitizeStorageString(freshData.skills || existingUser.skills),
+                            linkedinUrl: sanitizeStorageString(freshData.linkedinUrl || existingUser.linkedinUrl),
+                            githubUrl: sanitizeStorageString(freshData.githubUrl || existingUser.githubUrl),
+                            avatarUrl: freshData.avatarUrl || existingUser.avatarUrl || ""
+                        }));
+                    } catch (storageErr) {
+                        // ignore quota exceeded if avatar URL string is large
+                    }
 
                 }
             } catch (error) {

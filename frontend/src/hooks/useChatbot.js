@@ -1,7 +1,7 @@
 // src/hooks/useChatbot.js
 
 import { useState, useCallback } from "react";
-import { sendMessageToGemini } from "../api/geminiApi";
+import { sendChatMessage } from "../api/chatApi";
 
 const getFormattedTime = () => {
   return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -18,7 +18,7 @@ export function useChatbot() {
     }
   ]);
 
-  // true while waiting for Gemini response
+  // true while waiting for AI chatbot response
   const [isLoading, setIsLoading] = useState(false);
 
   // called by UI when user sends a message
@@ -35,16 +35,21 @@ export function useChatbot() {
     setIsLoading(true);
 
     try {
-      // call Gemini with full history
-      const reply = await sendMessageToGemini(updatedMessages);
+      // call Spring Boot backend POST /api/ai/chat
+      const reply = await sendChatMessage(userText);
 
       // append bot reply
       setMessages(prev => [...prev, { role: "model", text: reply, timestamp: getFormattedTime() }]);
     } catch (error) {
-      // show error in chat
+      console.error("Chatbot backend error:", error);
+      const is403 = error?.response?.status === 403;
+      const errorText = is403
+        ? "⚠️ Access denied (403). Please make sure you are logged in to chat."
+        : "⚠️ Sorry, I couldn't connect to the placement assistant. Please try again.";
+
       setMessages(prev => [...prev, {
         role: "model",
-        text: "⚠️ Sorry, I couldn't connect. Please try again.",
+        text: errorText,
         timestamp: getFormattedTime()
       }]);
     } finally {
@@ -64,3 +69,4 @@ export function useChatbot() {
 
   return { messages, isLoading, sendMessage, clearChat };
 }
+
