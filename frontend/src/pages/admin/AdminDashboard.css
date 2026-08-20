@@ -57,6 +57,16 @@
     transition: all 0.3s ease;
 }
 
+.admin-nav-desktop,
+.navbar-menu-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin: 0 auto;
+}
+
 .header-container {
     display: flex;
     justify-content: space-between;
@@ -2442,7 +2452,7 @@ textarea.error-input,
 
     .admin-nav-desktop,
     .navbar-menu-list {
-        display: none;
+        display: none ;
     }
 
     .header-right {
@@ -2927,4 +2937,4 @@ textarea.error-input,
     gap: 20px;
     overflow-y: auto;
 }
-
+
