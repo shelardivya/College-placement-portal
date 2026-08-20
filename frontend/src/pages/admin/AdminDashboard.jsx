@@ -232,6 +232,9 @@ function compressImageToBase64(file, maxWidth = 300, maxHeight = 300, quality = 
 
 /** Formats raw server photo paths (e.g. /opt/backend_app/.../uploads/profile/xxx.png) into valid HTTP web URLs. */
 function resolvePhotoUrl(serverPath, fallbackUrl = '') {
+    if (fallbackUrl && typeof fallbackUrl === 'string' && fallbackUrl.startsWith("data:")) {
+        return fallbackUrl;
+    }
     if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
     if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
     
@@ -2335,14 +2338,23 @@ function AdminDashboard({ onNavigate }) {
                     const savedAvatar = localStorage.getItem("admin_avatar") || storedAdmin.avatarUrl || "";
                     const rawPhoto = response.data.photoPath || response.data.profilePhoto || response.data.photo || response.data.avatarUrl || "";
                     const resolvedPhoto = resolvePhotoUrl(rawPhoto, savedAvatar);
+                    const finalAvatar = resolvedPhoto || savedAvatar || storedAdmin.avatarUrl || "";
                     setAdminProfile(prev => ({
                         ...prev,
                         name: response.data.fullName || response.data.name || prev.name,
                         email: response.data.email || prev.email,
                         phone: response.data.mobile || response.data.phone || prev.phone,
                         role: response.data.role || prev.role,
-                        avatarUrl: resolvedPhoto
+                        avatarUrl: finalAvatar || prev.avatarUrl || ""
                     }));
+
+                    if (finalAvatar) {
+                        try {
+                            localStorage.setItem("admin_avatar", finalAvatar);
+                            storedAdmin.avatarUrl = finalAvatar;
+                            localStorage.setItem("admin_user", JSON.stringify(storedAdmin));
+                        } catch {}
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching admin profile:", error);
