@@ -2,6 +2,7 @@ package com.college.placement.portal.ai.service;
 
 import com.college.placement.portal.ai.dto.AIChatResponseDto;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -267,20 +268,42 @@ public class AIChatService {
         );
 
         // =====================================================
-        // 8. ASK OLLAMA
+        // 8. ASK
         // =====================================================
+        try {
 
-        String answer = chatClient
-                .prompt()
-                .system(systemPrompt)
-                .user(question)
-                .call()
-                .content();
+            String answer = chatClient
+                    .prompt()
+                    .system(systemPrompt)
+                    .user(question)
+                    .call()
+                    .content();
 
-        // =====================================================
-        // 9. RETURN RESPONSE
-        // =====================================================
+            return new AIChatResponseDto(answer);
 
-        return new AIChatResponseDto(answer);
+        } catch (NonTransientAiException e) {
+
+            String errorMessage = e.getMessage();
+
+            if (errorMessage != null
+                    && (errorMessage.contains("HTTP 429")
+                    || errorMessage.contains("rate_limit_exceeded"))) {
+
+                return new AIChatResponseDto(
+                        "AI service is temporarily busy due to a usage limit. Please try again later."
+                );
+            }
+
+            return new AIChatResponseDto(
+                    "AI service is temporarily unavailable. Please try again later."
+            );
+
+        } catch (Exception e) {
+
+            return new AIChatResponseDto(
+                    "Something went wrong while processing your AI request. Please try again later."
+            );
+        }
+
     }
 }
