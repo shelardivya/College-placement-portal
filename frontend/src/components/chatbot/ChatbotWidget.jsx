@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useChatbot } from "../../hooks/useChatbot";
+import { useChatbot, LANGUAGE_OPTIONS } from "../../hooks/useChatbot";
 import "./ChatbotWidget.css";
 import roboIcon from "../../assets/robo icon.jpg";
 
@@ -24,10 +24,89 @@ function RobotIcon({ size = 28 }) {
   );
 }
 
+// Custom animated language dropdown component
+function LanguageDropdown({ language, changeLanguage }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const currentOption = LANGUAGE_OPTIONS.find(opt => opt.code === language) || LANGUAGE_OPTIONS[0];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  return (
+    <div ref={dropdownRef} className="chatbot-lang-container">
+      <button
+        type="button"
+        className="chatbot-lang-btn"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Select Language"
+      >
+        <span>{currentOption.label}</span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          style={{
+            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.2s ease"
+          }}
+        >
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            className="chatbot-lang-menu"
+            initial={{ opacity: 0, y: -6, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+          >
+            {LANGUAGE_OPTIONS.map((opt) => {
+              const isSelected = opt.code === language;
+              return (
+                <button
+                  key={opt.code}
+                  type="button"
+                  className={`chatbot-lang-option ${isSelected ? "chatbot-lang-option--selected" : ""}`}
+                  onClick={() => {
+                    changeLanguage(opt.code);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span>{opt.fullLabel}</span>
+                  {isSelected && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M20 6L9 17l-5-5" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChatbot();
+  const { messages, isLoading, language, changeLanguage, t, sendMessage, retryMessage, clearChat } = useChatbot();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -52,7 +131,7 @@ export default function ChatbotWidget() {
   };
 
   // suggestion chips shown before first user message
-  const suggestions = ["What companies are visiting?", "Eligibility criteria?", "Resume tips"];
+  const suggestions = t.suggestions || ["What companies are visiting?", "Eligibility criteria?", "Resume tips"];
   const showSuggestions = messages.length === 1;
 
   return (
@@ -73,27 +152,32 @@ export default function ChatbotWidget() {
               <div className="chatbot-header__info">
                 <div className="chatbot-header__avatar"><RobotIcon size={32} /></div>
                 <div>
-                  <div className="chatbot-header__title">Placement Assistant</div>
+                  <div className="chatbot-header__title">{t.title}</div>
                   <div className="chatbot-header__status">
                     <span className={`chatbot-header__dot ${isLoading ? "chatbot-header__dot--typing" : "chatbot-header__dot--online"}`} />
                     <span className="chatbot-header__status-text">
-                      {isLoading ? "Typing…" : "Online"}
+                      {isLoading ? t.typing : t.online}
                     </span>
                   </div>
                 </div>
               </div>
-              <motion.button
-                className="chatbot-header__clear"
-                onClick={clearChat}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.92 }}
-                title="Clear conversation"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </motion.button>
+              <div className="chatbot-header__actions">
+                {/* Custom Animated Language Dropdown */}
+                <LanguageDropdown language={language} changeLanguage={changeLanguage} />
+
+                <motion.button
+                  className="chatbot-header__clear"
+                  onClick={clearChat}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
+                  title={t.clearTitle}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </motion.button>
+              </div>
             </div>
 
             {/* messages */}
@@ -109,8 +193,18 @@ export default function ChatbotWidget() {
                   {msg.role === "model" && (
                     <div className="chatbot-msg-avatar"><RobotIcon size={28} /></div>
                   )}
-                  <div className={`chatbot-bubble chatbot-bubble--${msg.role}`}>
+                  <div className={`chatbot-bubble chatbot-bubble--${msg.role} ${msg.isError ? 'chatbot-bubble--error' : ''}`}>
                     <div>{msg.text}</div>
+                    {msg.isError && (
+                      <button
+                        type="button"
+                        className="chatbot-retry-btn"
+                        onClick={() => retryMessage(index)}
+                        disabled={isLoading}
+                      >
+                        {t.retry}
+                      </button>
+                    )}
                     {msg.timestamp && (
                       <div className={`chatbot-bubble-time chatbot-bubble-time--${msg.role}`}>
                         {msg.timestamp}
@@ -171,7 +265,7 @@ export default function ChatbotWidget() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about placements..."
+                placeholder={t.placeholder}
                 disabled={isLoading}
               />
               <motion.button
