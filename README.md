@@ -33,11 +33,15 @@ College-placement-portal/
 ├── database/                  # Database-related files
 ├── infra/                     # Infrastructure-related files
 ├── uploads/                   # Application upload directory
+├── docs/
+│   ├── github-repository-guide.md
+│   └── cicd-pipeline.md       
 ├── .github/
 │   └── workflows/
-│       ├── pr-check.yml       # Pull Request build, test and Sonar checks
-│       ├── develop-sonar.yml  # Develop branch SonarCloud analysis
-│       └── deploy.yml         # Automated AWS deployment
+│       ├── pr-check.yml
+│       ├── develop-sonar.yml
+│       └── deploy.yml
+├── .gitignore
 └── README.md
 ```
 
