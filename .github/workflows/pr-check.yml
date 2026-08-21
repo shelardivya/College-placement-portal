@@ -5,10 +5,6 @@ on:
     branches:
       - develop
 
-  push:
-    branches:
-      - develop
-
 permissions:
   contents: read
   pull-requests: read
