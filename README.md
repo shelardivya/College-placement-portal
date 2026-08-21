@@ -151,3 +151,10 @@ Security assessment includes tools such as **OWASP ZAP, Nmap, Nuclei, SSLyze, an
 ## Project Status
 
 Campus-Hire is deployed on AWS with automated CI/CD, SonarCloud code-quality analysis, HTTPS, and security assessment integrated into the development workflow.
+
+## Documentation
+
+Detailed technical documentation is available in the `docs/` directory:
+
+- [GitHub Repository & Collaboration Guide](docs/github-repository-guide.md)
+- [CI/CD Pipeline & Deployment Guide](docs/cicd-pipeline.md)
