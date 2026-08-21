@@ -559,7 +559,7 @@ function AdminHeader({
                     </div>
                 </div>
 
-                <nav className='navbar-menu-list admin-nav-desktop' style={{ display: 'flex', flexDirection: 'row', gap: '24px', alignItems: 'center', margin: '0 auto' }}>
+                <nav className='navbar-menu-list admin-nav-desktop'>
                     {[
                         { id: 'dashboard', label: 'Dashboard' },
                         { id: 'analytics', label: 'Student Analytics' },
