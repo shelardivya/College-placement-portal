@@ -260,6 +260,60 @@ public class AiScopeService {
         }
 
         // =====================================================
+        // NEW TOPICS ALLOWED FOR STUDENTS
+        // =====================================================
+
+        if (containsAny(q,
+                "eligibility criteria",
+                "eligibility",
+                "resume tips",
+                "resume tip",
+                "good resume",
+                "how to write resume",
+                "resume format",
+                "today's date",
+                "todays date",
+                "current date",
+                "what is the date",
+                "date today",
+                "drive date",
+                "drive time",
+                "drive venue",
+                "venue",
+                "discard query",
+                "resolve query",
+                "query section",
+                "my query",
+                "my queries",
+                "submit query",
+                "forgot password",
+                "reset password",
+                "change password",
+                "ai assistant",
+                "ai chatbot",
+                "how to talk to ai",
+                "chatbot help",
+                "chat with ai",
+                "highest cgpa",
+                "lowest cgpa",
+                "average cgpa",
+                "minimum cgpa",
+                "highest package",
+                "lowest package",
+                "average package",
+                "minimum package",
+                "small package",
+                "top company",
+                "most placements",
+                "total students",
+                "active jobs",
+                "active postings",
+                "active posting"
+        )) {
+            return true;
+        }
+
+        // =====================================================
         // NOTHING MATCHED
         // =====================================================
 

@@ -53,6 +53,7 @@ public class AiDataContextService {
             CAMPUSHIRE STUDENT PORTAL DATA
             ================================
             """);
+        addTodayDate(context);
 
         // Jobs visible to students
         addJobData(context);
@@ -93,6 +94,7 @@ public class AiDataContextService {
                 CAMPUSHIRE ADMIN PORTAL DATA
                 =================================
                 """);
+        addTodayDate(context);
 
         addJobData(context);
 
@@ -400,5 +402,22 @@ public class AiDataContextService {
         return value == null
                 ? "Not available"
                 : value;
+    }
+    // =====================================================
+    // TODAY'S DATE
+    // =====================================================
+
+    private void addTodayDate(StringBuilder context) {
+
+        context.append("\nTODAY'S DATE: ")
+                .append(
+                        java.time.LocalDate.now().format(
+                                java.time.format.DateTimeFormatter.ofPattern(
+                                        "dd MMM yyyy",
+                                        java.util.Locale.ENGLISH
+                                )
+                        )
+                )
+                .append("\n");
     }
 }
