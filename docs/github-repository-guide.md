@@ -28,7 +28,7 @@ College-placement-portal/
 ├── uploads/                   # Application upload directory
 ├── docs/
 │   ├── github-repository-guide.md
-│   └── cicd-pipeline.md       # Will be added next
+│   └── cicd-pipeline.md       
 ├── .github/
 │   └── workflows/
 │       ├── pr-check.yml
