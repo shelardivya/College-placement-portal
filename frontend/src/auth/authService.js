@@ -627,7 +627,4 @@ export const getLandingRecentActivity = () => {
     return api.get("/public/landing/recent-activity");
 };
 
-export const getLandingPlacementTrend = () => {
-    return api.get("/public/landing/placement-trend");
-};
 
