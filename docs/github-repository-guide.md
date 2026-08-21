@@ -26,6 +26,9 @@ College-placement-portal/
 ├── database/                  # Database-related files
 ├── infra/                     # Infrastructure-related files
 ├── uploads/                   # Application upload directory
+├── docs/
+│   ├── github-repository-guide.md
+│   └── cicd-pipeline.md       # Will be added next
 ├── .github/
 │   └── workflows/
 │       ├── pr-check.yml
