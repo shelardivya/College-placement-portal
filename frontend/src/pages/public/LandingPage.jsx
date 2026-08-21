@@ -1,11 +1,11 @@
-
-
 import { easeOut, motion } from 'framer-motion';
-
-import './LandingPage.css'
-
-import { useState } from 'react';
-
+import './LandingPage.css';
+import { useState, useEffect } from 'react';
+import {
+    getLandingPublicStats,
+    getLandingRecentActivity,
+    getLandingPlacementTrend
+} from '../../auth/authService';
 import {
     GraduationCap,
     ArrowRight,
@@ -22,23 +22,120 @@ import {
     ShieldCheck,
     UserPlus,
     LogIn
-} from 'lucide-react'
-
+} from 'lucide-react';
 
 function LandingPage({ onNavigate }) {
-    const chartData = [
-        { month: 'Sep', placements: 28, left: '2%', top: '78%' },
-        { month: 'Oct', placements: 45, left: '18.5%', top: '63%' },
-        { month: 'Nov', placements: 38, left: '35%', top: '67%' },
-        { month: 'Dec', placements: 40, left: '51.5%', top: '63%' },
-        { month: 'Jan', placements: 52, left: '68%', top: '50%' },
-        { month: 'Feb', placements: 60, left: '84.5%', top: '42%' },
-        { month: 'Mar', placements: 72, left: '98%', top: '28%' }
-    ];
+    const [stats, setStats] = useState({
+        totalStudents: 39,
+        totalPlacements: 18,
+        totalCompanies: 18,
+        placementRate: 46.15
+    });
 
+    const [recentActivity, setRecentActivity] = useState([
+        { companyName: "Amazon", jobRoleOverview: "Full Stack Developer", location: "Pune", tag: "Now Hiring" },
+        { companyName: "Accenture", jobRoleOverview: "Web Developer", location: "Dehradun ", tag: "Now Hiring" },
+        { companyName: "Infosys", jobRoleOverview: "Backend developer", location: "Bangalore, India", tag: "Now Hiring" }
+    ]);
 
-    // This state will track which month is currently active/hovered
-    const [activePoint, setActivePoint] = useState(chartData[1]); // Default to Oct
+    const [trendData, setTrendData] = useState([
+        { month: 'Feb', placements: 0, left: '2%', top: '78%' },
+        { month: 'Mar', placements: 0, left: '18%', top: '78%' },
+        { month: 'Apr', placements: 0, left: '34%', top: '78%' },
+        { month: 'May', placements: 0, left: '50%', top: '78%' },
+        { month: 'Jun', placements: 0, left: '66%', top: '78%' },
+        { month: 'Jul', placements: 0, left: '82%', top: '78%' },
+        { month: 'Aug', placements: 0, left: '98%', top: '78%' }
+    ]);
+
+    const [activePoint, setActivePoint] = useState(null);
+
+    useEffect(() => {
+        // Fetch Public Stats
+        getLandingPublicStats()
+            .then((res) => {
+                if (res?.data) {
+                    setStats({
+                        totalStudents: res.data.totalStudents ?? 0,
+                        totalPlacements: res.data.totalPlacements ?? 0,
+                        totalCompanies: res.data.totalCompanies ?? 0,
+                        placementRate: res.data.placementRate ?? 0
+                    });
+                }
+            })
+            .catch((err) => console.error("Error fetching landing public stats:", err));
+
+        // Fetch Recent Activity
+        getLandingRecentActivity()
+            .then((res) => {
+                if (Array.isArray(res?.data) && res.data.length > 0) {
+                    setRecentActivity(res.data);
+                }
+            })
+            .catch((err) => console.error("Error fetching landing recent activity:", err));
+
+        // Fetch Placement Trend
+        getLandingPlacementTrend()
+            .then((res) => {
+                if (Array.isArray(res?.data) && res.data.length > 0) {
+                    const rawTrend = res.data;
+                    const maxVal = Math.max(...rawTrend.map(d => d.placementCount || 0), 10);
+                    const count = rawTrend.length;
+                    const formatted = rawTrend.map((item, idx) => {
+                        const leftPercent = count > 1 ? (idx / (count - 1)) * 94 + 3 : 50;
+                        const val = item.placementCount || 0;
+                        const topPercent = 78 - (val / maxVal) * 50;
+                        return {
+                            month: item.month,
+                            placements: val,
+                            left: `${leftPercent}%`,
+                            top: `${topPercent}%`
+                        };
+                    });
+                    setTrendData(formatted);
+                    setActivePoint(formatted[0]);
+                }
+            })
+            .catch((err) => console.error("Error fetching landing placement trend:", err));
+    }, []);
+
+    useEffect(() => {
+        if (!activePoint && trendData.length > 0) {
+            setActivePoint(trendData[0]);
+        }
+    }, [trendData, activePoint]);
+
+    // Calculate SVG curve paths for placement trend chart
+    const getChartSvgPaths = () => {
+        if (!trendData || trendData.length === 0) {
+            return {
+                areaPath: "M 0 80 L 400 80 L 400 100 L 0 100 Z",
+                linePath: "M 0 80 L 400 80"
+            };
+        }
+        const maxVal = Math.max(...trendData.map(p => p.placements || 0), 10);
+        const count = trendData.length;
+        const coords = trendData.map((p, i) => {
+            const x = count > 1 ? (i / (count - 1)) * 400 : 200;
+            const y = 78 - ((p.placements || 0) / maxVal) * 50;
+            return { x, y };
+        });
+
+        let linePath = `M ${coords[0].x} ${coords[0].y}`;
+        for (let i = 1; i < coords.length; i++) {
+            const prev = coords[i - 1];
+            const curr = coords[i];
+            const cx1 = prev.x + (curr.x - prev.x) / 2;
+            const cy1 = prev.y;
+            const cx2 = prev.x + (curr.x - prev.x) / 2;
+            const cy2 = curr.y;
+            linePath += ` C ${cx1} ${cy1}, ${cx2} ${cy2}, ${curr.x} ${curr.y}`;
+        }
+        const areaPath = `${linePath} L 400 100 L 0 100 Z`;
+        return { areaPath, linePath };
+    };
+
+    const { areaPath, linePath } = getChartSvgPaths();
 
     return (
         <div className='landing-page'>
@@ -95,22 +192,22 @@ function LandingPage({ onNavigate }) {
                                 <div className='stat-box'>
                                     <span className='stat-label'>Total Students</span>
                                     <div className='stat-row'>
-                                        <span className='stat-value'>500</span>
-                                        <span className='stat-change'>+12%</span>
+                                        <span className='stat-value'>{stats.totalStudents}</span>
+                                        <span className='stat-change'>Live</span>
                                     </div>
                                 </div>
                                 <div className='stat-box'>
                                     <span className='stat-label'>Placements</span>
                                     <div className='stat-row'>
-                                        <span className='stat-value'>120</span>
-                                        <span className='stat-change'>+8%</span>
+                                        <span className='stat-value'>{stats.totalPlacements}</span>
+                                        <span className='stat-change'>Live</span>
                                     </div>
                                 </div>
                                 <div className='stat-box'>
                                     <span className='stat-label'>Companies</span>
                                     <div className='stat-row'>
-                                        <span className='stat-value'>30</span>
-                                        <span className='stat-change'>+5%</span>
+                                        <span className='stat-value'>{stats.totalCompanies}</span>
+                                        <span className='stat-change'>Live</span>
                                     </div>
                                 </div>
                             </div>
@@ -120,7 +217,6 @@ function LandingPage({ onNavigate }) {
                                     <span className="chart-year">AY 2025-26</span>
                                 </div>
                                 <div className='chart-wrapper'>
-
                                     <svg viewBox="0 0 400 100" className="trend-chart" preserveAspectRatio='none'>
                                         <defs>
                                             <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -128,22 +224,21 @@ function LandingPage({ onNavigate }) {
                                                 <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
                                             </linearGradient>
                                         </defs>
-                                        {/* Filled Area Curve matching the mockup (stretching edge-to-edge) */}
-                                        <path d="M 0 80 C 4 79, 6 78, 8 78 C 40 73, 50 63, 74 63 C 98 63, 110 68, 140 67 C 170 66, 180 63, 206 63 C 232 63, 250 53, 272 50 C 294 47, 310 44, 338 42 C 366 40, 380 30, 392 28 C 394 28, 396 27, 400 26 L 400 100 L 0 100 Z" fill="url(#chartGradient)" />
-
-                                        {/* Glowing Stroke Curve matching the mockup (stretching edge-to-edge) */}
-                                        <path d="M 0 80 C 4 79, 6 78, 8 78 C 40 73, 50 63, 74 63 C 98 63, 110 68, 140 67 C 170 66, 180 63, 206 63 C 232 63, 250 53, 272 50 C 294 47, 310 44, 338 42 C 366 40, 380 30, 392 28 C 394 28, 396 27, 400 26" fill="none" stroke="#63A8FF" strokeWidth="3" />
-
-
+                                        <path d={areaPath} fill="url(#chartGradient)" />
+                                        <path d={linePath} fill="none" stroke="#63A8FF" strokeWidth="3" />
                                     </svg>
-                                    <div className='chart-tooltip' style={{ left: activePoint.left, top: activePoint.top }}>
-                                        <span className='tooltip-month'>{activePoint.month}</span>
-                                        <span className='tooltip-value'>placements : {activePoint.placements}</span>
-                                    </div>
-                                    <div className='chart-tooltip-dot' style={{ left: activePoint.left, top: activePoint.top }}></div>
-                                    <div className='chart-tooltip-line' style={{ left: activePoint.left }}></div>
+                                    {activePoint && (
+                                        <>
+                                            <div className='chart-tooltip' style={{ left: activePoint.left, top: activePoint.top }}>
+                                                <span className='tooltip-month'>{activePoint.month}</span>
+                                                <span className='tooltip-value'>placements : {activePoint.placements}</span>
+                                            </div>
+                                            <div className='chart-tooltip-dot' style={{ left: activePoint.left, top: activePoint.top }}></div>
+                                            <div className='chart-tooltip-line' style={{ left: activePoint.left }}></div>
+                                        </>
+                                    )}
                                     <div className="hover-zones">
-                                        {chartData.map((point) => (
+                                        {trendData.map((point) => (
                                             <div
                                                 key={point.month}
                                                 className="hover-zone"
@@ -153,33 +248,33 @@ function LandingPage({ onNavigate }) {
                                     </div>
                                 </div>
                                 <div className="chart-months">
-                                    <span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
+                                    {trendData.map((point) => (
+                                        <span key={point.month}>{point.month}</span>
+                                    ))}
                                 </div>
                             </div>
                             <div className='activity-list'>
-                                <div className='activity-item'>
-                                    <div className='company-info'>
-                                        <span className='company-name'>Google</span>
-                                        <span className='job-role'>SDE Intern</span>
-                                    </div>
-                                    <span className='status-badge offer'>Offer</span>
-                                </div>
-                                <div className='activity-item'>
-                                    <div className='company-info'>
-                                        <span className='company-name'>Microsoft</span>
-                                        <span className='job-role'>FTE 2026</span>
-                                    </div>
-                                    <span className='status-badge interview'>Interview</span>
-                                </div>
-                                <div className='activity-item'>
-                                    <div className='company-info'>
-                                        <span className='company-name'>Infosys</span>
-                                        <span className='job-role'>Systems Eng.</span>
-                                    </div>
-                                    <span className='status-badge applied'>Applied</span>
-                                </div>
-                            </div>
+                                {recentActivity.map((item, index) => {
+                                    const badgeTag = item.tag || item.location || 'Now Hiring';
+                                    const lowerTag = badgeTag.toLowerCase();
+                                    let badgeClass = 'applied';
+                                    if (lowerTag.includes('offer')) badgeClass = 'offer';
+                                    else if (lowerTag.includes('interview')) badgeClass = 'interview';
+                                    else if (lowerTag.includes('hiring') || lowerTag.includes('now')) badgeClass = 'applied';
 
+                                    return (
+                                        <div key={index} className='activity-item'>
+                                            <div className='company-info'>
+                                                <span className='company-name'>{item.companyName}</span>
+                                                <span className='job-role'>{item.jobRoleOverview || item.location}</span>
+                                            </div>
+                                            <span className={`status-badge ${badgeClass}`}>
+                                                {badgeTag}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
                         </div>
                     </motion.div>
@@ -197,28 +292,28 @@ function LandingPage({ onNavigate }) {
                         <div className='stat-icon-wrapper gray-theme'>
                             <Users className='stat-icon' size={20} />
                         </div>
-                        <h3>500+</h3>
+                        <h3>{stats.totalStudents}+</h3>
                         <p>Students</p>
                     </div>
                     <div className='stats-card'>
                         <div className='stat-icon-wrapper blue-theme'>
                             <Award className='stat-icon' size={20} />
                         </div>
-                        <h3>120+</h3>
+                        <h3>{stats.totalPlacements}+</h3>
                         <p>Placements</p>
                     </div>
                     <div className='stats-card'>
                         <div className='stat-icon-wrapper gray-theme'>
                             <Building2 className='stat-icon' size={20} />
                         </div>
-                        <h3>30+</h3>
+                        <h3>{stats.totalCompanies}+</h3>
                         <p>Companies</p>
                     </div>
                     <div className='stats-card'>
                         <div className='stat-icon-wrapper blue-theme'>
                             <TrendingUp className='stat-icon' size={20} />
                         </div>
-                        <h3>95%</h3>
+                        <h3>{typeof stats.placementRate === 'number' ? stats.placementRate.toFixed(2) : stats.placementRate}%</h3>
                         <p>Placement Rate</p>
                     </div>
                 </div>
@@ -363,17 +458,8 @@ function LandingPage({ onNavigate }) {
                 </div>
             </section>
 
-        </div >
-    )
+        </div>
+    );
 }
+
 export default LandingPage;
-
-
-
-
-
-
-
-
-
-
