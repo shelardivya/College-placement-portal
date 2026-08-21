@@ -58,5 +58,11 @@ public interface AddJobRepository extends JpaRepository<AddJobEntity, Long> {
             LocalDateTime startDate,
             LocalDateTime endDate
     );
+    // ==========================================
+    // Landing Page — Distinct Company Count
+    // ==========================================
+
+    @Query("SELECT COUNT(DISTINCT j.companyName) FROM AddJobEntity j")
+    long countDistinctCompanyNames();
 
 }

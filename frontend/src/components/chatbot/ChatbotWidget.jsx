@@ -27,7 +27,7 @@ function RobotIcon({ size = 28 }) {
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const { messages, isLoading, sendMessage, clearChat } = useChatbot();
+  const { messages, isLoading, t, sendMessage, retryMessage, clearChat } = useChatbot();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -52,7 +52,7 @@ export default function ChatbotWidget() {
   };
 
   // suggestion chips shown before first user message
-  const suggestions = ["What companies are visiting?", "Eligibility criteria?", "Resume tips"];
+  const suggestions = t.suggestions || ["What companies are visiting?", "Eligibility criteria?", "Resume tips"];
   const showSuggestions = messages.length === 1;
 
   return (
@@ -73,27 +73,29 @@ export default function ChatbotWidget() {
               <div className="chatbot-header__info">
                 <div className="chatbot-header__avatar"><RobotIcon size={32} /></div>
                 <div>
-                  <div className="chatbot-header__title">Placement Assistant</div>
+                  <div className="chatbot-header__title">{t.title}</div>
                   <div className="chatbot-header__status">
                     <span className={`chatbot-header__dot ${isLoading ? "chatbot-header__dot--typing" : "chatbot-header__dot--online"}`} />
                     <span className="chatbot-header__status-text">
-                      {isLoading ? "Typing…" : "Online"}
+                      {isLoading ? t.typing : t.online}
                     </span>
                   </div>
                 </div>
               </div>
-              <motion.button
-                className="chatbot-header__clear"
-                onClick={clearChat}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.92 }}
-                title="Clear conversation"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </motion.button>
+              <div className="chatbot-header__actions">
+                <motion.button
+                  className="chatbot-header__clear"
+                  onClick={clearChat}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
+                  title={t.clearTitle}
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                </motion.button>
+              </div>
             </div>
 
             {/* messages */}
@@ -109,8 +111,18 @@ export default function ChatbotWidget() {
                   {msg.role === "model" && (
                     <div className="chatbot-msg-avatar"><RobotIcon size={28} /></div>
                   )}
-                  <div className={`chatbot-bubble chatbot-bubble--${msg.role}`}>
+                  <div className={`chatbot-bubble chatbot-bubble--${msg.role} ${msg.isError ? 'chatbot-bubble--error' : ''}`}>
                     <div>{msg.text}</div>
+                    {msg.isError && (
+                      <button
+                        type="button"
+                        className="chatbot-retry-btn"
+                        onClick={() => retryMessage(index)}
+                        disabled={isLoading}
+                      >
+                        {t.retry}
+                      </button>
+                    )}
                     {msg.timestamp && (
                       <div className={`chatbot-bubble-time chatbot-bubble-time--${msg.role}`}>
                         {msg.timestamp}
@@ -171,7 +183,7 @@ export default function ChatbotWidget() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about placements..."
+                placeholder={t.placeholder}
                 disabled={isLoading}
               />
               <motion.button

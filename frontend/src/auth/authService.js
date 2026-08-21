@@ -617,3 +617,14 @@ export const getStudentPlaceviewTopPlaced = () => {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
     });
 };
+
+// Public Landing Page Controller APIs
+export const getLandingPublicStats = () => {
+    return api.get("/public/landing/stats");
+};
+
+export const getLandingRecentActivity = () => {
+    return api.get("/public/landing/recent-activity");
+};
+
+

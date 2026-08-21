@@ -207,6 +207,9 @@ function Login({ onNavigate, initialView }) {
         }
         const matchedProfile = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === cleanEmail);
 
+        const avatarKey = cleanEmail ? `student_avatar_${cleanEmail}` : 'student_avatar';
+        const savedAvatar = localStorage.getItem(avatarKey) || localStorage.getItem('student_avatar') || "";
+
         if (matchedProfile) {
             const sanitizedUser = {
                 fullName: sanitizeStorageString(matchedProfile.fullName),
@@ -217,13 +220,15 @@ function Login({ onNavigate, initialView }) {
                 cgpa: sanitizeStorageString(matchedProfile.cgpa),
                 skills: sanitizeStorageString(matchedProfile.skills),
                 linkedinUrl: sanitizeStorageString(matchedProfile.linkedinUrl),
-                githubUrl: sanitizeStorageString(matchedProfile.githubUrl)
+                githubUrl: sanitizeStorageString(matchedProfile.githubUrl),
+                avatarUrl: matchedProfile.avatarUrl || savedAvatar
             };
             localStorage.setItem("user", JSON.stringify(sanitizedUser));
         } else {
             localStorage.setItem("user", JSON.stringify({
                 fullName: sanitizeStorageString(payload.fullName || payload.name || payload.studentName || fallbackName),
-                email: cleanEmail
+                email: cleanEmail,
+                avatarUrl: savedAvatar
             }));
         }
     };
