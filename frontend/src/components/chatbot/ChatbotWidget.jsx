@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useChatbot, LANGUAGE_OPTIONS } from "../../hooks/useChatbot";
+import { useChatbot } from "../../hooks/useChatbot";
 import "./ChatbotWidget.css";
 import roboIcon from "../../assets/robo icon.jpg";
 
@@ -24,89 +24,10 @@ function RobotIcon({ size = 28 }) {
   );
 }
 
-// Custom animated language dropdown component
-function LanguageDropdown({ language, changeLanguage }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  const currentOption = LANGUAGE_OPTIONS.find(opt => opt.code === language) || LANGUAGE_OPTIONS[0];
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
-
-  return (
-    <div ref={dropdownRef} className="chatbot-lang-container">
-      <button
-        type="button"
-        className="chatbot-lang-btn"
-        onClick={() => setIsOpen(!isOpen)}
-        title="Select Language"
-      >
-        <span>{currentOption.label}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          style={{
-            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s ease"
-          }}
-        >
-          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="chatbot-lang-menu"
-            initial={{ opacity: 0, y: -6, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-          >
-            {LANGUAGE_OPTIONS.map((opt) => {
-              const isSelected = opt.code === language;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  className={`chatbot-lang-option ${isSelected ? "chatbot-lang-option--selected" : ""}`}
-                  onClick={() => {
-                    changeLanguage(opt.code);
-                    setIsOpen(false);
-                  }}
-                >
-                  <span>{opt.fullLabel}</span>
-                  {isSelected && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17l-5-5" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const { messages, isLoading, language, changeLanguage, t, sendMessage, retryMessage, clearChat } = useChatbot();
+  const { messages, isLoading, t, sendMessage, retryMessage, clearChat } = useChatbot();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -162,9 +83,6 @@ export default function ChatbotWidget() {
                 </div>
               </div>
               <div className="chatbot-header__actions">
-                {/* Custom Animated Language Dropdown */}
-                <LanguageDropdown language={language} changeLanguage={changeLanguage} />
-
                 <motion.button
                   className="chatbot-header__clear"
                   onClick={clearChat}
