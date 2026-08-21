@@ -1,10 +1,12 @@
 package com.college.placement.portal.profile.controller;
 
-import com.college.placement.portal.profile.Dto.StudentProfileUpdateDto;
-import com.college.placement.portal.profile.Dto.StudentProfileViewDto;
+import com.college.placement.portal.profile.dto.StudentProfileUpdateDto;
+import com.college.placement.portal.profile.dto.StudentProfileViewDto;
 import com.college.placement.portal.profile.service.StudentProfileService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/student/profile")
@@ -36,6 +38,25 @@ public class StudentProfileController {
 
         return ResponseEntity.ok(
                 studentProfileService.getProfile()
+        );
+    }
+    @PostMapping(
+            value = "/photo",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<String> uploadProfilePhoto(
+            @RequestParam("photo") MultipartFile photo
+    ) throws Exception {
+
+        return ResponseEntity.ok(
+                studentProfileService.uploadProfilePhoto(photo)
+        );
+    }
+    @DeleteMapping("/photo")
+    public ResponseEntity<String> deleteProfilePhoto() {
+
+        return ResponseEntity.ok(
+                studentProfileService.deleteProfilePhoto()
         );
     }
 

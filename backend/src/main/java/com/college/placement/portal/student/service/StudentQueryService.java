@@ -6,8 +6,8 @@ import com.college.placement.portal.auth.entity.RegisterEntity;
 import com.college.placement.portal.auth.jwt.RegisterJWT;
 import com.college.placement.portal.auth.repository.RegisterRepository;
 import com.college.placement.portal.notification.util.NotificationHelper;
-import com.college.placement.portal.student.Dto.StudentQueryResponseDto;
-import com.college.placement.portal.student.Dto.SubmitQueryRequestDto;
+import com.college.placement.portal.student.dto.StudentQueryResponseDto;
+import com.college.placement.portal.student.dto.SubmitQueryRequestDto;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
@@ -100,8 +100,9 @@ public class StudentQueryService {
 
         List<StudentQueryEntity> queries =
                 studentQueryRepository
-                        .findByStudentIdOrderByCreatedAtDesc(
-                                student.getId()
+                        .findByStudentIdAndStatusNotOrderByCreatedAtDesc(
+                                student.getId(),
+                                "DISCARDED"
                         );
 
         List<StudentQueryResponseDto> response =

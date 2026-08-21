@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 import { useState, useEffect, useRef } from "react";
-import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
+import { getAllPlacementDrives, addPlacementDrive, getAllQueries, replyToQuery, discardQuery, updatePlacementDrive, deletePlacementDrive, publishPlacementStory, getAllPlacementStories, updatePlacementStory, deletePlacementStory, getAllStudentsForDrive } from '../../auth/authService';
 import {
     Search,
     Calendar,
@@ -16,6 +16,274 @@ import {
 } from 'lucide-react';
 import './QueriesStories.css';
 
+/** Cleans and sanitizes user input strings before storing or displaying. */
+function sanitizeStorageString(val) {
+    if (val === null || val === undefined) return '';
+    let str = String(val);
+    try {
+        if (str.includes('%')) {
+            str = decodeURIComponent(str);
+        }
+    } catch {
+        // Fallback
+    }
+    const doc = typeof DOMParser !== 'undefined' ? new DOMParser().parseFromString(str, 'text/html') : null;
+    const cleanText = doc ? (doc.body.textContent || '') : str;
+    const cleanStr = cleanText.replace(/[<>'"]/g, '').trim();
+    return cleanStr;
+}
+
+
+
+/*
+  Converts a backend `createdAt` field (which can be an ISO string, a DD/MM/YYYY HH:MM string,
+  or a Java LocalDateTime array) into a human-readable en-GB date/time string.
+ */
+function parseCreatedAt(createdAt) {
+    try {
+        const gbOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+        if (!createdAt) {
+            return new Date().toLocaleString('en-GB', gbOptions).replace(',', '');
+        }
+        if (Array.isArray(createdAt)) {
+            if (createdAt.length >= 5) {
+                const year = String(createdAt[0]);
+                const month = String(createdAt[1]).padStart(2, '0');
+                const day = String(createdAt[2]).padStart(2, '0');
+                const hour = String(createdAt[3]).padStart(2, '0');
+                const minute = String(createdAt[4]).padStart(2, '0');
+                return `${day}/${month}/${year} ${hour}:${minute}`;
+            }
+            if (createdAt.length >= 3) {
+                const day = String(createdAt[2]).padStart(2, '0');
+                const month = String(createdAt[1]).padStart(2, '0');
+                const year = String(createdAt[0]);
+                return `${day}/${month}/${year}`;
+            }
+        }
+        const dateStr = createdAt;
+        const ddMmYyyyMatch = typeof dateStr === 'string' && /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/.exec(dateStr);
+        if (ddMmYyyyMatch) {
+            return dateStr;
+        }
+
+        if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dateStr)) {
+            if (dateStr.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(dateStr)) {
+                const parsed = new Date(dateStr);
+                if (!Number.isNaN(parsed.getTime())) {
+                    return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+                }
+            } else {
+                const [datePart, timePart] = dateStr.split('T');
+                const [y, m, d] = datePart.split('-');
+                const [hh, mm] = timePart.split(':');
+                return `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y} ${hh.padStart(2, '0')}:${mm.padStart(2, '0')}`;
+            }
+        }
+
+        const parsed = new Date(dateStr);
+        if (Number.isNaN(parsed.getTime())) {
+            return typeof dateStr === 'string' ? dateStr.split('T')[0] : 'Recently';
+        }
+        return parsed.toLocaleString('en-GB', gbOptions).replace(',', '');
+    } catch {
+        return 'Recently';
+    }
+}
+
+const AVATAR_BG_MAP = {
+    blue: '#dbeafe',
+    purple: '#e9d5ff',
+    green: '#a7f3d0',
+    orange: '#fed7aa',
+};
+
+const AVATAR_TEXT_MAP = {
+    blue: '#1e40af',
+    purple: '#581c87',
+    green: '#047857',
+    orange: '#c2410c',
+};
+
+/** Returns background color for query avatar circle. */
+function getAvatarBgColor(colorClass) {
+    return AVATAR_BG_MAP[colorClass] || '#e0e7ff';
+}
+
+/** Returns text color for query avatar circle. */
+function getAvatarTextColor(colorClass) {
+    return AVATAR_TEXT_MAP[colorClass] || '#4f46e5';
+}
+
+// -----------------------------------------------------------------------------------------
+
+/** Builds a 2-letter avatar string from a student's full name. */
+function buildQueryAvatar(studentName) {
+    const nameParts = (studentName || 'Student').trim().split(' ');
+    const avatar = nameParts.length > 1 && nameParts[1]
+        ? nameParts[0][0] + nameParts[1][0]
+        : nameParts[0][0];
+    return avatar.toUpperCase();
+}
+
+/** Returns up to maxVisible page numbers centered around current page. */
+function getVisiblePageNumbers(current, total, maxVisible = 3) {
+    if (total <= maxVisible) {
+        return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    let start = Math.max(1, current - 1);
+    let end = start + maxVisible - 1;
+    if (end > total) {
+        end = total;
+        start = Math.max(1, end - maxVisible + 1);
+    }
+    const pages = [];
+    for (let i = start; i <= end; i++) {
+        pages.push(i);
+    }
+    return pages;
+}
+
+
+/** Builds the API payload object for creating or updating a placement drive. */
+function buildDrivePayload(driveForm) {
+    const targetStudent = typeof driveForm.targetStudent === 'string'
+        ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean)
+        : (driveForm.targetStudent || []);
+    return {
+        companyName: driveForm.company.trim(),
+        jobRole: driveForm.role.trim(),
+        location: driveForm.location.trim(),
+        venue: driveForm.venue ? driveForm.venue.trim() : "",
+        driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
+        driveTime: driveForm.time ? driveForm.time.trim() : "",
+        status: driveForm.status || "Open",
+        targetStudent,
+        specificStudentName: (driveForm.customTarget || "").trim()
+    };
+}
+
+/** Loads initial student queries state from localStorage. */
+function loadInitialStudentQueries() {
+    const stored = localStorage.getItem("student_queries");
+    if (stored) {
+        try {
+            return JSON.parse(stored);
+        } catch {
+            return [];
+        }
+    }
+    return [];
+}
+
+/** Maps backend drive object to UI drive object. */
+function mapApiDriveToUi(d) {
+    return {
+        ...d,
+        id: d.id,
+        company: d.companyName || d.company || "Unknown Company",
+        role: d.jobRole || d.role || "Unknown Role",
+        location: d.location || "Unknown Location",
+        date: d.driveDate || d.date || "TBD",
+        time: d.driveTime || d.time || "TBD",
+        status: d.status,
+        venue: d.venue || "",
+    };
+}
+
+/** Maps backend story object to UI story object. */
+function mapApiStoryToUi(s) {
+    const avatarUrl = s.photoPath || 'https://via.placeholder.com/150';
+    return {
+        id: s.id,
+        name: s.studentName,
+        avatar: avatarUrl,
+        company: s.companyName,
+        companyColor: '#eff6ff',
+        companyTextColor: '#2563eb',
+        role: s.jobRole || 'Placed Student',
+        packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
+        storyText: s.successStory || `Secured placement at ${s.companyName}.`,
+        date: parseCreatedAt(s.createdAt)
+    };
+}
+
+/** Converts data URL photo string into a File object for API upload. */
+async function preparePhotoFile(photoDataUrl) {
+    if (!photoDataUrl?.startsWith('data:')) return null;
+    try {
+        const photoBlob = await (await fetch(photoDataUrl)).blob();
+        return photoBlob ? new File([photoBlob], "photo.png", { type: photoBlob.type }) : null;
+    } catch {
+        return null;
+    }
+}
+
+/** Extracts user-friendly error message from story API publish/update failures. */
+function parseStoryError(error) {
+    let errorMsg = "Failed to publish story.";
+    if (error.response?.status === 413) {
+        errorMsg = "Photo is large size";
+    } else if (typeof error.response?.data === 'string' && error.response.data.includes('<html')) {
+        errorMsg = `Server Error (${error.response?.status || 'Unknown'}). Please try again.`;
+    } else {
+        errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
+    }
+    return typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg);
+}
+
+const INITIAL_STORY_FORM = {
+    studentName: '',
+    companyName: '',
+    jobRole: '',
+    package: '',
+    storyText: '',
+    photo: ''
+};
+
+const INITIAL_DRIVE_FORM = {
+    company: '',
+    role: '',
+    location: '',
+    date: '',
+    time: '',
+    venue: 'Seminar Hall A',
+    status: 'OPEN',
+    targetStudent: 'ALL',
+    customTarget: ''
+};
+
+/** Pure helper: filters student queries based on search query and status filter. */
+function filterStudentQueries(queries, querySearch, queryFilter) {
+    const searchLower = (querySearch || "").toLowerCase();
+    return queries.filter(q => {
+        const matchesSearch = !searchLower ||
+            (q.name || "").toLowerCase().includes(searchLower) ||
+            (q.title || "").toLowerCase().includes(searchLower) ||
+            (q.message || "").toLowerCase().includes(searchLower);
+        const matchesStatus = queryFilter === 'all' || q.status === queryFilter;
+        return matchesSearch && matchesStatus;
+    });
+}
+
+/*Pure helper: filters placement drives by company or role keyword. */
+function filterPlacementDrives(drives, driveSearch) {
+    const searchLower = (driveSearch || "").toLowerCase();
+    if (!searchLower) return drives;
+    return drives.filter(d =>
+        (d.company || "").toLowerCase().includes(searchLower) ||
+        (d.role || "").toLowerCase().includes(searchLower)
+    );
+}
+
+/* Pure helper: filters placement stories by year string. */
+function filterPlacementStories(stories, storyYearFilter) {
+    if (storyYearFilter === 'all') return stories;
+    return stories.filter(s => s.date?.includes(storyYearFilter));
+}
+
+
+
 export default function QueriesStories() {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState("");
@@ -28,80 +296,78 @@ export default function QueriesStories() {
         setShowToast(true);
         setTimeout(() => setShowToast(false), 3000);
     };
-    // 1. Initial Mock data for Student Queries
-    const initialQueries = [];
+
 
     // React States for student queries and pagination
-    const [queries, setQueries] = useState(() => {
-        const stored = localStorage.getItem("student_queries");
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                return parsed.map(q => q.status === 'in-progress' ? { ...q, status: 'resolved' } : q);
-            } catch {
-                return initialQueries;
+    const [queries, setQueries] = useState(loadInitialStudentQueries);
+
+    const fetchQueries = async () => {
+        try {
+            const response = await getAllQueries();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedQueries = response.data.map(q => {
+                    return {
+                        ...q,
+                        id: q.id,
+                        name: q.studentName,
+                        course: q.department,
+                        avatar: buildQueryAvatar(q.studentName || q.name),
+                        colorClass: 'blue',
+                        title: q.subject,
+                        message: q.description,
+                        status: (q.status || 'pending').toLowerCase(),
+                        reply: q.adminReply,
+                        date: parseCreatedAt(q.createdAt)
+                    };
+                });
+                setQueries(mappedQueries.toSorted((a, b) => b.id - a.id));
             }
+        } catch (error) {
+            console.error("Failed to fetch queries:", error);
         }
-        return initialQueries;
-    });
+    };
 
     useEffect(() => {
-        const fetchQueries = async () => {
-            try {
-                const response = await getAllQueries();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedQueries = response.data.map(q => {
-                        const nameParts = (q.studentName || q.name || 'Student').trim().split(' ');
-                        const avatar = nameParts.length > 1 && nameParts[1] ? nameParts[0][0] + nameParts[1][0] : nameParts[0][0];
+        fetchQueries();
 
-                        return {
-                            ...q,
-                            id: q.id,
-                            name: q.studentName,
-                            course: q.department,
-                            avatar: avatar.toUpperCase(),
-                            colorClass: 'blue',
-                            title: q.subject,
-                            message: q.description,
-                            status: (q.status || 'pending').toLowerCase(),
-                            reply: q.adminReply,
-                            date: (() => {
-                                try {
-                                    if (!q.createdAt) return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    if (Array.isArray(q.createdAt)) {
-                                        if (q.createdAt.length >= 5) {
-                                            const utcDate = new Date(Date.UTC(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2], q.createdAt[3], q.createdAt[4]));
-                                            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                        }
-                                        return new Date(q.createdAt[0], q.createdAt[1] - 1, q.createdAt[2]).toLocaleDateString();
-                                    }
-                                    const dateStr = q.createdAt;
-                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
-                                    if (ddMmYyyyMatch) {
-                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-                                        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-                                        return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    }
-                                    const parsed = new Date(dateStr);
-                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-                                    return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch {
-                                    return "Recently";
-                                }
-                            })()
-                        };
-                    });
-                    setQueries(mappedQueries.sort((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch queries:", error);
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchQueries();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchQueries();
             }
         };
-        fetchQueries();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("student_queries", JSON.stringify(queries));
+        if (!Array.isArray(queries)) return;
+        const sanitizedQueries = queries.map(q => ({
+            id: typeof q.id === 'number' ? q.id : Number(q.id) || 0,
+            studentName: sanitizeStorageString(q.studentName),
+            email: sanitizeStorageString(q.email),
+            subject: sanitizeStorageString(q.subject),
+            message: sanitizeStorageString(q.message),
+            category: sanitizeStorageString(q.category),
+            status: sanitizeStorageString(q.status),
+            createdAt: sanitizeStorageString(q.createdAt),
+            reply: sanitizeStorageString(q.reply),
+            adminReply: sanitizeStorageString(q.adminReply)
+        }));
+        localStorage.setItem("student_queries", JSON.stringify(sanitizedQueries));
     }, [queries]);
 
     const [querySearch, setQuerySearch] = useState('');
@@ -109,10 +375,12 @@ export default function QueriesStories() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2; // Show 2 queries per page
 
-    // States for View and Reply Modals
+    // States for View, Reply, and Discard Modals
     const [viewingQuery, setViewingQuery] = useState(null);
     const [replyingQuery, setReplyingQuery] = useState(null);
     const [replyText, setReplyText] = useState('');
+    const [discardingQuery, setDiscardingQuery] = useState(null);
+    const [discardReason, setDiscardReason] = useState('');
 
     const handleSendReply = async (e) => {
         e.preventDefault();
@@ -126,7 +394,8 @@ export default function QueriesStories() {
                     return {
                         ...q,
                         status: 'resolved',
-                        reply: replyText
+                        reply: replyText,
+                        adminReply: replyText
                     };
                 }
                 return q;
@@ -141,6 +410,45 @@ export default function QueriesStories() {
         }
     };
 
+    const handleDiscardQuery = async (queryToDiscard) => {
+        if (!queryToDiscard) return;
+
+        const subjectName = queryToDiscard.title || 'Placement Query';
+
+        try {
+            try {
+                await discardQuery(queryToDiscard.id, "Query discarded by Admin");
+            } catch (apiErr) {
+                console.warn("Backend API call for discard query failed or not available yet, updating UI locally:", apiErr);
+            }
+
+            // Completely remove query from local state list
+            setQueries(prevQueries => prevQueries.filter(q => q.id !== queryToDiscard.id));
+
+            // Notify student via notifications in localStorage
+            const notifObj = {
+                id: Date.now(),
+                title: "Query Discarded",
+                message: `Your query with subject '${subjectName}' got discarded.`,
+                type: "warning",
+                studentEmail: queryToDiscard.email || "",
+                studentName: queryToDiscard.name || queryToDiscard.studentName || "",
+                createdAt: new Date().toISOString(),
+                displayDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                displayTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                read: false
+            };
+
+            const existingNotifs = JSON.parse(localStorage.getItem("student_notifications") || "[]");
+            localStorage.setItem("student_notifications", JSON.stringify([notifObj, ...existingNotifs]));
+
+            triggerToast("Query discarded successfully", "success");
+        } catch (error) {
+            console.error("Failed to discard query:", error);
+            triggerToast("Failed to discard query.", "error");
+        }
+    };
+
     // Helper calculations for status counts
     const totalQueriesCount = queries.length;
     const pendingCount = queries.filter(q => q.status === 'pending').length;
@@ -152,13 +460,7 @@ export default function QueriesStories() {
     }, [querySearch, queryFilter]);
 
     // Filter student queries based on search keyword and selected status pill
-    const filteredQueries = queries.filter(q => {
-        const matchesSearch = (q.name || "").toLowerCase().includes(querySearch.toLowerCase()) ||
-            (q.title || "").toLowerCase().includes(querySearch.toLowerCase()) ||
-            (q.message || "").toLowerCase().includes(querySearch.toLowerCase());
-        const matchesStatus = queryFilter === 'all' || q.status === queryFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredQueries = filterStudentQueries(queries, querySearch, queryFilter);
 
     // Pagination calculations
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -178,35 +480,61 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialDrives;
     });
 
+    const fetchDrives = async () => {
+        try {
+            const response = await getAllPlacementDrives();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedDrives = response.data.map(mapApiDriveToUi);
+                setDrives(mappedDrives.toSorted((a, b) => b.id - a.id));
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement drives:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchDrives = async () => {
-            try {
-                const response = await getAllPlacementDrives();
-                if (response.data && Array.isArray(response.data)) {
-                    // Map backend schema to frontend schema
-                    const mappedDrives = response.data.map(d => ({
-                        ...d,
-                        id: d.id,
-                        company: d.companyName || d.company || "Unknown Company",
-                        role: d.jobRole || d.role || "Unknown Role",
-                        location: d.location || "Unknown Location",
-                        date: d.driveDate || d.date || "TBD",
-                        time: d.driveTime || d.time || "TBD",
-                        status: d.status,
-                        venue: d.venue || "",
-                    }));
-                    // Sort by ID descending so newest drives appear at the top
-                    setDrives(mappedDrives.sort((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement drives:", error);
+        fetchDrives();
+
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchDrives();
+            }, 5000);
+        }
+
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchDrives();
             }
         };
-        fetchDrives();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("placement_drives", JSON.stringify(drives));
+        if (!Array.isArray(drives)) return;
+        const sanitizedDrives = drives.map(drive => ({
+            id: typeof drive.id === 'number' ? drive.id : Number(drive.id) || 0,
+            company: sanitizeStorageString(drive.company),
+            role: sanitizeStorageString(drive.role),
+            date: sanitizeStorageString(drive.date),
+            time: sanitizeStorageString(drive.time),
+            venue: sanitizeStorageString(drive.venue),
+            targetStudent: Array.isArray(drive.targetStudent)
+                ? drive.targetStudent.map(t => sanitizeStorageString(t))
+                : sanitizeStorageString(drive.targetStudent),
+            customTarget: sanitizeStorageString(drive.customTarget),
+            status: sanitizeStorageString(drive.status),
+            createdAt: sanitizeStorageString(drive.createdAt)
+        }));
+        localStorage.setItem("placement_drives", JSON.stringify(sanitizedDrives));
     }, [drives]);
 
     // Modal states for adding/editing/deleting placement drives
@@ -238,31 +566,11 @@ export default function QueriesStories() {
         };
         fetchStudents();
     }, []);
-    const [driveForm, setDriveForm] = useState({
-        company: '',
-        role: '',
-        location: '',
-        date: '',
-        time: '',
-        venue: 'Seminar Hall A',
-        status: 'OPEN',
-        targetStudent: 'ALL',
-        customTarget: ''
-    });
+    const [driveForm, setDriveForm] = useState(INITIAL_DRIVE_FORM);
 
     const handleOpenAddDrive = () => {
         setEditingDrive(null);
-        setDriveForm({
-            company: '',
-            role: '',
-            location: '',
-            date: '',
-            time: '',
-            venue: 'Seminar Hall A',
-            status: 'OPEN',
-            targetStudent: 'ALL',
-            customTarget: ''
-        });
+        setDriveForm(INITIAL_DRIVE_FORM);
         setIsDriveModalOpen(true);
     };
 
@@ -307,17 +615,7 @@ export default function QueriesStories() {
         if (editingDrive) {
             // Update existing via API
             try {
-                const payload = {
-                    companyName: driveForm.company.trim(),
-                    jobRole: driveForm.role.trim(),
-                    location: driveForm.location.trim(),
-                    venue: driveForm.venue ? driveForm.venue.trim() : "",
-                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
-                    driveTime: driveForm.time ? driveForm.time.trim() : "",
-                    status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: (driveForm.customTarget || "").trim()
-                };
+                const payload = buildDrivePayload(driveForm);
 
                 await updatePlacementDrive(editingDrive.id, payload);
 
@@ -349,17 +647,7 @@ export default function QueriesStories() {
         } else {
             // Add new via API
             try {
-                const payload = {
-                    companyName: driveForm.company.trim(),
-                    jobRole: driveForm.role.trim(),
-                    location: driveForm.location.trim(),
-                    venue: driveForm.venue ? driveForm.venue.trim() : "",
-                    driveDate: driveForm.date ? driveForm.date.trim() : "2026-07-23",
-                    driveTime: driveForm.time ? driveForm.time.trim() : "",
-                    status: driveForm.status || "Open",
-                    targetStudent: typeof driveForm.targetStudent === 'string' ? driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean) : (driveForm.targetStudent || []),
-                    specificStudentName: (driveForm.customTarget || "").trim()
-                };
+                const payload = buildDrivePayload(driveForm);
 
                 const response = await addPlacementDrive(payload);
 
@@ -399,62 +687,62 @@ export default function QueriesStories() {
         return stored ? JSON.parse(stored) : initialStories;
     });
 
+    const fetchStories = async () => {
+        try {
+            const response = await getAllPlacementStories();
+            if (response.data && Array.isArray(response.data)) {
+                const mappedStories = response.data.map(mapApiStoryToUi);
+                setStories(mappedStories.toSorted((a, b) => b.id - a.id));
+            }
+        } catch (error) {
+            console.error("Failed to fetch placement stories:", error);
+        }
+    };
+
     useEffect(() => {
-        const fetchStories = async () => {
-            try {
-                const response = await getAllPlacementStories();
-                if (response.data && Array.isArray(response.data)) {
-                    const mappedStories = response.data.map(s => {
-                        const avatarUrl = s.photoPath || 'https://via.placeholder.com/150';
+        fetchStories();
 
-                        return {
-                            id: s.id,
-                            name: s.studentName,
-                            avatar: avatarUrl,
-                            company: s.companyName,
-                            companyColor: '#eff6ff',
-                            companyTextColor: '#2563eb',
-                            role: s.jobRole || 'Placed Student',
-                            packageAmt: s.packageLpa ? `${s.packageLpa} LPA` : '6.0 LPA',
-                            storyText: s.successStory || `Secured placement at ${s.companyName}.`,
-                            date: (() => {
-                                try {
-                                    if (!s.createdAt) return new Date().toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    if (Array.isArray(s.createdAt)) {
-                                        if (s.createdAt.length >= 5) {
-                                            const utcDate = new Date(Date.UTC(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2], s.createdAt[3], s.createdAt[4]));
-                                            return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                        }
-                                        return new Date(s.createdAt[0], s.createdAt[1] - 1, s.createdAt[2]).toLocaleDateString();
-                                    }
-                                    const dateStr = s.createdAt;
-                                    const ddMmYyyyMatch = typeof dateStr === 'string' && dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
-                                    if (ddMmYyyyMatch) {
-                                        const [, day, month, year, hour, minute] = ddMmYyyyMatch;
-                                        const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
-                                        return utcDate.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                    }
-                                    const parsed = new Date(dateStr);
-                                    if (isNaN(parsed)) return typeof dateStr === 'string' ? dateStr.split('T')[0] : "Recently";
-                                    return parsed.toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
-                                } catch {
+        let pollInterval;
+        if (import.meta.env.MODE !== 'test') {
+            pollInterval = setInterval(() => {
+                if (document.hidden) return;
+                fetchStories();
+            }, 5000);
+        }
 
-                                    return "Recently";
-                                }
-                            })()
-                        };
-                    });
-                    setStories(mappedStories.sort((a, b) => b.id - a.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch placement stories:", error);
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStories();
             }
         };
-        fetchStories();
+        document.addEventListener('visibilitychange', handleVisibility);
+        window.addEventListener('focus', handleVisibility);
+
+        return () => {
+            if (pollInterval) clearInterval(pollInterval);
+            document.removeEventListener('visibilitychange', handleVisibility);
+            window.removeEventListener('focus', handleVisibility);
+        };
     }, []);
 
     useEffect(() => {
-        localStorage.setItem("placement_stories", JSON.stringify(stories));
+        if (!Array.isArray(stories)) return;
+        const sanitizedStories = stories.map(story => ({
+            id: typeof story.id === 'number' ? story.id : Number(story.id) || 0,
+            name: sanitizeStorageString(story.name),
+            branch: sanitizeStorageString(story.branch),
+            year: sanitizeStorageString(story.year),
+            company: sanitizeStorageString(story.company),
+            package: sanitizeStorageString(story.package),
+            quote: sanitizeStorageString(story.quote),
+            role: sanitizeStorageString(story.role),
+            tips: sanitizeStorageString(story.tips),
+            avatar: sanitizeStorageString(story.avatar),
+            logo: sanitizeStorageString(story.logo),
+            logoColor: sanitizeStorageString(story.logoColor),
+            createdAt: sanitizeStorageString(story.createdAt)
+        }));
+        localStorage.setItem("placement_stories", JSON.stringify(sanitizedStories));
     }, [stories]);
 
     const [storyPage, setStoryPage] = useState(1);
@@ -479,15 +767,9 @@ export default function QueriesStories() {
     }, [driveSearch]);
 
     // Filter drives list based on company name or role search
-    const filteredDrives = drives.filter(d =>
-        (d.company || "").toLowerCase().includes(driveSearch.toLowerCase()) ||
-        (d.role || "").toLowerCase().includes(driveSearch.toLowerCase())
-    );
+    const filteredDrives = filterPlacementDrives(drives, driveSearch);
 
-    const filteredStories = stories.filter(s => {
-        if (storyYearFilter === 'all') return true;
-        return s.date && s.date.includes(storyYearFilter);
-    });
+    const filteredStories = filterPlacementStories(stories, storyYearFilter);
 
     // Drives pagination calculations
     const indexOfLastDrive = drivePage * drivesPerPage;
@@ -514,7 +796,7 @@ export default function QueriesStories() {
     });
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files && e.target.files[0];
+        const file = e.target.files?.[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
                 triggerToast("Photo size exceeds 5MB limit", "error");
@@ -537,7 +819,7 @@ export default function QueriesStories() {
         }
 
         try {
-            const packageValue = parseFloat(storyForm.package) || 0;
+            const packageValue = Number.parseFloat(storyForm.package) || 0;
             const payload = {
                 studentName: storyForm.studentName,
                 companyName: storyForm.companyName,
@@ -549,19 +831,9 @@ export default function QueriesStories() {
             // Note: In a real scenario, you'd pass the actual File object from the file input to publishPlacementStory.
             // Since the UI only stores a data URL in storyForm.photo right now, we can convert it to a Blob, or just pass null if not strictly enforced.
             // For simplicity, passing null as the file since the UI just has a preview string.
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
-                ? await (await fetch(storyForm.photo)).blob()
-                : null;
-
-            let photoFile = null;
-            if (photoBlob) {
-                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
-            }
-
+            const photoFile = await preparePhotoFile(storyForm.photo);
             await publishPlacementStory(payload, photoFile);
 
-            // The backend returns a string message or a PlacementStoryResponseDto.
-            // We can fetch all stories again, or just optimistically add it.
             const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(storyForm.studentName)}&background=2563eb&color=fff`;
 
             const newStory = {
@@ -579,30 +851,10 @@ export default function QueriesStories() {
 
             setStories([newStory, ...stories]);
             triggerToast("Placement story published successfully!", "success");
-
-            // Reset form inputs after publishing
-            setStoryForm({
-                studentName: '',
-                companyName: '',
-                jobRole: '',
-                package: '',
-                storyText: '',
-                photo: ''
-            });
+            setStoryForm(INITIAL_STORY_FORM);
         } catch (error) {
             console.error("Failed to publish placement story:", error);
-
-            // Handle Nginx 413 or HTML responses
-            let errorMsg = "Failed to publish story.";
-            if (error.response?.status === 413) {
-                errorMsg = "Photo is large size";
-            } else if (typeof error.response?.data === 'string' && error.response.data.includes('<html')) {
-                errorMsg = `Server Error (${error.response?.status || 'Unknown'}). Please try again.`;
-            } else {
-                errorMsg = error.response?.data?.message || error.response?.data || error.message || errorMsg;
-            }
-
-            triggerToast(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg), "error");
+            triggerToast(parseStoryError(error), "error");
         }
     };
 
@@ -624,7 +876,7 @@ export default function QueriesStories() {
         if (!editingStory) return;
 
         try {
-            const packageValue = parseFloat(storyForm.package) || 0;
+            const packageValue = Number.parseFloat(storyForm.package) || 0;
             const payload = {
                 studentName: storyForm.studentName,
                 companyName: storyForm.companyName,
@@ -633,15 +885,7 @@ export default function QueriesStories() {
                 storyText: storyForm.storyText
             };
 
-            const photoBlob = storyForm.photo && storyForm.photo.startsWith('data:')
-                ? await (await fetch(storyForm.photo)).blob()
-                : null;
-
-            let photoFile = null;
-            if (photoBlob) {
-                photoFile = new File([photoBlob], "photo.png", { type: photoBlob.type });
-            }
-
+            const photoFile = await preparePhotoFile(storyForm.photo);
             await updatePlacementStory(editingStory.id, payload, photoFile);
 
             const updatedStories = stories.map(s => {
@@ -724,13 +968,13 @@ export default function QueriesStories() {
 
 
                     <div className="pills-wrapper">
-                        <button className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
+                        <button type="button" className={`pill-btn all-pill ${queryFilter === 'all' ? 'active' : ''}`} onClick={() => setQueryFilter('all')}>
                             All ({totalQueriesCount})
                         </button>
-                        <button className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
+                        <button type="button" className={`pill-btn pending-pill ${queryFilter === 'pending' ? 'active' : ''}`} onClick={() => setQueryFilter('pending')}>
                             Pending ({pendingCount})
                         </button>
-                        <button className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
+                        <button type="button" className={`pill-btn resolved-pill ${queryFilter === 'resolved' ? 'active' : ''}`} onClick={() => setQueryFilter('resolved')}>
                             Resolved ({resolvedCount})
                         </button>
                     </div>
@@ -744,16 +988,8 @@ export default function QueriesStories() {
                                         <div
                                             className="query-avatar-circle"
                                             style={{
-                                                backgroundColor:
-                                                    query.colorClass === 'blue' ? '#dbeafe' :
-                                                        query.colorClass === 'purple' ? '#e9d5ff' :
-                                                            query.colorClass === 'green' ? '#a7f3d0' :
-                                                                query.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                                color:
-                                                    query.colorClass === 'blue' ? '#1e40af' :
-                                                        query.colorClass === 'purple' ? '#581c87' :
-                                                            query.colorClass === 'green' ? '#047857' :
-                                                                query.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                                backgroundColor: getAvatarBgColor(query.colorClass),
+                                                color: getAvatarTextColor(query.colorClass)
                                             }}
                                         >
                                             {query.avatar}
@@ -775,8 +1011,46 @@ export default function QueriesStories() {
                                             {query.status}
                                         </span>
                                         <div className="action-links-group">
-                                            <button className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
-                                            <button className="text-action-btn primary-action" onClick={() => { setReplyingQuery(query); setReplyText(query.reply || ''); }}>Reply</button>
+                                            <button type="button" className="text-action-btn" onClick={() => setViewingQuery(query)}>View</button>
+                                            {(() => {
+                                                const hasReply = Boolean((query.reply && String(query.reply).trim()) || (query.adminReply && String(query.adminReply).trim()));
+                                                const isResolved = query.status === 'resolved';
+                                                if (hasReply || isResolved) {
+                                                    return (
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action disabled"
+                                                            disabled
+                                                            title="Reply has already been given to this query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                    );
+                                                }
+                                                return (
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn primary-action"
+                                                            onClick={() => {
+                                                                setReplyingQuery(query);
+                                                                setReplyText(query.reply || '');
+                                                            }}
+                                                            title="Reply to query"
+                                                        >
+                                                            Reply
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="text-action-btn discard-action"
+                                                            onClick={() => handleDiscardQuery(query)}
+                                                            title="Discard query"
+                                                        >
+                                                            Discard
+                                                        </button>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
@@ -790,6 +1064,7 @@ export default function QueriesStories() {
                     <div className="table-card-footer">
                         <div className="pagination-wrapper">
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
@@ -797,9 +1072,10 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(currentPage, totalPages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
+                                    type="button"
                                     className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(pageNum)}
                                 >
@@ -808,6 +1084,7 @@ export default function QueriesStories() {
                             ))}
 
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages || totalPages === 0}
@@ -833,7 +1110,12 @@ export default function QueriesStories() {
                     <form onSubmit={(e) => { e.preventDefault(); setConfirmingPublish(true); }} className="publish-form-body">
 
                         <div className="form-upper-row">
-                            <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()}>
+                            <button
+                                type="button"
+                                aria-label="Upload photo"
+                                className="upload-photo-zone"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -867,12 +1149,13 @@ export default function QueriesStories() {
                                         <span className="upload-subtext">PNG, JPG (Max 5MB)</span>
                                     </>
                                 )}
-                            </div>
+                            </button>
                             <div className="inputs-block">
                                 <div className="form-group-field">
-                                    <label className="field-label">Student Name</label>
+                                    <label htmlFor="story-student-name" className="field-label">Student Name</label>
                                     <input
                                         type="text"
+                                        id="story-student-name"
                                         placeholder="Enter student name"
                                         className="form-input-control"
                                         value={storyForm.studentName}
@@ -881,9 +1164,10 @@ export default function QueriesStories() {
                                     />
                                 </div>
                                 <div className="form-group-field">
-                                    <label className="field-label">Company Name</label>
+                                    <label htmlFor="story-company-name" className="field-label">Company Name</label>
                                     <input
                                         type="text"
+                                        id="story-company-name"
                                         placeholder="Enter company name"
                                         className="form-input-control"
                                         value={storyForm.companyName}
@@ -897,9 +1181,10 @@ export default function QueriesStories() {
 
                         <div className="form-grid-row">
                             <div className="form-group-field">
-                                <label className="field-label">Job Role</label>
+                                <label htmlFor="story-job-role" className="field-label">Job Role</label>
                                 <input
                                     type="text"
+                                    id="story-job-role"
                                     placeholder="Enter job role"
                                     className="form-input-control"
                                     value={storyForm.jobRole}
@@ -908,9 +1193,10 @@ export default function QueriesStories() {
                                 />
                             </div>
                             <div className="form-group-field">
-                                <label className="field-label">Package</label>
+                                <label htmlFor="story-package" className="field-label">Package</label>
                                 <input
                                     type="text"
+                                    id="story-package"
                                     placeholder="Enter package (e.g. 6 LPA)"
                                     className="form-input-control"
                                     value={storyForm.package}
@@ -921,8 +1207,9 @@ export default function QueriesStories() {
 
 
                         <div className="form-group-field full-width">
-                            <label className="field-label">Success Story</label>
+                            <label htmlFor="story-text" className="field-label">Success Story</label>
                             <textarea
+                                id="story-text"
                                 placeholder="Write the student's success story..."
                                 className="form-textarea-control"
                                 rows={4}
@@ -965,7 +1252,7 @@ export default function QueriesStories() {
                                     onChange={(e) => setDriveSearch(e.target.value)}
                                 />
                             </div>
-                            <button className="btn-add-drive" onClick={handleOpenAddDrive}>
+                            <button type="button" className="btn-add-drive" onClick={handleOpenAddDrive}>
                                 <Plus size={15} style={{ marginRight: '6px' }} />
                                 Add New Drive
                             </button>
@@ -1042,10 +1329,10 @@ export default function QueriesStories() {
                                             </td>
                                             <td>
                                                 <div className="actions-button-row">
-                                                    <button className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
+                                                    <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditDrive(drive)}>
                                                         <Edit2 size={15} />
                                                     </button>
-                                                    <button className="action-icon-btn delete" onClick={() => setDeletingDrive(drive)}>
+                                                    <button type="button" className="action-icon-btn delete" onClick={() => setDeletingDrive(drive)}>
                                                         <Trash2 size={15} />
                                                     </button>
                                                 </div>
@@ -1064,6 +1351,7 @@ export default function QueriesStories() {
                     <div className="table-card-footer" style={{ paddingTop: '12px', marginBottom: 'auto' }}>
                         <div className="pagination-wrapper">
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setDrivePage(prev => Math.max(prev - 1, 1))}
                                 disabled={drivePage === 1}
@@ -1071,9 +1359,10 @@ export default function QueriesStories() {
                                 &larr;
                             </button>
 
-                            {Array.from({ length: totalDrivePages }, (_, i) => i + 1).map(pageNum => (
+                            {getVisiblePageNumbers(drivePage, totalDrivePages, 3).map(pageNum => (
                                 <button
                                     key={pageNum}
+                                    type="button"
                                     className={`pagination-btn ${drivePage === pageNum ? 'active' : ''}`}
                                     onClick={() => setDrivePage(pageNum)}
                                 >
@@ -1082,6 +1371,7 @@ export default function QueriesStories() {
                             ))}
 
                             <button
+                                type="button"
                                 className="pagination-btn"
                                 onClick={() => setDrivePage(prev => Math.min(prev + 1, totalDrivePages))}
                                 disabled={drivePage === totalDrivePages || totalDrivePages === 0}
@@ -1148,13 +1438,13 @@ export default function QueriesStories() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+                                    <div className="story-top-actions-col">
                                         <span className="story-package-badge">{story.packageAmt}</span>
                                         <div className="actions-button-row" style={{ display: 'flex', gap: '6px' }}>
-                                            <button className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
+                                            <button type="button" className="action-icon-btn edit" onClick={() => handleOpenEditStory(story)}>
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button className="action-icon-btn delete" onClick={() => setDeletingStory(story)}>
+                                            <button type="button" className="action-icon-btn delete" onClick={() => setDeletingStory(story)}>
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
@@ -1177,6 +1467,7 @@ export default function QueriesStories() {
 
                     <div className="stories-pagination-footer">
                         <button
+                            type="button"
                             className="stories-nav-btn"
                             onClick={() => setStoryPage(prev => Math.max(prev - 1, 1))}
                             disabled={storyPage === 1}
@@ -1189,6 +1480,7 @@ export default function QueriesStories() {
                         </span>
 
                         <button
+                            type="button"
                             className="stories-nav-btn"
                             onClick={() => setStoryPage(prev => Math.min(prev + 1, totalStoryPages))}
                             disabled={storyPage === totalStoryPages || totalStoryPages === 0}
@@ -1203,23 +1495,24 @@ export default function QueriesStories() {
 
             {
                 isDriveModalOpen && (
-                    <div className="qs-modal-overlay" onClick={() => setIsDriveModalOpen(false)}>
-                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close drive modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsDriveModalOpen(false); }}>
+                        <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">{editingDrive ? "Edit Placement Drive" : "Add New Placement Drive"}</h4>
                                     <p className="modal-subtitle">Configure schedule, venue, and target students for this placement drive.</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setIsDriveModalOpen(false)}>
                                     <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleSaveDrive} className="qs-modal-form">
                                 <div className="qs-form-grid">
                                     <div className="qs-form-group">
-                                        <label className="form-label">Company Name *</label>
+                                        <label htmlFor="drive-company-name" className="form-label">Company Name *</label>
                                         <input
                                             type="text"
+                                            id="drive-company-name"
                                             required
                                             className="form-input-control"
                                             value={driveForm.company}
@@ -1228,9 +1521,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Job Role *</label>
+                                        <label htmlFor="drive-job-role" className="form-label">Job Role *</label>
                                         <input
                                             type="text"
+                                            id="drive-job-role"
                                             required
                                             className="form-input-control"
                                             value={driveForm.role}
@@ -1239,9 +1533,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Location *</label>
+                                        <label htmlFor="drive-location" className="form-label">Location *</label>
                                         <input
                                             type="text"
+                                            id="drive-location"
                                             required
                                             className="form-input-control"
                                             value={driveForm.location}
@@ -1250,9 +1545,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Date *</label>
+                                        <label htmlFor="drive-date" className="form-label">Date *</label>
                                         <input
                                             type="text"
+                                            id="drive-date"
                                             required
                                             className="form-input-control"
                                             value={driveForm.date}
@@ -1261,9 +1557,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Time *</label>
+                                        <label htmlFor="drive-time" className="form-label">Time *</label>
                                         <input
                                             type="text"
+                                            id="drive-time"
                                             required
                                             className="form-input-control"
                                             value={driveForm.time}
@@ -1272,9 +1569,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Venue *</label>
+                                        <label htmlFor="drive-venue" className="form-label">Venue *</label>
                                         <input
                                             type="text"
+                                            id="drive-venue"
                                             required
                                             className="form-input-control"
                                             value={driveForm.venue}
@@ -1283,8 +1581,9 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Status *</label>
+                                        <label htmlFor="drive-status" className="form-label">Status *</label>
                                         <select
+                                            id="drive-status"
                                             className="form-input-control"
                                             value={driveForm.status}
                                             onChange={(e) => setDriveForm({ ...driveForm, status: e.target.value })}
@@ -1295,21 +1594,29 @@ export default function QueriesStories() {
                                         </select>
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Target Student *</label>
+                                        <label htmlFor="drive-target-student" className="form-label">Target Student *</label>
                                         <div className="multi-select-container" style={{ position: 'relative' }}>
-                                            <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }} onClick={() => setShowTargetDropdown(true)}>
-                                                {driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t).map((target, idx) => (
-                                                    <span key={idx} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                            <div className="form-input-control multi-select-input-wrapper" style={{ minHeight: '38px', height: 'auto', padding: '4px', display: 'flex', flexWrap: 'wrap', gap: '4px', cursor: 'text' }}>
+                                                {driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean).map((target, idx) => (
+                                                    <span key={`${target}-${idx}`} className="multi-select-pill" style={{ background: '#e0e7ff', color: '#4338ca', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                                         {target}
-                                                        <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
-                                                            setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
-                                                        }}>&times;</span>
+                                                        <button
+                                                            type="button"
+                                                            aria-label={`Remove ${target}`}
+                                                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', padding: '0 0 0 4px', color: 'inherit', fontSize: '14px', lineHeight: 1 }}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t !== target);
+                                                                setDriveForm({ ...driveForm, targetStudent: newTargets.join(', ') });
+                                                            }}
+                                                        >
+                                                            &times;
+                                                        </button>
                                                     </span>
                                                 ))}
                                                 <input
                                                     type="text"
+                                                    id="drive-target-student"
                                                     value={targetSearchTerm}
                                                     onChange={(e) => { setTargetSearchTerm(e.target.value); setShowTargetDropdown(true); }}
                                                     onFocus={() => setShowTargetDropdown(true)}
@@ -1323,12 +1630,13 @@ export default function QueriesStories() {
                                                     {availableStudents
                                                         .filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase()))
                                                         .map((student, idx) => (
-                                                            <div
-                                                                key={idx}
-                                                                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
+                                                            <button
+                                                                type="button"
+                                                                key={student.id || student.name || idx}
+                                                                style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f1f5f9', fontSize: '13px' }}
                                                                 onMouseDown={(e) => e.preventDefault()}
                                                                 onClick={() => {
-                                                                    const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(t => t);
+                                                                    const currentTargets = driveForm.targetStudent.split(',').map(t => t.trim()).filter(Boolean);
                                                                     if (!currentTargets.includes(student.name)) {
                                                                         setDriveForm({ ...driveForm, targetStudent: [...currentTargets, student.name].join(', ') });
                                                                     }
@@ -1337,7 +1645,7 @@ export default function QueriesStories() {
                                                                 }}
                                                             >
                                                                 <div style={{ fontWeight: 600, color: '#1e293b' }}>{student.name}</div>
-                                                            </div>
+                                                            </button>
                                                         ))}
                                                     {availableStudents.filter(s => s.name.toLowerCase().includes(targetSearchTerm.toLowerCase()) || s.email.toLowerCase().includes(targetSearchTerm.toLowerCase())).length === 0 && (
                                                         <div style={{ padding: '8px 12px', fontSize: '13px', color: '#64748b' }}>No students found</div>
@@ -1347,9 +1655,10 @@ export default function QueriesStories() {
                                         </div>
                                     </div>
                                     <div className="qs-form-group full-width">
-                                        <label className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
+                                        <label htmlFor="drive-custom-target" className="form-label">Or Type Specific Student Name / Interview Target Manually</label>
                                         <input
                                             type="text"
+                                            id="drive-custom-target"
                                             className="form-input-control"
                                             value={driveForm.customTarget || ''}
                                             onChange={(e) => setDriveForm({ ...driveForm, customTarget: e.target.value })}
@@ -1357,7 +1666,7 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                 </div>
-                                <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <div className="qs-modal-actions">
                                     <button type="button" className="qs-cancel-btn" onClick={() => setIsDriveModalOpen(false)}>
                                         Cancel
                                     </button>
@@ -1374,8 +1683,8 @@ export default function QueriesStories() {
 
             {
                 deletingDrive && (
-                    <div className="qs-modal-overlay" onClick={() => setDeletingDrive(null)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close delete drive backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingDrive(null); }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
                             </div>
@@ -1399,14 +1708,14 @@ export default function QueriesStories() {
 
             {
                 viewingQuery && (
-                    <div className="qs-modal-overlay" onClick={() => setViewingQuery(null)}>
-                        <div className="qs-modal-content view-query-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close query modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setViewingQuery(null); }}>
+                        <div className="qs-modal-content view-query-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Student Query Details</h4>
                                     <p className="modal-subtitle">Submitted by {viewingQuery.name}</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setViewingQuery(null)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setViewingQuery(null)}>
                                     <X size={18} />
                                 </button>
                             </div>
@@ -1417,16 +1726,8 @@ export default function QueriesStories() {
                                         <div
                                             className="query-avatar-circle"
                                             style={{
-                                                backgroundColor:
-                                                    viewingQuery.colorClass === 'blue' ? '#dbeafe' :
-                                                        viewingQuery.colorClass === 'purple' ? '#e9d5ff' :
-                                                            viewingQuery.colorClass === 'green' ? '#a7f3d0' :
-                                                                viewingQuery.colorClass === 'orange' ? '#fed7aa' : '#e0e7ff',
-                                                color:
-                                                    viewingQuery.colorClass === 'blue' ? '#1e40af' :
-                                                        viewingQuery.colorClass === 'purple' ? '#581c87' :
-                                                            viewingQuery.colorClass === 'green' ? '#047857' :
-                                                                viewingQuery.colorClass === 'orange' ? '#c2410c' : '#4f46e5'
+                                                backgroundColor: getAvatarBgColor(viewingQuery.colorClass),
+                                                color: getAvatarTextColor(viewingQuery.colorClass)
                                             }}
                                         >
                                             {viewingQuery.avatar}
@@ -1459,7 +1760,7 @@ export default function QueriesStories() {
                                 </div>
 
                                 <div className="qs-modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                    <button className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
+                                    <button type="button" className="qs-cancel-btn" onClick={() => setViewingQuery(null)}>
                                         Close
                                     </button>
                                 </div>
@@ -1472,14 +1773,14 @@ export default function QueriesStories() {
 
             {
                 replyingQuery && (
-                    <div className="qs-modal-overlay" onClick={() => setReplyingQuery(null)}>
-                        <div className="qs-modal-content reply-query-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close reply modal backdrop" onClick={(e) => { if (e.target === e.currentTarget) setReplyingQuery(null); }}>
+                        <div className="qs-modal-content reply-query-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Reply to Query</h4>
                                     <p className="modal-subtitle">Replying to {replyingQuery.name}</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setReplyingQuery(null)}>
                                     <X size={18} />
                                 </button>
                             </div>
@@ -1494,10 +1795,11 @@ export default function QueriesStories() {
                                 </div>
 
                                 <div className="modal-field-section">
-                                    <label className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
+                                    <label htmlFor="query-reply-text" className="form-label" style={{ fontWeight: '600', fontSize: '0.82rem', color: '#334155' }}>
                                         Admin Response Message *
                                     </label>
                                     <textarea
+                                        id="query-reply-text"
                                         className="form-textarea-control"
                                         rows={4}
                                         placeholder="Type your official response to the student here..."
@@ -1523,21 +1825,27 @@ export default function QueriesStories() {
             }
             {
                 isStoryModalOpen && (
-                    <div className="qs-modal-overlay" onClick={() => setIsStoryModalOpen(false)}>
-                        <div className="qs-modal-content drive-form-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close edit story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setIsStoryModalOpen(false); }}>
+                        <div className="qs-modal-content drive-form-modal">
                             <div className="qs-modal-header">
                                 <div>
                                     <h4 className="modal-title">Edit Placement Story</h4>
                                     <p className="modal-subtitle">Update details or fix typos in the published story.</p>
                                 </div>
-                                <button className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
+                                <button type="button" className="qs-close-btn" onClick={() => setIsStoryModalOpen(false)}>
                                     <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleUpdateStory} className="qs-modal-form">
                                 <div className="qs-form-grid">
                                     <div className="qs-form-group full-width">
-                                        <div className="upload-photo-zone" onClick={() => fileInputRef.current?.click()} style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <button
+                                            type="button"
+                                            aria-label="Upload new photo"
+                                            className="upload-photo-zone"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            style={{ minHeight: '100px', cursor: 'pointer', border: '1px dashed #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', background: 'transparent' }}
+                                        >
                                             <input
                                                 type="file"
                                                 ref={fileInputRef}
@@ -1570,12 +1878,13 @@ export default function QueriesStories() {
                                                     <span className="upload-label">Upload New Photo</span>
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Student Name *</label>
+                                        <label htmlFor="edit-story-student-name" className="form-label">Student Name *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-student-name"
                                             required
                                             className="form-input-control"
                                             value={storyForm.studentName}
@@ -1584,9 +1893,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Company Name *</label>
+                                        <label htmlFor="edit-story-company-name" className="form-label">Company Name *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-company-name"
                                             required
                                             className="form-input-control"
                                             value={storyForm.companyName}
@@ -1595,9 +1905,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Job Role *</label>
+                                        <label htmlFor="edit-story-job-role" className="form-label">Job Role *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-job-role"
                                             required
                                             className="form-input-control"
                                             value={storyForm.jobRole}
@@ -1606,9 +1917,10 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group">
-                                        <label className="form-label">Package (LPA) *</label>
+                                        <label htmlFor="edit-story-package" className="form-label">Package (LPA) *</label>
                                         <input
                                             type="text"
+                                            id="edit-story-package"
                                             required
                                             className="form-input-control"
                                             value={storyForm.package}
@@ -1617,8 +1929,9 @@ export default function QueriesStories() {
                                         />
                                     </div>
                                     <div className="qs-form-group full-width">
-                                        <label className="form-label">Success Story *</label>
+                                        <label htmlFor="edit-story-text" className="form-label">Success Story *</label>
                                         <textarea
+                                            id="edit-story-text"
                                             required
                                             className="form-textarea-control"
                                             rows={4}
@@ -1643,8 +1956,8 @@ export default function QueriesStories() {
 
             {
                 deletingStory && (
-                    <div className="qs-modal-overlay" onClick={() => setDeletingStory(null)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close delete story backdrop" onClick={(e) => { if (e.target === e.currentTarget) setDeletingStory(null); }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg">
                                 <Trash2 size={22} />
                             </div>
@@ -1666,8 +1979,8 @@ export default function QueriesStories() {
             }
             {
                 confirmingPublish && (
-                    <div className="qs-modal-overlay" onClick={() => setConfirmingPublish(false)}>
-                        <div className="qs-delete-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="qs-modal-overlay" aria-label="Close confirm publish backdrop" onClick={(e) => { if (e.target === e.currentTarget) setConfirmingPublish(false); }}>
+                        <div className="qs-delete-modal-content">
                             <div className="delete-modal-icon-bg" style={{ backgroundColor: '#e0e7ff', color: '#4f46e5' }}>
                                 <CheckCircle2 size={22} />
                             </div>

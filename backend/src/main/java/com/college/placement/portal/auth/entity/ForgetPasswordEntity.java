@@ -21,4 +21,8 @@ public class ForgetPasswordEntity {
     private LocalDateTime requestTime;
 
     private LocalDateTime expiryTime;
+
+    private String token;
+
+    private Boolean used = false;
 }

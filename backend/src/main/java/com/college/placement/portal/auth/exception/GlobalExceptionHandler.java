@@ -1,5 +1,6 @@
 package com.college.placement.portal.auth.exception;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -61,5 +62,17 @@ public class GlobalExceptionHandler {
                         "message", ex.getReason()
                 ));
 
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleException(Exception e) {
+
+        e.printStackTrace();
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of(
+                        "error", "Something went wrong. Please try again later."
+                ));
     }
 }

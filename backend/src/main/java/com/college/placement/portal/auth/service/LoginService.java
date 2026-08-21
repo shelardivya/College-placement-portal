@@ -26,11 +26,6 @@ public class LoginService {
 
     public LoginResponse login(LoginRequest request) {
 
-        // password & confirm password mismatch
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            return new LoginResponse("Password and Confirm Password do not match", null, null);
-        }
-
         Optional<RegisterEntity> optionalUser =
                 registerRepository.findByEmail(request.getEmail());
 

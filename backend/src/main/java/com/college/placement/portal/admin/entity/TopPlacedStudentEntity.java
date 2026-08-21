@@ -34,6 +34,11 @@ public class TopPlacedStudentEntity {
     @Column(name = "created_at", insertable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "branch")
+    private String branch;
+
+    @Column(name = "passing_year")
+    private String passingYear;
     // ==========================
     // Getters & Setters
     // ==========================
@@ -84,5 +89,20 @@ public class TopPlacedStudentEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    public String getPassingYear() {
+        return passingYear;
+    }
+
+    public void setPassingYear(String passingYear) {
+        this.passingYear = passingYear;
     }
 }
