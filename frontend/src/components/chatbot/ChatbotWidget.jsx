@@ -24,6 +24,63 @@ function RobotIcon({ size = 28 }) {
   );
 }
 
+// Formats markdown syntax into clean styled JSX elements and strips ALL leftover asterisks completely
+function renderFormattedMessage(text) {
+  if (!text) return null;
+  const lines = String(text).split(/\r?\n/);
+  return lines.map((rawLine, idx) => {
+    let line = rawLine.trim();
+    if (!line) return <div key={idx} style={{ height: '4px' }} />;
+
+    // Detect bullet line format (starts with *, -, •, or digits like 1.)
+    const isBullet = /^[*•-]\s*/.test(line) || /^\d+\.\s*/.test(line);
+    
+    // Strip leading bullet marker
+    if (/^[*•-]\s*/.test(line)) {
+      line = line.replace(/^[*•-]\s*/, '');
+    } else if (/^\d+\.\s*/.test(line)) {
+      line = line.replace(/^\d+\.\s*/, '');
+    }
+
+    // Split by double asterisks **bold**
+    const boldParts = line.split(/(\*\*[^*]+\*\*)/g);
+    
+    const parsedElements = boldParts.map((part, bIdx) => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        // Extract content inside **...** and strip any inner asterisks
+        const content = part.slice(2, -2).replace(/\*/g, '');
+        return <strong key={bIdx}>{content}</strong>;
+      }
+      
+      // Split by single asterisk *italic*
+      const italicParts = part.split(/(\*[^*]+\*)/g);
+      return italicParts.map((subPart, iIdx) => {
+        if (subPart.startsWith('*') && subPart.endsWith('*') && subPart.length > 2) {
+          const content = subPart.slice(1, -1).replace(/\*/g, '');
+          return <em key={iIdx}>{content}</em>;
+        }
+        // STRIP ALL REMAINING ASTESISKS FROM PLAIN TEXT
+        return subPart.replace(/\*/g, '');
+      });
+    });
+
+    if (isBullet) {
+      return (
+        <div key={idx} className="chatbot-bullet-line" style={{ display: 'flex', gap: '8px', marginTop: '4px', marginBottom: '4px', alignItems: 'flex-start' }}>
+          <span style={{ color: '#2563eb', fontWeight: 'bold', fontSize: '1rem', lineHeight: '1.2' }}>•</span>
+          <div style={{ flex: 1, lineHeight: '1.5' }}>{parsedElements}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={idx} style={{ marginBottom: '4px', lineHeight: '1.5' }}>
+        {parsedElements}
+      </div>
+    );
+  });
+}
+
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -112,7 +169,7 @@ export default function ChatbotWidget() {
                     <div className="chatbot-msg-avatar"><RobotIcon size={28} /></div>
                   )}
                   <div className={`chatbot-bubble chatbot-bubble--${msg.role} ${msg.isError ? 'chatbot-bubble--error' : ''}`}>
-                    <div>{msg.text}</div>
+                    <div>{renderFormattedMessage(msg.text)}</div>
                     {msg.isError && (
                       <button
                         type="button"
