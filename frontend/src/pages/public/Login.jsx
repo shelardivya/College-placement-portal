@@ -332,28 +332,12 @@ function Login({ onNavigate, initialView }) {
         try {
             await forgotPassword(formData.email);
             localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email).toLowerCase());
-            setShowResetModal(true);
-            showToastMessage("Reset link sent! Previewing Email Inbox...", 'success', 2500);
+            showToastMessage("Password reset link sent to your email!", 'success', 3000, () => setLoginView('login'));
         } catch (error) {
             console.error("Forgot Password Error:", error);
-            // Even if API fails in offline/demo mode, show reset email modal so frontend flow can be demonstrated
             localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email || 'student@college.edu').toLowerCase());
-            setShowResetModal(true);
-            showToastMessage("Reset email generated! Opening Inbox preview...", 'info', 2500);
+            showToastMessage("Password reset link sent to your email!", 'success', 3000, () => setLoginView('login'));
         }
-    };
-
-    const handleSimulateClick = (token, email) => {
-        setShowResetModal(false);
-        const targetEmail = email || formData.email || localStorage.getItem('allowed_reset_email') || '';
-        const searchParams = new URLSearchParams(window.location.search);
-        searchParams.set('token', token || 'mock_reset_token');
-        searchParams.set('email', targetEmail);
-        window.history.pushState({}, '', `${window.location.pathname}?${searchParams.toString()}`);
-        
-        setFormData(prev => ({ ...prev, email: targetEmail }));
-        setLoginView('reset');
-        showToastMessage("Opened Reset Password page from email link!", 'success', 2000);
     };
 
     const handleResetSubmit = async () => {
@@ -728,7 +712,7 @@ function Login({ onNavigate, initialView }) {
                                         </div>
 
                                         {/* Password Strength Popover Checklist */}
-                                        {(isPasswordFocused || formData.password.length > 0) && (
+                                        {isPasswordFocused && (
                                             <div className="password-strength-popover">
                                                 <div className="strength-header">
                                                     <span className={`strength-title ${strengthTheme}`}>{strengthLabel}</span>
@@ -772,6 +756,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
+                                                onFocus={() => setIsPasswordFocused(false)}
                                                 autoComplete="off"
                                                 required
                                             />
