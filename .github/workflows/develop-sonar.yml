@@ -1,17 +1,20 @@
-name: Check Developer Code
+name: Develop Branch SonarQube Analysis
 
 on:
-  pull_request:
+  push:
     branches:
       - develop
 
 permissions:
   contents: read
-  pull-requests: read
+
+concurrency:
+  group: develop-sonar
+  cancel-in-progress: true
 
 jobs:
-  build-backend:
-    name: Backend Build and SonarQube
+  backend-sonar:
+    name: Backend Develop Sonar Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -39,8 +42,8 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-  build-frontend:
-    name: Frontend Build and SonarQube
+  frontend-sonar:
+    name: Frontend Develop Sonar Analysis
     runs-on: ubuntu-latest
 
     steps:
