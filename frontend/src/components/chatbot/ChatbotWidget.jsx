@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useChatbot, LANGUAGE_OPTIONS } from "../../hooks/useChatbot";
+import { useChatbot } from "../../hooks/useChatbot";
 import "./ChatbotWidget.css";
 import roboIcon from "../../assets/robo icon.jpg";
 
@@ -24,89 +24,67 @@ function RobotIcon({ size = 28 }) {
   );
 }
 
-// Custom animated language dropdown component
-function LanguageDropdown({ language, changeLanguage }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
+// Formats markdown syntax into clean styled JSX elements and strips ALL leftover asterisks completely
+function renderFormattedMessage(text) {
+  if (!text) return null;
+  const lines = String(text).split(/\r?\n/);
+  return lines.map((rawLine, idx) => {
+    let line = rawLine.trim();
+    if (!line) return <div key={idx} style={{ height: '4px' }} />;
 
-  const currentOption = LANGUAGE_OPTIONS.find(opt => opt.code === language) || LANGUAGE_OPTIONS[0];
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+    // Detect bullet line format (starts with *, -, •, or digits like 1.)
+    const isBullet = /^[*•-]\s*/.test(line) || /^\d+\.\s*/.test(line);
+    
+    // Strip leading bullet marker
+    if (/^[*•-]\s*/.test(line)) {
+      line = line.replace(/^[*•-]\s*/, '');
+    } else if (/^\d+\.\s*/.test(line)) {
+      line = line.replace(/^\d+\.\s*/, '');
     }
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
 
-  return (
-    <div ref={dropdownRef} className="chatbot-lang-container">
-      <button
-        type="button"
-        className="chatbot-lang-btn"
-        onClick={() => setIsOpen(!isOpen)}
-        title="Select Language"
-      >
-        <span>{currentOption.label}</span>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill="none"
-          style={{
-            transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s ease"
-          }}
-        >
-          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+    // Split by double asterisks **bold**
+    const boldParts = line.split(/(\*\*[^*]+\*\*)/g);
+    
+    const parsedElements = boldParts.map((part, bIdx) => {
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+        // Extract content inside **...** and strip any inner asterisks
+        const content = part.slice(2, -2).replace(/\*/g, '');
+        return <strong key={bIdx}>{content}</strong>;
+      }
+      
+      // Split by single asterisk *italic*
+      const italicParts = part.split(/(\*[^*]+\*)/g);
+      return italicParts.map((subPart, iIdx) => {
+        if (subPart.startsWith('*') && subPart.endsWith('*') && subPart.length > 2) {
+          const content = subPart.slice(1, -1).replace(/\*/g, '');
+          return <em key={iIdx}>{content}</em>;
+        }
+        // STRIP ALL REMAINING ASTESISKS FROM PLAIN TEXT
+        return subPart.replace(/\*/g, '');
+      });
+    });
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="chatbot-lang-menu"
-            initial={{ opacity: 0, y: -6, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -6, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-          >
-            {LANGUAGE_OPTIONS.map((opt) => {
-              const isSelected = opt.code === language;
-              return (
-                <button
-                  key={opt.code}
-                  type="button"
-                  className={`chatbot-lang-option ${isSelected ? "chatbot-lang-option--selected" : ""}`}
-                  onClick={() => {
-                    changeLanguage(opt.code);
-                    setIsOpen(false);
-                  }}
-                >
-                  <span>{opt.fullLabel}</span>
-                  {isSelected && (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M20 6L9 17l-5-5" stroke="#2563EB" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+    if (isBullet) {
+      return (
+        <div key={idx} className="chatbot-bullet-line" style={{ display: 'flex', gap: '8px', marginTop: '4px', marginBottom: '4px', alignItems: 'flex-start' }}>
+          <span style={{ color: '#2563eb', fontWeight: 'bold', fontSize: '1rem', lineHeight: '1.2' }}>•</span>
+          <div style={{ flex: 1, lineHeight: '1.5' }}>{parsedElements}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={idx} style={{ marginBottom: '4px', lineHeight: '1.5' }}>
+        {parsedElements}
+      </div>
+    );
+  });
 }
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
-  const { messages, isLoading, language, changeLanguage, t, sendMessage, retryMessage, clearChat } = useChatbot();
+  const { messages, isLoading, t, sendMessage, retryMessage, clearChat } = useChatbot();
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -162,9 +140,6 @@ export default function ChatbotWidget() {
                 </div>
               </div>
               <div className="chatbot-header__actions">
-                {/* Custom Animated Language Dropdown */}
-                <LanguageDropdown language={language} changeLanguage={changeLanguage} />
-
                 <motion.button
                   className="chatbot-header__clear"
                   onClick={clearChat}
@@ -194,7 +169,7 @@ export default function ChatbotWidget() {
                     <div className="chatbot-msg-avatar"><RobotIcon size={28} /></div>
                   )}
                   <div className={`chatbot-bubble chatbot-bubble--${msg.role} ${msg.isError ? 'chatbot-bubble--error' : ''}`}>
-                    <div>{msg.text}</div>
+                    <div>{renderFormattedMessage(msg.text)}</div>
                     {msg.isError && (
                       <button
                         type="button"

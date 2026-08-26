@@ -29,6 +29,7 @@ api.interceptors.request.use((config) => {
     if (config.url) {
         if (config.url.startsWith('/admin/') ||
             config.url.startsWith('/ai/') ||
+            config.url.startsWith('/public/') ||
             (config.url.startsWith('/student/') && !config.url.includes('resume-match'))) {
             config.url = `/api${config.url}`;
         }

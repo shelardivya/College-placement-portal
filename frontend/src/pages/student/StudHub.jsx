@@ -914,7 +914,7 @@ export default function StudHub() {
         <motion.div className="studhub-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
             <div className="studhub-banner">
                 <div className="studhub-banner-text">
-                    <h2>Stud Hub <span>🚀</span></h2>
+                    <h2>Student Hub <span>🚀</span></h2>
                     <p>Stay updated with placement stories, upcoming campus drives, and raise your queries — all in one place.</p>
                 </div>
                 <div className="welcome-date-badge">
