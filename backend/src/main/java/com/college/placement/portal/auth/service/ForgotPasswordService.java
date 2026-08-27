@@ -447,7 +447,7 @@ public class ForgotPasswordService {
       >
 
         <a
-          href="YOUR_RESET_LINK_HERE"
+          href="{{RESET_LINK}}"
           class="reset-button"
           style="
             display: inline-block;
