@@ -97,7 +97,7 @@ function resolvePhotoUrl(serverPath, fallbackUrl = '') {
     }
     if (!serverPath || typeof serverPath !== 'string') return fallbackUrl;
     if (serverPath.startsWith("http") || serverPath.startsWith("data:")) return serverPath;
-    
+
     const cleanPath = serverPath.replace(/\\/g, '/');
     const uploadsIdx = cleanPath.indexOf("/uploads/");
     const baseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/api\/?$/, '');
@@ -1280,7 +1280,7 @@ export default function
                         try {
                             localStorage.setItem(avatarKey, finalAvatar);
                             localStorage.setItem("student_avatar", finalAvatar);
-                        } catch {}
+                        } catch { }
                     }
 
                     // Update localStorage so next time we refresh or login, it has the fresh data!
@@ -1383,15 +1383,15 @@ export default function
             if (base64) {
                 setTempProfile(prev => ({ ...prev, avatarUrl: base64 }));
                 setProfile(prev => ({ ...prev, avatarUrl: base64 }));
-                try { localStorage.setItem(avatarKey, base64); } catch {}
+                try { localStorage.setItem(avatarKey, base64); } catch { }
 
                 const rawUser = localStorage.getItem("user");
                 let userObj = {};
                 if (rawUser) {
-                    try { userObj = JSON.parse(rawUser) || {}; } catch {}
+                    try { userObj = JSON.parse(rawUser) || {}; } catch { }
                 }
                 userObj.avatarUrl = base64;
-                try { localStorage.setItem("user", JSON.stringify(userObj)); } catch {}
+                try { localStorage.setItem("user", JSON.stringify(userObj)); } catch { }
             }
 
             // Call backend API (POST /student/profile/photo)
@@ -1402,7 +1402,7 @@ export default function
                 if (finalPhotoUrl) {
                     setTempProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
                     setProfile(prev => ({ ...prev, avatarUrl: finalPhotoUrl }));
-                    try { localStorage.setItem(avatarKey, finalPhotoUrl); } catch {}
+                    try { localStorage.setItem(avatarKey, finalPhotoUrl); } catch { }
                 }
             } catch (apiErr) {
                 console.warn("Backend photo upload warning:", apiErr);
@@ -1427,7 +1427,7 @@ export default function
         const rawUser = localStorage.getItem("user");
         let userObj = {};
         if (rawUser) {
-            try { userObj = JSON.parse(rawUser) || {}; } catch {}
+            try { userObj = JSON.parse(rawUser) || {}; } catch { }
         }
         delete userObj.avatarUrl;
         localStorage.setItem("user", JSON.stringify(userObj));
@@ -1908,7 +1908,7 @@ export default function
                     >
                         <Menu className="mobile-menu-icon" size={22} />
                     </button>
-                    
+
                     <div className="header-logo">
                         <GraduationCap className="logo-icon" />
                         <h1 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#2563eb' }}>Campus_Hire</h1>
@@ -1927,7 +1927,7 @@ export default function
                         className={`student-nav-tab ${activeTab === 'studhub' ? 'active' : ''}`}
                         onClick={() => setActiveTab('studhub')}
                     >
-                        <span>Stud Hub</span>
+                        <span>Student Hub</span>
                         {activeTab === 'studhub' && <span className="tab-underline" />}
                     </button>
                     <button type="button"
