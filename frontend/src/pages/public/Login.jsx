@@ -329,14 +329,20 @@ function Login({ onNavigate, initialView }) {
     };
 
     const handleForgotSubmit = async () => {
+        const cleanEmail = getStorageString(formData.email).trim();
+        if (!cleanEmail) {
+            showToastMessage("Please enter your registered email address.", 'error', 3000);
+            return;
+        }
+
         try {
-            await forgotPassword(formData.email);
-            localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email).toLowerCase());
-            showToastMessage("Password reset link sent to your email!", 'success', 3000, () => setLoginView('login'));
+            await forgotPassword(cleanEmail);
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(cleanEmail).toLowerCase());
         } catch (error) {
             console.error("Forgot Password Error:", error);
-            localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email || 'student@college.edu').toLowerCase());
-            showToastMessage("Password reset link sent to your email!", 'success', 3000, () => setLoginView('login'));
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(cleanEmail).toLowerCase());
+        } finally {
+            showToastMessage("Password reset link sent to your email!", 'success', 3500, () => setLoginView('login'));
         }
     };
 
