@@ -82,513 +82,531 @@ public class ForgotPasswordService {
         // ==========================================
 
         String emailBody = """
-                <!DOCTYPE html>
-                <html>
-
-                <head>
-
-                    <meta charset="UTF-8">
-
-                    <meta name="viewport"
-                          content="width=device-width, initial-scale=1.0">
-
-                    <title>Campus Hire - Password Reset</title>
-
-                </head>
-
-
-                <body style="
-                    margin:0;
-                    padding:0;
-                    background-color:#f4f8fc;
-                    font-family:Arial, Helvetica, sans-serif;
-                ">
-
-
-                <!-- MAIN BACKGROUND -->
-
-                <table width="100%"
-                       cellpadding="0"
-                       cellspacing="0"
-                       border="0"
-                       style="
-                           background-color:#f4f8fc;
-                           padding:40px 15px;
-                       ">
-
-                    <tr>
-
-                        <td align="center">
-
-
-                            <!-- MAIN CARD -->
-
-                            <table width="600"
-                                   cellpadding="0"
-                                   cellspacing="0"
-                                   border="0"
-                                   style="
-                                       max-width:600px;
-                                       width:100%%;
-                                       background-color:#ffffff;
-                                       border-radius:14px;
-                                       overflow:hidden;
-                                       box-shadow:0 4px 18px rgba(0,0,0,0.08);
-                                   ">
-
-
-                                <!-- ========================= -->
-                                <!-- HEADER -->
-                                <!-- ========================= -->
-
-                                <tr>
-
-                                    <td align="center"
-                                        style="
-                                            background-color:#0d6efd;
-                                            padding:30px 20px;
-                                        ">
-
-
-                                        <!-- Graduation Icon -->
-
-                                        <div style="
-                                            color:#ffffff;
-                                            font-size:28px;
-                                            margin-bottom:8px;
-                                        ">
-
-                                            🎓
-
-                                        </div>
-
-
-                                        <!-- Campus Hire -->
-
-                                        <div style="
-                                            color:#ffffff;
-                                            font-size:30px;
-                                            font-weight:bold;
-                                            letter-spacing:0.5px;
-                                        ">
-
-                                            Campus Hire
-
-                                        </div>
-
-
-                                        <!-- College Placement Portal -->
-
-                                        <div style="
-                                            color:#dbeafe;
-                                            font-size:15px;
-                                            margin-top:8px;
-                                        ">
-
-                                            College Placement Portal
-
-                                        </div>
-
-
-                                    </td>
-
-                                </tr>
-
-
-                                <!-- ========================= -->
-                                <!-- CONTENT -->
-                                <!-- ========================= -->
-
-                                <tr>
-
-                                    <td style="
-                                        padding:40px 35px;
-                                    ">
-
-
-                                        <!-- Main Heading -->
-
-                                        <h1 style="
-                                            margin:0 0 20px 0;
-                                            color:#172b4d;
-                                            font-size:26px;
-                                            text-align:center;
-                                        ">
-
-                                            Reset Your Password
-
-                                        </h1>
-
-
-                                        <!-- Secure Badge -->
-
-                                        <div style="
-                                            text-align:center;
-                                            margin-bottom:25px;
-                                        ">
-
-                                            <span style="
-                                                display:inline-block;
-                                                background-color:#eff6ff;
-                                                color:#0d6efd;
-                                                border:1px solid #bfdbfe;
-                                                padding:7px 14px;
-                                                border-radius:20px;
-                                                font-size:12px;
-                                                font-weight:bold;
-                                            ">
-
-                                                🔒 SECURE PASSWORD RESET
-
-                                            </span>
-
-                                        </div>
-
-
-                                        <!-- Main Message -->
-
-                                        <p style="
-                                            margin:0 0 18px 0;
-                                            color:#53657d;
-                                            font-size:15px;
-                                            line-height:1.7;
-                                            text-align:center;
-                                        ">
-
-                                            We received a request to reset
-                                            the password for your Campus Hire
-                                            account.
-
-                                        </p>
-
-
-                                        <p style="
-                                            margin:0 0 25px 0;
-                                            color:#53657d;
-                                            font-size:15px;
-                                            line-height:1.7;
-                                            text-align:center;
-                                        ">
-
-                                            Click the button below to create
-                                            a new password.
-
-                                        </p>
-
-
-                                        <!-- ========================= -->
-                                        <!-- ACCOUNT INFORMATION -->
-                                        <!-- ========================= -->
-
-                                        <div style="
-                                            background-color:#f8fafc;
-                                            border:1px solid #e5e7eb;
-                                            border-radius:8px;
-                                            padding:13px 16px;
-                                            margin-bottom:25px;
-                                            text-align:center;
-                                        ">
-
-                                            <span style="
-                                                color:#64748b;
-                                                font-size:13px;
-                                            ">
-
-                                                Password reset requested for
-                                                your
-
-                                                <strong style="
-                                                    color:#172b4d;
-                                                ">
-
-                                                    Campus Hire account
-
-                                                </strong>
-
-                                            </span>
-
-                                        </div>
-
-
-                                        <!-- ========================= -->
-                                        <!-- RESET BUTTON -->
-                                        <!-- ========================= -->
-
-                                        <table width="100%%"
-                                               cellpadding="0"
-                                               cellspacing="0"
-                                               border="0">
-
-                                            <tr>
-
-                                                <td align="center">
-
-
-                                                    <a href="{{RESET_LINK}}"
-                                                       style="
-                                                           display:inline-block;
-                                                           background-color:#0d6efd;
-                                                           color:#ffffff;
-                                                           text-decoration:none;
-                                                           font-size:16px;
-                                                           font-weight:bold;
-                                                           padding:15px 35px;
-                                                           border-radius:8px;
-                                                           letter-spacing:0.3px;
-                                                       ">
-
-                                                        🔐 RESET PASSWORD →
-
-                                                    </a>
-
-
-                                                </td>
-
-                                            </tr>
-
-                                        </table>
-
-
-                                        <!-- ========================= -->
-                                        <!-- TIMER INFORMATION -->
-                                        <!-- ========================= -->
-
-                                        <div style="
-                                            text-align:center;
-                                            margin-top:28px;
-                                            margin-bottom:12px;
-                                        ">
-
-                                            <span style="
-                                                color:#0d6efd;
-                                                font-size:13px;
-                                                font-weight:bold;
-                                            ">
-
-                                                ⏱️ Your reset link is active
-                                                for 15 minutes
-
-                                            </span>
-
-                                        </div>
-
-
-                                        <!-- ========================= -->
-                                        <!-- EXPIRY BOX -->
-                                        <!-- ========================= -->
-
-                                        <div style="
-                                            margin-top:15px;
-                                            background-color:#eff6ff;
-                                            border-left:4px solid #0d6efd;
-                                            padding:16px 18px;
-                                            border-radius:6px;
-                                        ">
-
-
-                                            <p style="
-                                                margin:0;
-                                                color:#24527a;
-                                                font-size:14px;
-                                                line-height:1.6;
-                                            ">
-
-                                                <strong>
-                                                    Important:
-                                                </strong>
-
-                                                This password reset link is
-                                                valid for only
-
-                                                <strong>
-                                                    15 minutes
-                                                </strong>.
-
-                                                After that, the link will
-                                                expire.
-
-                                            </p>
-
-
-                                        </div>
-
-
-                                        <!-- ========================= -->
-                                        <!-- SECURITY MESSAGE -->
-                                        <!-- ========================= -->
-
-                                        <p style="
-                                            margin-top:28px;
-                                            margin-bottom:10px;
-                                            color:#718096;
-                                            font-size:13px;
-                                            line-height:1.6;
-                                            text-align:center;
-                                        ">
-
-                                            For your security, this reset
-                                            link can be used only once.
-
-                                        </p>
-
-
-                                        <p style="
-                                            margin:0;
-                                            color:#718096;
-                                            font-size:13px;
-                                            line-height:1.6;
-                                            text-align:center;
-                                        ">
-
-                                            If you did not request a password
-                                            reset, you can safely ignore this
-                                            email.
-
-                                        </p>
-
-
-                                        <!-- ========================= -->
-                                        <!-- SECURITY NOTICE -->
-                                        <!-- ========================= -->
-
-                                        <div style="
-                                            margin-top:30px;
-                                            padding:20px;
-                                            background-color:#f8fafc;
-                                            border-radius:10px;
-                                            border:1px solid #e5e7eb;
-                                        ">
-
-
-                                            <div style="
-                                                text-align:center;
-                                                color:#172b4d;
-                                                font-size:15px;
-                                                font-weight:bold;
-                                                margin-bottom:12px;
-                                            ">
-
-                                                🛡️ Security Notice
-
-                                            </div>
-
-
-                                            <p style="
-                                                margin:5px 0;
-                                                color:#64748b;
-                                                font-size:12px;
-                                                line-height:1.6;
-                                            ">
-
-                                                ✓ This reset link is unique
-                                                to your account.
-
-                                            </p>
-
-
-                                            <p style="
-                                                margin:5px 0;
-                                                color:#64748b;
-                                                font-size:12px;
-                                                line-height:1.6;
-                                            ">
-
-                                                ✓ The link can be used only
-                                                once.
-
-                                            </p>
-
-
-                                            <p style="
-                                                margin:5px 0;
-                                                color:#64748b;
-                                                font-size:12px;
-                                                line-height:1.6;
-                                            ">
-
-                                                ✓ The link automatically
-                                                expires after 15 minutes.
-
-                                            </p>
-
-
-                                        </div>
-
-
-                                    </td>
-
-                                </tr>
-
-
-                                <!-- ========================= -->
-                                <!-- FOOTER -->
-                                <!-- ========================= -->
-
-                                <tr>
-
-                                    <td align="center"
-                                        style="
-                                            background-color:#f8fafc;
-                                            padding:22px 20px;
-                                            border-top:1px solid #e5e7eb;
-                                        ">
-
-
-                                        <p style="
-                                            margin:0;
-                                            color:#64748b;
-                                            font-size:12px;
-                                        ">
-
-                                            © 2026 Campus Hire
-
-                                        </p>
-
-
-                                        <p style="
-                                            margin:6px 0 0 0;
-                                            color:#94a3b8;
-                                            font-size:12px;
-                                        ">
-
-                                            College Placement Portal
-
-                                        </p>
-
-
-                                        <!-- Added Tagline -->
-
-                                        <p style="
-                                            margin:10px 0 0 0;
-                                            color:#0d6efd;
-                                            font-size:12px;
-                                            font-weight:bold;
-                                        ">
-
-                                            Connecting Students with
-                                            Opportunities
-
-                                        </p>
-
-
-                                    </td>
-
-                                </tr>
-
-
-                            </table>
-
-
-                        </td>
-
-                    </tr>
-
-                </table>
-
-
-                </body>
-
-                </html>
+ <!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Campus_Hire - Reset Password</title>
+
+  <style>
+    @media only screen and (max-width: 600px) {
+
+      .email-card {
+        width: 100% ;
+        border-radius: 0 ;
+      }
+
+      .header {
+        height: 80px ;
+      }
+
+      .header-left {
+        padding-left: 20px ;
+      }
+
+      .brand-name {
+        font-size: 23px ;
+      }
+
+      .brand-cap {
+        width: 55px ;
+        height: 42px ;
+      }
+
+      .header-right {
+        padding-right: 15px ;
+      }
+
+      .plane {
+        width: 50px ;
+        height: 40px ;
+      }
+
+      .main-body {
+        padding: 25px 20px 25px ;
+      }
+
+      .security-area {
+        width: 140px ;
+        height: 115px ;
+      }
+
+      .email-title {
+        font-size: 26px ;
+      }
+
+      .content-text {
+        font-size: 16px ;
+        line-height: 1.6 ;
+      }
+
+      .reset-button {
+        width: 100% ;
+        max-width: 320px ;
+        padding: 16px 0 ;
+        font-size: 19px ;
+      }
+
+      .notice-text {
+        font-size: 15px ;
+      }
+
+      .footer {
+        padding: 18px 15px ;
+        font-size: 14px ;
+      }
+
+    }
+  </style>
+
+</head>
+
+
+<body
+  style="
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f6fb;
+    font-family: Arial, Helvetica, sans-serif;
+  "
+>
+
+  <!-- MAIN CARD -->
+
+  <div
+    class="email-card"
+    style="
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      overflow: hidden;
+      background-color: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+    "
+  >
+
+
+    <!-- HEADER -->
+
+    <div
+      class="header"
+      style="
+        height: 90px;
+        background: linear-gradient(
+          90deg,
+          #173d8c,
+          #203f91,
+          #334db4
+        );
+        position: relative;
+        overflow: hidden;
+      "
+    >
+
+      <table
+        role="presentation"
+        width="100%"
+        height="90"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+      >
+        <tr>
+
+          <!-- BRAND -->
+
+          <td
+            class="header-left"
+            style="
+              padding-left: 45px;
+              vertical-align: middle;
+            "
+          >
+
+            <svg
+              class="brand-cap"
+              width="65"
+              height="50"
+              viewBox="0 0 76 58"
+              xmlns="http://www.w3.org/2000/svg"
+              style="
+                display: inline-block;
+                vertical-align: middle;
+                margin-right: 10px;
+              "
+            >
+              <polygon
+                points="38,4 72,20 38,36 4,20"
+                fill="#ffffff"
+              />
+
+              <polygon
+                points="16,27 38,37 60,27 60,42 38,52 16,42"
+                fill="#ffffff"
+              />
+
+              <line
+                x1="10"
+                y1="20"
+                x2="10"
+                y2="43"
+                stroke="#ffffff"
+                stroke-width="3"
+              />
+
+              <circle
+                cx="10"
+                cy="46"
+                r="3"
+                fill="#ffffff"
+              />
+            </svg>
+
+
+            <span
+              class="brand-name"
+              style="
+                color: #ffffff;
+                font-size: 28px;
+                font-weight: 700;
+                vertical-align: middle;
+              "
+            >
+              Campus_Hire
+            </span>
+
+          </td>
+
+
+          <!-- DECORATION -->
+
+          <td
+            class="header-right"
+            align="right"
+            style="
+              padding-right: 30px;
+              vertical-align: middle;
+            "
+          >
+
+            <span
+              style="
+                color: #ffffff;
+                font-size: 16px;
+                margin-right: 15px;
+              "
+            >
+              ✦
+            </span>
+
+
+            <svg
+              class="plane"
+              width="65"
+              height="50"
+              viewBox="0 0 80 60"
+              xmlns="http://www.w3.org/2000/svg"
+              style="vertical-align: middle;"
+            >
+              <polygon
+                points="4,12 76,2 48,54 35,31"
+                fill="#dce7ff"
+              />
+
+              <polygon
+                points="35,31 76,2 23,26"
+                fill="#ffffff"
+              />
+
+              <polygon
+                points="35,31 48,54 44,29"
+                fill="#aebff2"
+              />
+            </svg>
+
+          </td>
+
+        </tr>
+      </table>
+
+    </div>
+
+
+    <!-- MAIN BODY -->
+
+    <div
+      class="main-body"
+      style="
+        padding: 30px 70px 25px;
+        background: linear-gradient(
+          180deg,
+          #f7f9ff,
+          #ffffff 35%
+        );
+      "
+    >
+
+
+      <!-- SECURITY ICON -->
+
+      <div
+        class="security-area"
+        style="
+          width: 160px;
+          height: 125px;
+          margin: 0 auto 5px;
+          text-align: center;
+          font-size: 90px;
+          line-height: 125px;
+        "
+      >
+        🔒
+      </div>
+
+
+      <!-- TITLE -->
+
+      <h1
+        class="email-title"
+        style="
+          margin: 0;
+          text-align: center;
+          color: #1b2946;
+          font-size: 30px;
+          line-height: 1.3;
+        "
+      >
+        Reset Your Password
+      </h1>
+
+
+      <!-- UNDERLINE -->
+
+      <div
+        style="
+          width: 55px;
+          height: 3px;
+          margin: 16px auto 28px;
+          background-color: #2457c6;
+          border-radius: 5px;
+        "
+      ></div>
+
+
+      <!-- CONTENT -->
+
+      <p
+        class="content-text"
+        style="
+          margin: 0 0 14px;
+          color: #273449;
+          font-size: 18px;
+          line-height: 1.6;
+        "
+      >
+        Hi there,
+      </p>
+
+
+      <p
+        class="content-text"
+        style="
+          margin: 0;
+          color: #273449;
+          font-size: 18px;
+          line-height: 1.7;
+        "
+      >
+        We received a request to reset your password for your
+        <strong style="color: #2452aa;">
+          Campus_Hire
+        </strong>
+        account.
+
+        <br>
+
+        Click the button below to create a new password.
+      </p>
+
+
+      <!-- BUTTON -->
+
+      <div
+        style="
+          text-align: center;
+          margin: 24px 0 18px;
+        "
+      >
+
+        <a
+          href="YOUR_RESET_LINK_HERE"
+          class="reset-button"
+          style="
+            display: inline-block;
+            width: 270px;
+            padding: 17px 0;
+            background: linear-gradient(
+              135deg,
+              #2d62dc,
+              #153eab
+            );
+            border-radius: 8px;
+            color: #ffffff;
+            text-decoration: none;
+            text-align: center;
+            font-size: 21px;
+            font-weight: 700;
+          "
+        >
+          Reset Password
+        </a>
+
+      </div>
+
+
+      <!-- EXPIRY -->
+
+      <p
+        class="content-text"
+        style="
+          margin: 0 0 20px;
+          text-align: center;
+          color: #475467;
+          font-size: 17px;
+        "
+      >
+        ⏱ This link will expire in
+        <strong style="color: #214ba6;">
+          15 minutes.
+        </strong>
+      </p>
+
+
+      <!-- DIVIDER -->
+
+      <div
+        style="
+          height: 1px;
+          background-color: #d9dfe9;
+          margin: 18px 0;
+        "
+      ></div>
+
+
+      <!-- NOTICE -->
+
+      <table
+        role="presentation"
+        width="100%"
+        cellpadding="0"
+        cellspacing="0"
+        border="0"
+      >
+        <tr>
+
+          <td
+            style="
+              width: 45px;
+              vertical-align: middle;
+            "
+          >
+
+            <div
+              style="
+                width: 34px;
+                height: 34px;
+                line-height: 34px;
+                text-align: center;
+                border-radius: 50%;
+                background-color: #e7efff;
+                color: #2457c6;
+                font-weight: 700;
+              "
+            >
+              i
+            </div>
+
+          </td>
+
+
+          <td
+            class="notice-text"
+            style="
+              color: #374357;
+              font-size: 17px;
+              line-height: 1.5;
+            "
+          >
+            If you didn’t request a password reset,
+            you can ignore this email.
+          </td>
+
+        </tr>
+      </table>
+
+
+      <!-- SIGNATURE -->
+
+      <div style="margin-top: 20px;">
+
+        <p
+          class="content-text"
+          style="
+            margin: 0 0 5px;
+            color: #374357;
+            font-size: 17px;
+          "
+        >
+          Thanks,
+        </p>
+
+        <p
+          class="content-text"
+          style="
+            margin: 0;
+            color: #374357;
+            font-size: 17px;
+          "
+        >
+          The
+          <strong style="color: #2452aa;">
+            Campus_Hire
+          </strong>
+          Team
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <!-- FOOTER -->
+
+    <div
+      class="footer"
+      style="
+        padding: 20px;
+        text-align: center;
+        background-color: #eef2f8;
+        color: #566174;
+        font-size: 15px;
+      "
+    >
+      © 2026 Campus_Hire. All rights reserved.
+    </div>
+
+  </div>
+
+</body>
+</html>
                 """;
 
 
