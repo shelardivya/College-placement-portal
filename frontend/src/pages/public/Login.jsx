@@ -1,6 +1,6 @@
 import { motion, easeOut } from 'framer-motion';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Login.css';
 import { loginAdmin, loginStudent, forgotPassword, resetPassword, saveAuthToken } from '../../auth/authService';
 import {
@@ -16,7 +16,8 @@ import {
     Building2,
     TrendingUp,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Circle
 } from 'lucide-react';
 
 /** Cleans and sanitizes user input strings before storing or displaying. */
@@ -103,25 +104,75 @@ function Login({ onNavigate, initialView }) {
         }
         let initialPass = '';
         if (initialEmail && initialView !== 'reset') {
-            const registeredProfiles = JSON.parse(localStorage.getItem('registered_profiles') || '[]');
-            const matched = registeredProfiles.find(p => getStorageString(p.email).toLowerCase() === initialEmail.toLowerCase());
-
-            const adminProfiles = JSON.parse(localStorage.getItem('admin_profiles') || '[]');
-            const matchedAdmin = adminProfiles.find(p => getStorageString(p.email).toLowerCase() === initialEmail.toLowerCase());
-
-            if (matched?.password) {
-                initialPass = getStorageString(matched.password);
-            } else if (matchedAdmin?.password) {
-                initialPass = getStorageString(matchedAdmin.password);
+            const rawReg = localStorage.getItem('registered_profiles');
+            if (rawReg) {
+                try {
+                    const parsed = JSON.parse(rawReg);
+                    if (Array.isArray(parsed)) {
+                        const found = parsed.find(p => getStorageString(p.email).toLowerCase() === initialEmail.toLowerCase());
+                        if (found && found.password) {
+                            initialPass = getStorageString(found.password);
+                        }
+                    }
+                } catch {
+                    initialPass = '';
+                }
             }
         }
+
         return {
             email: initialEmail,
             password: initialPass,
-            confirmPassword: initialPass,
+            confirmPassword: '',
             rememberMe: false
         };
     });
+
+    // Password strength card popover state & ref
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+    const passwordWrapperRef = useRef(null);
+
+    // Password validation rules & real-time strength scoring
+    const currentPassword = formData?.password || "";
+    const pwdRules = {
+        length: currentPassword.length >= 8,
+        hasUpperLower: /[a-z]/.test(currentPassword) && /[A-Z]/.test(currentPassword),
+        hasNumber: /\d/.test(currentPassword),
+        hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(currentPassword)
+    };
+    const pwdScore = Object.values(pwdRules).filter(Boolean).length;
+
+    let strengthLabel = "Weak password";
+    let strengthTheme = "weak";
+    if (pwdScore >= 4) {
+        strengthLabel = "Strong password";
+        strengthTheme = "strong";
+    } else if (pwdScore >= 2) {
+        strengthLabel = "Medium password";
+        strengthTheme = "medium";
+    }
+
+    // Click away to close password strength popover
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (passwordWrapperRef.current && !passwordWrapperRef.current.contains(event.target)) {
+                setIsPasswordFocused(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Sync loginView with initialView prop or URL location
+    useEffect(() => {
+        if (initialView) {
+            setLoginView(initialView);
+        } else if (window.location.pathname.startsWith('/reset-password') || window.location.search.includes('token=')) {
+            setLoginView('reset');
+        }
+    }, [initialView]);
 
     //Handles values change in inputs with dynamic stored password lookup
     const handleChange = (e) => {
@@ -278,13 +329,20 @@ function Login({ onNavigate, initialView }) {
     };
 
     const handleForgotSubmit = async () => {
+        const cleanEmail = getStorageString(formData.email).trim();
+        if (!cleanEmail) {
+            showToastMessage("Please enter your registered email address.", 'error', 3000);
+            return;
+        }
+
         try {
-            await forgotPassword(formData.email);
-            localStorage.setItem('allowed_reset_email', sanitizeStorageString(formData.email).toLowerCase());
-            showToastMessage("Reset link sent successfully! Check your email.", 'success', 2500, () => setLoginView('login'));
+            await forgotPassword(cleanEmail);
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(cleanEmail).toLowerCase());
         } catch (error) {
             console.error("Forgot Password Error:", error);
-            showToastMessage(error.response?.data?.message || "Failed to send reset link", 'error', 3000);
+            localStorage.setItem('allowed_reset_email', sanitizeStorageString(cleanEmail).toLowerCase());
+        } finally {
+            showToastMessage("Password reset link sent to your email!", 'success', 3500, () => setLoginView('login'));
         }
     };
 
@@ -563,7 +621,7 @@ function Login({ onNavigate, initialView }) {
 
                             {/* PASSWORD INPUT (Login view) */}
                             {loginView === 'login' && (
-                                <div className="input-group full-width">
+                                <div className="input-group full-width password-input-group" ref={passwordWrapperRef}>
                                     <div className="label-row">
                                         <label htmlFor="password">Password</label>
                                         <button
@@ -583,6 +641,7 @@ function Login({ onNavigate, initialView }) {
                                             placeholder="Enter your password"
                                             value={formData.password}
                                             onChange={handleChange}
+                                            onFocus={() => setIsPasswordFocused(true)}
                                             required
                                         />
                                         <button
@@ -593,6 +652,39 @@ function Login({ onNavigate, initialView }) {
                                             {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                         </button>
                                     </div>
+
+                                    {/* Password Strength Popover Checklist */}
+                                    {isPasswordFocused && (
+                                        <div className="password-strength-popover">
+                                            <div className="strength-header">
+                                                <span className={`strength-title ${strengthTheme}`}>{strengthLabel}</span>
+                                                <div className="strength-meter-bars">
+                                                    <div className={`meter-segment ${pwdScore >= 1 ? strengthTheme : ''}`}></div>
+                                                    <div className={`meter-segment ${pwdScore >= 2 ? strengthTheme : ''}`}></div>
+                                                    <div className={`meter-segment ${pwdScore >= 4 ? strengthTheme : ''}`}></div>
+                                                </div>
+                                            </div>
+                                            <p className="strength-subtitle">It's better to have:</p>
+                                            <ul className="strength-checklist">
+                                                <li className={pwdRules.length ? 'rule-satisfied' : ''}>
+                                                    {pwdRules.length ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                    <span>At least 8 characters</span>
+                                                </li>
+                                                <li className={pwdRules.hasUpperLower ? 'rule-satisfied' : ''}>
+                                                    {pwdRules.hasUpperLower ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                    <span>Uppercase and lowercase letters</span>
+                                                </li>
+                                                <li className={pwdRules.hasNumber ? 'rule-satisfied' : ''}>
+                                                    {pwdRules.hasNumber ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                    <span>Numbers</span>
+                                                </li>
+                                                <li className={pwdRules.hasSymbol ? 'rule-satisfied' : ''}>
+                                                    {pwdRules.hasSymbol ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                    <span>Symbols (#$&)</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -601,7 +693,7 @@ function Login({ onNavigate, initialView }) {
                             {loginView === 'reset' && (
                                 <>
 
-                                    <div className="input-group full-width">
+                                    <div className="input-group full-width password-input-group" ref={passwordWrapperRef}>
                                         <label htmlFor="resetPassword">New Password</label>
                                         <div className="input-wrapper">
                                             <Lock size={16} />
@@ -612,6 +704,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Enter new password"
                                                 value={formData.password}
                                                 onChange={handleChange}
+                                                onFocus={() => setIsPasswordFocused(true)}
                                                 autoComplete="off"
                                                 required
                                             />
@@ -623,6 +716,39 @@ function Login({ onNavigate, initialView }) {
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                         </div>
+
+                                        {/* Password Strength Popover Checklist */}
+                                        {isPasswordFocused && (
+                                            <div className="password-strength-popover">
+                                                <div className="strength-header">
+                                                    <span className={`strength-title ${strengthTheme}`}>{strengthLabel}</span>
+                                                    <div className="strength-meter-bars">
+                                                        <div className={`meter-segment ${pwdScore >= 1 ? strengthTheme : ''}`}></div>
+                                                        <div className={`meter-segment ${pwdScore >= 2 ? strengthTheme : ''}`}></div>
+                                                        <div className={`meter-segment ${pwdScore >= 4 ? strengthTheme : ''}`}></div>
+                                                    </div>
+                                                </div>
+                                                <p className="strength-subtitle">It's better to have:</p>
+                                                <ul className="strength-checklist">
+                                                    <li className={pwdRules.length ? 'rule-satisfied' : ''}>
+                                                        {pwdRules.length ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                        <span>At least 8 characters</span>
+                                                    </li>
+                                                    <li className={pwdRules.hasUpperLower ? 'rule-satisfied' : ''}>
+                                                        {pwdRules.hasUpperLower ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                        <span>Uppercase and lowercase letters</span>
+                                                    </li>
+                                                    <li className={pwdRules.hasNumber ? 'rule-satisfied' : ''}>
+                                                        {pwdRules.hasNumber ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                        <span>Numbers</span>
+                                                    </li>
+                                                    <li className={pwdRules.hasSymbol ? 'rule-satisfied' : ''}>
+                                                        {pwdRules.hasSymbol ? <CheckCircle2 size={15} /> : <Circle size={15} />}
+                                                        <span>Symbols (#$&)</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="input-group full-width">
@@ -636,6 +762,7 @@ function Login({ onNavigate, initialView }) {
                                                 placeholder="Confirm your password"
                                                 value={formData.confirmPassword}
                                                 onChange={handleChange}
+                                                onFocus={() => setIsPasswordFocused(false)}
                                                 autoComplete="off"
                                                 required
                                             />
@@ -647,6 +774,19 @@ function Login({ onNavigate, initialView }) {
                                                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
                                         </div>
+                                        {formData.confirmPassword.length > 0 && (
+                                            <div style={{ marginTop: '6px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+                                                {formData.password === formData.confirmPassword ? (
+                                                    <span style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <CheckCircle2 size={14} /> Passwords match
+                                                    </span>
+                                                ) : (
+                                                    <span style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <XCircle size={14} /> Passwords do not match
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
 
                                 </>
