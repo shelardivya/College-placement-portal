@@ -1,0 +1,209 @@
+package com.college.placement.portal.admin.service;
+
+import com.college.placement.portal.admin.dto.AdminQueryResponseDto;
+import com.college.placement.portal.admin.dto.ReplyQueryRequestDto;
+import com.college.placement.portal.admin.entity.StudentQueryEntity;
+import com.college.placement.portal.admin.repository.StudentQueryRepository;
+import com.college.placement.portal.notification.util.NotificationHelper;
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class AdminQueryService {
+
+    private final StudentQueryRepository studentQueryRepository;
+    private final NotificationHelper notificationHelper;
+    public AdminQueryService(
+            StudentQueryRepository studentQueryRepository,
+            NotificationHelper notificationHelper
+    ) {
+        this.studentQueryRepository = studentQueryRepository;
+        this.notificationHelper = notificationHelper;
+    }
+    // ==========================================
+    // View All Queries
+    // ==========================================
+
+    public List<AdminQueryResponseDto> getAllQueries() {
+
+        List<StudentQueryEntity> queries =
+                studentQueryRepository
+                        .findByStatusNotOrderByCreatedAtDesc("DISCARDED");
+
+        return convertToDtoList(queries);
+    }
+
+    // ==========================================
+    // View Pending Queries
+    // ==========================================
+
+    public List<AdminQueryResponseDto> getPendingQueries() {
+
+        List<StudentQueryEntity> queries =
+                studentQueryRepository.findByStatusOrderByCreatedAtDesc("PENDING");
+
+        return convertToDtoList(queries);
+
+    }
+
+    // ==========================================
+    // View Resolved Queries
+    // ==========================================
+
+    public List<AdminQueryResponseDto> getResolvedQueries() {
+
+        List<StudentQueryEntity> queries =
+                studentQueryRepository.findByStatusOrderByCreatedAtDesc("RESOLVED");
+
+        return convertToDtoList(queries);
+
+    }
+
+    // ==========================================
+    // View Query By Id
+    // ==========================================
+
+    public AdminQueryResponseDto getQueryById(Long id) {
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Query not found."));
+
+        return convertToDto(query);
+
+    }
+
+    // ==========================================
+    // Reply Query
+    // ==========================================
+
+    public String replyToQuery(
+            Long id,
+            ReplyQueryRequestDto request
+    ) {
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException("Query not found."));
+
+        query.setAdminReply(request.getReply());
+
+        studentQueryRepository.save(query);
+
+// ==========================================
+// Notify Student
+// ==========================================
+
+        notificationHelper.createNotification(
+                query.getStudent(),
+                "STUDENT",
+                "Query Replied",
+                "Your query \"" + query.getSubject()
+                        + "\" has been replied by Admin."
+        );
+
+        return "Reply submitted successfully.";
+
+    }
+
+    // ==========================================
+    // Convert Entity -> DTO
+    // ==========================================
+
+    private List<AdminQueryResponseDto> convertToDtoList(
+            List<StudentQueryEntity> queries
+    ) {
+
+        List<AdminQueryResponseDto> response =
+                new ArrayList<>();
+
+        for (StudentQueryEntity query : queries) {
+
+            response.add(convertToDto(query));
+
+        }
+
+        return response;
+
+    }
+
+    // ==========================================
+    // Convert Single Entity -> DTO
+    // ==========================================
+
+    private AdminQueryResponseDto convertToDto(
+            StudentQueryEntity query
+    ) {
+
+        AdminQueryResponseDto dto =
+                new AdminQueryResponseDto();
+
+        dto.setId(query.getId());
+
+        dto.setStudentId(query.getStudent().getId());
+
+        dto.setStudentName(query.getStudent().getFullName());
+
+        dto.setDepartment(query.getStudent().getDepartment());
+
+        dto.setSubject(query.getSubject());
+
+        dto.setDescription(query.getDescription());
+
+        dto.setStatus(query.getStatus());
+
+        dto.setAdminReply(query.getAdminReply());
+
+        dto.setCreatedAt(query.getCreatedAt());
+
+        dto.setResolvedAt(query.getResolvedAt());
+
+        return dto;
+
+    }
+
+    // ==========================================
+// Discard Query
+// ==========================================
+
+    public String discardQuery(Long id) {
+
+        StudentQueryEntity query =
+                studentQueryRepository.findById(id)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "Query not found."
+                                ));
+
+        // Only pending query can be discarded
+        if (!"PENDING".equalsIgnoreCase(query.getStatus())) {
+
+            throw new IllegalArgumentException(
+                    "Only pending queries can be discarded."
+            );
+        }
+
+        // Change status
+        query.setStatus("DISCARDED");
+
+        studentQueryRepository.save(query);
+
+        // ==========================================
+        // Notify Student
+        // ==========================================
+
+        notificationHelper.createNotification(
+                query.getStudent(),
+                "STUDENT",
+                "Query Discarded",
+                "Your query get discarded"
+        );
+
+        return "Query discarded successfully.";
+
+    }
+
+}

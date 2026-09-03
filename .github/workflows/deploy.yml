@@ -1,0 +1,92 @@
+name: Auto Deploy to AWS App Server
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - "backend/**"
+      - "frontend/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ---------------- BACKEND ----------------
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+          overwrite-settings: false
+
+      - name: Build Backend
+        working-directory: backend
+        run: mvn clean package -DskipTests
+
+      - name: Deploy Backend
+        run: |
+          sudo cp backend/target/portal-0.0.1-SNAPSHOT.jar \
+            /opt/backend_app/College-placement-portal/backend/target/portal-0.0.1-SNAPSHOT.jar
+
+          sudo chown backend_user:backend_user \
+            /opt/backend_app/College-placement-portal/backend/target/portal-0.0.1-SNAPSHOT.jar
+
+          sudo systemctl restart backend.service
+
+      - name: Wait for Backend
+        run: |
+          echo "Waiting for backend..."
+
+          for i in {1..12}; do
+            if curl -sS -o /dev/null http://127.0.0.1:8080/; then
+              echo "Backend is ready"
+              exit 0
+            fi
+
+            sleep 5
+          done
+
+          echo "Backend failed to start"
+          sudo systemctl status backend.service --no-pager
+          sudo journalctl -u backend.service -n 50 --no-pager
+          exit 1
+
+      # ---------------- FRONTEND ----------------
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy Frontend
+        run: |
+          sudo mkdir -p /opt/frontend_app/frontend/dist
+
+          sudo rsync -a --delete \
+            frontend/dist/ \
+            /opt/frontend_app/frontend/dist/
+
+          sudo chown -R frontend_user:frontend_user \
+            /opt/frontend_app/frontend/dist
